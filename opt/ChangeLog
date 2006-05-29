@@ -1,0 +1,24 @@
+2006-05-29  Matthew Allum  <mallum@openedhand.com>
+
+	* Makefile:
+	* opt.h:
+	* opt-config.c:
+	* test.xml:
+	Add initial basic XML config file loading. 
+	Regret using g_markup. 
+
+	* opt-show.c	
+	* opt-show.h:
+	Add props for default show 'style'
+
+	* opt-slide.c:
+	* opt-slide.h:
+	Add font and colour args.
+
+	* opt.c: (main):
+	Remove old manual slide building, use XML files instead.
+
+	* bg.png 
+        * hirez/oh-present.xcf
+        Add new OH template presentation background.
+

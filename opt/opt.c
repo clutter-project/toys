@@ -1,9 +1,10 @@
 #include "opt.h"
 #include <stdlib.h> 		/* for exit() */
 
-void input_cb (ClutterStage *stage,
-               ClutterEvent *event,
-               gpointer      user_data)
+void 
+input_cb (ClutterStage *stage,
+	  ClutterEvent *event,
+	  gpointer      user_data)
 {
   OptShow  *show = (OptShow*)user_data;
 
@@ -25,61 +26,19 @@ int
 main(int argc, char **argv)
 {
   OptShow  *show;
-  OptSlide *slide;
-  ClutterElement *pic;
+  GError        *error = NULL; 
 
   opt_init ();
 
   show = opt_show_new();
 
-  /* Slide 1 */
-
-  slide = opt_slide_new ();
-  opt_slide_set_title  (slide, "This is slide 1");
-  opt_slide_add_bullet_text_item (slide, "Hey!, the first bullet!");
-  opt_slide_add_bullet_text_item (slide, "And Im the second :)");
-  opt_slide_add_bullet_text_item (slide, "( any key to advance, q to quit )");
-  opt_show_add_slide (show, slide);
-
-  /* Slide 2 with image */
-
-  slide = opt_slide_new ();
-  opt_slide_set_title (slide, "And this be slide 2");
-  opt_slide_add_bullet_text_item (slide, "With a kitten ! ( For Iain )");
-  pic = clutter_texture_new_from_pixbuf 
-              (gdk_pixbuf_new_from_file ("kitten.jpg", NULL));
-
-  if (pic != NULL)
-    opt_slide_add_bullet (slide, pic);
-
-  opt_show_add_slide (show, slide);
-
-  /* Slide 3 */
-
-  slide = opt_slide_new ();
-  opt_slide_set_title (slide, "Slide 3 is the Best");
-  opt_slide_add_bullet_text_item (slide, "Because");
-  opt_slide_add_bullet_text_item (slide, "It");
-  opt_slide_add_bullet_text_item (slide, "Has");
-  opt_slide_add_bullet_text_item (slide, "Most");
-  opt_slide_add_bullet_text_item (slide, "Bullets");
-  opt_show_add_slide (show, slide);
-
-  /* Slide 4 */
-
-  slide = opt_slide_new ();
-  opt_slide_set_title (slide, "No! No! slide 4 is best!");
-  opt_slide_add_bullet_text_item (slide, "As more kittens!");
-  pic = clutter_texture_new_from_pixbuf 
-              (gdk_pixbuf_new_from_file ("kitten2.jpg", NULL));
-
-  if (pic != NULL)
-    opt_slide_add_bullet (slide, pic);
-
-  opt_slide_add_bullet_text_item (slide, 
-				  "Thats all for now apart from "
-				  "see me wrap some text here.");
-  opt_show_add_slide (show, slide);
+  if (!opt_config_load (show, "test.xml", &error))
+    {
+      /* Cleanup */
+      g_warning ("Could not load presentation: %s", error->message);
+      g_error_free (error);
+      exit(-1);
+    }
 
   /* Connect up for input event */
 

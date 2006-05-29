@@ -1,13 +1,19 @@
-#include "opt-show.h"
+#include "opt.h"
 
 G_DEFINE_TYPE (OptShow, opt_show, G_TYPE_OBJECT);
+
+#define TITLE_BORDER_SIZE    8  /* all round */
+#define TITLE_BULLET_PAD     5  /* between title and bullet */
+#define BULLET_BORDER_SIZE  10  /* sides */
+#define BULLET_PAD    5  /* between bullets */
+
+#define TITLE_FONT "VistaSansMed 50"
+#define BULLET_FONT "VistaSansMed 40"
 
 typedef struct OptTransition
 {
   OptTransitionType type;
   OptSlide         *from, *to;
-
-
 }
 OptTransition;
 
@@ -16,9 +22,31 @@ struct OptShowPrivate
   GList           *slides;
   gint             current_slide_num;
   guint            num_slides;
+
+  gint             title_border_size;
+  gint             title_bullet_pad;
+  gint             bullet_border_size;
+  gint             bullet_pad;
+  gchar*           title_font;
+  gchar*           bullet_font;
+  gchar*           background;
+
   ClutterTimeline *transition;
   ClutterElement   *bg;
 };
+
+enum
+{
+  PROP_0,
+  PROP_TITLE_BORDER_SIZE,
+  PROP_TITLE_BULLET_PAD,  
+  PROP_BULLET_BORDER_SIZE,
+  PROP_BULLET_PAD,  
+  PROP_TITLE_FONT,
+  PROP_BULLET_FONT,
+  PROP_BACKGROUND
+};
+
 
 static void 
 opt_show_dispose (GObject *object)
@@ -47,6 +75,87 @@ opt_show_finalize (GObject *object)
   G_OBJECT_CLASS (opt_show_parent_class)->finalize (object);
 }
 
+static void 
+opt_show_set_property (GObject      *object, 
+		       guint         prop_id,
+		       const GValue *value, 
+		       GParamSpec   *pspec)
+{
+
+  OptShow *show = OPT_SHOW(object);
+  OptShowPrivate *priv;
+
+  priv = show->priv;
+
+  switch (prop_id) 
+    {
+    case PROP_TITLE_BORDER_SIZE:
+      priv->title_border_size = g_value_get_int (value);
+      break;
+    case PROP_TITLE_BULLET_PAD:
+      priv->title_bullet_pad = g_value_get_int (value);
+      break;
+    case PROP_BULLET_BORDER_SIZE:
+      priv->bullet_border_size = g_value_get_int (value);
+      break;
+    case PROP_BULLET_PAD:
+      priv->bullet_pad = g_value_get_int (value);
+      break;
+    case PROP_TITLE_FONT:
+      if (priv->title_font) g_free (priv->title_font);
+      priv->title_font = g_value_dup_string (value);
+      break;
+    case PROP_BULLET_FONT:
+      if (priv->bullet_font) g_free (priv->bullet_font);
+      priv->bullet_font = g_value_dup_string (value);
+      break;
+    case PROP_BACKGROUND:
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
+}
+
+static void 
+opt_show_get_property (GObject    *object, 
+		       guint       prop_id,
+		       GValue     *value, 
+		       GParamSpec *pspec)
+{
+  OptShow *show = OPT_SHOW(object);
+  OptShowPrivate *priv;
+
+  priv = show->priv;
+
+  switch (prop_id) 
+    {
+    case PROP_TITLE_BORDER_SIZE:
+      g_value_set_int (value, priv->title_border_size);
+      break;
+    case PROP_TITLE_BULLET_PAD:
+      g_value_set_int (value, priv->title_bullet_pad);
+      break;
+    case PROP_BULLET_BORDER_SIZE:
+      g_value_set_int (value, priv->bullet_border_size);
+      break;
+    case PROP_BULLET_PAD:
+      g_value_set_int (value, priv->bullet_pad);
+      break;
+    case PROP_TITLE_FONT:
+      g_value_set_string (value, priv->title_font);
+      break;
+    case PROP_BULLET_FONT:
+      g_value_set_string (value, priv->bullet_font);
+      break;
+    case PROP_BACKGROUND:
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
+}
+
 static void
 opt_show_class_init (OptShowClass *klass)
 {
@@ -54,14 +163,68 @@ opt_show_class_init (OptShowClass *klass)
 
   object_class = (GObjectClass*) klass;
 
-  /*
-  element_class->request_coords  = opt_show_request_coords;
-  element_class->allocate_coords = opt_show_allocate_coords;
-  */
-
   /* GObject */
   object_class->finalize     = opt_show_finalize;
   object_class->dispose      = opt_show_dispose;
+  object_class->set_property = opt_show_set_property;
+  object_class->get_property = opt_show_get_property;
+
+  g_object_class_install_property
+    (object_class, PROP_TITLE_BORDER_SIZE,
+     g_param_spec_int ("title-border-size",
+		       "percentage",
+		       "percentage",
+		       0,
+		       100,
+		       TITLE_BORDER_SIZE,
+		       G_PARAM_CONSTRUCT | G_PARAM_READWRITE));
+
+  g_object_class_install_property
+    (object_class, PROP_TITLE_BULLET_PAD,
+     g_param_spec_int ("title-bullet-pad",
+		       "percentage",
+		       "percentage",
+		       0,
+		       100,
+		       TITLE_BULLET_PAD,
+		       G_PARAM_CONSTRUCT | G_PARAM_READWRITE));
+
+  g_object_class_install_property
+    (object_class, PROP_BULLET_BORDER_SIZE,
+     g_param_spec_int ("bullet-border-size",
+		       "percentage",
+		       "percentage",
+		       0,
+		       100,
+		       BULLET_BORDER_SIZE,
+		       G_PARAM_CONSTRUCT | G_PARAM_READWRITE));
+
+  g_object_class_install_property
+    (object_class, PROP_BULLET_PAD,
+     g_param_spec_int ("bullet-pad",
+		       "percentage",
+		       "percentage",
+		       0,
+		       100,
+		       BULLET_PAD,
+		       G_PARAM_CONSTRUCT | G_PARAM_READWRITE));
+
+  g_object_class_install_property
+    (object_class, PROP_BULLET_FONT,
+     g_param_spec_string ("bullet-font",
+			  "bullet font name",
+			  "bullet font name",
+			  BULLET_FONT,
+			  G_PARAM_CONSTRUCT | G_PARAM_READWRITE));
+
+  g_object_class_install_property
+    (object_class, PROP_TITLE_FONT,
+     g_param_spec_string ("title-font",
+			  "title font name",
+			  "title font name",
+			  TITLE_FONT,
+			  G_PARAM_CONSTRUCT | G_PARAM_READWRITE));
+
 }
 
 static void
@@ -74,7 +237,7 @@ opt_show_init (OptShow *self)
   self->priv  = priv;
 
   g_object_set (clutter_stage(),
-		"fullscreen", TRUE,
+		"fullscreen", TRUE, 
 		"hide-cursor", TRUE,
 		NULL);
 
@@ -101,6 +264,7 @@ opt_show_add_slide (OptShow *self, OptSlide *slide)
   self->priv->num_slides++;
 
   clone = clutter_clone_texture_new(CLUTTER_TEXTURE(self->priv->bg));
+
   clutter_element_set_size (clone, 
 			    CLUTTER_STAGE_WIDTH(), CLUTTER_STAGE_HEIGHT()); 
   clutter_group_add (CLUTTER_GROUP(slide), clone);
@@ -148,6 +312,8 @@ cube_transition_frame_cb (ClutterTimeline *timeline,
       clutter_element_lower_bottom (CLUTTER_ELEMENT(from));
     }
 
+  clutter_stage_set_color (CLUTTER_STAGE(clutter_stage()), 0x222222ff);
+
   clutter_element_rotate_y (CLUTTER_ELEMENT(from),
                             - (float)frame_num * 3,
                             CLUTTER_STAGE_WIDTH()/2,
@@ -167,6 +333,7 @@ fade_transition_frame_cb (ClutterTimeline *timeline,
   OptShow        *show = (OptShow *)data;
   OptSlide       *from, *to;
   OptShowPrivate *priv;
+  gint            opacity;
 
   priv = show->priv;
 
@@ -175,9 +342,39 @@ fade_transition_frame_cb (ClutterTimeline *timeline,
 
   clutter_group_show_all (CLUTTER_GROUP(to));
 
-  clutter_element_set_opacity (CLUTTER_ELEMENT(from), 255 - frame_num);
-  clutter_element_set_opacity (CLUTTER_ELEMENT(to), frame_num);
+  clutter_stage_set_color (CLUTTER_STAGE(clutter_stage()), 0xffffffff);
+
+  opacity = (frame_num * 255 ) / clutter_timeline_get_n_frames (timeline);
+
+  clutter_element_set_opacity (CLUTTER_ELEMENT(from), 255 - opacity);
+  clutter_element_set_opacity (CLUTTER_ELEMENT(to), opacity);
 }
+
+void
+pebbles_transition_frame_cb (ClutterTimeline *timeline,
+			  gint             frame_num,
+			  gpointer         data)
+{
+  OptShow        *show = (OptShow *)data;
+  OptSlide       *from, *to;
+  OptShowPrivate *priv;
+  gint            opacity;
+
+  priv = show->priv;
+
+  from = g_list_nth_data (priv->slides, priv->current_slide_num);
+  to   = g_list_nth_data (priv->slides, priv->current_slide_num+1);
+
+  clutter_group_show_all (CLUTTER_GROUP(to));
+
+  clutter_stage_set_color (CLUTTER_STAGE(clutter_stage()), 0xffffffff);
+
+  opacity = (frame_num * 255 ) / clutter_timeline_get_n_frames (timeline);
+
+  clutter_element_set_opacity (CLUTTER_ELEMENT(from), 255 - opacity);
+  clutter_element_set_opacity (CLUTTER_ELEMENT(to), opacity);
+}
+
 
 void
 transition_completed_cb (ClutterTimeline *timeline,
@@ -227,9 +424,9 @@ opt_show_advance (OptShow *self, OptTransitionType transition)
   clutter_group_add (clutter_stage(), CLUTTER_ELEMENT(to));
   clutter_element_lower_bottom (CLUTTER_ELEMENT(to));
 
-  if (/*priv->current_slide_num % 2 == */ 0)
+  if (priv->current_slide_num % 2 == 0)
     {
-      priv->transition = clutter_timeline_new (100, 60); /* num frames, fps */
+      priv->transition = clutter_timeline_new (30, 60); /* num frames, fps */
 
       g_signal_connect (priv->transition, 
 			"new-frame",  

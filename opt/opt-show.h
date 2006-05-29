@@ -3,9 +3,7 @@
 
 #include <glib-object.h>
 
-#include "clutter.h"
 #include "opt.h"
-#include "opt-slide.h"
 
 G_BEGIN_DECLS
 
@@ -32,7 +30,6 @@ G_BEGIN_DECLS
   OPT_TYPE_SHOW, OptShowClass))
 
 typedef struct OptShowPrivate OptShowPrivate;
-typedef struct _OptShow       OptShow;
 typedef struct _OptShowClass  OptShowClass;
  
 struct _OptShow

@@ -1,0 +1,40 @@
+<opt>
+
+  <defaults>
+    <title  color="#444444ff" font="VistaSansMed 50" />
+    <bullet color="#444444ff" font="VistaSansMed 40" />	
+  </defaults>
+
+  <slide>
+    <title>Hello slide 1</title>
+    <bullet>See test.xml</bullet>
+    <bullet>bullet 2</bullet>
+  </slide>
+
+  <slide>
+    <title>Hello slide 2</title>
+    <bullet>bullet 3</bullet>
+    <img src="kitten.jpg" /> 
+    <bullet>bullet 4</bullet>
+  </slide>
+
+  <slide>
+    <title>Hello slide 3</title>
+    <bullet>bullet 3</bullet>
+    <bullet>bullet 4</bullet>
+  </slide>
+
+  <slide>
+    <title>Hello slide 4</title>
+    <bullet>Foo foo </bullet>
+    <bullet>bullet 4</bullet>
+  </slide>
+
+  <slide>
+    <title color="#ff4444ff">Hello slide 5 ( colors! )</title>
+    <bullet color="#44ff44ff">Foo foo </bullet>
+    <bullet color="#4444ffff">bullet 4</bullet>
+    <bullet font="mono 40">and fonts</bullet>
+  </slide>
+
+</opt>

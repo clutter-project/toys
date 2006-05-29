@@ -3,7 +3,7 @@
 
 #include <glib-object.h>
 
-#include "clutter.h"
+#include "opt.h"
 
 G_BEGIN_DECLS
 
@@ -23,14 +23,13 @@ G_BEGIN_DECLS
 
 #define OPT_IS_SLIDE_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_TYPE ((klass), \
-  OPT_TYPE_SLIDE))
+   OPT_TYPE_SLIDE))
 
 #define OPT_SLIDE_GET_CLASS(obj) \
   (G_TYPE_INSTANCE_GET_CLASS ((obj), \
   OPT_TYPE_SLIDE, OptSlideClass))
 
 typedef struct OptSlidePrivate OptSlidePrivate;
-typedef struct _OptSlide       OptSlide;
 typedef struct _OptSlideClass  OptSlideClass;
  
 struct _OptSlide
@@ -47,17 +46,28 @@ struct _OptSlideClass
 GType opt_slide_get_type (void);
 
 OptSlide* 
-opt_slide_new (void);
+opt_slide_new (OptShow *show);
 
 void
-opt_slide_set_title (OptSlide *slide, const gchar *title);
+opt_slide_set_title (OptSlide    *slide, 
+		     const gchar *title,
+		     const gchar *font,
+		     ClutterColor col);
 
 void
-opt_slide_add_bullet_text_item (OptSlide *slide, const gchar *title);
+opt_slide_add_bullet_text_item (OptSlide    *slide, 
+				const gchar *title,
+				const gchar *font,
+				ClutterColor col);
 
 void
 opt_slide_add_bullet (OptSlide *slide, ClutterElement *element);
 
+const ClutterElement*
+opt_slide_get_title (OptSlide *slide);
+
+GList*
+opt_slide_get_bullets (OptSlide *slide);
 
 G_END_DECLS
 
