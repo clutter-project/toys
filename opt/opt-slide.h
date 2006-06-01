@@ -69,6 +69,12 @@ opt_slide_get_title (OptSlide *slide);
 GList*
 opt_slide_get_bullets (OptSlide *slide);
 
+void
+opt_slide_set_transition (OptSlide *slide, OptTransition *trans);
+
+OptTransition*
+opt_slide_get_transition (OptSlide *slide);
+
 G_END_DECLS
 
 #endif

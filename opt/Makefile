@@ -4,7 +4,7 @@ INCS=`pkg-config --cflags clutter-0.0`
 .c.o:
 	$(CC) -g -Wall $(CFLAGS) $(INCS) -c $*.c
 
-OBJS=opt.o opt-show.o opt-slide.o opt-config.o
+OBJS=opt.o opt-show.o opt-slide.o opt-config.o opt-transition.o
 
 opt: $(OBJS)
 	$(CC) -g -Wall $(CFLAGS) -o $@ $(OBJS) $(LIBS)

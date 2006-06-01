@@ -55,7 +55,10 @@ void
 opt_show_run (OptShow *self);
 
 void
-opt_show_advance (OptShow *self, OptTransitionType transition);
+opt_show_advance (OptShow *self);
+
+void
+opt_show_retreat (OptShow *self);
 
 G_END_DECLS
 

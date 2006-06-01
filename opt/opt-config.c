@@ -9,7 +9,7 @@
     <title font="" color="">
     <offsets />
     <background img="" | color= "" />
-    <transition type="" />
+    <transition style="cube|flip|fade" />
   </defualts>
   <slide>
     <background />
@@ -17,6 +17,7 @@
     <bullet font="" color=""></bullet>
     <img src="" />
     <code width="xx"></code>
+    <transition style="cube|flip|fade" />
   </slide>
   <transition type=""/>
   ....
@@ -33,11 +34,13 @@ typedef enum
   IN_DEFAULTS,
   IN_DEFAULTS_TITLE,
   IN_DEFAULTS_BULLET,
+  IN_DEFAULTS_TRANS,
   IN_FONTS,
   IN_OFFSETS,
   IN_SLIDE,
   IN_TITLE,
   IN_BULLET,
+  IN_TRANS,
   IN_IMG,
   IN_BG,
   FINAL
@@ -52,29 +55,42 @@ typedef enum
   TAG_DEFAULTS,
   TAG_DEFAULTS_TITLE,
   TAG_DEFAULTS_BULLET,
+  TAG_DEFAULTS_TRANS,
   TAG_SLIDE,
   TAG_TITLE,
   TAG_BULLET,
+  TAG_TRANS,
   TAG_IMG,
   TAG_BG
 
 } OptParseTag;
 
+const struct { gchar *name; OptTransitionStyle style; } _style_lookup[] = 
+  {
+    { "cube", OPT_TRANSITION_CUBE },
+    { "flip", OPT_TRANSITION_FLIP },
+    { "fade", OPT_TRANSITION_FADE },
+    { NULL, 0 }
+  };
+
+
 struct OptParseInfo
 {
-  OptShow      *show;
-  OptParseState state;
-  OptSlide     *slide;
+  OptShow           *show;
+  OptParseState      state;
+  OptSlide          *slide;
 
-  GString      *title_buf;
-  gchar        *title_font;
-  ClutterColor  title_color;
-  ClutterColor  title_default_color;
+  GString           *title_buf;
+  gchar             *title_font;
+  ClutterColor       title_color;
+  ClutterColor       title_default_color;
 
-  GString      *bullet_buf;
-  gchar        *bullet_font;
-  ClutterColor  bullet_color;
-  ClutterColor  bullet_default_color;
+  GString           *bullet_buf;
+  gchar             *bullet_font;
+  ClutterColor       bullet_color;
+  ClutterColor       bullet_default_color;
+
+  OptTransitionStyle style_default;
 };
 
 static ClutterColor
@@ -99,6 +115,22 @@ color_from_string (const gchar *spec)
   g_warning("unable to parse '%s' as a color in format #RRGGBBAA", spec);
 
   return color;
+}
+
+static OptTransitionStyle
+lookup_style (const gchar *name)
+{
+  gint i = 0;
+
+  while (_style_lookup[i].name != NULL)
+    {
+      if (!strcmp(name, _style_lookup[i].name))
+	return _style_lookup[i].style;
+
+      i++;
+    }
+
+  return OPT_TRANSITION_ANY;
 }
 
 static int
@@ -275,8 +307,16 @@ opt_parse_on_start_element (GMarkupParseContext *context,
 	  info->state = IN_DEFAULTS;
 	  break;
 	case TAG_SLIDE:
-	  info->state = IN_SLIDE;
-	  info->slide = opt_slide_new (info->show);
+	  {
+	    OptTransition *trans;
+
+	    info->state = IN_SLIDE;
+	    info->slide = opt_slide_new (info->show);
+
+	    trans = opt_transition_new (info->style_default); 
+	    opt_transition_set_from (trans, info->slide);
+	    opt_slide_set_transition (info->slide, trans);
+	  }
 	  break;
 	default:
 	  break;
@@ -289,9 +329,23 @@ opt_parse_on_start_element (GMarkupParseContext *context,
       tag = expect_tag (context, element_name, error, 
 			"title",  TAG_DEFAULTS_TITLE, 
 			"bullet", TAG_DEFAULTS_BULLET,
+			"transition", TAG_DEFAULTS_TRANS,
 			NULL); 
       switch (tag)
 	{
+	case TAG_DEFAULTS_TRANS:
+	  {
+	    const char *style_str = NULL;
+
+	    if (extract_attrs (context, attr_names, attr_values, error,
+			       "style", FALSE, &style_str,
+			       NULL))
+	      {
+		info->style_default = lookup_style (style_str);
+	      }
+	  }
+	  info->state = IN_DEFAULTS_TRANS;
+	  break;
 	case TAG_DEFAULTS_TITLE:
 	  {
 	    const char *color = NULL;
@@ -349,12 +403,32 @@ opt_parse_on_start_element (GMarkupParseContext *context,
 
     case IN_SLIDE:
       tag = expect_tag (context, element_name, error, 
-			"title",  TAG_TITLE, 
-			"bullet", TAG_BULLET,
-			"img",    TAG_IMG,
+			"title",      TAG_TITLE, 
+			"bullet",     TAG_BULLET,
+			"img",        TAG_IMG,
+			"transition", TAG_TRANS,
 			NULL); 
       switch (tag)
 	{
+	case TAG_TRANS:
+	  {
+	    const char *style_str = NULL;
+
+	    if (extract_attrs (context, attr_names, attr_values, error,
+			       "style", TRUE, &style_str,
+			       NULL))
+	      {
+		OptTransitionStyle style;
+		OptTransition     *trans;
+
+		style = lookup_style (style_str);
+		
+		trans = opt_slide_get_transition (info->slide);
+		opt_transition_set_style (trans, style);
+	      }
+	    info->state = IN_TRANS;
+	  }
+	  break;
 	case TAG_IMG:
 	  {
 	    gchar *img_path = NULL;
@@ -462,6 +536,7 @@ opt_parse_on_end_element (GMarkupParseContext *context,
       break;
     case IN_DEFAULTS_TITLE:
     case IN_DEFAULTS_BULLET:
+    case IN_DEFAULTS_TRANS:
       info->state = IN_DEFAULTS;
       break;
     case IN_IMG:
@@ -490,6 +565,9 @@ opt_parse_on_end_element (GMarkupParseContext *context,
 	g_free (info->bullet_font);
       info->bullet_font  = NULL;
       info->bullet_buf = NULL;
+      info->state = IN_SLIDE;
+      break;
+    case IN_TRANS:
       info->state = IN_SLIDE;
       break;
     case FINAL:
@@ -525,10 +603,12 @@ opt_parse_on_text (GMarkupParseContext *context,
     case IN_DEFAULTS:
     case IN_DEFAULTS_TITLE:
     case IN_DEFAULTS_BULLET:
+    case IN_DEFAULTS_TRANS:
     case IN_FONTS:
     case IN_OFFSETS:
     case IN_SLIDE:
     case IN_BG:
+    case IN_TRANS:
     case FINAL:
       for (i = 0; i < text_len; i++)
 	if (!g_ascii_isspace (text[i]))
@@ -570,6 +650,7 @@ opt_config_load (OptShow     *show,
   info.show  = show;
   info.bullet_default_color = 0x000000ff;
   info.title_default_color  = 0x000000ff;
+  info.style_default        = OPT_TRANSITION_FADE;
 
   if (!g_file_get_contents (filename, &contents, &len, error))
     return FALSE;

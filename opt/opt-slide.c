@@ -20,6 +20,7 @@ struct OptSlidePrivate
   ClutterElement *bg;
   GList          *bullets;
   OptShow        *show;
+  OptTransition  *trans;
 };
 
 static void 
@@ -29,7 +30,9 @@ opt_slide_dispose (GObject *object)
 
   if (self->priv)
     {
-
+      if (self->priv->trans != NULL)
+	g_object_unref(self->priv->trans);
+      self->priv->trans = NULL;
     }
 
   G_OBJECT_CLASS (opt_slide_parent_class)->dispose (object);
@@ -272,5 +275,31 @@ GList*
 opt_slide_get_bullets (OptSlide *slide)
 {
   return slide->priv->bullets;
+}
+
+void
+opt_slide_set_transition (OptSlide *slide, OptTransition *trans)
+{
+  OptSlidePrivate *priv;
+
+  priv = slide->priv;
+
+  if (priv->trans == trans)
+    return;
+
+  if (priv->trans != NULL)
+    g_object_unref(priv->trans);
+
+  if (trans)
+    {
+      priv->trans = trans;
+      g_object_ref(slide);
+    }
+}
+
+OptTransition*
+opt_slide_get_transition (OptSlide *slide)
+{
+  return slide->priv->trans;
 }
 

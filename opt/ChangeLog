@@ -1,3 +1,21 @@
+2006-06-01  Matthew Allum  <mallum@openedhand.com>
+
+	* Makefile:
+	* opt.h:
+	* opt-transition.c:
+	* opt-transition.h:
+	* opt-config.c:
+	* opt-show.c:
+	* opt-show.h:
+	* opt-slide.c:
+	* opt-slide.h:
+	Redo transition handling.	
+
+	* opt.c: (input_cb), (main):
+	Handle back button now.
+	* test.xml:
+	Add some transition examples.
+
 2006-05-29  Matthew Allum  <mallum@openedhand.com>
 
 	* Makefile:

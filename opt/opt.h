@@ -12,9 +12,11 @@ OptTransitionType;
 
 typedef struct _OptSlide OptSlide;
 typedef struct _OptShow OptShow;
+typedef struct _OptTransition OptTransition;
 
 #include "opt-show.h"
 #include "opt-slide.h"
+#include "opt-transition.h"
 
 gboolean
 opt_config_load (OptShow     *show, 

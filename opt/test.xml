@@ -3,12 +3,14 @@
   <defaults>
     <title  color="#444444ff" font="VistaSansMed 50" />
     <bullet color="#444444ff" font="VistaSansMed 40" />	
+    <transition style="cube" />  
   </defaults>
 
   <slide>
     <title>Hello slide 1</title>
     <bullet>See test.xml</bullet>
-    <bullet>bullet 2</bullet>
+    <bullet>q quit, r or left back</bullet>
+    <bullet>Any key to advance.</bullet>
   </slide>
 
   <slide>
@@ -16,6 +18,8 @@
     <bullet>bullet 3</bullet>
     <img src="kitten.jpg" /> 
     <bullet>bullet 4</bullet>
+
+    <transition style="fade" />	
   </slide>
 
   <slide>
@@ -28,6 +32,7 @@
     <title>Hello slide 4</title>
     <bullet>Foo foo </bullet>
     <bullet>bullet 4</bullet>
+    <transition style="flip" />	
   </slide>
 
   <slide>
