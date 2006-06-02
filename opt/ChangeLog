@@ -1,3 +1,17 @@
+2006-06-02  Matthew Allum  <mallum@openedhand.com>
+
+	* test.xml:
+	* opt.c: (main):
+	* opt-config.c: 
+	* opt-show.c: 
+	* opt-show.h:
+	Add support for default <background> tag.
+	Attempt ( non working on fglfx at least ) slide export.
+
+	* opt-transition.c: 
+	* opt-transition.h:
+	Add another flip transition.
+
 2006-06-01  Matthew Allum  <mallum@openedhand.com>
 
 	* Makefile:

@@ -12,7 +12,7 @@
     <transition style="cube|flip|fade" />
   </defualts>
   <slide>
-    <background />
+    <background img="" | color= "" />
     <title font="" color=""></title>
     <bullet font="" color=""></bullet>
     <img src="" />
@@ -35,6 +35,7 @@ typedef enum
   IN_DEFAULTS_TITLE,
   IN_DEFAULTS_BULLET,
   IN_DEFAULTS_TRANS,
+  IN_DEFAULTS_BG,
   IN_FONTS,
   IN_OFFSETS,
   IN_SLIDE,
@@ -56,6 +57,7 @@ typedef enum
   TAG_DEFAULTS_TITLE,
   TAG_DEFAULTS_BULLET,
   TAG_DEFAULTS_TRANS,
+  TAG_DEFAULTS_BG,
   TAG_SLIDE,
   TAG_TITLE,
   TAG_BULLET,
@@ -69,6 +71,7 @@ const struct { gchar *name; OptTransitionStyle style; } _style_lookup[] =
   {
     { "cube", OPT_TRANSITION_CUBE },
     { "flip", OPT_TRANSITION_FLIP },
+    { "yzflip", OPT_TRANSITION_YZ_FLIP },
     { "fade", OPT_TRANSITION_FADE },
     { NULL, 0 }
   };
@@ -330,6 +333,7 @@ opt_parse_on_start_element (GMarkupParseContext *context,
 			"title",  TAG_DEFAULTS_TITLE, 
 			"bullet", TAG_DEFAULTS_BULLET,
 			"transition", TAG_DEFAULTS_TRANS,
+			"background", TAG_DEFAULTS_BG,
 			NULL); 
       switch (tag)
 	{
@@ -391,7 +395,31 @@ opt_parse_on_start_element (GMarkupParseContext *context,
 	  }
 	  info->state = IN_DEFAULTS_BULLET;
 	  break;
+	case TAG_DEFAULTS_BG:
+	  {
+	    const char *src = NULL;
 
+	    if (extract_attrs (context, attr_names, attr_values, error,
+			       "src", TRUE, &src,
+			       NULL))
+	      {
+		GdkPixbuf *pic;
+		
+		pic = gdk_pixbuf_new_from_file (src, NULL);
+
+		if (pic == NULL)
+		  {
+		    g_set_error (error,
+				 G_MARKUP_ERROR,
+				 G_MARKUP_ERROR_INVALID_CONTENT,
+				 "Unable to load '%s'", src);
+		  }
+		
+		g_object_set (info->show, "background", pic, NULL);
+	      }
+	  }
+	  info->state = IN_DEFAULTS_BG;
+	  break;
 	default:
 	  g_assert_not_reached ();
 	  break;
@@ -410,6 +438,11 @@ opt_parse_on_start_element (GMarkupParseContext *context,
 			NULL); 
       switch (tag)
 	{
+	case TAG_BG:
+	  {
+	    
+	  }
+	  break;
 	case TAG_TRANS:
 	  {
 	    const char *style_str = NULL;
@@ -537,6 +570,7 @@ opt_parse_on_end_element (GMarkupParseContext *context,
     case IN_DEFAULTS_TITLE:
     case IN_DEFAULTS_BULLET:
     case IN_DEFAULTS_TRANS:
+    case IN_DEFAULTS_BG:
       info->state = IN_DEFAULTS;
       break;
     case IN_IMG:
@@ -604,6 +638,7 @@ opt_parse_on_text (GMarkupParseContext *context,
     case IN_DEFAULTS_TITLE:
     case IN_DEFAULTS_BULLET:
     case IN_DEFAULTS_TRANS:
+    case IN_DEFAULTS_BG:
     case IN_FONTS:
     case IN_OFFSETS:
     case IN_SLIDE:

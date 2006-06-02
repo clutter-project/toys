@@ -60,6 +60,9 @@ opt_show_advance (OptShow *self);
 void
 opt_show_retreat (OptShow *self);
 
+gboolean
+opt_show_export (OptShow *self, const char *path, GError **error);
+
 G_END_DECLS
 
 #endif

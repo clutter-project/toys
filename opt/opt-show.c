@@ -22,7 +22,7 @@ struct OptShowPrivate
   gint             bullet_pad;
   gchar*           title_font;
   gchar*           bullet_font;
-  gchar*           background;
+  GdkPixbuf       *background;
 
   ClutterTimeline *transition;
   ClutterElement  *bg;
@@ -105,6 +105,9 @@ opt_show_set_property (GObject      *object,
       priv->bullet_font = g_value_dup_string (value);
       break;
     case PROP_BACKGROUND:
+      priv->background = (GdkPixbuf*)g_value_get_pointer(value);
+      /* refs */
+      clutter_texture_set_pixbuf (CLUTTER_TEXTURE(priv->bg), priv->background);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -144,6 +147,7 @@ opt_show_get_property (GObject    *object,
       g_value_set_string (value, priv->bullet_font);
       break;
     case PROP_BACKGROUND:
+      g_value_set_pointer (value, priv->background);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -220,6 +224,12 @@ opt_show_class_init (OptShowClass *klass)
 			  TITLE_FONT,
 			  G_PARAM_CONSTRUCT | G_PARAM_READWRITE));
 
+  g_object_class_install_property
+    (object_class, PROP_BACKGROUND,
+     g_param_spec_pointer ("background",
+			   "Pixbuf source for default show background.",
+			   "Pixbuf source for default show background.",
+			   G_PARAM_READWRITE));
 }
 
 static void
@@ -237,9 +247,12 @@ opt_show_init (OptShow *self)
 		NULL);
 
   /* FIXME: should be prop */
+#if 0
   priv->bg = clutter_texture_new_from_pixbuf 
               (gdk_pixbuf_new_from_file ("bg.png", NULL));
+#endif
 
+  priv->bg = g_object_new (CLUTTER_TYPE_TEXTURE, NULL);
   /* FIXME: construct only prop to set bullet style */
 }
 
@@ -376,4 +389,60 @@ void
 opt_show_retreat (OptShow *self)
 {
   opt_show_step (self, -1);
+}
+
+gboolean
+opt_show_export (OptShow *self, const char *path, GError **error)
+{
+  GList          *slide;
+  OptShowPrivate *priv;
+  gint            i = 0;
+
+  priv = self->priv;
+
+  g_object_set (clutter_stage(), "offscreen", TRUE, NULL);
+
+  clutter_group_show_all(clutter_stage());
+
+  slide = priv->slides;
+
+  while (slide)
+    {
+      ClutterElement *e = CLUTTER_ELEMENT(slide->data);
+      GdkPixbuf      *pixb = NULL;
+      gchar           name[32];
+      gchar          *filename = NULL;
+
+      clutter_group_add (clutter_stage(), e);
+      clutter_group_show_all(clutter_stage());
+
+      clutter_redraw();
+      
+      pixb = clutter_stage_snapshot (CLUTTER_STAGE(clutter_stage()),
+				     0,
+				     0,
+				     CLUTTER_STAGE_WIDTH(),
+				     CLUTTER_STAGE_HEIGHT());
+
+      g_snprintf(name, 32, "slide-%i.png", i);
+
+      filename = g_build_filename(path, name, NULL);
+
+      if (!gdk_pixbuf_save (pixb, filename, "png", error, NULL))
+	{
+	  if (filename) g_free (filename);
+	  return FALSE;
+	}
+
+      g_print ("wrote '%s'\n", filename);
+
+      clutter_group_remove (clutter_stage(), e);
+      clutter_group_hide_all (CLUTTER_GROUP(e));
+
+      if (filename) g_free (filename);
+      slide = slide->next;
+      i++;
+    }
+
+  return TRUE;
 }

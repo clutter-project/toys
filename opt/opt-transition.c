@@ -13,6 +13,50 @@ struct OptTransitionPrivate
 };
 
 static void
+yz_flip_transition_frame_cb (OptTransition   *trans,
+			     gint             frame_num,
+			     gpointer         data)
+{
+  OptSlide             *from, *to;
+  OptTransitionPrivate *priv;
+
+  priv = trans->priv;
+
+  from = opt_transition_get_from (trans);
+  to   = opt_transition_get_to (trans);
+
+  clutter_group_show_all (CLUTTER_GROUP(to));
+
+  if (frame_num > 15)
+    {
+      /* Fix Z ordering */
+      clutter_element_lower_bottom (CLUTTER_ELEMENT(from));
+    }
+
+  clutter_stage_set_color (CLUTTER_STAGE(clutter_stage()), 0x222222ff);
+
+  clutter_element_rotate_y (CLUTTER_ELEMENT(from),
+                            - (float)frame_num * 6,
+                            CLUTTER_STAGE_WIDTH()/2,
+                            0);
+
+  clutter_element_rotate_y (CLUTTER_ELEMENT(to),
+                            180 - (frame_num * 6),
+                            CLUTTER_STAGE_WIDTH()/2,
+                            0);
+
+  clutter_element_rotate_z (CLUTTER_ELEMENT(from),
+                            - (float)frame_num * 6,
+                            CLUTTER_STAGE_WIDTH()/2,
+                            0);
+
+  clutter_element_rotate_z (CLUTTER_ELEMENT(to),
+                            180 - (frame_num * 6),
+                            CLUTTER_STAGE_WIDTH()/2,
+                            0);
+}
+
+static void
 flip_transition_frame_cb (OptTransition   *trans,
 			  gint             frame_num,
 			  gpointer         data)
@@ -201,6 +245,13 @@ opt_transition_set_style (OptTransition     *trans,
 	= g_signal_connect (trans,
 			    "new-frame",  
 			    G_CALLBACK (flip_transition_frame_cb), 
+			    trans);
+      break;
+    case OPT_TRANSITION_YZ_FLIP:
+      priv->signal_id 
+	= g_signal_connect (trans,
+			    "new-frame",  
+			    G_CALLBACK (yz_flip_transition_frame_cb), 
 			    trans);
       break;
     case OPT_TRANSITION_FADE:

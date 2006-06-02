@@ -42,6 +42,18 @@ main(int argc, char **argv)
       exit(-1);
     }
 
+#if 0
+  if (!opt_show_export (show, "/tmp", &error))
+    {
+      /* Cleanup */
+      g_warning ("Could not export presentation: %s", error->message);
+      g_error_free (error);
+      exit(-1);
+    }
+  
+  return 0;
+#endif
+
   /* Connect up for input event */
   g_signal_connect (clutter_stage(), 
 		    "input-event",
