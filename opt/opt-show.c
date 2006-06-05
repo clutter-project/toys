@@ -236,12 +236,15 @@ static void
 opt_show_init (OptShow *self)
 {
   OptShowPrivate *priv;
+  ClutterElement *stage;
 
   priv           = g_new0 (OptShowPrivate, 1);
 
   self->priv  = priv;
 
-  g_object_set (clutter_stage(),
+  stage = clutter_stage_get_default();
+
+  g_object_set (stage,
 		"fullscreen", TRUE, 
 		"hide-cursor", TRUE,
 		NULL);
@@ -265,15 +268,18 @@ opt_show_new (void)
 void
 opt_show_add_slide (OptShow *self, OptSlide *slide)
 {
-  ClutterElement *clone;
+  ClutterElement *clone, *stage;
 
   self->priv->slides = g_list_append(self->priv->slides, slide);
   self->priv->num_slides++;
 
+  stage = clutter_stage_get_default();
+  
   clone = clutter_clone_texture_new(CLUTTER_TEXTURE(self->priv->bg));
 
   clutter_element_set_size (clone, 
-			    CLUTTER_STAGE_WIDTH(), CLUTTER_STAGE_HEIGHT()); 
+			    clutter_element_get_width (stage),
+			    clutter_element_get_height (stage));
   clutter_group_add (CLUTTER_GROUP(slide), clone);
 
   clutter_element_lower_bottom(clone);
@@ -285,15 +291,18 @@ opt_show_run (OptShow *self)
 {
   OptSlide       *slide;
   OptShowPrivate *priv;
+  ClutterElement *stage;
+  ClutterColor    col = { 0x22, 0x22, 0x22, 0xff };
 
   priv = self->priv;
   priv->current_slide_num = 0;
 
   slide = g_list_nth_data (priv->slides, 0);
+  stage = clutter_stage_get_default();
 
-  clutter_stage_set_color (CLUTTER_STAGE(clutter_stage()), 0x222222ff);
-  clutter_group_add (clutter_stage(), CLUTTER_ELEMENT(slide));
-  clutter_group_show_all(clutter_stage());
+  clutter_stage_set_color (CLUTTER_STAGE(stage), &col);
+  clutter_group_add (CLUTTER_GROUP(stage), CLUTTER_ELEMENT(slide));
+  clutter_group_show_all (CLUTTER_GROUP(stage));
 
   clutter_main();
 }
@@ -305,13 +314,16 @@ transition_completed_cb (OptTransition   *trans,
   OptShow        *show = (OptShow *)data;
   OptSlide       *from;
   OptShowPrivate *priv;
+  ClutterElement *stage;
 
   priv = show->priv;
 
   from = opt_transition_get_from (trans);
+  stage = clutter_stage_get_default();
 
   /* Remove as to free up resources. */
-  clutter_group_remove (clutter_stage(), CLUTTER_ELEMENT(from));
+
+  clutter_group_remove (CLUTTER_GROUP(stage), CLUTTER_ELEMENT(from));
   clutter_group_hide_all (CLUTTER_GROUP(from));
 
   /* Reset any tranforms to be safe */
@@ -330,12 +342,15 @@ opt_show_step (OptShow *self, gint step)
   OptSlide       *from, *to;
   OptShowPrivate *priv;
   OptTransition  *trans;
+  ClutterElement *stage;
 
   priv = self->priv;
 
   /* transition already running */
   if (priv->trans_signal_id != 0)
     return;
+
+  stage = clutter_stage_get_default();
 
   from = g_list_nth_data (priv->slides, priv->current_slide_num);
   to   = g_list_nth_data (priv->slides, priv->current_slide_num + step);
@@ -345,7 +360,7 @@ opt_show_step (OptShow *self, gint step)
     return;
 
   /* Add next slide to stage */
-  clutter_group_add (clutter_stage(), CLUTTER_ELEMENT(to));
+  clutter_group_add (CLUTTER_GROUP(stage), CLUTTER_ELEMENT(to));
 
   trans = opt_slide_get_transition (from);
 
@@ -368,7 +383,7 @@ opt_show_step (OptShow *self, gint step)
   else
     {
       /* No transition just hide current slide*/
-      clutter_group_remove (clutter_stage(), CLUTTER_ELEMENT(from));
+      clutter_group_remove (CLUTTER_GROUP(stage), CLUTTER_ELEMENT(from));
       clutter_group_hide_all (CLUTTER_GROUP(from));
     }
   
@@ -396,13 +411,16 @@ opt_show_export (OptShow *self, const char *path, GError **error)
 {
   GList          *slide;
   OptShowPrivate *priv;
+  ClutterElement *stage;
   gint            i = 0;
 
   priv = self->priv;
 
-  g_object_set (clutter_stage(), "offscreen", TRUE, NULL);
+  stage = clutter_stage_get_default();
 
-  clutter_group_show_all(clutter_stage());
+  g_object_set (stage, "offscreen", TRUE, NULL);
+
+  clutter_group_show_all (CLUTTER_GROUP(stage));
 
   slide = priv->slides;
 
@@ -413,16 +431,16 @@ opt_show_export (OptShow *self, const char *path, GError **error)
       gchar           name[32];
       gchar          *filename = NULL;
 
-      clutter_group_add (clutter_stage(), e);
-      clutter_group_show_all(clutter_stage());
+      clutter_group_add (CLUTTER_GROUP(stage), e);
+      clutter_group_show_all (CLUTTER_GROUP(stage));
 
       clutter_redraw();
       
-      pixb = clutter_stage_snapshot (CLUTTER_STAGE(clutter_stage()),
+      pixb = clutter_stage_snapshot (CLUTTER_STAGE(stage),
 				     0,
 				     0,
-				     CLUTTER_STAGE_WIDTH(),
-				     CLUTTER_STAGE_HEIGHT());
+				     clutter_element_get_width (stage),
+				     clutter_element_get_height (stage));
 
       g_snprintf(name, 32, "slide-%i.png", i);
 
@@ -436,7 +454,7 @@ opt_show_export (OptShow *self, const char *path, GError **error)
 
       g_print ("wrote '%s'\n", filename);
 
-      clutter_group_remove (clutter_stage(), e);
+      clutter_group_remove (CLUTTER_GROUP(stage), e);
       clutter_group_hide_all (CLUTTER_GROUP(e));
 
       if (filename) g_free (filename);

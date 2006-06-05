@@ -19,11 +19,14 @@ yz_flip_transition_frame_cb (OptTransition   *trans,
 {
   OptSlide             *from, *to;
   OptTransitionPrivate *priv;
+  ClutterElement       *stage;
+  ClutterColor          color = { 0x22, 0x22, 0x22, 0xff };
 
   priv = trans->priv;
 
-  from = opt_transition_get_from (trans);
-  to   = opt_transition_get_to (trans);
+  from  = opt_transition_get_from (trans);
+  to    = opt_transition_get_to (trans);
+  stage = clutter_stage_get_default();
 
   clutter_group_show_all (CLUTTER_GROUP(to));
 
@@ -33,7 +36,7 @@ yz_flip_transition_frame_cb (OptTransition   *trans,
       clutter_element_lower_bottom (CLUTTER_ELEMENT(from));
     }
 
-  clutter_stage_set_color (CLUTTER_STAGE(clutter_stage()), 0x222222ff);
+  clutter_stage_set_color (CLUTTER_STAGE(stage), &color);
 
   clutter_element_rotate_y (CLUTTER_ELEMENT(from),
                             - (float)frame_num * 6,
@@ -63,11 +66,14 @@ flip_transition_frame_cb (OptTransition   *trans,
 {
   OptSlide             *from, *to;
   OptTransitionPrivate *priv;
+  ClutterColor          color = { 0x22, 0x22, 0x22, 0xff };
+  ClutterElement       *stage;
 
   priv = trans->priv;
 
   from = opt_transition_get_from (trans);
   to   = opt_transition_get_to (trans);
+  stage = clutter_stage_get_default();
 
   clutter_group_show_all (CLUTTER_GROUP(to));
 
@@ -77,7 +83,7 @@ flip_transition_frame_cb (OptTransition   *trans,
       clutter_element_lower_bottom (CLUTTER_ELEMENT(from));
     }
 
-  clutter_stage_set_color (CLUTTER_STAGE(clutter_stage()), 0x222222ff);
+  clutter_stage_set_color (CLUTTER_STAGE(stage), &color);
 
   clutter_element_rotate_y (CLUTTER_ELEMENT(from),
                             - (float)frame_num * 6,
@@ -96,12 +102,15 @@ cube_transition_frame_cb (OptTransition   *trans,
 			  gpointer         data)
 {
   OptSlide             *from, *to;
+  ClutterElement       *stage;
+  ClutterColor          color = { 0x22, 0x22, 0x22, 0xff };
   OptTransitionPrivate *priv;
 
   priv = trans->priv;
 
-  from = opt_transition_get_from (trans);
-  to   = opt_transition_get_to (trans);
+  from  = opt_transition_get_from (trans);
+  to    = opt_transition_get_to (trans);
+  stage = clutter_stage_get_default();
 
   clutter_group_show_all (CLUTTER_GROUP(to));
 
@@ -111,7 +120,7 @@ cube_transition_frame_cb (OptTransition   *trans,
       clutter_element_lower_bottom (CLUTTER_ELEMENT(from));
     }
 
-  clutter_stage_set_color (CLUTTER_STAGE(clutter_stage()), 0x222222ff);
+  clutter_stage_set_color (CLUTTER_STAGE(stage), &color);
 
   clutter_element_rotate_y (CLUTTER_ELEMENT(from),
                             - (float)frame_num * 3,
@@ -148,6 +157,8 @@ fade_transition_frame_cb (OptTransition   *trans,
                   / clutter_timeline_get_n_frames (CLUTTER_TIMELINE(trans));
 
   clutter_element_set_opacity (CLUTTER_ELEMENT(to), opacity);
+
+  /* clutter_element_set_depth (CLUTTER_ELEMENT(from), - opacity/10 ); */
 }
 
 static void 

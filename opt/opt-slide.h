@@ -49,16 +49,16 @@ OptSlide*
 opt_slide_new (OptShow *show);
 
 void
-opt_slide_set_title (OptSlide    *slide, 
-		     const gchar *title,
-		     const gchar *font,
-		     ClutterColor col);
+opt_slide_set_title (OptSlide     *slide, 
+		     const gchar  *title,
+		     const gchar  *font,
+		     ClutterColor *col);
 
 void
-opt_slide_add_bullet_text_item (OptSlide    *slide, 
-				const gchar *title,
-				const gchar *font,
-				ClutterColor col);
+opt_slide_add_bullet_text_item (OptSlide     *slide, 
+				const gchar  *title,
+				const gchar  *font,
+				ClutterColor *col);
 
 void
 opt_slide_add_bullet (OptSlide *slide, ClutterElement *element);

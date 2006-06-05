@@ -1,3 +1,13 @@
+2006-06-05  Matthew Allum  <mallum@openedhand.com>
+
+	* opt-config.c:
+	* opt-show.c:
+	* opt-slide.c:
+	* opt-slide.h:
+	* opt-transition.c:
+	* opt.c: 
+	Sync up with ebassi's clutter API changes.
+
 2006-06-02  Matthew Allum  <mallum@openedhand.com>
 
 	* test.xml:

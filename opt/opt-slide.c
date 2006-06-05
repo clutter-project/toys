@@ -62,11 +62,6 @@ opt_slide_class_init (OptSlideClass *klass)
   object_class = (GObjectClass*) klass;
   element_class = (ClutterElementClass*)klass;
 
-  /*
-  element_class->request_coords  = opt_slide_request_coords;
-  element_class->allocate_coords = opt_slide_allocate_coords;
-  */
-
   /* GObject */
   object_class->finalize     = opt_slide_finalize;
   object_class->dispose      = opt_slide_dispose;
@@ -80,16 +75,6 @@ opt_slide_init (OptSlide *self)
   priv = g_new0 (OptSlidePrivate, 1);
 
   self->priv  = priv;
-
-  /* FIXME: set this via API call. show would usually set
-  priv->bg = clutter_rectangle_new (0x999999FF);
-  clutter_element_set_size (priv->bg, 
-			    CLUTTER_STAGE_WIDTH(), 
-			    CLUTTER_STAGE_HEIGHT());
-
-  clutter_group_add (CLUTTER_GROUP(self), priv->bg);
-  clutter_element_show(priv->bg);
-  */
 }
 
 OptSlide*
@@ -107,10 +92,10 @@ opt_slide_new (OptShow *show)
 }
 
 void
-opt_slide_set_title (OptSlide    *slide, 
-		     const gchar *title,
-		     const gchar *font,
-		     ClutterColor col)
+opt_slide_set_title (OptSlide     *slide, 
+		     const gchar  *title,
+		     const gchar  *font,
+		     ClutterColor *col)
 {
   OptSlidePrivate *priv;
   gint             avail_w, border;
@@ -199,10 +184,10 @@ get_next_bullet_offsets (OptSlide *slide,
 }
 
 void
-opt_slide_add_bullet_text_item (OptSlide    *slide, 
-				const gchar *title,
-				const gchar *font,
-				ClutterColor col)
+opt_slide_add_bullet_text_item (OptSlide     *slide, 
+				const gchar  *title,
+				const gchar  *font,
+				ClutterColor *col)
 {
   OptSlidePrivate *priv;
   ClutterElement  *bullet;

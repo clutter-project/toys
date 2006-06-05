@@ -7,7 +7,7 @@
   <defaults>
     <bullet font="" color="">
     <title font="" color="">
-    <offsets />
+    <offsets border="" title-spacing="" bullet-border="" bullet-spacing=""/>
     <background img="" | color= "" />
     <transition style="cube|flip|fade" />
   </defualts>
@@ -96,28 +96,23 @@ struct OptParseInfo
   OptTransitionStyle style_default;
 };
 
-static ClutterColor
-color_from_string (const gchar *spec)
+static void 
+color_from_string (const gchar *spec, ClutterColor *color)
 {
-  ClutterColor color = 0x000000ff;
-
   if (spec[0] == '#' && strlen(spec) == 9)
     {
       guint32 result;
       if (sscanf (spec+1, "%x", &result))
 	{
-	  clutter_color_set (&color,
-			     result >> 24 & 0xff,
-			     (result >> 16) & 0xff,
-			     (result >> 8) & 0xff,
-			      result & 0xff);
-	  return color;
+	  color->red   = result >> 24 & 0xff;
+	  color->green = (result >> 16) & 0xff;
+	  color->blue  = (result >> 8) & 0xff;
+	  color->alpha = result & 0xff;
+	  return;
 	}
     }
   
   g_warning("unable to parse '%s' as a color in format #RRGGBBAA", spec);
-
-  return color;
 }
 
 static OptTransitionStyle
@@ -367,7 +362,7 @@ opt_parse_on_start_element (GMarkupParseContext *context,
 
 		if (color)
 		  {
-		    info->title_default_color = color_from_string (color);
+		    color_from_string (color, &info->title_default_color);
 		  }
 	      }
 	  }
@@ -390,7 +385,7 @@ opt_parse_on_start_element (GMarkupParseContext *context,
 			       NULL);
 
 		if (color)
-		  info->bullet_default_color = color_from_string (color);
+		  color_from_string (color, &info->bullet_default_color);
 	      }
 	  }
 	  info->state = IN_DEFAULTS_BULLET;
@@ -507,7 +502,8 @@ opt_parse_on_start_element (GMarkupParseContext *context,
 		  info->title_font = g_strdup(font);
 
 		if (color)
-		  info->title_color = color_from_string(color);
+		  color_from_string(color, &info->title_color);
+		  
 	      }
 	  }
 	  break;
@@ -531,7 +527,7 @@ opt_parse_on_start_element (GMarkupParseContext *context,
 		  info->bullet_font = g_strdup(font);
 		
 		if (color)
-		  info->bullet_color = color_from_string(color);
+		  color_from_string(color, &info->bullet_color);
 	      }
 	  }
 	  break;
@@ -580,7 +576,7 @@ opt_parse_on_end_element (GMarkupParseContext *context,
       opt_slide_set_title (info->slide, 
 			   info->title_buf->str,
 			   info->title_font,
-			   info->title_color);
+			   &info->title_color);
       g_string_free (info->title_buf, TRUE);
 
       if (info->title_font)
@@ -593,7 +589,7 @@ opt_parse_on_end_element (GMarkupParseContext *context,
       opt_slide_add_bullet_text_item (info->slide, 
 				      info->bullet_buf->str,
 				      info->bullet_font,
-				      info->bullet_color);
+				      &info->bullet_color);
       g_string_free (info->bullet_buf, TRUE);
       if (info->bullet_font)
 	g_free (info->bullet_font);
@@ -683,8 +679,10 @@ opt_config_load (OptShow     *show,
 
   info.state = INITIAL; 
   info.show  = show;
-  info.bullet_default_color = 0x000000ff;
-  info.title_default_color  = 0x000000ff;
+  /*
+  info.bullet_default_color = { 0, 0, 0, 0xff };
+  info.title_default_color  = { 0, 0, 0, 0xff };
+  */
   info.style_default        = OPT_TRANSITION_FADE;
 
   if (!g_file_get_contents (filename, &contents, &len, error))

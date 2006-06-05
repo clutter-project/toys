@@ -27,10 +27,13 @@ input_cb (ClutterStage *stage,
 int 
 main(int argc, char **argv)
 {
-  OptShow  *show;
-  GError   *error = NULL; 
+  OptShow        *show;
+  ClutterElement *stage;
+  GError         *error = NULL; 
 
   clutter_init(NULL, NULL);
+
+  stage = clutter_stage_get_default();
 
   show = opt_show_new();
 
@@ -55,7 +58,7 @@ main(int argc, char **argv)
 #endif
 
   /* Connect up for input event */
-  g_signal_connect (clutter_stage(), 
+  g_signal_connect (stage, 
 		    "input-event",
                     G_CALLBACK (input_cb),
                     show);
