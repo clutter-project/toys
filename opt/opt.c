@@ -23,47 +23,125 @@ input_cb (ClutterStage *stage,
     }
 }
 
+static void
+usage (const char *msg)
+{
+  g_print("\nUsage: %s [OPTIONS..] <FILE>\n\n", msg);
+  exit(-1);
+}
 
 int 
 main(int argc, char **argv)
 {
-  OptShow        *show;
-  ClutterElement *stage;
   GError         *error = NULL; 
+  ClutterElement *stage;
+  OptShow        *show;
+  gchar         **opt_filename = NULL;
+  gchar          *opt_export = NULL;
+  gchar          *opt_size = NULL;
+  GOptionContext *ctx;
 
+  GOptionEntry options[] = {
+    { "export", 
+      'e', 
+      0, 
+      G_OPTION_ARG_STRING, 
+      &opt_export, 
+      "Export PNG slides to PATH", 
+      "PATH" },
+
+    { "size", 
+      's', 
+      0, 
+      G_OPTION_ARG_STRING, 
+      &opt_size, 
+      "Presentation display dimentions.", 
+      "<WxH>" },
+
+    { G_OPTION_REMAINING, 
+      0, 
+      0, 
+      G_OPTION_ARG_FILENAME_ARRAY, 
+      &opt_filename, 
+      "Presentation XML filename to load", 
+      "<PRESENTATION FILE>" },
+
+    { NULL }
+  };
+
+  if (argc == 1)
+    usage(argv[0]);
+
+  ctx = g_option_context_new("- OH Presentation Tool");
+  g_option_context_add_main_entries(ctx, options, "OPT");
+
+  if (!g_option_context_parse(ctx, &argc, &argv, NULL))
+    usage(argv[0]);
+
+  if (opt_filename  == NULL)
+    usage(argv[0]);
+
+  g_option_context_free(ctx);
+
+  /* FIXME: Need clutter_init_with_args() */
   clutter_init(NULL, NULL);
 
   stage = clutter_stage_get_default();
 
+  /* Need to set this early on */
+  if (opt_export != NULL)
+    g_object_set (stage, "offscreen", TRUE, NULL);
+
+  if (opt_size != NULL)
+    {
+      gint w, h;
+      if (!sscanf(opt_size, "%dx%d", &w, &h) || w <= 0 || h <= 0)
+	usage(argv[0]);
+
+      g_object_set (stage, "fullscreen", FALSE, NULL);
+
+      clutter_element_set_size (stage, w, h);
+    }
+  else
+    {
+      g_object_set (stage,
+		    "fullscreen",  TRUE, 
+		    "hide-cursor", TRUE,
+		    NULL);
+    }
+
   show = opt_show_new();
 
-  if (!opt_config_load (show, "test.xml", &error))
+  if (!opt_config_load (show, opt_filename[0], &error))
     {
       /* Cleanup */
-      g_warning ("Could not load presentation: %s", error->message);
+      g_print ("Could not load presentation:\n\t%s\n", error->message);
       g_error_free (error);
       exit(-1);
     }
 
-#if 0
-  if (!opt_show_export (show, "/tmp", &error))
+  if (opt_export)
     {
-      /* Cleanup */
-      g_warning ("Could not export presentation: %s", error->message);
-      g_error_free (error);
-      exit(-1);
+      if (!opt_show_export (show, opt_export, &error))
+	{
+	  /* Cleanup */
+	  g_print ("Could not export presentation:\n\t%s\n", error->message);
+	  g_error_free (error);
+	  exit(-1);
+	}
+      return 0;
     }
-  
-  return 0;
-#endif
+  else
+    {
+      /* Connect up for input event */
+      g_signal_connect (stage, 
+			"input-event",
+			G_CALLBACK (input_cb),
+			show);
 
-  /* Connect up for input event */
-  g_signal_connect (stage, 
-		    "input-event",
-                    G_CALLBACK (input_cb),
-                    show);
+      opt_show_run (show);
+    }
 
-  opt_show_run (show);
 
   return 0;
 }

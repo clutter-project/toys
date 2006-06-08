@@ -244,10 +244,6 @@ opt_show_init (OptShow *self)
 
   stage = clutter_stage_get_default();
 
-  g_object_set (stage,
-		"fullscreen", TRUE, 
-		"hide-cursor", TRUE,
-		NULL);
 
   /* FIXME: should be prop */
 #if 0
@@ -274,12 +270,13 @@ opt_show_add_slide (OptShow *self, OptSlide *slide)
   self->priv->num_slides++;
 
   stage = clutter_stage_get_default();
-  
+
   clone = clutter_clone_texture_new(CLUTTER_TEXTURE(self->priv->bg));
 
   clutter_element_set_size (clone, 
 			    clutter_element_get_width (stage),
 			    clutter_element_get_height (stage));
+
   clutter_group_add (CLUTTER_GROUP(slide), clone);
 
   clutter_element_lower_bottom(clone);
@@ -362,12 +359,18 @@ opt_show_step (OptShow *self, gint step)
   /* Add next slide to stage */
   clutter_group_add (CLUTTER_GROUP(stage), CLUTTER_ELEMENT(to));
 
-  trans = opt_slide_get_transition (from);
+  trans = opt_slide_get_transition ( step < 0 ? to : from);
 
   if (trans != NULL)
     {
+      if (step < 0)
+	opt_transition_set_direction (trans, OPT_TRANSITION_BACKWARD);
+      else
+	opt_transition_set_direction (trans, OPT_TRANSITION_FORWARD);
+
       /* Set up transition and start it */
       opt_transition_set_to (trans, to);
+      opt_transition_set_from (trans, from);
 
       priv->trans_signal_id 
 	= g_signal_connect (trans,
@@ -426,13 +429,16 @@ opt_show_export (OptShow *self, const char *path, GError **error)
 
   while (slide)
     {
-      ClutterElement *e = CLUTTER_ELEMENT(slide->data);
+      ClutterElement *e;
       GdkPixbuf      *pixb = NULL;
       gchar           name[32];
       gchar          *filename = NULL;
 
+      e = CLUTTER_ELEMENT(slide->data);
+
       clutter_group_add (CLUTTER_GROUP(stage), e);
       clutter_group_show_all (CLUTTER_GROUP(stage));
+      clutter_group_show_all (CLUTTER_GROUP(e));
 
       clutter_redraw();
       
@@ -441,6 +447,12 @@ opt_show_export (OptShow *self, const char *path, GError **error)
 				     0,
 				     clutter_element_get_width (stage),
 				     clutter_element_get_height (stage));
+
+      if (pixb == NULL)
+	{
+	  g_warning("Failed to grab pixels from stage");
+	  return FALSE;
+	}
 
       g_snprintf(name, 32, "slide-%i.png", i);
 
@@ -454,8 +466,8 @@ opt_show_export (OptShow *self, const char *path, GError **error)
 
       g_print ("wrote '%s'\n", filename);
 
-      clutter_group_remove (CLUTTER_GROUP(stage), e);
       clutter_group_hide_all (CLUTTER_GROUP(e));
+      clutter_group_remove (CLUTTER_GROUP(stage), e);
 
       if (filename) g_free (filename);
       slide = slide->next;

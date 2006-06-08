@@ -4,12 +4,6 @@
 #include <glib.h>
 #include <clutter/clutter.h>
 
-typedef enum OptTransitionType 
-{
-  OPT_TRANS_CUBE
-}
-OptTransitionType;
-
 typedef struct _OptSlide OptSlide;
 typedef struct _OptShow OptShow;
 typedef struct _OptTransition OptTransition;

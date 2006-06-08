@@ -39,6 +39,14 @@ typedef enum OptTransitionStyle
 }
 OptTransitionStyle;
 
+typedef enum OptTransitionDirection
+{
+  OPT_TRANSITION_FORWARD,
+  OPT_TRANSITION_BACKWARD,
+}
+OptTransitionDirection;
+
+
 typedef struct OptTransitionPrivate OptTransitionPrivate;
 typedef struct _OptTransitionClass  OptTransitionClass;
  
@@ -64,6 +72,10 @@ opt_transition_get_style (OptTransition     *trans);
 void
 opt_transition_set_style (OptTransition     *trans,
 			  OptTransitionStyle style);
+
+void
+opt_transition_set_direction (OptTransition           *trans, 
+			      OptTransitionDirection   direction);
 void
 opt_transition_set_from (OptTransition *trans, OptSlide *slide);
 

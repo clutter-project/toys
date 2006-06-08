@@ -1,3 +1,16 @@
+2006-06-08  Matthew Allum  <mallum@openedhand.com>
+
+	* opt.c: 
+	* opt.h:
+	* opt-show.c:
+	Add command line opts.
+	Fix png exporting.
+	Make transitions work backwards and forwards.		
+
+	* opt-transition.c:
+	* opt-transition.h:
+	Add a direction parameter.
+
 2006-06-05  Matthew Allum  <mallum@openedhand.com>
 
 	* opt-config.c:

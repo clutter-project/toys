@@ -7,9 +7,10 @@ G_DEFINE_TYPE (OptTransition, opt_transition, CLUTTER_TYPE_TIMELINE);
 
 struct OptTransitionPrivate
 {
-  OptTransitionStyle  style;
-  OptSlide           *from, *to;
-  gulong              signal_id;
+  OptTransitionStyle      style;
+  OptSlide               *from, *to;
+  gulong                  signal_id;
+  OptTransitionDirection  direction;
 };
 
 static void
@@ -68,6 +69,7 @@ flip_transition_frame_cb (OptTransition   *trans,
   OptTransitionPrivate *priv;
   ClutterColor          color = { 0x22, 0x22, 0x22, 0xff };
   ClutterElement       *stage;
+  gint                  mult;
 
   priv = trans->priv;
 
@@ -76,6 +78,8 @@ flip_transition_frame_cb (OptTransition   *trans,
   stage = clutter_stage_get_default();
 
   clutter_group_show_all (CLUTTER_GROUP(to));
+
+  mult = priv->direction ? 1 : -1;
 
   if (frame_num > 15)
     {
@@ -86,12 +90,12 @@ flip_transition_frame_cb (OptTransition   *trans,
   clutter_stage_set_color (CLUTTER_STAGE(stage), &color);
 
   clutter_element_rotate_y (CLUTTER_ELEMENT(from),
-                            - (float)frame_num * 6,
+                            - (float)frame_num * 6 * mult,
                             CLUTTER_STAGE_WIDTH()/2,
                             0);
 
   clutter_element_rotate_y (CLUTTER_ELEMENT(to),
-                            180 - (frame_num * 6),
+                            180 - (frame_num * 6) * mult,
                             CLUTTER_STAGE_WIDTH()/2,
                             0);
 }
@@ -105,6 +109,7 @@ cube_transition_frame_cb (OptTransition   *trans,
   ClutterElement       *stage;
   ClutterColor          color = { 0x22, 0x22, 0x22, 0xff };
   OptTransitionPrivate *priv;
+  gint                  mult;
 
   priv = trans->priv;
 
@@ -113,6 +118,8 @@ cube_transition_frame_cb (OptTransition   *trans,
   stage = clutter_stage_get_default();
 
   clutter_group_show_all (CLUTTER_GROUP(to));
+
+  mult = priv->direction ? 1 : -1;
 
   if (frame_num > 15)
     {
@@ -123,12 +130,12 @@ cube_transition_frame_cb (OptTransition   *trans,
   clutter_stage_set_color (CLUTTER_STAGE(stage), &color);
 
   clutter_element_rotate_y (CLUTTER_ELEMENT(from),
-                            - (float)frame_num * 3,
+                            - (float)frame_num * 3 * mult,
                             CLUTTER_STAGE_WIDTH()/2,
                             -1 * (CLUTTER_STAGE_WIDTH()/2));
 
   clutter_element_rotate_y (CLUTTER_ELEMENT(to),
-                            90 - (frame_num * 3),
+                            (mult * 90) - (frame_num * 3 * mult),
                             CLUTTER_STAGE_WIDTH()/2,
                             -1 * (CLUTTER_STAGE_WIDTH()/2));
 }
@@ -208,6 +215,7 @@ opt_transition_init (OptTransition *self)
   priv  = g_new0 (OptTransitionPrivate, 1);
 
   self->priv = priv;
+
 }
 
 OptTransition*
@@ -324,6 +332,12 @@ opt_transition_get_to (OptTransition *trans)
   return trans->priv->to;
 }
 
+void
+opt_transition_set_direction (OptTransition           *trans, 
+			      OptTransitionDirection   direction)
+{
+  trans->priv->direction = direction;
+}
 
 
 
