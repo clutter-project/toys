@@ -133,7 +133,7 @@ lookup_style (const gchar *name)
 
 static int
 expect_tag (GMarkupParseContext *context,
-	    const gchar         *element_name,
+	    const gchar         *actor_name,
 	    GError             **error,
 	    ...)
 {
@@ -148,7 +148,7 @@ expect_tag (GMarkupParseContext *context,
       int value = va_arg (vap, int);
       n_expected++;
       
-      if (strcmp (expected, element_name) == 0)
+      if (strcmp (expected, actor_name) == 0)
 	return value;
       
       expected = va_arg (vap, const char *);
@@ -162,7 +162,7 @@ expect_tag (GMarkupParseContext *context,
 		   G_MARKUP_ERROR,
 		   G_MARKUP_ERROR_INVALID_CONTENT,
 		   "Unexpected tag '%s', no tags expected",
-		   element_name);
+		   actor_name);
     }
   else
     {
@@ -188,13 +188,13 @@ expect_tag (GMarkupParseContext *context,
 		     G_MARKUP_ERROR,
 		     G_MARKUP_ERROR_INVALID_CONTENT,
 		     "Unexpected tag '%s', expected '%s'",
-		     element_name, tag_string->str);
+		     actor_name, tag_string->str);
       else
 	g_set_error (error,
 		     G_MARKUP_ERROR,
 		     G_MARKUP_ERROR_INVALID_CONTENT,
 		     "Unexpected tag '%s', expected one of: %s",
-		     element_name, tag_string->str);
+		     actor_name, tag_string->str);
 
       g_string_free (tag_string, TRUE);
     }
@@ -274,8 +274,8 @@ extract_attrs (GMarkupParseContext *context,
 
 
 static void 
-opt_parse_on_start_element (GMarkupParseContext *context,
-			    const gchar         *element_name,
+opt_parse_on_start_actor (GMarkupParseContext *context,
+			    const gchar         *actor_name,
 			    const gchar        **attr_names,
 			    const gchar        **attr_values,
 			    gpointer             user_data,
@@ -287,7 +287,7 @@ opt_parse_on_start_element (GMarkupParseContext *context,
   switch (info->state)
     {
     case INITIAL:
-      if (expect_tag (context, element_name, error, "opt", TAG_OPT, NULL) 
+      if (expect_tag (context, actor_name, error, "opt", TAG_OPT, NULL) 
 	  && extract_attrs (context, attr_names, attr_values, error, NULL))
 	info->state = IN_OPT;
       break;
@@ -295,7 +295,7 @@ opt_parse_on_start_element (GMarkupParseContext *context,
       /***** Top level, just defaults and slide *****/
 
     case IN_OPT:
-      tag = expect_tag (context, element_name, error, 
+      tag = expect_tag (context, actor_name, error, 
 			"defaults", TAG_DEFAULTS, 
 			"slide", TAG_SLIDE,
 			NULL); 
@@ -324,7 +324,7 @@ opt_parse_on_start_element (GMarkupParseContext *context,
       /*****  Default tags *****/
 
     case IN_DEFAULTS:
-      tag = expect_tag (context, element_name, error, 
+      tag = expect_tag (context, actor_name, error, 
 			"title",  TAG_DEFAULTS_TITLE, 
 			"bullet", TAG_DEFAULTS_BULLET,
 			"transition", TAG_DEFAULTS_TRANS,
@@ -425,7 +425,7 @@ opt_parse_on_start_element (GMarkupParseContext *context,
       /*****  Slide Tags *****/
 
     case IN_SLIDE:
-      tag = expect_tag (context, element_name, error, 
+      tag = expect_tag (context, actor_name, error, 
 			"title",      TAG_TITLE, 
 			"bullet",     TAG_BULLET,
 			"img",        TAG_IMG,
@@ -465,7 +465,7 @@ opt_parse_on_start_element (GMarkupParseContext *context,
 			       "src", TRUE, &img_path,
 			       NULL))
 	      {
-		  ClutterElement *pic;
+		  ClutterActor *pic;
 		  pic = clutter_texture_new_from_pixbuf 
 		    (gdk_pixbuf_new_from_file (img_path, NULL));
 
@@ -540,8 +540,8 @@ opt_parse_on_start_element (GMarkupParseContext *context,
 }
 
 static void 
-opt_parse_on_end_element (GMarkupParseContext *context,
-			  const gchar         *element_name,
+opt_parse_on_end_actor (GMarkupParseContext *context,
+			  const gchar         *actor_name,
 			  gpointer             user_data,
 			  GError             **error)
 {
@@ -668,8 +668,8 @@ opt_config_load (OptShow     *show,
 
   const GMarkupParser parser = 
     {
-      opt_parse_on_start_element,
-      opt_parse_on_end_element,
+      opt_parse_on_start_actor,
+      opt_parse_on_end_actor,
       opt_parse_on_text,
       NULL,
       NULL

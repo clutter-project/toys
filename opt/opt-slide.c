@@ -16,8 +16,8 @@ G_DEFINE_TYPE (OptSlide, opt_slide, CLUTTER_TYPE_GROUP);
 
 struct OptSlidePrivate
 {
-  ClutterElement *title;
-  ClutterElement *bg;
+  ClutterActor *title;
+  ClutterActor *bg;
   GList          *bullets;
   OptShow        *show;
   OptTransition  *trans;
@@ -57,10 +57,10 @@ static void
 opt_slide_class_init (OptSlideClass *klass)
 {
   GObjectClass        *object_class;
-  ClutterElementClass *element_class;
+  ClutterActorClass *actor_class;
 
   object_class = (GObjectClass*) klass;
-  element_class = (ClutterElementClass*)klass;
+  actor_class = (ClutterActorClass*)klass;
 
   /* GObject */
   object_class->finalize     = opt_slide_finalize;
@@ -137,9 +137,9 @@ opt_slide_set_title (OptSlide     *slide,
 
   clutter_label_set_color (CLUTTER_LABEL(priv->title), col);
 
-  clutter_element_set_position (priv->title, border, border);
+  clutter_actor_set_position (priv->title, border, border);
 
-  clutter_element_show (priv->title);
+  clutter_actor_show (priv->title);
 }
 
 void
@@ -162,17 +162,17 @@ get_next_bullet_offsets (OptSlide *slide,
 
   if ((last_bullet_item = g_list_last (priv->bullets)) == NULL)
     {
-      *y = clutter_element_get_y (priv->title)
-	+ clutter_element_get_height (priv->title);
+      *y = clutter_actor_get_y (priv->title)
+	+ clutter_actor_get_height (priv->title);
 
       *y += PERCENT_TO_PIXELS (title_bullet_pad);
     }
   else
     {
-      ClutterElement *last_bullet = CLUTTER_ELEMENT(last_bullet_item->data);
+      ClutterActor *last_bullet = CLUTTER_ACTOR(last_bullet_item->data);
 
-      *y = clutter_element_get_y (last_bullet)
-	+ clutter_element_get_height (last_bullet);
+      *y = clutter_actor_get_y (last_bullet)
+	+ clutter_actor_get_height (last_bullet);
 
       *y += PERCENT_TO_PIXELS (bullet_pad);
     }
@@ -190,7 +190,7 @@ opt_slide_add_bullet_text_item (OptSlide     *slide,
 				ClutterColor *col)
 {
   OptSlidePrivate *priv;
-  ClutterElement  *bullet;
+  ClutterActor  *bullet;
   gint             x, y, width;
   gchar           *buf;
 
@@ -219,17 +219,17 @@ opt_slide_add_bullet_text_item (OptSlide     *slide,
 				  width,
 				  0);
 
-  clutter_element_set_position (bullet, x, y);
+  clutter_actor_set_position (bullet, x, y);
 
   clutter_group_add (CLUTTER_GROUP(slide), bullet);
 
-  clutter_element_show(bullet);
+  clutter_actor_show(bullet);
 
   g_free(buf);
 }
 
 void
-opt_slide_add_bullet (OptSlide *slide, ClutterElement *element)
+opt_slide_add_bullet (OptSlide *slide, ClutterActor *actor)
 {
   OptSlidePrivate *priv;
   gint             x, y, width;
@@ -238,19 +238,19 @@ opt_slide_add_bullet (OptSlide *slide, ClutterElement *element)
 
   get_next_bullet_offsets (slide, &x, &y, &width);
 
-  priv->bullets = g_list_append(priv->bullets, element);
+  priv->bullets = g_list_append(priv->bullets, actor);
 
-  clutter_group_add (CLUTTER_GROUP(slide), element);
+  clutter_group_add (CLUTTER_GROUP(slide), actor);
 
-  clutter_element_set_position (element, 
-				x + (width -clutter_element_get_width(element))
+  clutter_actor_set_position (actor, 
+				x + (width -clutter_actor_get_width(actor))
 				                      /2, 
 				y);
 
-  clutter_element_show(element);
+  clutter_actor_show(actor);
 }
 
-const ClutterElement*
+const ClutterActor*
 opt_slide_get_title (OptSlide *slide)
 {
   return slide->priv->title;

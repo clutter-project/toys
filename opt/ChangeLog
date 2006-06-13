@@ -1,3 +1,13 @@
+2006-06-13  Matthew Allum  <mallum@openedhand.com>
+
+	* opt-config.c:
+	* opt-show.c:
+	* opt-slide.c:
+	* opt-slide.h:
+	* opt-transition.c:
+	* opt.c: 
+	Update for new element -> actor naming.
+
 2006-06-08  Matthew Allum  <mallum@openedhand.com>
 
 	* opt.c: 

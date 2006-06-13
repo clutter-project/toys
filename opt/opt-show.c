@@ -25,7 +25,7 @@ struct OptShowPrivate
   GdkPixbuf       *background;
 
   ClutterTimeline *transition;
-  ClutterElement  *bg;
+  ClutterActor  *bg;
 
   gulong           trans_signal_id;  
 };
@@ -236,7 +236,7 @@ static void
 opt_show_init (OptShow *self)
 {
   OptShowPrivate *priv;
-  ClutterElement *stage;
+  ClutterActor *stage;
 
   priv           = g_new0 (OptShowPrivate, 1);
 
@@ -264,7 +264,7 @@ opt_show_new (void)
 void
 opt_show_add_slide (OptShow *self, OptSlide *slide)
 {
-  ClutterElement *clone, *stage;
+  ClutterActor *clone, *stage;
 
   self->priv->slides = g_list_append(self->priv->slides, slide);
   self->priv->num_slides++;
@@ -273,14 +273,14 @@ opt_show_add_slide (OptShow *self, OptSlide *slide)
 
   clone = clutter_clone_texture_new(CLUTTER_TEXTURE(self->priv->bg));
 
-  clutter_element_set_size (clone, 
-			    clutter_element_get_width (stage),
-			    clutter_element_get_height (stage));
+  clutter_actor_set_size (clone, 
+			    clutter_actor_get_width (stage),
+			    clutter_actor_get_height (stage));
 
   clutter_group_add (CLUTTER_GROUP(slide), clone);
 
-  clutter_element_lower_bottom(clone);
-  clutter_element_show(clone);
+  clutter_actor_lower_bottom(clone);
+  clutter_actor_show(clone);
 }
 
 void
@@ -288,7 +288,7 @@ opt_show_run (OptShow *self)
 {
   OptSlide       *slide;
   OptShowPrivate *priv;
-  ClutterElement *stage;
+  ClutterActor *stage;
   ClutterColor    col = { 0x22, 0x22, 0x22, 0xff };
 
   priv = self->priv;
@@ -298,7 +298,7 @@ opt_show_run (OptShow *self)
   stage = clutter_stage_get_default();
 
   clutter_stage_set_color (CLUTTER_STAGE(stage), &col);
-  clutter_group_add (CLUTTER_GROUP(stage), CLUTTER_ELEMENT(slide));
+  clutter_group_add (CLUTTER_GROUP(stage), CLUTTER_ACTOR(slide));
   clutter_group_show_all (CLUTTER_GROUP(stage));
 
   clutter_main();
@@ -311,7 +311,7 @@ transition_completed_cb (OptTransition   *trans,
   OptShow        *show = (OptShow *)data;
   OptSlide       *from;
   OptShowPrivate *priv;
-  ClutterElement *stage;
+  ClutterActor *stage;
 
   priv = show->priv;
 
@@ -320,13 +320,13 @@ transition_completed_cb (OptTransition   *trans,
 
   /* Remove as to free up resources. */
 
-  clutter_group_remove (CLUTTER_GROUP(stage), CLUTTER_ELEMENT(from));
+  clutter_group_remove (CLUTTER_GROUP(stage), CLUTTER_ACTOR(from));
   clutter_group_hide_all (CLUTTER_GROUP(from));
 
   /* Reset any tranforms to be safe */
-  clutter_element_rotate_x (CLUTTER_ELEMENT(from), 0, 0, 0);
-  clutter_element_rotate_y (CLUTTER_ELEMENT(from), 0, 0, 0);
-  clutter_element_rotate_z (CLUTTER_ELEMENT(from), 0, 0, 0);
+  clutter_actor_rotate_x (CLUTTER_ACTOR(from), 0, 0, 0);
+  clutter_actor_rotate_y (CLUTTER_ACTOR(from), 0, 0, 0);
+  clutter_actor_rotate_z (CLUTTER_ACTOR(from), 0, 0, 0);
 
   /* Disconnect the handler */
   g_signal_handler_disconnect (trans, priv->trans_signal_id);
@@ -339,7 +339,7 @@ opt_show_step (OptShow *self, gint step)
   OptSlide       *from, *to;
   OptShowPrivate *priv;
   OptTransition  *trans;
-  ClutterElement *stage;
+  ClutterActor *stage;
 
   priv = self->priv;
 
@@ -357,7 +357,7 @@ opt_show_step (OptShow *self, gint step)
     return;
 
   /* Add next slide to stage */
-  clutter_group_add (CLUTTER_GROUP(stage), CLUTTER_ELEMENT(to));
+  clutter_group_add (CLUTTER_GROUP(stage), CLUTTER_ACTOR(to));
 
   trans = opt_slide_get_transition ( step < 0 ? to : from);
 
@@ -379,14 +379,14 @@ opt_show_step (OptShow *self, gint step)
 			    self);
 
       /* lower it out of view */
-      clutter_element_lower_bottom (CLUTTER_ELEMENT(to));
+      clutter_actor_lower_bottom (CLUTTER_ACTOR(to));
 
       clutter_timeline_start (CLUTTER_TIMELINE(trans));
     }
   else
     {
       /* No transition just hide current slide*/
-      clutter_group_remove (CLUTTER_GROUP(stage), CLUTTER_ELEMENT(from));
+      clutter_group_remove (CLUTTER_GROUP(stage), CLUTTER_ACTOR(from));
       clutter_group_hide_all (CLUTTER_GROUP(from));
     }
   
@@ -414,7 +414,7 @@ opt_show_export (OptShow *self, const char *path, GError **error)
 {
   GList          *slide;
   OptShowPrivate *priv;
-  ClutterElement *stage;
+  ClutterActor *stage;
   gint            i = 0;
 
   priv = self->priv;
@@ -429,12 +429,12 @@ opt_show_export (OptShow *self, const char *path, GError **error)
 
   while (slide)
     {
-      ClutterElement *e;
+      ClutterActor *e;
       GdkPixbuf      *pixb = NULL;
       gchar           name[32];
       gchar          *filename = NULL;
 
-      e = CLUTTER_ELEMENT(slide->data);
+      e = CLUTTER_ACTOR(slide->data);
 
       clutter_group_add (CLUTTER_GROUP(stage), e);
       clutter_group_show_all (CLUTTER_GROUP(stage));
@@ -445,8 +445,8 @@ opt_show_export (OptShow *self, const char *path, GError **error)
       pixb = clutter_stage_snapshot (CLUTTER_STAGE(stage),
 				     0,
 				     0,
-				     clutter_element_get_width (stage),
-				     clutter_element_get_height (stage));
+				     clutter_actor_get_width (stage),
+				     clutter_actor_get_height (stage));
 
       if (pixb == NULL)
 	{

@@ -61,9 +61,9 @@ opt_slide_add_bullet_text_item (OptSlide     *slide,
 				ClutterColor *col);
 
 void
-opt_slide_add_bullet (OptSlide *slide, ClutterElement *element);
+opt_slide_add_bullet (OptSlide *slide, ClutterActor *actor);
 
-const ClutterElement*
+const ClutterActor*
 opt_slide_get_title (OptSlide *slide);
 
 GList*

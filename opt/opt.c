@@ -34,7 +34,7 @@ int
 main(int argc, char **argv)
 {
   GError         *error = NULL; 
-  ClutterElement *stage;
+  ClutterActor *stage;
   OptShow        *show;
   gchar         **opt_filename = NULL;
   gchar          *opt_export = NULL;
@@ -100,7 +100,7 @@ main(int argc, char **argv)
 
       g_object_set (stage, "fullscreen", FALSE, NULL);
 
-      clutter_element_set_size (stage, w, h);
+      clutter_actor_set_size (stage, w, h);
     }
   else
     {
