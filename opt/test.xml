@@ -19,7 +19,7 @@
 
   <slide>
     <title>Hello slide 2</title>
-    <bullet>bullet 3</bullet>
+    <bullet>Checking wr-wr-wr-wr-wr-wrapping, check check one two three four Checking wr-wr-wr-wr-wr-wrapping, check check one two three four</bullet>
     <img src="kitten.jpg" /> 
     <bullet>bullet 4</bullet>
 
@@ -28,8 +28,18 @@
 
   <slide>
     <title>Hello slide 3</title>
-    <bullet>bullet 3</bullet>
-    <bullet>bullet 4</bullet>
+    <bullet>Some code</bullet>
+    <bullet font="mono 20" symbol="none">clutter_label_set_text_extents (CLUTTER_LABEL(bullet),
+				  width - symbol_width,
+				  0);
+
+clutter_actor_set_position (bullet, x, y);
+clutter_group_add (CLUTTER_GROUP(slide), bullet);
+
+clutter_actor_show(bullet);
+clutter_actor_show(symbol);
+</bullet>
+
   </slide>
 
   <slide>

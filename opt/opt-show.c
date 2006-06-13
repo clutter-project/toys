@@ -22,6 +22,7 @@ struct OptShowPrivate
   gint             bullet_pad;
   gchar*           title_font;
   gchar*           bullet_font;
+  ClutterActor    *bullet_texture;
   GdkPixbuf       *background;
 
   ClutterTimeline *transition;
@@ -236,29 +237,34 @@ static void
 opt_show_init (OptShow *self)
 {
   OptShowPrivate *priv;
-  ClutterActor *stage;
 
   priv           = g_new0 (OptShowPrivate, 1);
 
   self->priv  = priv;
-
-  stage = clutter_stage_get_default();
-
-
-  /* FIXME: should be prop */
-#if 0
-  priv->bg = clutter_texture_new_from_pixbuf 
-              (gdk_pixbuf_new_from_file ("bg.png", NULL));
-#endif
-
-  priv->bg = g_object_new (CLUTTER_TYPE_TEXTURE, NULL);
-  /* FIXME: construct only prop to set bullet style */
 }
 
 OptShow*
 opt_show_new (void)
 {
-  return g_object_new (OPT_TYPE_SHOW, NULL);
+  OptShow       *show;
+  ClutterColor col = { 0, 0, 0, 0xff };
+
+  show = g_object_new (OPT_TYPE_SHOW, NULL);
+
+  show->priv->bullet_texture 
+    = clutter_label_new_with_text (show->priv->bullet_font, "•");
+  clutter_label_set_color (CLUTTER_LABEL(show->priv->bullet_texture), &col);
+
+  show->priv->bg = g_object_new (CLUTTER_TYPE_TEXTURE, NULL);
+
+  return show;
+}
+
+ClutterActor*
+opt_show_bullet_clone (OptShow *show)
+{
+  return 
+    clutter_clone_texture_new(CLUTTER_TEXTURE(show->priv->bullet_texture));
 }
 
 void

@@ -43,6 +43,13 @@ struct _OptSlideClass
   ClutterGroupClass     parent_class;
 };
 
+typedef enum OptSlideBulletSymbol
+{
+  OPT_BULLET_REGULAR = 0,
+  OPT_BULLET_NONE
+}
+OptSlideBulletSymbol;
+
 GType opt_slide_get_type (void);
 
 OptSlide* 
@@ -55,10 +62,11 @@ opt_slide_set_title (OptSlide     *slide,
 		     ClutterColor *col);
 
 void
-opt_slide_add_bullet_text_item (OptSlide     *slide, 
-				const gchar  *title,
-				const gchar  *font,
-				ClutterColor *col);
+opt_slide_add_bullet_text_item (OptSlide            *slide, 
+				const gchar         *title,
+				const gchar         *font,
+				OptSlideBulletSymbol sym,
+				ClutterColor        *col);
 
 void
 opt_slide_add_bullet (OptSlide *slide, ClutterActor *actor);

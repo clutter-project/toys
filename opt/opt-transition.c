@@ -1,6 +1,6 @@
 #include "opt.h"
 
-#define FPS    60
+#define FPS    90
 #define FRAMES 30
 
 G_DEFINE_TYPE (OptTransition, opt_transition, CLUTTER_TYPE_TIMELINE);

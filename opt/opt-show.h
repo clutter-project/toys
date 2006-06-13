@@ -63,6 +63,9 @@ opt_show_retreat (OptShow *self);
 gboolean
 opt_show_export (OptShow *self, const char *path, GError **error);
 
+ClutterActor*
+opt_show_bullet_clone (OptShow *show);
+
 G_END_DECLS
 
 #endif

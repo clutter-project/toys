@@ -21,6 +21,7 @@
 <!ATTLIST bullet
           color CDATA #IMPLIED
           font CDATA #IMPLIED
+	  symbol CDATA #IMPLIED
 >
 
 <!ELEMENT img (#PCDATA)>

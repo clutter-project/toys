@@ -1,3 +1,20 @@
+2006-06-13  Matthew Allum  <mallum@openedhand.com>
+
+	* opt-config.c:
+	* opt.dtd:
+	* test.xml:
+	Add new style attribute to bullets.
+	Update text.xml with wrap test and code example.
+
+	* opt-show.c:
+	* opt-show.h:
+	* opt-slide.c:
+	* opt-slide.h:
+	* opt-transition.c:
+	Fix wrapping with bullet symbols
+	Add optional blank bullet
+	Increase FPS to 90
+
 2006-06-13  Ross Burton  <ross@openedhand.com>
 
 	* opt.dtd:

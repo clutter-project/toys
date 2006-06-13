@@ -14,7 +14,7 @@
   <slide>
     <background img="" | color= "" />
     <title font="" color=""></title>
-    <bullet font="" color=""></bullet>
+    <bullet font="" color="" symbol="none"></bullet>
     <img src="" />
     <code width="xx"></code>
     <transition style="cube|flip|fade" />
@@ -92,6 +92,7 @@ struct OptParseInfo
   gchar             *bullet_font;
   ClutterColor       bullet_color;
   ClutterColor       bullet_default_color;
+  OptSlideBulletSymbol bullet_sym;
 
   OptTransitionStyle style_default;
 };
@@ -377,6 +378,7 @@ opt_parse_on_start_actor (GMarkupParseContext *context,
 	    if (extract_attrs (context, attr_names, attr_values, error,
 			       "font", FALSE, &font,
 			       "color",  FALSE, &color,
+
 			       NULL))
 	      {
 		if (font)
@@ -386,6 +388,7 @@ opt_parse_on_start_actor (GMarkupParseContext *context,
 
 		if (color)
 		  color_from_string (color, &info->bullet_default_color);
+
 	      }
 	  }
 	  info->state = IN_DEFAULTS_BULLET;
@@ -512,15 +515,18 @@ opt_parse_on_start_actor (GMarkupParseContext *context,
 	  {
 	    const char *color = NULL;
 	    const char *font = NULL;
+	    const char *sym  = NULL;
 	    
 	    info->state        = IN_BULLET;
 	    info->bullet_buf   = g_string_new("");
 	    info->bullet_font  = NULL;
 	    info->bullet_color = info->bullet_default_color;
-	    
+	    info->bullet_sym   = OPT_BULLET_REGULAR;	    
+
 	    if (extract_attrs (context, attr_names, attr_values, error,
 			       "font", FALSE, &font,
 			       "color",  FALSE, &color,
+			       "symbol", FALSE, &sym,
 			       NULL))
 	      {
 		if (font)
@@ -528,6 +534,9 @@ opt_parse_on_start_actor (GMarkupParseContext *context,
 		
 		if (color)
 		  color_from_string(color, &info->bullet_color);
+		
+		if (sym && !strcmp(sym, "none"))
+		  info->bullet_sym = OPT_BULLET_NONE;
 	      }
 	  }
 	  break;
@@ -589,6 +598,7 @@ opt_parse_on_end_actor (GMarkupParseContext *context,
       opt_slide_add_bullet_text_item (info->slide, 
 				      info->bullet_buf->str,
 				      info->bullet_font,
+				      info->bullet_sym,
 				      &info->bullet_color);
       g_string_free (info->bullet_buf, TRUE);
       if (info->bullet_font)

@@ -184,48 +184,56 @@ get_next_bullet_offsets (OptSlide *slide,
 }
 
 void
-opt_slide_add_bullet_text_item (OptSlide     *slide, 
-				const gchar  *title,
-				const gchar  *font,
-				ClutterColor *col)
+opt_slide_add_bullet_text_item (OptSlide            *slide, 
+				const gchar         *title,
+				const gchar         *font,
+				OptSlideBulletSymbol sym,
+				ClutterColor        *col)
 {
   OptSlidePrivate *priv;
-  ClutterActor  *bullet;
-  gint             x, y, width;
-  gchar           *buf;
+  ClutterActor  *bullet, *symbol = NULL;
+  gint             x, y, width, symbol_width = 0;
 
   priv = slide->priv;
-
-  buf = g_strdup_printf ("• %s", title);
 
   if (font == NULL)
     {
       gchar *default_font = NULL;
 
       g_object_get (priv->show, "bullet-font", &default_font, NULL);
-      bullet = clutter_label_new_with_text (default_font, buf);
+      bullet = clutter_label_new_with_text (default_font, title);
       g_free (default_font);
     }
   else
-    bullet = clutter_label_new_with_text (font, buf);
+    bullet = clutter_label_new_with_text (font, title);
 
   clutter_label_set_color (CLUTTER_LABEL(bullet), col);
 
   get_next_bullet_offsets (slide, &x, &y, &width);
 
-  priv->bullets = g_list_append(priv->bullets, bullet);
+  symbol       = opt_show_bullet_clone (priv->show);
+  symbol_width = 2 * clutter_actor_get_width(symbol);
+
+  if (sym != OPT_BULLET_NONE)
+    {
+      clutter_group_add (CLUTTER_GROUP(slide), symbol);
+      clutter_actor_set_position (symbol, x, y);
+      clutter_actor_show(symbol);
+    }
+
+  x += symbol_width;
 
   clutter_label_set_text_extents (CLUTTER_LABEL(bullet),
-				  width,
+				  width - symbol_width,
 				  0);
 
   clutter_actor_set_position (bullet, x, y);
-
   clutter_group_add (CLUTTER_GROUP(slide), bullet);
 
   clutter_actor_show(bullet);
 
-  g_free(buf);
+
+  priv->bullets = g_list_append(priv->bullets, bullet);
 }
 
 void
