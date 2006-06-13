@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!ELEMENT opt (defaults?,slide+)>
+
+<!ELEMENT defaults (title, (background|bullet|img|transition)+)>
+
+<!ELEMENT slide (title, (background|bullet|img|transition)+)>
+
+<!ELEMENT title (#PCDATA)>
+<!ATTLIST title
+          color CDATA #IMPLIED
+          font CDATA #IMPLIED
+>
+
+<!ELEMENT background (#PCDATA)>
+<!ATTLIST background
+          src CDATA #REQUIRED
+>
+
+<!ELEMENT bullet (#PCDATA)>
+<!ATTLIST bullet
+          color CDATA #IMPLIED
+          font CDATA #IMPLIED
+>
+
+<!ELEMENT img (#PCDATA)>
+<!ATTLIST img
+          src CDATA #REQUIRED
+>
+
+<!ELEMENT transition (#PCDATA)>
+<!ATTLIST transition
+          style CDATA #REQUIRED
+>
+
