@@ -260,11 +260,18 @@ opt_show_new (void)
   return show;
 }
 
+/* bullet hacks, needs redoing */
 ClutterActor*
 opt_show_bullet_clone (OptShow *show)
 {
   return 
     clutter_clone_texture_new(CLUTTER_TEXTURE(show->priv->bullet_texture));
+}
+
+void
+opt_show_set_bullet_color (OptShow *show, ClutterColor *col)
+{
+  clutter_label_set_color (CLUTTER_LABEL(show->priv->bullet_texture), col);
 }
 
 void
@@ -397,7 +404,7 @@ opt_show_step (OptShow *self, gint step)
     }
   
   /* Advance */
-  priv->current_slide_num += step;
+    priv->current_slide_num += step;
 
   priv->current_slide_num = 
       CLAMP(priv->current_slide_num, 0, priv->num_slides-1);

@@ -66,6 +66,9 @@ opt_show_export (OptShow *self, const char *path, GError **error);
 ClutterActor*
 opt_show_bullet_clone (OptShow *show);
 
+void
+opt_show_set_bullet_color (OptShow *show, ClutterColor *col);
+
 G_END_DECLS
 
 #endif

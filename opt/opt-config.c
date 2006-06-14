@@ -387,8 +387,12 @@ opt_parse_on_start_actor (GMarkupParseContext *context,
 			       NULL);
 
 		if (color)
-		  color_from_string (color, &info->bullet_default_color);
+		  {
+		    color_from_string (color, &info->bullet_default_color);
 
+		    opt_show_set_bullet_color (info->show,
+					       &info->bullet_default_color);
+		  }
 	      }
 	  }
 	  info->state = IN_DEFAULTS_BULLET;

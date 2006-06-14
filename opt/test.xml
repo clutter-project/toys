@@ -4,7 +4,7 @@
 
   <defaults>
     <title  color="#444444ff" font="VistaSansMed 50" />
-    <bullet color="#444444ff" font="VistaSansMed 40" />	
+    <bullet color="#444444ff" font="VistaSansMed 40" /> 
     <transition style="flip" />  
     <background src="bg.png" />
   </defaults>
