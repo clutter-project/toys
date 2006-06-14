@@ -13,7 +13,7 @@ input_cb (ClutterStage *stage,
       ClutterKeyEvent* kev = (ClutterKeyEvent*)event;
 
       if (clutter_key_event_symbol (kev) == CLUTTER_q)
-	exit(0); 		/* FIXME: need clutter exit func */
+	clutter_main_quit (); 		/* FIXME: need clutter exit func */
 
       if (clutter_key_event_symbol (kev) == CLUTTER_r
 	  || clutter_key_event_symbol (kev) == CLUTTER_Left)
