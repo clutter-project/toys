@@ -2,9 +2,9 @@
 
 <!ELEMENT opt (defaults?,slide+)>
 
-<!ELEMENT defaults (title, (background|bullet|img|transition)+)>
+<!ELEMENT defaults (title, (background|bullet|transition)+)>
 
-<!ELEMENT slide (title, (background|bullet|img|transition)+)>
+<!ELEMENT slide (title, (bullet|img|transition)+)>
 
 <!ELEMENT title (#PCDATA)>
 <!ATTLIST title
@@ -21,7 +21,7 @@
 <!ATTLIST bullet
           color CDATA #IMPLIED
           font CDATA #IMPLIED
-	  symbol CDATA #IMPLIED
+          symbol (none) #IMPLIED
 >
 
 <!ELEMENT img (#PCDATA)>
@@ -31,6 +31,6 @@
 
 <!ELEMENT transition (#PCDATA)>
 <!ATTLIST transition
-          style CDATA #REQUIRED
+          style (cube|flip|yzflip|fade) #REQUIRED
 >
 
