@@ -21,6 +21,15 @@ input_cb (ClutterStage *stage,
       else
 	opt_show_advance (show);
     }
+  else if (event->type == CLUTTER_BUTTON_RELEASE)
+    {
+      ClutterButtonEvent* bev = (ClutterButtonEvent*)event;
+
+      if (bev->button == 1)
+	opt_show_advance (show);
+      else
+	opt_show_retreat (show);
+    }
 }
 
 static void
