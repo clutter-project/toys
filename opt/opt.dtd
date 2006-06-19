@@ -24,7 +24,7 @@
           symbol (none) #IMPLIED
 >
 
-<!ELEMENT img (#PCDATA)>
+<!ELEMENT img EMPTY>
 <!ATTLIST img
           src CDATA #REQUIRED
 >
