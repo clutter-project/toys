@@ -10,16 +10,27 @@ input_cb (ClutterStage *stage,
 
   if (event->type == CLUTTER_KEY_RELEASE)
     {
-      ClutterKeyEvent* kev = (ClutterKeyEvent*)event;
+      ClutterKeyEvent* kev = (ClutterKeyEvent *) event;
 
-      if (clutter_key_event_symbol (kev) == CLUTTER_q)
-	clutter_main_quit (); 		/* FIXME: need clutter exit func */
-
-      if (clutter_key_event_symbol (kev) == CLUTTER_r
-	  || clutter_key_event_symbol (kev) == CLUTTER_Left)
-	opt_show_retreat (show);
-      else
-	opt_show_advance (show);
+      switch (clutter_key_event_symbol (kev))
+	{
+        case CLUTTER_q:
+          clutter_main_quit ();
+	  break;
+	case CLUTTER_r:
+	case CLUTTER_Left:
+	  opt_show_retreat (show);
+	  break;
+	case CLUTTER_Page_Down:
+	  opt_show_skip (show, 5);
+	  break;
+	case CLUTTER_Page_Up:
+	  opt_show_skip (show, -5);
+	  break;
+	default:
+	  opt_show_advance (show);
+	  break;
+	}
     }
   else if (event->type == CLUTTER_BUTTON_RELEASE)
     {

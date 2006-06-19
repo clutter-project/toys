@@ -365,6 +365,9 @@ opt_show_step (OptShow *self, gint step)
   from = g_list_nth_data (priv->slides, priv->current_slide_num);
   to   = g_list_nth_data (priv->slides, priv->current_slide_num + step);
 
+  if (from == NULL)
+    from = priv->slides->data;
+  
   /* Nowhere to go */
   if (to == NULL)
     return;
@@ -420,6 +423,12 @@ void
 opt_show_retreat (OptShow *self)
 {
   opt_show_step (self, -1);
+}
+
+void
+opt_show_skip (OptShow *self, gint n_slides)
+{
+  opt_show_step (self, n_slides);
 }
 
 gboolean

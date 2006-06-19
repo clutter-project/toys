@@ -1,3 +1,9 @@
+2006-06-19  Emmanuele Bassi  <ebassi@openedhand.com>
+
+	* opt-show.c:
+	Add support for the PgUp and PgDown keys, for skipping 5 slides
+	backward and forward the current position.
+
 2006-06-19  Ross Burton  <ross@openedhand.com>
 
 	* opt-show.c:

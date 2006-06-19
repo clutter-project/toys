@@ -60,6 +60,9 @@ opt_show_advance (OptShow *self);
 void
 opt_show_retreat (OptShow *self);
 
+void
+opt_show_skip (OptShow *self, gint n_slides);
+
 gboolean
 opt_show_export (OptShow *self, const char *path, GError **error);
 
