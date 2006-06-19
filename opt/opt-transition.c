@@ -119,7 +119,7 @@ cube_transition_frame_cb (OptTransition   *trans,
 
   clutter_group_show_all (CLUTTER_GROUP(to));
 
-  mult = priv->direction ? 1 : -1;
+  mult = priv->direction ? -1 : 1;
 
   if (frame_num > 15)
     {
