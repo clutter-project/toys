@@ -34,6 +34,7 @@ typedef enum OptTransitionStyle
   OPT_TRANSITION_ANY,
   OPT_TRANSITION_CUBE,
   OPT_TRANSITION_FLIP,
+  OPT_TRANSITION_ZOOM,
   OPT_TRANSITION_YZ_FLIP,
   OPT_TRANSITION_FADE
 }
@@ -45,7 +46,6 @@ typedef enum OptTransitionDirection
   OPT_TRANSITION_BACKWARD,
 }
 OptTransitionDirection;
-
 
 typedef struct OptTransitionPrivate OptTransitionPrivate;
 typedef struct _OptTransitionClass  OptTransitionClass;

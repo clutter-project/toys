@@ -20,8 +20,8 @@ yz_flip_transition_frame_cb (OptTransition   *trans,
 {
   OptSlide             *from, *to;
   OptTransitionPrivate *priv;
-  ClutterActor       *stage;
-  ClutterColor          color = { 0x22, 0x22, 0x22, 0xff };
+  ClutterActor         *stage;
+  gint                  n_frames = 0; 
 
   priv = trans->priv;
 
@@ -29,35 +29,72 @@ yz_flip_transition_frame_cb (OptTransition   *trans,
   to    = opt_transition_get_to (trans);
   stage = clutter_stage_get_default();
 
-  clutter_group_show_all (CLUTTER_GROUP(to));
+  n_frames = clutter_timeline_get_n_frames (CLUTTER_TIMELINE(trans));
 
   if (frame_num > 15)
     {
-      /* Fix Z ordering */
-      clutter_actor_lower_bottom (CLUTTER_ACTOR(from));
+      clutter_actor_hide (CLUTTER_ACTOR(from));
+      clutter_group_show_all (CLUTTER_GROUP(to));
+      clutter_actor_set_depth (CLUTTER_ACTOR(to), 
+			       -1 * ((n_frames * 2000) - (frame_num * 2000)));
+
+      clutter_actor_rotate_z (CLUTTER_ACTOR(to),
+			      frame_num * (360/15),
+			      CLUTTER_STAGE_WIDTH()/2,
+			      CLUTTER_STAGE_HEIGHT()/2);
     }
+  else
+    {
+      clutter_actor_hide (CLUTTER_ACTOR(to));
+      clutter_actor_set_depth (CLUTTER_ACTOR(from), -2000 * frame_num);
 
-  clutter_stage_set_color (CLUTTER_STAGE(stage), &color);
+      clutter_actor_rotate_z (CLUTTER_ACTOR(from),
+			      frame_num * (360/15),
+			      CLUTTER_STAGE_WIDTH()/2,
+			      CLUTTER_STAGE_HEIGHT()/2);
+    }
+}
 
-  clutter_actor_rotate_y (CLUTTER_ACTOR(from),
-                            - (float)frame_num * 6,
-                            CLUTTER_STAGE_WIDTH()/2,
-                            0);
+static void
+zoom_transition_frame_cb (OptTransition   *trans,
+			  gint             frame_num,
+			  gpointer         data)
+{
+  OptSlide             *from, *to;
+  OptTransitionPrivate *priv;
+  ClutterActor         *stage;
+  gint                  n_frames = 0; 
 
-  clutter_actor_rotate_y (CLUTTER_ACTOR(to),
-                            180 - (frame_num * 6),
-                            CLUTTER_STAGE_WIDTH()/2,
-                            0);
+  priv = trans->priv;
 
-  clutter_actor_rotate_z (CLUTTER_ACTOR(from),
-                            - (float)frame_num * 6,
-                            CLUTTER_STAGE_WIDTH()/2,
-                            0);
+  from  = opt_transition_get_from (trans);
+  to    = opt_transition_get_to (trans);
+  stage = clutter_stage_get_default();
 
-  clutter_actor_rotate_z (CLUTTER_ACTOR(to),
-                            180 - (frame_num * 6),
-                            CLUTTER_STAGE_WIDTH()/2,
-                            0);
+  n_frames = clutter_timeline_get_n_frames (CLUTTER_TIMELINE(trans));
+
+  if (frame_num > 15)
+    {
+      clutter_actor_hide (CLUTTER_ACTOR(from));
+      clutter_group_show_all (CLUTTER_GROUP(to));
+      clutter_actor_set_depth (CLUTTER_ACTOR(to), 
+			       -1 * ((n_frames * 2000) - (frame_num * 2000)));
+
+      clutter_actor_rotate_z (CLUTTER_ACTOR(to),
+			      frame_num * (360/15),
+			      CLUTTER_STAGE_WIDTH()/2,
+			      CLUTTER_STAGE_HEIGHT()/2);
+    }
+  else
+    {
+      clutter_actor_hide (CLUTTER_ACTOR(to));
+      clutter_actor_set_depth (CLUTTER_ACTOR(from), -2000 * frame_num);
+
+      clutter_actor_rotate_z (CLUTTER_ACTOR(from),
+			      frame_num * (360/15),
+			      CLUTTER_STAGE_WIDTH()/2,
+			      CLUTTER_STAGE_HEIGHT()/2);
+    }
 }
 
 static void

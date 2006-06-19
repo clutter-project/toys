@@ -14,7 +14,7 @@
     <bullet>See test.xml</bullet>
     <bullet>q quit, r or left back</bullet>
     <bullet>Any key to advance.</bullet>
-    <transition style="cube" />	
+    <transition style="zoom" />	
   </slide>
 
   <slide>
