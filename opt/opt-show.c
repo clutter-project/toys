@@ -277,23 +277,26 @@ opt_show_set_bullet_color (OptShow *show, ClutterColor *col)
 void
 opt_show_add_slide (OptShow *self, OptSlide *slide)
 {
-  ClutterActor *clone, *stage;
+  ClutterActor   *bg, *stage;
 
   self->priv->slides = g_list_append(self->priv->slides, slide);
   self->priv->num_slides++;
 
   stage = clutter_stage_get_default();
 
-  clone = clutter_clone_texture_new(CLUTTER_TEXTURE(self->priv->bg));
+  bg = CLUTTER_ACTOR(opt_slide_get_background_texture (slide));
 
-  clutter_actor_set_size (clone, 
-			    clutter_actor_get_width (stage),
-			    clutter_actor_get_height (stage));
+  if (bg == NULL)
+    bg = clutter_clone_texture_new(CLUTTER_TEXTURE(self->priv->bg));
 
-  clutter_group_add (CLUTTER_GROUP(slide), clone);
-
-  clutter_actor_lower_bottom(clone);
-  clutter_actor_show(clone);
+  clutter_actor_set_size (bg, 
+                          clutter_actor_get_width (stage),
+                          clutter_actor_get_height (stage));
+  
+  clutter_group_add (CLUTTER_GROUP(slide), bg);
+  
+  clutter_actor_lower_bottom(bg);
+  clutter_actor_show(bg);
 }
 
 void
@@ -376,6 +379,13 @@ opt_show_step (OptShow *self, gint step)
   clutter_group_add (CLUTTER_GROUP(stage), CLUTTER_ACTOR(to));
 
   trans = opt_slide_get_transition ( step < 0 ? to : from);
+
+  /* 
+   * Make sure any textures are loaded before the transitions is started .
+  */
+  clutter_group_foreach (CLUTTER_GROUP (to), 
+			 (ClutterCallback)clutter_actor_realize,
+			 NULL);
 
   if (trans != NULL)
     {

@@ -1,6 +1,16 @@
 2006-06-19  Matthew Allum  <mallum@openedhand.com>
 
 	* opt-config.c:
+	* opt-show.c:
+	* opt-slide.c:
+	* opt-slide.h:
+	Integrate Mr Burtons per slide background patch.
+	Pre-realize textures before a transition.
+	Correctly bail on error if image cannot be loaded.
+
+2006-06-19  Matthew Allum  <mallum@openedhand.com>
+
+	* opt-config.c:
 	* opt-transition.c: (yz_flip_transition_frame_cb):
 	* opt-transition.h:
 	* test.xml:

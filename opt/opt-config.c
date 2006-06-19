@@ -84,6 +84,8 @@ struct OptParseInfo
   OptParseState      state;
   OptSlide          *slide;
 
+  GdkPixbuf *default_bg;
+
   GString           *title_buf;
   gchar             *title_font;
   ClutterColor       title_color;
@@ -313,6 +315,8 @@ opt_parse_on_start_actor (GMarkupParseContext *context,
 	    info->state = IN_SLIDE;
 	    info->slide = opt_slide_new (info->show);
 
+	    g_object_set (info->show, "background", info->default_bg, NULL);
+
 	    trans = opt_transition_new (info->style_default); 
 	    opt_transition_set_from (trans, info->slide);
 	    opt_slide_set_transition (info->slide, trans);
@@ -418,7 +422,7 @@ opt_parse_on_start_actor (GMarkupParseContext *context,
 				 "Unable to load '%s'", src);
 		  }
 		
-		g_object_set (info->show, "background", pic, NULL);
+		info->default_bg = pic;
 	      }
 	  }
 	  info->state = IN_DEFAULTS_BG;
@@ -438,12 +442,35 @@ opt_parse_on_start_actor (GMarkupParseContext *context,
 			"bullet",     TAG_BULLET,
 			"img",        TAG_IMG,
 			"transition", TAG_TRANS,
+			"background", TAG_BG,
 			NULL); 
       switch (tag)
 	{
 	case TAG_BG:
 	  {
-	    
+	    const char *src = NULL;
+
+	    if (extract_attrs (context, attr_names, attr_values, error,
+			       "src", TRUE, &src,
+			       NULL))
+	      {
+		GdkPixbuf *pic = NULL;
+
+		pic = gdk_pixbuf_new_from_file (src, NULL);
+
+		if (pic == NULL)
+		  {
+		    g_set_error (error,
+				 G_MARKUP_ERROR,
+				 G_MARKUP_ERROR_INVALID_CONTENT,
+				 "Unable to load '%s'", src);
+		  }
+		
+		opt_slide_set_background_pixbuf (info->slide, pic);
+
+		g_object_unref (pic);
+	      }
+	    info->state = IN_BG;
 	  }
 	  break;
 	case TAG_TRANS:
@@ -473,19 +500,23 @@ opt_parse_on_start_actor (GMarkupParseContext *context,
 			       "src", TRUE, &img_path,
 			       NULL))
 	      {
-		  ClutterActor *pic;
-		  pic = clutter_texture_new_from_pixbuf 
-		    (gdk_pixbuf_new_from_file (img_path, NULL));
+		GdkPixbuf    *pix = NULL;
+		ClutterActor *pic = NULL;
 
-		  if (pic == NULL)
-		    {
-		      g_set_error (error,
-				   G_MARKUP_ERROR,
-				   G_MARKUP_ERROR_INVALID_CONTENT,
-				   "Unable to load '%s'", img_path);
-		    }
-		  else 
+		pix = gdk_pixbuf_new_from_file (img_path, NULL);
+
+		if (pix == NULL)
+		  {
+		    g_set_error (error,
+				 G_MARKUP_ERROR,
+				 G_MARKUP_ERROR_INVALID_CONTENT,
+				 "Unable to load '%s'", img_path);
+		  }
+		else
+		  {
+		    pic = clutter_texture_new_from_pixbuf(pix);
 		    opt_slide_add_bullet (info->slide, pic);
+		  }
 	      }
 	    info->state = IN_IMG;
 	  }
@@ -583,6 +614,7 @@ opt_parse_on_end_actor (GMarkupParseContext *context,
     case IN_DEFAULTS_BG:
       info->state = IN_DEFAULTS;
       break;
+    case IN_BG:
     case IN_IMG:
       info->state = IN_SLIDE;
       break;
@@ -662,7 +694,8 @@ opt_parse_on_text (GMarkupParseContext *context,
 	    g_set_error (error,
 			 G_MARKUP_ERROR,
 			 G_MARKUP_ERROR_INVALID_CONTENT,
-			 "Unexpected text in presentaion file");
+			 "Unexpected text '%s' in presentation file",
+			 text);
 	    return;
 	  }
       break;

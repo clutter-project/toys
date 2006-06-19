@@ -16,8 +16,9 @@ G_DEFINE_TYPE (OptSlide, opt_slide, CLUTTER_TYPE_GROUP);
 
 struct OptSlidePrivate
 {
-  ClutterActor *title;
-  ClutterActor *bg;
+  ClutterActor   *background;
+  ClutterActor   *title;
+  ClutterActor   *bg;
   GList          *bullets;
   OptShow        *show;
   OptTransition  *trans;
@@ -296,3 +297,23 @@ opt_slide_get_transition (OptSlide *slide)
   return slide->priv->trans;
 }
 
+void
+opt_slide_set_background_pixbuf (OptSlide *slide, GdkPixbuf *background)
+{
+  OptSlidePrivate *priv;
+
+  g_return_if_fail (background != NULL);
+
+  priv = slide->priv;
+
+  if (priv->background != NULL)
+    g_object_unref(priv->background);
+
+  priv->background = clutter_texture_new_from_pixbuf (background);
+}
+
+ClutterActor*
+opt_slide_get_background_texture (OptSlide *slide)
+{
+  return slide->priv->background;
+}
