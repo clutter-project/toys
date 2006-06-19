@@ -1,5 +1,10 @@
 2006-06-19  Ross Burton  <ross@openedhand.com>
 
+	* opt-show.c:
+	Marshal the background property as a GdkPixbuf object not a pointer.
+
+2006-06-19  Ross Burton  <ross@openedhand.com>
+
 	* hirez/oh-present.xcf:
 	Title the layers and remove empty/duplicate layers.
 

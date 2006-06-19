@@ -106,7 +106,7 @@ opt_show_set_property (GObject      *object,
       priv->bullet_font = g_value_dup_string (value);
       break;
     case PROP_BACKGROUND:
-      priv->background = (GdkPixbuf*)g_value_get_pointer(value);
+      priv->background = g_value_get_object (value);
       /* refs */
       clutter_texture_set_pixbuf (CLUTTER_TEXTURE(priv->bg), priv->background);
       break;
@@ -148,7 +148,7 @@ opt_show_get_property (GObject    *object,
       g_value_set_string (value, priv->bullet_font);
       break;
     case PROP_BACKGROUND:
-      g_value_set_pointer (value, priv->background);
+      g_value_set_object (value, priv->background);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -227,10 +227,10 @@ opt_show_class_init (OptShowClass *klass)
 
   g_object_class_install_property
     (object_class, PROP_BACKGROUND,
-     g_param_spec_pointer ("background",
-			   "Pixbuf source for default show background.",
-			   "Pixbuf source for default show background.",
-			   G_PARAM_READWRITE));
+     g_param_spec_object ("background",
+			  "Pixbuf source for default show background.",
+			  "Pixbuf source for default show background.",
+			  GDK_TYPE_PIXBUF, G_PARAM_READWRITE));
 }
 
 static void
