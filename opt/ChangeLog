@@ -1,5 +1,10 @@
 2006-06-19  Ross Burton  <ross@openedhand.com>
 
+	* hirez/oh-present.xcf:
+	Title the layers and remove empty/duplicate layers.
+
+2006-06-19  Ross Burton  <ross@openedhand.com>
+
 	* opt-transition.c:
 	Change the rotation of the cube when switching.
 
