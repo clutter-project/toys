@@ -2,6 +2,7 @@
 
 #define FPS    90
 #define FRAMES 30
+#define FRAMES_MID (FRAMES/2)
 
 G_DEFINE_TYPE (OptTransition, opt_transition, CLUTTER_TYPE_TIMELINE);
 
@@ -31,7 +32,7 @@ yz_flip_transition_frame_cb (OptTransition   *trans,
 
   n_frames = clutter_timeline_get_n_frames (CLUTTER_TIMELINE(trans));
 
-  if (frame_num > 15)
+  if (frame_num > FRAMES_MID)
     {
       clutter_actor_hide (CLUTTER_ACTOR(from));
       clutter_group_show_all (CLUTTER_GROUP(to));
@@ -39,7 +40,7 @@ yz_flip_transition_frame_cb (OptTransition   *trans,
 			       -1 * ((n_frames * 2000) - (frame_num * 2000)));
 
       clutter_actor_rotate_z (CLUTTER_ACTOR(to),
-			      frame_num * (360/15),
+			      frame_num * (360/FRAMES_MID),
 			      CLUTTER_STAGE_WIDTH()/2,
 			      CLUTTER_STAGE_HEIGHT()/2);
     }
@@ -49,7 +50,7 @@ yz_flip_transition_frame_cb (OptTransition   *trans,
       clutter_actor_set_depth (CLUTTER_ACTOR(from), -2000 * frame_num);
 
       clutter_actor_rotate_z (CLUTTER_ACTOR(from),
-			      frame_num * (360/15),
+			      frame_num * (360/FRAMES_MID),
 			      CLUTTER_STAGE_WIDTH()/2,
 			      CLUTTER_STAGE_HEIGHT()/2);
     }
@@ -73,7 +74,7 @@ zoom_transition_frame_cb (OptTransition   *trans,
 
   n_frames = clutter_timeline_get_n_frames (CLUTTER_TIMELINE(trans));
 
-  if (frame_num > 15)
+  if (frame_num > FRAMES_MID)
     {
       clutter_actor_hide (CLUTTER_ACTOR(from));
       clutter_group_show_all (CLUTTER_GROUP(to));
@@ -81,7 +82,7 @@ zoom_transition_frame_cb (OptTransition   *trans,
 			       -1 * ((n_frames * 2000) - (frame_num * 2000)));
 
       clutter_actor_rotate_z (CLUTTER_ACTOR(to),
-			      frame_num * (360/15),
+			      frame_num * (360/FRAMES_MID),
 			      CLUTTER_STAGE_WIDTH()/2,
 			      CLUTTER_STAGE_HEIGHT()/2);
     }
@@ -91,7 +92,7 @@ zoom_transition_frame_cb (OptTransition   *trans,
       clutter_actor_set_depth (CLUTTER_ACTOR(from), -2000 * frame_num);
 
       clutter_actor_rotate_z (CLUTTER_ACTOR(from),
-			      frame_num * (360/15),
+			      frame_num * (360/FRAMES_MID),
 			      CLUTTER_STAGE_WIDTH()/2,
 			      CLUTTER_STAGE_HEIGHT()/2);
     }
@@ -118,7 +119,7 @@ flip_transition_frame_cb (OptTransition   *trans,
 
   mult = priv->direction ? 1 : -1;
 
-  if (frame_num > 15)
+  if (frame_num > FRAMES_MID)
     {
       /* Fix Z ordering */
       clutter_actor_lower_bottom (CLUTTER_ACTOR(from));
@@ -158,7 +159,7 @@ cube_transition_frame_cb (OptTransition   *trans,
 
   mult = priv->direction ? -1 : 1;
 
-  if (frame_num > 15)
+  if (frame_num > FRAMES_MID)
     {
       /* Fix Z ordering */
       clutter_actor_lower_bottom (CLUTTER_ACTOR(from));
@@ -310,6 +311,13 @@ opt_transition_set_style (OptTransition     *trans,
 			    G_CALLBACK (yz_flip_transition_frame_cb), 
 			    trans);
       break;
+    case OPT_TRANSITION_ZOOM:
+      priv->signal_id 
+	= g_signal_connect (trans,
+			    "new-frame",  
+			    G_CALLBACK (zoom_transition_frame_cb), 
+			    trans);
+      break;
     case OPT_TRANSITION_FADE:
     default:
       priv->signal_id 
@@ -375,7 +383,3 @@ opt_transition_set_direction (OptTransition           *trans,
 {
   trans->priv->direction = direction;
 }
-
-
-
-

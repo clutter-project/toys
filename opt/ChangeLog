@@ -1,5 +1,11 @@
 2006-06-20  Ross Burton  <ross@openedhand.com>
 
+	* opt-transition.c:
+	Add a define for the transition midpoint frame, and hook up the
+	zoom transition.
+
+2006-06-20  Ross Burton  <ross@openedhand.com>
+
 	* opt-config.c:
 	Scale background images to the stage size when loading to avoid
 	scaling at runtime.
