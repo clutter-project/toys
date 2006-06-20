@@ -1,3 +1,9 @@
+2006-06-20  Ross Burton  <ross@openedhand.com>
+
+	* opt-config.c:
+	Scale background images to the stage size when loading to avoid
+	scaling at runtime.
+
 2006-06-19  Matthew Allum  <mallum@openedhand.com>
 
 	* opt-config.c:

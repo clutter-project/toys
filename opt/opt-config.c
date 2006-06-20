@@ -412,7 +412,10 @@ opt_parse_on_start_actor (GMarkupParseContext *context,
 	      {
 		GdkPixbuf *pic;
 		
-		pic = gdk_pixbuf_new_from_file (src, NULL);
+		pic = gdk_pixbuf_new_from_file_at_size (src,
+                                                        CLUTTER_STAGE_WIDTH(),
+                                                        CLUTTER_STAGE_HEIGHT(),
+                                                        NULL);
 
 		if (pic == NULL)
 		  {
@@ -456,7 +459,10 @@ opt_parse_on_start_actor (GMarkupParseContext *context,
 	      {
 		GdkPixbuf *pic = NULL;
 
-		pic = gdk_pixbuf_new_from_file (src, NULL);
+		pic = gdk_pixbuf_new_from_file_at_size (src,
+                                                        CLUTTER_STAGE_WIDTH(),
+                                                        CLUTTER_STAGE_HEIGHT(),
+                                                        NULL);
 
 		if (pic == NULL)
 		  {
