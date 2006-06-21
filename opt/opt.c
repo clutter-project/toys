@@ -6,7 +6,7 @@ input_cb (ClutterStage *stage,
 	  ClutterEvent *event,
 	  gpointer      user_data)
 {
-  OptShow  *show = (OptShow*)user_data;
+  OptShow  *show = OPT_SHOW (user_data);
 
   if (event->type == CLUTTER_KEY_RELEASE)
     {
@@ -14,6 +14,9 @@ input_cb (ClutterStage *stage,
 
       switch (clutter_key_event_symbol (kev))
 	{
+        case CLUTTER_s:
+          opt_show_toggle_position (show);
+	  break;
         case CLUTTER_q:
           clutter_main_quit ();
 	  break;

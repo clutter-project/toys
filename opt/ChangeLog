@@ -1,3 +1,13 @@
+2006-06-21  Emmanuele Bassi  <ebassi@openedhand.com>
+
+	* opt-show.h:
+	* opt-show.c (opt_show_update_position_label),
+	(transition_completed_cb), (opt_show_toggle_position): Toggle
+	an overlayed rectangle containing the current slide and the
+	total number of slides.
+
+	* opt.c (input_cb): Add binding for showing the slide number.
+
 2006-06-20  Ross Burton  <ross@openedhand.com>
 
 	* opt-transition.c:

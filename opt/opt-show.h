@@ -72,6 +72,9 @@ opt_show_bullet_clone (OptShow *show);
 void
 opt_show_set_bullet_color (OptShow *show, ClutterColor *col);
 
+void
+opt_show_toggle_position (OptShow *show);
+
 G_END_DECLS
 
 #endif

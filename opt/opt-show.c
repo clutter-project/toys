@@ -25,6 +25,10 @@ struct OptShowPrivate
   ClutterActor    *bullet_texture;
   GdkPixbuf       *background;
 
+  ClutterActor    *position_label;
+  ClutterActor    *position_rect;
+  guint            position_label_visible;
+  
   ClutterTimeline *transition;
   ClutterActor  *bg;
 
@@ -321,6 +325,44 @@ opt_show_run (OptShow *self)
 }
 
 static void
+opt_show_update_position_label (OptShow *show)
+{
+  OptShowPrivate *priv = show->priv;
+  ClutterActor *stage;
+  ClutterGeometry stage_geom;
+  ClutterGeometry rect_geom;
+  gint label_width, label_height;
+  gchar *pos;
+  
+  if (!priv->position_label)
+    return;
+
+  stage = clutter_stage_get_default ();
+  clutter_actor_get_geometry (stage, &stage_geom);
+  
+  pos = g_strdup_printf ("%d/%d",
+		         priv->current_slide_num + 1,
+			 priv->num_slides);
+
+  clutter_label_set_text (CLUTTER_LABEL (priv->position_label), pos);
+  clutter_texture_get_base_size (CLUTTER_TEXTURE (priv->position_label),
+		                 &label_width,
+				 &label_height);
+
+  rect_geom.width = label_width + 50;
+  rect_geom.height = label_height + 20;
+  rect_geom.x = (stage_geom.width / 2) - (rect_geom.width / 2);
+  rect_geom.y = stage_geom.height - rect_geom.height - 10;
+  
+  clutter_actor_set_geometry (priv->position_rect, &rect_geom);
+  clutter_actor_set_position (priv->position_label,
+		              rect_geom.x + 25,
+			      rect_geom.y + 10);
+  
+  g_free (pos);
+}
+
+static void
 transition_completed_cb (OptTransition   *trans,
 			 gpointer         data)
 {
@@ -344,6 +386,10 @@ transition_completed_cb (OptTransition   *trans,
   clutter_actor_rotate_y (CLUTTER_ACTOR(from), 0, 0, 0);
   clutter_actor_rotate_z (CLUTTER_ACTOR(from), 0, 0, 0);
 
+  /* If needed, update the position */
+  if (priv->position_label_visible)
+    opt_show_update_position_label (show);
+  
   /* Disconnect the handler */
   g_signal_handler_disconnect (trans, priv->trans_signal_id);
   priv->trans_signal_id = 0;
@@ -507,4 +553,70 @@ opt_show_export (OptShow *self, const char *path, GError **error)
     }
 
   return TRUE;
+}
+
+void
+opt_show_toggle_position (OptShow *show)
+{
+  OptShowPrivate *priv;
+  ClutterActor *stage;
+  ClutterGeometry stage_geom;
+  
+  g_return_if_fail (OPT_IS_SHOW (show));
+
+  priv = show->priv;
+
+  stage = clutter_stage_get_default ();
+  clutter_actor_get_geometry (stage, &stage_geom);
+
+  if (!priv->position_label)
+    {
+      ClutterActor *rect;
+      ClutterActor *label;
+      ClutterColor rect_color = { 0x00, 0x00, 0x00, 0x33 };
+      ClutterColor label_color = { 0xff, 0xff, 0xff, 0xee };
+      ClutterGeometry rect_geom;
+
+      rect = clutter_rectangle_new ();
+      clutter_rectangle_set_color (CLUTTER_RECTANGLE (rect),
+		                   &rect_color);
+
+      rect_geom.width = 102;
+      rect_geom.height = 77;
+      rect_geom.x = stage_geom.width / 2 - rect_geom.width / 2;
+      rect_geom.y = stage_geom.height - rect_geom.height - 20;
+
+      clutter_actor_set_geometry (rect, &rect_geom);
+
+      label = clutter_label_new_with_text ("Sans Bold 20", "0/0");
+      clutter_label_set_color (CLUTTER_LABEL (label),
+		               &label_color);
+      clutter_actor_set_position (label, rect_geom.x + 10, rect_geom.y + 10);
+
+      clutter_group_add_many (CLUTTER_GROUP (stage),
+		              rect,
+			      label,
+			      NULL);
+      
+      priv->position_label = label;
+      priv->position_rect = rect;
+      priv->position_label_visible = FALSE;
+    }
+
+  if (!priv->position_label_visible)
+    {
+      priv->position_label_visible = TRUE;
+
+      opt_show_update_position_label (show);
+      
+      clutter_actor_show (priv->position_rect);
+      clutter_actor_show (priv->position_label);
+    }
+  else
+    {
+      clutter_actor_hide (priv->position_label);
+      clutter_actor_hide (priv->position_rect);
+
+      priv->position_label_visible = FALSE;
+    }
 }
