@@ -1,3 +1,8 @@
+2006-06-23  Matthew Allum  <mallum@openedhand.com>
+
+	* opt-transition.c: (zoom_transition_frame_cb):
+	Fix zoom transition as to not leave next frame 180 degrees
+
 2006-06-22  Ross Burton  <ross@openedhand.com>
 
 	* Makefile:

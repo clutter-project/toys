@@ -81,7 +81,7 @@ zoom_transition_frame_cb (OptTransition   *trans,
 			       -1 * ((n_frames * 2000) - (frame_num * 2000)));
 
       clutter_actor_rotate_z (CLUTTER_ACTOR(to),
-			      frame_num * (360/n_frames/2),
+			      frame_num * ((360*2)/n_frames),
 			      CLUTTER_STAGE_WIDTH()/2,
 			      CLUTTER_STAGE_HEIGHT()/2);
     }
@@ -91,7 +91,7 @@ zoom_transition_frame_cb (OptTransition   *trans,
       clutter_actor_set_depth (CLUTTER_ACTOR(from), -2000 * frame_num);
 
       clutter_actor_rotate_z (CLUTTER_ACTOR(from),
-			      frame_num * (360/n_frames/2),
+			      frame_num * ((360*2)/n_frames),
 			      CLUTTER_STAGE_WIDTH()/2,
 			      CLUTTER_STAGE_HEIGHT()/2);
     }
