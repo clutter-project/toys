@@ -4,7 +4,7 @@
 
 <!ELEMENT defaults (title, (background|bullet|transition)+)>
 
-<!ELEMENT slide (title, (bullet|img|transition)+)>
+<!ELEMENT slide (title, (bullet|img|transition)*)>
 
 <!ELEMENT title (#PCDATA)>
 <!ATTLIST title
