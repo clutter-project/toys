@@ -2,15 +2,6 @@
 
 G_DEFINE_TYPE (OptSlide, opt_slide, CLUTTER_TYPE_GROUP);
 
-/* Note: percentages of total stage size */
-#define TITLE_BORDER_SIZE    8  /* all round */
-#define TITLE_BULLET_PAD     5  /* between title and bullet */
-#define BULLET_BORDER_SIZE  10  /* sides */
-#define BULLET_BULLET_PAD    5  /* between bullets */
-
-#define TITLE_FONT "VistaSansMed 50"
-#define BULLET_FONT "VistaSansMed 40"
-
 #define PERCENT_TO_PIXELS(p) \
    (( (p) * CLUTTER_STAGE_WIDTH() ) / 100)
 
