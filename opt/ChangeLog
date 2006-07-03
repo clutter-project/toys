@@ -1,5 +1,12 @@
 2006-07-03  Ross Burton  <ross@openedhand.com>
 
+	* opt-show.c:
+	Use somewhat better filenames when exporting. Should really count
+	slides to use the right number but this works for most
+	presentations.
+
+2006-07-03  Ross Burton  <ross@openedhand.com>
+
 	* opt.dtd:
 	Allow slides with only titles (Wouter Bolsterlee <uws@xs4all.nl>)
 

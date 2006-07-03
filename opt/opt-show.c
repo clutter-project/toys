@@ -532,7 +532,7 @@ opt_show_export (OptShow *self, const char *path, GError **error)
 	  return FALSE;
 	}
 
-      g_snprintf(name, 32, "slide-%i.png", i);
+      g_snprintf(name, 32, "slide-%02i.png", i);
 
       filename = g_build_filename(path, name, NULL);
 
