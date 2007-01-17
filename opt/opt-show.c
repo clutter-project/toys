@@ -268,8 +268,7 @@ opt_show_new (void)
 ClutterActor*
 opt_show_bullet_clone (OptShow *show)
 {
-  return 
-    clutter_clone_texture_new(CLUTTER_TEXTURE(show->priv->bullet_texture));
+  return clutter_label_new_with_text (show->priv->bullet_font, "•");
 }
 
 void

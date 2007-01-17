@@ -1,3 +1,10 @@
+2007-01-17  Matthew Allum  <mallum@openedhand.com>
+
+	* Makefile:
+	* opt-show.c:
+	* opt-slide.c: (opt_slide_set_title), (opt_slide_add_bullet_text_item):
+	Update for 0.2 API changes.
+
 2006-07-03  Ross Burton  <ross@openedhand.com>
 
 	* opt-slide.c:

@@ -123,9 +123,7 @@ opt_slide_set_title (OptSlide     *slide,
 
   avail_w = CLUTTER_STAGE_WIDTH() - (2 * border) ; 
 
-  clutter_label_set_text_extents (CLUTTER_LABEL(priv->title),
-				  avail_w,
-				  0);
+  clutter_actor_set_size (CLUTTER_ACTOR(priv->title), avail_w, 0);
 
   clutter_label_set_color (CLUTTER_LABEL(priv->title), col);
 
@@ -215,9 +213,7 @@ opt_slide_add_bullet_text_item (OptSlide            *slide,
 
   x += symbol_width;
 
-  clutter_label_set_text_extents (CLUTTER_LABEL(bullet),
-				  width - symbol_width,
-				  0);
+  clutter_actor_set_size (CLUTTER_ACTOR(bullet), width - symbol_width, 0);
 
   clutter_actor_set_position (bullet, x, y);
   clutter_group_add (CLUTTER_GROUP(slide), bullet);
