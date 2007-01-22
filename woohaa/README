@@ -1,0 +1,24 @@
+Woohaa README
+=============
+
+Woohaa is hacky prototype movie viewing toy. *YMMV*.
+
+To run, 'Woohaa <path to movie files>'
+
+Keys:
+  up/down    - navigate list
+  left/right - check list view (not implemnted as yet) 
+  Enter      - Play movie
+  q          - Quit
+
+  With movie playing:
+ 
+  left/right - advance movie forward/back.
+  p          - pause
+  Enter      - toggle on screen display
+  Esc        - exit back to list
+  e          - bonus useless feature.
+
+Remember its a prototype.
+
+  -- Matthew Allum
