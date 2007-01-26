@@ -1,0 +1,41 @@
+<Project xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns:foaf="http://xmlns.com/foaf/0.1/"
+	xmlns="http://usefulinc.com/ns/doap#">
+
+	<name>OpenedHand Presentation Tool</name>
+	<shortname>opt</shortname>
+	<created>2006-21-11</created>
+
+	<shortdesc xml:lang="en">'OPT' is a simple application for creating presentations.</shortdesc>
+
+	<description xml:lang="en"> 
+
+	</description>
+
+	<license rdf:resource="http://usefulinc.com/doap/licenses/gpl" />
+        <os>linux</os>
+        <programming-language>C</programming-language>
+        <category rdf:resource="http://labs.o-hand.com/doap/category/clutter"/>
+        <category rdf:resource="http://labs.o-hand.com/doap/category/graphics"/>
+        <category rdf:resource="http://labs.o-hand.com/doap/category/application"/>
+
+	<maintainer>
+		<foaf:Person>
+			<foaf:name>Matthew Allum</foaf:name>
+		</foaf:Person>
+	</maintainer>
+
+	<author>
+		<foaf:Person>
+			<foaf:name>Matthew Allum</foaf:name>
+		</foaf:Person>
+	</author>
+
+        <repository>
+		<SVNRepository>
+			<browse rdf:resource="http://svn.o-hand.com/view/clutter/trunk/toys/opt"/>
+			<location rdf:resource="https://svn.o-hand.com/repos/clutter/trunk/toys/opt"/>
+		</SVNRepository>
+        </repository>
+
+</Project>
