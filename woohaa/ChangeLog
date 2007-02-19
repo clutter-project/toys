@@ -1,5 +1,15 @@
 2007-02-20  Matthew Allum  <mallum@openedhand.com>
 
+	* clutter-disk.c:
+	* clutter-disk.h:
+	* clutter-video-model.c:
+	* clutter-video-model.h:
+	* clutter-video-view.c:
+	* clutter-video-view.h:
+	Remove old files
+
+2007-02-20  Matthew Allum  <mallum@openedhand.com>
+
 	* Makefile.am:
 	* autogen.sh:
 	* clutter-video-model.h:
