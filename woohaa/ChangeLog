@@ -1,0 +1,20 @@
+2007-02-20  Matthew Allum  <mallum@openedhand.com>
+
+	* Makefile.am:
+	* autogen.sh:
+	* clutter-video-model.h:
+	* configure.ac:
+	* eggsequence.c:
+	* eggsequence.h:
+	* wh-db.c:
+	* wh-db.h:
+	* wh-video-model-row.c:
+	* wh-video-model-row.h:
+	* wh-video-model.c:
+	* wh-video-model.h:
+	* wh-video-row-renderer.c:
+	* wh-video-row-renderer.h:
+	* wh-video-view.c:
+	* wh-video-view.h:
+	* woohaa.c:
+	Overhaul and refactor lots. 

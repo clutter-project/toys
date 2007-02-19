@@ -52,7 +52,7 @@ typedef void (*ClutterVideoModelFunc) (ClutterVideoModel     *model,
 GType clutter_video_model_get_type (void);
 
 ClutterVideoModel*
-clutter_video_model_new (const gchar* path);
+clutter_video_model_new (void);
 
 void
 clutter_video_model_view_foreach (ClutterVideoModel     *model,
