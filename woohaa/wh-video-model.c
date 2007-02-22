@@ -11,6 +11,8 @@ typedef struct _WHVideoModelPrivate WHVideoModelPrivate;
 enum
 {
   REORDERED,
+  ROW_CHANGED,
+  FILTER,
   LAST_SIGNAL
 };
 
@@ -20,12 +22,14 @@ struct _WHVideoModelPrivate
 {
   WHFilterRowFunc  filter;
   gpointer         filter_data;
+  WHCompareRowFunc sort;
+  gpointer         sort_data;
   EggSequence     *rows;
 };
 
 static void
 wh_video_model_get_property (GObject *object, guint property_id,
-				  GValue *value, GParamSpec *pspec)
+			     GValue *value, GParamSpec *pspec)
 {
   switch (property_id) {
   default:
@@ -69,13 +73,32 @@ wh_video_model_class_init (WHVideoModelClass *klass)
   object_class->finalize = wh_video_model_finalize;
 
   _model_signals[REORDERED] =
-    g_signal_new ("reordered",
+    g_signal_new ("rows-reordered",
 		  G_OBJECT_CLASS_TYPE (object_class),
 		  G_SIGNAL_RUN_FIRST,
 		  G_STRUCT_OFFSET (WHVideoModelClass, reordered),
 		  NULL, NULL,
 		  g_cclosure_marshal_VOID__VOID,
 		  G_TYPE_NONE, 0);
+
+  _model_signals[FILTER] =
+    g_signal_new ("filter-changed",
+		  G_OBJECT_CLASS_TYPE (object_class),
+		  G_SIGNAL_RUN_FIRST,
+		  G_STRUCT_OFFSET (WHVideoModelClass, filter_change),
+		  NULL, NULL,
+		  g_cclosure_marshal_VOID__VOID,
+		  G_TYPE_NONE, 0);
+
+  _model_signals[ROW_CHANGED] =
+    g_signal_new ("row-changed",
+		  G_OBJECT_CLASS_TYPE (object_class),
+		  G_SIGNAL_RUN_FIRST,
+		  G_STRUCT_OFFSET (WHVideoModelClass, row_change),
+		  NULL, NULL,
+		  g_cclosure_marshal_VOID__OBJECT,
+		  G_TYPE_NONE, 1, WH_TYPE_VIDEO_MODEL_ROW);
+
 }
 
 static void
@@ -150,10 +173,36 @@ wh_video_model_get_row (WHVideoModel *model, gint index)
   return NULL;
 }
 
+static void
+on_row_changed (GObject      *obj,
+		GParamSpec   *arg1,
+		gpointer      data)
+{
+  WHVideoModel        *model = WH_VIDEO_MODEL(data);
+  WHVideoModelPrivate *priv;
+
+  priv = VIDEO_MODEL_PRIVATE(model);
+
+  if (priv->sort)
+    {
+      egg_sequence_sort (priv->rows, 
+			 (GCompareDataFunc)priv->sort, priv->sort_data);
+      g_signal_emit (model, _model_signals[REORDERED], 0);
+    }
+
+  g_signal_emit (model, _model_signals[ROW_CHANGED], 0, 
+		 WH_VIDEO_MODEL_ROW(obj));
+} 
+
 void
 wh_video_model_append_row (WHVideoModel *model, WHVideoModelRow *row)
 {
   WHVideoModelPrivate *priv = VIDEO_MODEL_PRIVATE(model);
+
+  g_signal_connect (row,
+		    "notify",
+		    G_CALLBACK (on_row_changed),
+		    model);
 
   egg_sequence_append (priv->rows, (gpointer)row);
 }
@@ -180,16 +229,20 @@ wh_video_model_foreach (WHVideoModel      *model,
 }
 
 void
-wh_video_model_sort (WHVideoModel     *model, 
-		     WHCompareRowFunc  func, 
-		     gpointer          userdata)
+wh_video_model_set_sort_func (WHVideoModel     *model, 
+			      WHCompareRowFunc  func, 
+			      gpointer          userdata)
 {
   WHVideoModelPrivate *priv = VIDEO_MODEL_PRIVATE(model);
 
-  /* FIXME: Also need a filter function for not viewed etc */
+  priv->sort      = func;
+  priv->sort_data = userdata;
 
-  egg_sequence_sort (priv->rows, (GCompareDataFunc)func, userdata);
-  g_signal_emit (model, _model_signals[REORDERED], 0);
+  if (func)
+    {
+      egg_sequence_sort (priv->rows, (GCompareDataFunc)func, userdata);
+      g_signal_emit (model, _model_signals[REORDERED], 0);
+    }
 }
 
 void
@@ -206,16 +259,12 @@ wh_video_model_set_filter (WHVideoModel    *model,
   priv->filter_data = data;
 
   if (prev_filter != priv->filter)
-    g_signal_emit (model, _model_signals[REORDERED], 0);
+    g_signal_emit (model, _model_signals[FILTER], 0);
 }
 
 WHVideoModel*
 wh_video_model_new ()
 {
-  WHVideoModel *model;
-
-  model = g_object_new (WH_TYPE_VIDEO_MODEL, NULL);
-
-  return model;
+  return g_object_new (WH_TYPE_VIDEO_MODEL, NULL);
 }
 

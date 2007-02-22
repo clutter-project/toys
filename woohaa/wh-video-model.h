@@ -39,6 +39,8 @@ typedef struct {
   GObjectClass parent_class;
 
   void (*reordered) (WHVideoModel *model);
+  void (*filter_change) (WHVideoModel *model);
+  void (*row_change) (WHVideoModel *model, WHVideoModelRow *row);
 
 } WHVideoModelClass;
 
@@ -72,10 +74,11 @@ void
 wh_video_model_set_filter (WHVideoModel    *model,
 			   WHFilterRowFunc  filter, 
 			   gpointer         data);
+
 void
-wh_video_model_sort (WHVideoModel     *model, 
-		     WHCompareRowFunc  func, 
-		     gpointer          userdata);
+wh_video_model_set_sort_func (WHVideoModel     *model, 
+			      WHCompareRowFunc  func, 
+			      gpointer          userdata);
 
 void
 wh_video_model_foreach (WHVideoModel      *model, 

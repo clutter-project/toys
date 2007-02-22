@@ -114,6 +114,7 @@ struct _WHVideoViewPrivate
   ClutterActor      *selector; 
   gint               row_height;
   gint               n_rows_visible;
+  gboolean           enable_model_change_anim;
   
   /* For vertical scroll */
   ClutterTimeline   *timeline;
@@ -158,7 +159,7 @@ ensure_layout (WHVideoView *view,
 	       gint         n_rows);
 
 static void
-wh_video_view_model_reordered (WHVideoModel *model, gpointer *userdata);
+on_model_rows_change (WHVideoModel *model, gpointer *userdata);
 
 static void
 wh_video_view_set_property (GObject      *object, 
@@ -183,9 +184,15 @@ wh_video_view_set_property (GObject      *object,
 	{
 	  g_object_ref (priv->model);
 	  wh_video_view_add_rows (view);
+
 	  g_signal_connect(priv->model, 
-			   "reordered",
-			   G_CALLBACK(wh_video_view_model_reordered), 
+			   "rows-reordered",
+			   G_CALLBACK(on_model_rows_change), 
+			   view);
+
+	  g_signal_connect(priv->model, 
+			   "filter-changed",
+			   G_CALLBACK(on_model_rows_change), 
 			   view);
 	}
       break;
@@ -235,10 +242,13 @@ ensure_layout (WHVideoView *view,
 {
   WHVideoViewPrivate *priv;
   gint                i, offset = 0;
+  gboolean            size_change, n_rows_change;
 
   priv = WH_VIDEO_VIEW_GET_PRIVATE(view);
 
-  clutter_actor_show_all (priv->rows);
+  n_rows_change = (priv->n_rows_visible != n_rows);
+  size_change = (clutter_actor_get_width(CLUTTER_ACTOR(view)) != width 
+		 || clutter_actor_get_width(CLUTTER_ACTOR(view)) != height);
 
   priv->n_rows_visible = n_rows;
 
@@ -260,40 +270,41 @@ ensure_layout (WHVideoView *view,
       offset += priv->row_height;
     }
 
-  if (priv->selector)
-    g_object_unref (priv->selector);
+  clutter_actor_show_all (priv->rows);
 
-  /* FIXME: only do this if size change */
-  priv->selector = util_actor_from_file ("selector.svg", 
-					 width, 
-					 priv->row_height);
-
-  clutter_actor_set_parent (priv->selector, CLUTTER_ACTOR(view));
-
-  clutter_actor_set_size (priv->selector, width, priv->row_height);
-  clutter_actor_set_position (priv->selector, 0, priv->row_height);        
-
-  priv->path_up[0].x = 0;   priv->path_up[0].y = 0; 
-  priv->path_up[1].x = 0;   
-  priv->path_up[1].y = -1 * (priv->row_height + (priv->row_height/4)); 
-  priv->path_up[2].x = 0;   priv->path_up[2].y = -1 * priv->row_height; 
-
-  priv->path_down[0].x = 0;   priv->path_down[0].y = 0; 
-  priv->path_down[1].x = 0;   
-  priv->path_down[1].y = (priv->row_height + (priv->row_height/4)); 
-  priv->path_down[2].x = 0;   priv->path_down[2].y = priv->row_height; 
-
-  /* FIXME: unapply to any actors.. */
-  if (priv->behave_up)
-    g_object_unref (priv->behave_up);
-
-  if (priv->behave_down)
-    g_object_unref (priv->behave_down);
-
-  priv->behave_up = clutter_behaviour_path_new (priv->alpha, 
-						priv->path_up, 3);
-  priv->behave_down = clutter_behaviour_path_new (priv->alpha, 
-						  priv->path_down, 3);
+  if (n_rows_change || size_change)
+    {
+      if (priv->selector)
+	g_object_unref (priv->selector);
+      
+      priv->selector = util_actor_from_file ("selector.svg", 
+					     width, 
+					     priv->row_height);
+      
+      clutter_actor_set_parent (priv->selector, CLUTTER_ACTOR(view));
+      
+      clutter_actor_set_size (priv->selector, width, priv->row_height);
+      clutter_actor_set_position (priv->selector, 0, priv->row_height);        
+      
+      priv->path_up[0].x = 0;   priv->path_up[0].y = 0; 
+      priv->path_up[1].x = 0;   
+      priv->path_up[1].y = -1 * (priv->row_height + (priv->row_height/4)); 
+      priv->path_up[2].x = 0;   priv->path_up[2].y = -1 * priv->row_height; 
+      
+      priv->path_down[0].x = 0;   priv->path_down[0].y = 0; 
+      priv->path_down[1].x = 0;   
+      priv->path_down[1].y = (priv->row_height + (priv->row_height/4)); 
+      priv->path_down[2].x = 0;   priv->path_down[2].y = priv->row_height; 
+      
+      /* FIXME: unapply to any actors.. */
+      if (priv->behave_up) g_object_unref (priv->behave_up);
+      priv->behave_up = clutter_behaviour_path_new (priv->alpha, 
+						    priv->path_up, 3);
+      
+      if (priv->behave_down) g_object_unref (priv->behave_down);
+      priv->behave_down = clutter_behaviour_path_new (priv->alpha,  
+						      priv->path_down, 3);
+    }
 }
 
 static void
@@ -528,6 +539,14 @@ wh_video_view_get_selected (WHVideoView *view)
   return wh_video_model_get_row (priv->model, priv->active_item_num);
 }
 
+void
+wh_video_view_enable_animation (WHVideoView *view, gboolean active)
+{
+  WHVideoViewPrivate *priv = WH_VIDEO_VIEW_GET_PRIVATE (view);
+
+  priv->enable_model_change_anim = active;
+}
+
 static void
 wh_video_view_remove_rows (WHVideoView *view)
 {
@@ -561,12 +580,32 @@ wh_video_view_add_rows (WHVideoView *view)
 }
 
 static void
-wh_video_view_model_reordered (WHVideoModel *model, gpointer *userdata)
+on_model_rows_change (WHVideoModel *model, gpointer *userdata)
 {
   WHVideoView        *view = WH_VIDEO_VIEW(userdata);
   WHVideoViewPrivate *priv;
 
   priv = WH_VIDEO_VIEW_GET_PRIVATE (view);
+
+  if (!priv->enable_model_change_anim)
+    {
+      WHVideoModelRow *row;
+
+      row = wh_video_model_get_row (priv->model, priv->active_item_num);
+
+      wh_video_view_remove_rows (view);
+      wh_video_view_add_rows (view);
+
+      /* If our row has dissapeared, just defualt to first */
+      if (row != wh_video_model_get_row (priv->model, priv->active_item_num))
+	priv->active_item_num = 0;
+
+      ensure_layout (view,
+		     clutter_actor_get_width(CLUTTER_ACTOR(view)),
+		     clutter_actor_get_height(CLUTTER_ACTOR(view)),
+		     priv->n_rows_visible);
+      return;
+    }
 
   /* FIXME: filter and sort each fire a signal giving us *2* signals 
    *        and thus we get called twice. Need to figure out a better
@@ -603,6 +642,8 @@ wh_video_view_init (WHVideoView *self)
 		    self);
 
   /* Underlying view change */
+
+  priv->enable_model_change_anim = TRUE;
 
   priv->timeline_switch = clutter_timeline_new (10, 120);
 

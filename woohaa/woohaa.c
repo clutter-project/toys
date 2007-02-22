@@ -121,6 +121,8 @@ video_tick (GObject      *object,
 
   if (!app->video_playing && position > 0)
     {
+      WHVideoModelRow *row = NULL;
+
       util_actor_fade_in (app->screen_video);
 
       clutter_timeline_stop (app->video_busy_timeline);
@@ -132,6 +134,14 @@ video_tick (GObject      *object,
       util_actor_fade_out (app->video_busy);
       util_actor_fade_out (app->screen_browse);
 #endif
+      /* Update underlying db */
+      row = wh_video_view_get_selected (WH_VIDEO_VIEW(app->view));
+
+      wh_video_view_enable_animation (WH_VIDEO_VIEW(app->view), FALSE);
+      wh_video_model_row_set_n_views (row, 
+				      wh_video_model_row_get_n_views(row)+1);
+      wh_video_model_row_set_vtime (row, time(NULL));
+      wh_db_sync_row (app->db, row);
 
       app->video_playing = TRUE;
     }
@@ -139,7 +149,6 @@ video_tick (GObject      *object,
   clutter_actor_set_size (app->video_seekbar, 
 			  (position * (CSW() - CSW()/4 - 20)) / duration, 
 			  20);  
-
 }
 
 void
@@ -152,6 +161,7 @@ video_stop (MovieApp *app)
 					app);
 
   app->video_playing = FALSE;
+  wh_video_view_enable_animation (WH_VIDEO_VIEW(app->view), TRUE);
 
   util_actor_fade_out (app->screen_video);
 
@@ -235,10 +245,6 @@ video_start (MovieApp *app)
 
   if (row == NULL || wh_video_model_row_get_path(row) == NULL)
     return;
-
-  wh_video_model_row_set_n_views (row, wh_video_model_row_get_n_views(row)+1);
-  wh_video_model_row_set_vtime (row, time(NULL));
-  wh_db_sync_row (app->db, row);
 
   g_signal_handlers_disconnect_by_func(clutter_stage_get_default(),
 				       browse_input_cb,
@@ -359,8 +365,6 @@ model_recently_added_filter (WHVideoModel    *model,
 			     WHVideoModelRow *row,
 			     gpointer         data)
 {
-  MovieApp *app = (MovieApp*)data;
-
   return TRUE;
 }
 
@@ -372,7 +376,7 @@ view_recently_added_selected (ClutterSliderMenu *menu,
   MovieApp *app = (MovieApp*)userdata;
 
   wh_video_model_set_filter (app->model, model_recently_added_filter, app);
-  wh_video_model_sort (app->model, model_sort_mtime, NULL);
+  wh_video_model_set_sort_func (app->model, model_sort_mtime, NULL);
 }
 
 static gint
@@ -393,8 +397,6 @@ model_recently_viewed_filter (WHVideoModel    *model,
 			      WHVideoModelRow *row,
 			      gpointer         data)
 {
-  MovieApp *app = (MovieApp*)data;
-
   if (wh_video_model_row_get_n_views(row) == 0) 
     return FALSE;
 
@@ -409,7 +411,7 @@ view_recently_viewed_selected (ClutterSliderMenu *menu,
   MovieApp *app = (MovieApp*)userdata;
 
   wh_video_model_set_filter (app->model, model_recently_viewed_filter, app);
-  wh_video_model_sort (app->model, model_sort_vtime, NULL);
+  wh_video_model_set_sort_func (app->model, model_sort_vtime, NULL);
 }
 
 static gboolean  
@@ -417,8 +419,6 @@ model_not_viewed_filter (WHVideoModel    *model,
 			 WHVideoModelRow *row,
 			 gpointer         data)
 {
-  MovieApp *app = (MovieApp*)data;
-
   if (wh_video_model_row_get_n_views(row) > 0) 
     return FALSE;
 
@@ -433,7 +433,7 @@ view_not_viewed_selected (ClutterSliderMenu *menu,
   MovieApp *app = (MovieApp*)userdata;
 
   wh_video_model_set_filter (app->model, model_not_viewed_filter, app);
-  wh_video_model_sort (app->model, model_sort_mtime, NULL);
+  wh_video_model_set_sort_func (app->model, model_sort_mtime, NULL);
 }
 
 static gint
@@ -460,7 +460,7 @@ view_popular_selected (ClutterSliderMenu *menu,
   MovieApp *app = (MovieApp*)userdata;
 
   wh_video_model_set_filter (app->model, model_recently_viewed_filter, app);
-  wh_video_model_sort (app->model, model_sort_popular, NULL);
+  wh_video_model_set_sort_func (app->model, model_sort_popular, NULL);
 }
 
 int
@@ -488,7 +488,7 @@ main (int argc, char *argv[])
   wh_db_populate_model (app->db, app->model);
 
   wh_video_model_set_filter (app->model, model_recently_added_filter, app);
-  wh_video_model_sort (app->model, model_sort_mtime, NULL);
+  wh_video_model_set_sort_func (app->model, model_sort_mtime, NULL);
 
   stage = clutter_stage_get_default ();
 

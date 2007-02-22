@@ -83,7 +83,7 @@ void
 wh_video_view_advance (WHVideoView *view, gint n);
 
 void
-wh_video_view_switch (WHVideoView *view);
+wh_video_view_enable_animation (WHVideoView *view, gboolean active);
 
 WHVideoModelRow*
 wh_video_view_get_selected (WHVideoView *view);
