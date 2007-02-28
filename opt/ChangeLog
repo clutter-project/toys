@@ -1,5 +1,13 @@
 2007-02-28  Tomas Frydrych  <tf@openedhand.com>
 
+	* Makefile:
+	Put clutter version requirement back to 0.2
+	
+	* opt-menu.c:
+	Animated menu
+	
+2007-02-28  Tomas Frydrych  <tf@openedhand.com>
+
 	* opt-transition.h:
 	* opt-transition.c:
 	* opt-config.c:

@@ -13,6 +13,7 @@ G_DEFINE_TYPE (OptMenu, opt_menu, CLUTTER_TYPE_GROUP);
 static void opt_menu_up (OptMenu * menu);
 static void opt_menu_down (OptMenu * menu);
 static void opt_menu_activate (OptMenu * menu);
+static void opt_menu_select_item (OptMenu * menu, gint slide_no);
 
 struct OptMenuPrivate
 {
@@ -29,8 +30,13 @@ struct OptMenuPrivate
   ClutterActor     *background;
   ClutterActor     *selection;
 
+  ClutterTimeline  *timeline;
+  ClutterAlpha     *alpha;
+  ClutterBehaviour *behaviour_s;
+  ClutterBehaviour *behaviour_o;
+  
   gboolean          size_set;
-
+  gboolean          hiding;
   guint             timeout_id;
   gulong            input_signal_id;
 };
@@ -113,6 +119,10 @@ opt_menu_finalize (GObject *object)
 {
   OptMenu *self = OPT_MENU(object); 
 
+  g_object_unref (G_OBJECT (self->priv->behaviour_s));
+  g_object_unref (G_OBJECT (self->priv->behaviour_o));
+  g_object_unref (G_OBJECT (self->priv->timeline));
+  
   if (self->priv)
     {
       g_free(self->priv);
@@ -134,6 +144,29 @@ opt_menu_init (OptMenu *self)
 {
   OptMenuPrivate *priv = g_new0 (OptMenuPrivate, 1);
   self->priv = priv;
+}
+
+static void
+opt_menu_hide_cb (ClutterTimeline * timeline, gpointer data)
+{
+  OptMenu  *menu = OPT_MENU (data);
+
+  if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR (menu)) &&
+      menu->priv->hiding)
+    {
+      ClutterActor * stage = clutter_stage_get_default();
+
+      clutter_actor_hide_all (CLUTTER_ACTOR (menu));
+      clutter_group_remove (CLUTTER_GROUP (stage), CLUTTER_ACTOR (menu));
+      opt_menu_select_item (menu, 0);
+      menu->priv->hiding = FALSE;
+      
+      if (menu->priv->timeout_id)
+        {
+          g_source_remove (menu->priv->timeout_id);
+          menu->priv->timeout_id = 0;
+        }
+    }
 }
 
 OptMenu*
@@ -178,6 +211,27 @@ opt_menu_new (OptShow * show)
                      CLUTTER_ACTOR (menu->priv->selection));
   clutter_actor_set_position (CLUTTER_ACTOR (menu->priv->selection),
                               MENU_BORDER, 0);
+
+  menu->priv->timeline = clutter_timeline_new (10, 26);
+
+  g_signal_connect (menu->priv->timeline, "completed",
+                    G_CALLBACK (opt_menu_hide_cb), menu);
+  
+  menu->priv->alpha = clutter_alpha_new_full (menu->priv->timeline,
+                                              CLUTTER_ALPHA_RAMP_INC,
+                                              NULL, NULL);
+
+  menu->priv->behaviour_s =
+    clutter_behaviour_scale_new (menu->priv->alpha,
+                                 0.0, 1.0,
+                                 CLUTTER_GRAVITY_SOUTH_WEST); 
+
+  clutter_behaviour_apply (menu->priv->behaviour_s, CLUTTER_ACTOR (menu));
+
+  menu->priv->behaviour_o =
+    clutter_behaviour_opacity_new (menu->priv->alpha, 0x00, 0xff); 
+
+  clutter_behaviour_apply (menu->priv->behaviour_o, CLUTTER_ACTOR (menu));
   
   return menu;
 }
@@ -370,7 +424,6 @@ opt_menu_pop (OptMenu * menu)
   if (!CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR (menu)))
     {
       guint width, height;
-      gint  x;
       
       ClutterActor * stage = clutter_stage_get_default();
 
@@ -378,12 +431,14 @@ opt_menu_pop (OptMenu * menu)
         opt_menu_init_size (menu);
       
       clutter_actor_get_size (CLUTTER_ACTOR (menu), &width, &height);
-  
+
+      clutter_actor_set_scale (CLUTTER_ACTOR (menu), 0.0, 0.0);
+      clutter_alpha_set_func (menu->priv->alpha, CLUTTER_ALPHA_RAMP_INC,
+                              NULL, NULL);
+      
       clutter_group_add (CLUTTER_GROUP(stage), CLUTTER_ACTOR(menu));
 
-      x = CLUTTER_STAGE_WIDTH () - width;
-
-      clutter_actor_set_position (CLUTTER_ACTOR (menu), x, 0);
+      clutter_actor_set_position (CLUTTER_ACTOR (menu), 0, 0);
 
       /* Connect up for input event */
       menu->priv->input_signal_id =
@@ -391,10 +446,11 @@ opt_menu_pop (OptMenu * menu)
                           G_CALLBACK (opt_menu_input_cb), menu);
 
       opt_menu_select_item (menu, menu->priv->current_slide);
-      
       clutter_actor_show_all (CLUTTER_ACTOR (menu));
-  
+
       menu->priv->timeout_id = g_timeout_add (5000, opt_menu_timeout_cb, menu);
+      menu->priv->hiding = FALSE;
+      clutter_timeline_start (menu->priv->timeline);
     }
 }
 
@@ -414,16 +470,12 @@ opt_menu_popdown (OptMenu * menu)
         menu->priv->input_signal_id = 0;
       }
   
-    clutter_group_remove (CLUTTER_GROUP (stage), CLUTTER_ACTOR (menu));
-    clutter_actor_hide_all (CLUTTER_ACTOR (menu));
-
-    opt_menu_select_item (menu, 0);
-  
-    if (menu->priv->timeout_id)
-      {
-        g_source_remove (menu->priv->timeout_id);
-        menu->priv->timeout_id = 0;
-      }
+    clutter_actor_set_scale (CLUTTER_ACTOR (menu), 1.0, 1.0);
+    clutter_alpha_set_func (menu->priv->alpha, CLUTTER_ALPHA_RAMP_DEC,
+                            NULL, NULL);
+    
+    menu->priv->hiding = TRUE;
+    clutter_timeline_start (menu->priv->timeline);
   }
 }
 
