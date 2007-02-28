@@ -70,6 +70,7 @@ typedef enum
 const struct { gchar *name; OptTransitionStyle style; } _style_lookup[] = 
   {
     { "cube", OPT_TRANSITION_CUBE },
+    { "page", OPT_TRANSITION_PAGE },
     { "flip", OPT_TRANSITION_FLIP },
     { "zoom", OPT_TRANSITION_ZOOM },
     { "yzflip", OPT_TRANSITION_YZ_FLIP },

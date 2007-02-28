@@ -1,7 +1,7 @@
 #include "opt.h"
 #include <stdlib.h> 		/* for exit() */
 
-void 
+static void 
 input_cb (ClutterStage *stage,
 	  ClutterEvent *event,
 	  gpointer      user_data)
@@ -14,6 +14,9 @@ input_cb (ClutterStage *stage,
 
       switch (clutter_key_event_symbol (kev))
 	{
+        case CLUTTER_m:
+          opt_show_pop_menu (show);
+	  break;
         case CLUTTER_s:
           opt_show_toggle_position (show);
 	  break;
@@ -30,6 +33,14 @@ input_cb (ClutterStage *stage,
 	case CLUTTER_Page_Up:
 	  opt_show_skip (show, -5);
 	  break;
+
+        case CLUTTER_Up:
+        case CLUTTER_Down:
+        case CLUTTER_Return:
+	    /* menu keys -- ignore */
+	    break;
+
+	case CLUTTER_Right:
 	default:
 	  opt_show_advance (show);
 	  break;
@@ -41,7 +52,7 @@ input_cb (ClutterStage *stage,
 
       if (bev->button == 1)
 	opt_show_advance (show);
-      else
+      else if (bev->button == 3)
 	opt_show_retreat (show);
     }
 }

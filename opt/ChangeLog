@@ -1,3 +1,23 @@
+2007-02-28  Tomas Frydrych  <tf@openedhand.com>
+
+	* opt-transition.h:
+	* opt-transition.c:
+	* opt-config.c:
+	Added new transition type 'page'
+
+	* Makefile:
+	* opt.h:
+	* opt-menu.h:
+	* opt-menu.c:
+	* opt-show.h:
+	* opt-show.c:
+	Added simple menu
+
+	* opt.c: (input_cb): 
+	Added 'm' to bring up menu, explicitely Right to advance, button 3
+	to retreat; ignore Up, Down, Return and buttons 2, 4, 5 used by
+	menu.
+	
 2007-01-26  Matthew Allum  <mallum@openedhand.com>
 
 	* opt.doap:

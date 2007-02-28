@@ -182,6 +182,48 @@ cube_transition_frame_cb (OptTransition   *trans,
 }
 
 static void
+page_transition_frame_cb (OptTransition   *trans,
+			     gint             frame_num,
+			     gpointer         data)
+{
+  OptSlide             *from, *to;
+  ClutterActor       *stage;
+  ClutterColor          color = { 0x22, 0x22, 0x22, 0xff };
+  OptTransitionPrivate *priv;
+  gint                  mult, n_frames;
+
+  priv = trans->priv;
+
+  from  = opt_transition_get_from (trans);
+  to    = opt_transition_get_to (trans);
+  stage = clutter_stage_get_default();
+
+  clutter_group_show_all (CLUTTER_GROUP(to));
+
+  mult = priv->direction ? -1 : 1;
+
+  n_frames = clutter_timeline_get_n_frames (CLUTTER_TIMELINE(trans));
+
+  if (frame_num > n_frames/2)
+    {
+      /* Fix Z ordering */
+      clutter_actor_lower_bottom (CLUTTER_ACTOR(from));
+    }
+
+  clutter_stage_set_color (CLUTTER_STAGE(stage), &color);
+
+  clutter_actor_rotate_y (CLUTTER_ACTOR(from),
+                            - (float)frame_num * 2 * mult,
+                            CLUTTER_STAGE_WIDTH()*3/2,
+                            -1 * (CLUTTER_STAGE_WIDTH()/2));
+
+  clutter_actor_rotate_y (CLUTTER_ACTOR(to),
+                            (mult * 60) - (frame_num * 2 * mult),
+                            CLUTTER_STAGE_WIDTH()*3/2,
+                            -1 * (CLUTTER_STAGE_WIDTH()/2));
+}
+
+static void
 fade_transition_frame_cb (OptTransition   *trans,
 			  gint             frame_num,
 			  gpointer         data)
@@ -298,6 +340,13 @@ opt_transition_set_style (OptTransition     *trans,
 	= g_signal_connect (trans,
 			    "new-frame",  
 			    G_CALLBACK (cube_transition_frame_cb), 
+			    trans);
+      break;
+    case OPT_TRANSITION_PAGE:
+      priv->signal_id 
+	= g_signal_connect (trans,
+			    "new-frame",  
+			    G_CALLBACK (page_transition_frame_cb), 
 			    trans);
       break;
     case OPT_TRANSITION_FLIP:

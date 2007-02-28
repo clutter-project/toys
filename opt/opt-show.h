@@ -75,6 +75,9 @@ opt_show_set_bullet_color (OptShow *show, ClutterColor *col);
 void
 opt_show_toggle_position (OptShow *show);
 
+void
+opt_show_pop_menu (OptShow *show);
+
 G_END_DECLS
 
 #endif

@@ -30,9 +30,11 @@ struct OptShowPrivate
   guint            position_label_visible;
   
   ClutterTimeline *transition;
-  ClutterActor  *bg;
+  ClutterActor    *bg;
 
-  gulong           trans_signal_id;  
+  gulong           trans_signal_id;
+
+  OptMenu         *menu;
 };
 
 enum
@@ -66,6 +68,8 @@ opt_show_finalize (GObject *object)
 {
   OptShow *self = OPT_SHOW(object); 
 
+  g_object_unref (G_OBJECT (self->priv->menu));
+  
   if (self->priv)
     {
       g_free(self->priv);
@@ -261,6 +265,9 @@ opt_show_new (void)
 
   show->priv->bg = g_object_new (CLUTTER_TYPE_TEXTURE, NULL);
 
+  show->priv->menu = opt_menu_new (show);
+  g_object_ref (G_OBJECT (show->priv->menu));
+  
   return show;
 }
 
@@ -300,6 +307,8 @@ opt_show_add_slide (OptShow *self, OptSlide *slide)
   
   clutter_actor_lower_bottom(bg);
   clutter_actor_show(bg);
+
+  opt_menu_add_slide (self->priv->menu, slide);
 }
 
 void
@@ -466,6 +475,11 @@ opt_show_step (OptShow *self, gint step)
 
   priv->current_slide_num = 
       CLAMP(priv->current_slide_num, 0, priv->num_slides-1);
+
+  if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR (priv->menu)))
+      opt_menu_popdown (priv->menu);
+  
+  opt_menu_set_current_slide (priv->menu, priv->current_slide_num);
 }
 
 void
@@ -619,3 +633,10 @@ opt_show_toggle_position (OptShow *show)
       priv->position_label_visible = FALSE;
     }
 }
+
+void
+opt_show_pop_menu (OptShow *show)
+{
+    opt_menu_pop (show->priv->menu);
+}
+
