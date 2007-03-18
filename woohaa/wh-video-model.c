@@ -1,4 +1,4 @@
-#include "wh-video-model.h"
+ #include "wh-video-model.h"
 #include <string.h>
 
 G_DEFINE_TYPE (WHVideoModel, wh_video_model, G_TYPE_OBJECT);
@@ -12,6 +12,7 @@ enum
 {
   REORDERED,
   ROW_CHANGED,
+  ROW_ADDED,
   FILTER,
   LAST_SIGNAL
 };
@@ -95,6 +96,15 @@ wh_video_model_class_init (WHVideoModelClass *klass)
 		  G_OBJECT_CLASS_TYPE (object_class),
 		  G_SIGNAL_RUN_FIRST,
 		  G_STRUCT_OFFSET (WHVideoModelClass, row_change),
+		  NULL, NULL,
+		  g_cclosure_marshal_VOID__OBJECT,
+		  G_TYPE_NONE, 1, WH_TYPE_VIDEO_MODEL_ROW);
+
+  _model_signals[ROW_ADDED] =
+    g_signal_new ("row-added",
+		  G_OBJECT_CLASS_TYPE (object_class),
+		  G_SIGNAL_RUN_FIRST,
+		  G_STRUCT_OFFSET (WHVideoModelClass, row_added),
 		  NULL, NULL,
 		  g_cclosure_marshal_VOID__OBJECT,
 		  G_TYPE_NONE, 1, WH_TYPE_VIDEO_MODEL_ROW);
@@ -198,14 +208,27 @@ void
 wh_video_model_append_row (WHVideoModel *model, WHVideoModelRow *row)
 {
   WHVideoModelPrivate *priv = VIDEO_MODEL_PRIVATE(model);
+  EggSequenceIter     *iter;
 
   g_signal_connect (row,
 		    "notify",
 		    G_CALLBACK (on_row_changed),
 		    model);
 
-  egg_sequence_append (priv->rows, (gpointer)row);
+  g_object_ref (row);
+
+  if (priv->sort)
+    iter = egg_sequence_insert_sorted (priv->rows,
+				       (gpointer)row,
+				       priv->sort,
+				       priv->sort_data);
+  else
+    iter = egg_sequence_append (priv->rows, (gpointer)row);
+
+  if (check_filter (model, iter))
+    g_signal_emit (model, _model_signals[ROW_ADDED], 0, row);
 }
+
 
 void
 wh_video_model_foreach (WHVideoModel      *model, 

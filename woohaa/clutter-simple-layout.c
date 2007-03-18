@@ -10,9 +10,6 @@ G_DEFINE_TYPE (ClutterSimpleLayout, clutter_simple_layout, CLUTTER_TYPE_GROUP);
 typedef struct _ClutterSimpleLayoutPrivate
 {
   int               allocated_width, allocated_height;
-  ClutterBehaviour *opacity_behave, *scale_behave;
-  gulong            behave_signal_id;
-
 } 
 ClutterSimpleLayoutPrivate;
 
@@ -103,8 +100,6 @@ remove_handler (ClutterGroup *group,
 static void
 clutter_simple_layout_init (ClutterSimpleLayout *self)
 {
-  ClutterSimpleLayoutPrivate *priv = CLUTTER_SIMPLE_LAYOUT_PRIVATE(self);
-
   g_signal_connect (self,
 		    "add",
 		    G_CALLBACK (add_handler),
@@ -115,12 +110,6 @@ clutter_simple_layout_init (ClutterSimpleLayout *self)
 		    G_CALLBACK (remove_handler),
 		    NULL);
 
-  priv->scale_behave 
-    = CLUTTER_BEHAVIOUR(g_object_new(CLUTTER_TYPE_BEHAVIOUR_SCALE, NULL));
-
-  priv->opacity_behave 
-    = CLUTTER_BEHAVIOUR(g_object_new(CLUTTER_TYPE_BEHAVIOUR_OPACITY, NULL));
-
 }
 
 ClutterActor*
@@ -129,93 +118,4 @@ clutter_simple_layout_new (void)
   return CLUTTER_ACTOR(g_object_new (CLUTTER_TYPE_SIMPLE_LAYOUT, NULL));
 }
 
-static void
-fade_complete (ClutterTimeline *timeline,
-	       gpointer         user_data)
-{
-  ClutterSimpleLayout        *self = CLUTTER_SIMPLE_LAYOUT(user_data);
-  ClutterSimpleLayoutPrivate *priv = CLUTTER_SIMPLE_LAYOUT_PRIVATE(self);
 
-  if (priv->behave_signal_id)
-    {
-      g_signal_handler_disconnect (timeline, priv->behave_signal_id);
-      clutter_behaviour_remove (priv->scale_behave, CLUTTER_ACTOR(self));
-      clutter_behaviour_remove (priv->opacity_behave, CLUTTER_ACTOR(self));
-    }
-
-  priv->behave_signal_id = 0;
-}
-
-void
-clutter_simple_layout_fade_out (ClutterSimpleLayout *self, 
-				ClutterAlpha        *alpha)
-{
-  ClutterSimpleLayoutPrivate *priv = CLUTTER_SIMPLE_LAYOUT_PRIVATE(self);
-
-  if (priv->behave_signal_id)
-    return;
-
-  clutter_behaviour_set_alpha (priv->scale_behave, alpha);
-
-  g_object_set (priv->scale_behave, 
-		"scale-begin", 1.0f,
-		"scale-end", 0.5f,
-		"scale-gravity", CLUTTER_GRAVITY_CENTER,
-		NULL);
-
-  clutter_behaviour_apply (priv->scale_behave, CLUTTER_ACTOR(self));
-
-  clutter_behaviour_set_alpha (priv->opacity_behave, alpha);
-
-  g_object_set (priv->opacity_behave, 
-		"opacity-start", 0xff,
-		"opacity-end", 0x10,
-		NULL);
-
-  clutter_behaviour_apply (priv->opacity_behave, CLUTTER_ACTOR(self));
-
-  priv->behave_signal_id 
-    = g_signal_connect (clutter_alpha_get_timeline (alpha), 
-			"completed",
-			G_CALLBACK (fade_complete),
-			self);
-
-  clutter_timeline_start(clutter_alpha_get_timeline (alpha));
-}
-
-void
-clutter_simple_layout_fade_in (ClutterSimpleLayout *self, 
-			       ClutterAlpha        *alpha)
-{
-  ClutterSimpleLayoutPrivate *priv = CLUTTER_SIMPLE_LAYOUT_PRIVATE(self);
-
-  if (priv->behave_signal_id)
-    return;
-
-  clutter_behaviour_set_alpha (priv->scale_behave, alpha);
-
-  g_object_set (priv->scale_behave, 
-		"scale-begin", 0.5f,
-		"scale-end", 1.0f,
-		"scale-gravity", CLUTTER_GRAVITY_CENTER,
-		NULL);
-
-  clutter_behaviour_apply (priv->scale_behave, CLUTTER_ACTOR(self));
-
-  clutter_behaviour_set_alpha (priv->opacity_behave, alpha);
-
-  g_object_set (priv->opacity_behave, 
-		"opacity-start", 0x10,
-		"opacity-end", 0xff,
-		NULL);
-
-  clutter_behaviour_apply (priv->opacity_behave, CLUTTER_ACTOR(self));
-
-  priv->behave_signal_id 
-    = g_signal_connect (clutter_alpha_get_timeline (alpha), 
-			"completed",
-			G_CALLBACK (fade_complete),
-			self);
-
-  clutter_timeline_start(clutter_alpha_get_timeline (alpha));
-}

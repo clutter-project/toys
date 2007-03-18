@@ -1,19 +1,22 @@
 #include "util.h"
 #include "math.h"
 
-typedef struct FadeClosure
-{
-  ClutterActor     *actor;
-  ClutterTimeline  *timeline;
-  ClutterAlpha     *alpha;
-  ClutterBehaviour *behave;
-  gulong            signal_id;
-}
-FadeClosure;
+#include <gdk/gdk.h>
 
+typedef struct AnimClosure
+{
+  ClutterActor        *actor;
+  ClutterTimeline     *timeline;
+  ClutterAlpha        *alpha;
+  ClutterBehaviour    *behave;
+  gulong               signal_id;
+  UtilAnimCompleteFunc completed_func;
+  gpointer             completed_data;
+}
+AnimClosure;
 
 static void
-util_fade_closure_destroy (FadeClosure *f)
+util_anim_closure_destroy (AnimClosure *f)
 {
   g_signal_handler_disconnect (f->timeline, f->signal_id);
   clutter_behaviour_remove (f->behave, f->actor);
@@ -26,12 +29,12 @@ util_fade_closure_destroy (FadeClosure *f)
   g_free(f);
 }
 
-static FadeClosure*
-util_fade_closure_new (ClutterActor *actor, GCallback complete)
+static AnimClosure*
+util_anim_closure_new (ClutterActor *actor, GCallback complete)
 {
-  FadeClosure *f;
+  AnimClosure *f;
 
-  f = g_new0(FadeClosure, 1);
+  f = g_new0(AnimClosure, 1);
 
   g_object_ref (actor);
 
@@ -52,49 +55,140 @@ static void
 util_actor_fade_in_complete (ClutterTimeline *timeline,
 			     gpointer         user_data)
 {
-  FadeClosure *f =  (FadeClosure*)user_data;
+  AnimClosure *f =  (AnimClosure*)user_data;
 
   clutter_actor_show_all (f->actor);
 
-  util_fade_closure_destroy (f);
+  if (f->completed_func)
+    f->completed_func(f->actor, f->completed_data);
+
+  util_anim_closure_destroy (f);
 }
 
 static void
 util_actor_fade_out_complete (ClutterTimeline *timeline,
 			     gpointer         user_data)
 {
-  FadeClosure *f =  (FadeClosure*)user_data;
+  AnimClosure *f =  (AnimClosure*)user_data;
 
   clutter_actor_hide_all (f->actor);
 
-  util_fade_closure_destroy (f);
+  if (f->completed_func)
+    f->completed_func(f->actor, f->completed_data);
+
+  util_anim_closure_destroy (f);
 }
 
-
 ClutterTimeline*
-util_actor_fade_in (ClutterActor *actor)
+util_actor_fade_in (ClutterActor        *actor, 
+		    UtilAnimCompleteFunc func, 
+		    gpointer             data)
 {
-  FadeClosure *f;
+  AnimClosure *f;
+  
+  f = util_anim_closure_new (actor, G_CALLBACK (util_actor_fade_in_complete));
 
-  f = util_fade_closure_new (actor, G_CALLBACK (util_actor_fade_in_complete));
+  f->completed_func = func;
+  f->completed_data = data;
 
   f->behave = clutter_behaviour_opacity_new (f->alpha, 0, 0xff);
-
+  
   clutter_actor_set_opacity (actor, 0);
   clutter_actor_show_all (actor);
+  
+  clutter_behaviour_apply (f->behave, actor);
+  clutter_timeline_start (f->timeline);
+  
+  return f->timeline;
+}
+
+static void
+util_actor_fade_complete (ClutterTimeline *timeline,
+			  gpointer         user_data)
+{
+  AnimClosure *f =  (AnimClosure*)user_data;
+
+  if (f->completed_func)
+    f->completed_func(f->actor, f->completed_data);
+
+  util_anim_closure_destroy (f);
+}
+
+ClutterTimeline*
+util_actor_fade (ClutterActor        *actor, 
+		 UtilAnimCompleteFunc func,
+		 guint8               start_opacity,
+		 guint8               end_opacity,
+		 gpointer             data)
+{
+  AnimClosure *f;
+
+  f = util_anim_closure_new (actor, G_CALLBACK (util_actor_fade_complete));
+
+  f->completed_func = func;
+  f->completed_data = data;
+
+  f->behave = clutter_behaviour_opacity_new (f->alpha, 
+					     start_opacity, 
+					     end_opacity);
+  
+  clutter_actor_set_opacity (actor, start_opacity);
+  clutter_actor_show_all (actor);
+  
+  clutter_behaviour_apply (f->behave, actor);
+  clutter_timeline_start (f->timeline);
+  
+  return f->timeline;
+}
+
+static void
+util_actor_zoom_complete (ClutterTimeline *timeline,
+			  gpointer         user_data)
+{
+  AnimClosure *f =  (AnimClosure*)user_data;
+
+  if (f->completed_func)
+    f->completed_func(f->actor, f->completed_data);
+
+  util_anim_closure_destroy (f);
+}
+
+ClutterTimeline*
+util_actor_zoom (ClutterActor        *actor, 
+		 UtilAnimCompleteFunc func,
+		 gdouble              start_scale,
+		 gdouble              end_scale,
+		 gpointer             data)
+{
+  AnimClosure *f;
+
+  f = util_anim_closure_new (actor, G_CALLBACK (util_actor_zoom_complete));
+
+  f->completed_func = func;
+  f->completed_data = data;
+
+  f->behave = clutter_behaviour_scale_new (f->alpha,
+					   start_scale,
+					   end_scale,
+					   CLUTTER_GRAVITY_CENTER);
 
   clutter_behaviour_apply (f->behave, actor);
   clutter_timeline_start (f->timeline);
-
+  
   return f->timeline;
 }
 
 ClutterTimeline*
-util_actor_fade_out (ClutterActor *actor)
+util_actor_fade_out (ClutterActor        *actor,
+		     UtilAnimCompleteFunc func, 
+		     gpointer             data)
 {
-  FadeClosure *f;
+  AnimClosure *f;
 
-  f = util_fade_closure_new (actor, G_CALLBACK (util_actor_fade_out_complete));
+  f = util_anim_closure_new (actor, G_CALLBACK (util_actor_fade_out_complete));
+
+  f->completed_func = func;
+  f->completed_data = data;
 
   f->behave = clutter_behaviour_opacity_new (f->alpha, 0xff, 0);
 
@@ -114,11 +208,42 @@ util_actor_from_file (const gchar *path, int width, int height)
 
   if (pixbuf)
     {
-      actor =  clutter_texture_new_from_pixbuf (pixbuf);
+      actor = clutter_texture_new_from_pixbuf (pixbuf);
       g_object_unref (pixbuf);
       return actor;
     }
   
+  return NULL;
+}
+
+ClutterActor*
+util_texture_from_root_window (void)
+{
+  ClutterActor *texture = NULL;
+  GdkWindow    *root;
+  GdkPixbuf    *pixbuf;
+
+  gdk_init(NULL, NULL);
+
+  root = gdk_get_default_root_window ();
+  
+  pixbuf = gdk_pixbuf_get_from_drawable (NULL, 
+					 root, 
+					 NULL,
+					 0, 
+					 0, 
+					 0, 
+					 0, 
+					 gdk_screen_width(), 
+					 gdk_screen_height());
+
+  if (pixbuf)
+    {
+      texture = clutter_texture_new_from_pixbuf (pixbuf);
+      g_object_unref (pixbuf);
+      return texture;
+    }
+
   return NULL;
 }
 

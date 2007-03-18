@@ -43,6 +43,10 @@ GType wh_video_row_renderer_get_type (void);
 WHVideoRowRenderer*
 wh_video_row_renderer_new (WHVideoModelRow *row);
 
+void
+wh_video_row_renderer_set_active (WHVideoRowRenderer *renderer, 
+				  gboolean            setting);
+
 G_END_DECLS
 
 #endif /* _WH_VIDEO_ROW_RENDERER */

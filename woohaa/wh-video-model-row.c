@@ -14,9 +14,12 @@ struct _WHVideoModelRowPrivate
 {
   gchar              *path;
   gchar              *title;
+  gchar              *series;
+  gchar              *episode;
   gint                n_views;
   time_t              age;
   time_t              vtime;
+  GdkPixbuf          *thumbnail;
   WHVideoRowRenderer *renderer; 
 };
 
@@ -28,7 +31,10 @@ enum
   PROP_N_VIEWS,
   PROP_AGE,
   PROP_RENDERER,
-  PROP_VTIME
+  PROP_VTIME,
+  PROP_SERIES,
+  PROP_EPISODE,
+  PROP_THUMBNAIL
 };
 
 static void
@@ -48,6 +54,12 @@ wh_video_model_row_get_property (GObject *object, guint property_id,
     case PROP_TITLE:
       g_value_set_string (value, priv->title);
       break;
+    case PROP_SERIES:
+      g_value_set_string (value, priv->series);
+      break;
+    case PROP_EPISODE:
+      g_value_set_string (value, priv->episode);
+      break;
     case PROP_N_VIEWS:
       g_value_set_int (value, wh_video_model_row_get_n_views (row));
       break;
@@ -60,6 +72,9 @@ wh_video_model_row_get_property (GObject *object, guint property_id,
     case PROP_RENDERER:
       g_value_set_object (value, priv->renderer);
       break;
+    case PROP_THUMBNAIL:
+      g_value_set_object (value, priv->thumbnail);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
     }
@@ -70,6 +85,9 @@ wh_video_model_row_set_property (GObject *object, guint property_id,
 				 const GValue *value, GParamSpec *pspec)
 {
  WHVideoModelRow *row = WH_VIDEO_MODEL_ROW(object);
+  WHVideoModelRowPrivate *priv;  
+  
+  priv = VIDEO_MODEL_ROW_PRIVATE(row);
 
   switch (property_id) 
     {
@@ -78,6 +96,16 @@ wh_video_model_row_set_property (GObject *object, guint property_id,
       break;
     case PROP_TITLE:
       wh_video_model_row_set_title (row, g_value_get_string (value));
+      break;
+    case PROP_SERIES:
+      wh_video_model_row_set_extended_info (row, 
+					    g_value_get_string (value),
+					    priv->episode);
+      break;
+    case PROP_EPISODE:
+      wh_video_model_row_set_extended_info (row,
+					    priv->series,
+					    g_value_get_string (value));
       break;
     case PROP_N_VIEWS:
       wh_video_model_row_set_n_views (row, g_value_get_int (value));
@@ -90,6 +118,10 @@ wh_video_model_row_set_property (GObject *object, guint property_id,
       break;
     case PROP_RENDERER:
       wh_video_model_row_set_renderer (row, g_value_get_object (value));
+      break;
+    case PROP_THUMBNAIL:
+      wh_video_model_row_set_thumbnail (row, 
+					g_value_get_object (value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -141,6 +173,24 @@ wh_video_model_row_class_init (WHVideoModelRowClass *klass)
 
   g_object_class_install_property 
     (object_class,
+     PROP_SERIES,
+     g_param_spec_string ("series",
+			  "series",
+			  "Series",
+			  NULL,
+			  G_PARAM_READWRITE));
+
+  g_object_class_install_property 
+    (object_class,
+     PROP_EPISODE,
+     g_param_spec_string ("episode",
+			  "episide",
+			  "Episode",
+			  NULL,
+			  G_PARAM_READWRITE));
+
+  g_object_class_install_property 
+    (object_class,
      PROP_N_VIEWS,
      g_param_spec_int ("n-views",
 		       "n-views",
@@ -178,6 +228,16 @@ wh_video_model_row_class_init (WHVideoModelRowClass *klass)
 			  "Renderer Object used to paint the row",
 			  WH_TYPE_VIDEO_ROW_RENDERER,
 			  G_PARAM_READWRITE));
+
+  g_object_class_install_property 
+    (object_class,
+     PROP_THUMBNAIL,
+     g_param_spec_object ("thumbnail",
+			  "Thumbnail",
+			  "Thumbnail image of video file",
+			  GDK_TYPE_PIXBUF,
+			  G_PARAM_READWRITE));
+
 }
 
 static void
@@ -231,13 +291,61 @@ wh_video_model_row_set_title (WHVideoModelRow *row, const gchar *title)
   g_object_ref (row);
 
   g_free (priv->title);
-  
+  priv->title = NULL;
+
   if (title && title[0] != '\0')
     priv->title = g_strdup(title);
 
   g_object_notify (G_OBJECT (row), "title");
   g_object_unref (row);
 }
+
+void
+wh_video_model_row_set_extended_info (WHVideoModelRow *row,
+				      const gchar     *series,
+				      const gchar     *episode)
+{
+  WHVideoModelRowPrivate *priv = VIDEO_MODEL_ROW_PRIVATE(row);
+
+  g_object_ref (row);
+
+  g_free (priv->series);
+  priv->series = NULL;
+  
+  if (series && series[0] != '\0')
+    priv->series = g_strdup(series);
+
+  g_object_notify (G_OBJECT (row), "series");
+
+  g_free (priv->episode);
+  priv->episode = NULL;
+  
+  if (episode && episode[0] != '\0')
+    priv->episode = g_strdup(episode);
+
+  g_object_notify (G_OBJECT (row), "episode");
+
+  g_object_unref (row);
+}
+
+void
+wh_video_model_row_get_extended_info (WHVideoModelRow *row,
+				      gchar          **series,
+				      gchar          **episode)
+{
+  WHVideoModelRowPrivate *priv = VIDEO_MODEL_ROW_PRIVATE(row);
+
+  if (priv->series)
+    *series = g_strdup (priv->series);
+  else
+    *series = NULL;
+
+  if (priv->episode)
+    *episode = g_strdup (priv->episode);
+  else
+    *episode = NULL;
+}
+
 
 gint
 wh_video_model_row_get_age (WHVideoModelRow *row)
@@ -327,5 +435,31 @@ wh_video_model_row_set_n_views (WHVideoModelRow *row, gint n_views)
   priv->n_views = n_views;
 
   g_object_notify (G_OBJECT (row), "n-views");
+  g_object_unref (row);
+}
+
+GdkPixbuf*
+wh_video_model_row_get_thumbnail (WHVideoModelRow *row)
+{
+  WHVideoModelRowPrivate *priv = VIDEO_MODEL_ROW_PRIVATE(row);
+
+  return priv->thumbnail;
+}
+
+void
+wh_video_model_row_set_thumbnail (WHVideoModelRow *row,
+				  GdkPixbuf       *pixbuf)
+{
+  WHVideoModelRowPrivate *priv = VIDEO_MODEL_ROW_PRIVATE(row);
+
+  g_object_ref (row);
+
+  if (priv->thumbnail)
+    g_object_unref (priv->thumbnail);
+
+  priv->thumbnail = pixbuf;
+  g_object_ref (pixbuf);
+
+  g_object_notify (G_OBJECT (row), "thumbnail");
   g_object_unref (row);
 }

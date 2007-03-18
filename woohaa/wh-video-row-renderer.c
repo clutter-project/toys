@@ -5,6 +5,8 @@
 
 G_DEFINE_TYPE (WHVideoRowRenderer, wh_video_row_renderer, CLUTTER_TYPE_ACTOR);
 
+#define PAD 4
+
 #define VIDEO_ROW_RENDERER_PRIVATE(o) \
   (G_TYPE_INSTANCE_GET_PRIVATE ((o), WH_TYPE_VIDEO_ROW_RENDERER, WHVideoRowRendererPrivate))
 
@@ -14,9 +16,10 @@ struct _WHVideoRowRendererPrivate
 {
   WHVideoModelRow *row;
   ClutterActor    *container;
-  ClutterActor    *thumbnail;
-  ClutterActor    *title_label;
+  ClutterActor    *thumbnail, *thumbnail_image;
+  ClutterActor    *title_label, *info_label, *date_label;
   gint             width, height;
+  gboolean         active;
 };
 
 enum
@@ -25,7 +28,43 @@ enum
   PROP_ROW
 };
 
-static ClutterActor *_default_video_thumbnail = NULL;
+static void
+sync_thumbnail (WHVideoRowRenderer *renderer)
+{
+  GdkPixbuf                 *pixbuf; 
+  WHVideoRowRendererPrivate *priv;  
+
+  priv = VIDEO_ROW_RENDERER_PRIVATE(renderer);
+
+  pixbuf = wh_video_model_row_get_thumbnail (priv->row);
+
+  if (pixbuf)
+    {
+      if (priv->thumbnail_image)
+	g_object_unref (priv->thumbnail_image);
+
+      priv->thumbnail_image = clutter_texture_new_from_pixbuf (pixbuf);
+
+      if (priv->thumbnail_image == NULL)
+	return;
+
+      clutter_actor_set_position (priv->thumbnail_image, PAD + 2, PAD + 2);
+      clutter_actor_set_size (priv->thumbnail_image, 
+			      priv->height - (PAD*2) - 4, 
+			      priv->height - (PAD*2) - 4);
+      clutter_group_add(CLUTTER_GROUP(priv->container),
+			priv->thumbnail_image);
+      clutter_actor_show (priv->thumbnail_image);
+    }
+}
+
+static void 
+on_thumbnail_change (GObject        *object,
+		     GParamSpec     *pspec,
+		     WHVideoRowRenderer *renderer)
+{
+  sync_thumbnail (renderer);
+}
 
 static void
 wh_video_row_renderer_get_property (GObject *object, guint property_id,
@@ -61,6 +100,10 @@ wh_video_row_renderer_set_property (GObject *object, guint property_id,
       if (priv->row)
 	g_object_unref(priv->row);
       priv->row = g_value_get_object (value);
+      g_signal_connect (priv->row,
+			"notify::thumbnail",
+			G_CALLBACK (on_thumbnail_change),
+			row);
       g_object_ref(priv->row);
       break;
     default:
@@ -93,30 +136,74 @@ wh_video_row_renderer_request_coords (ClutterActor    *self,
   if ( ((box->x2 - box->x1) != priv->width) 
        || ((box->y2 - box->y1) != priv->height))
     {
-#define PAD 10
-
+      ClutterColor color      = { 0xff, 0xff, 0xff, 0xff };
+      ClutterColor info_color = { 0xdd, 0xdd, 0xee, 0xff };
       gint  w,h;
       gchar font_desc[32];
+      gchar *episode = NULL, *series = NULL, *info = NULL;
+      GDate *date;      
+      gchar  date_buf[32];
 
       /* Keep a simple cache to avoid setting fonts up too much */
       w = priv->width  = (box->x2 - box->x1);
       h = priv->height = (box->y2 - box->y1);
 
-      clutter_actor_set_position (priv->thumbnail, 0, 0);
-      clutter_actor_set_size (priv->thumbnail, h, h);
+      clutter_actor_set_position (priv->thumbnail, PAD, PAD);
+      clutter_actor_set_size (priv->thumbnail, h-(PAD*2), h-(PAD*2));
 
-      g_snprintf(font_desc, 32, "Sans Bold %ipx", h/3); 
+      g_snprintf(font_desc, 32, "Sans %ipx", (h*4)/10); 
 
       clutter_label_set_text (CLUTTER_LABEL(priv->title_label),
 			      wh_video_model_row_get_title (priv->row));
       clutter_label_set_font_name (CLUTTER_LABEL(priv->title_label), 
 				   font_desc); 
+      clutter_label_set_color (CLUTTER_LABEL(priv->title_label), &color);
       clutter_label_set_line_wrap (CLUTTER_LABEL(priv->title_label), FALSE);
       clutter_label_set_ellipsize  (CLUTTER_LABEL(priv->title_label), 
-				    PANGO_ELLIPSIZE_END);
+				    PANGO_ELLIPSIZE_MIDDLE);
 
       clutter_actor_set_width (priv->title_label, w - (h + (2*PAD)));
       clutter_actor_set_position (priv->title_label, h + PAD, PAD); 
+
+      g_snprintf(font_desc, 32, "Sans %ipx", (h*3)/10); 
+      wh_video_model_row_get_extended_info (priv->row, &series, &episode);
+
+      date = g_date_new();
+      
+      g_date_set_time_t (date, wh_video_model_row_get_age(priv->row)); 
+      g_date_strftime (date_buf, 32, "%x", date);
+      
+      info = g_strdup_printf("%s%s%s%s%s%s"
+			     "Added: %s",
+			     series != NULL  ? "Series: " : "",
+			     series != NULL  ?  series : "",
+			     series != NULL  ?  " " : "",
+			     episode != NULL ? "Episode: " : "",
+			     episode != NULL ?  episode : "",
+			     episode != NULL ?  " " : "",
+			     date_buf);
+      
+      clutter_label_set_text (CLUTTER_LABEL(priv->info_label), info);
+      clutter_label_set_font_name (CLUTTER_LABEL(priv->info_label), 
+				   font_desc); 
+      clutter_label_set_color (CLUTTER_LABEL(priv->info_label), 
+			       &info_color);
+      clutter_label_set_line_wrap (CLUTTER_LABEL(priv->info_label), FALSE);
+      clutter_label_set_use_markup (CLUTTER_LABEL(priv->info_label), TRUE);
+      
+      clutter_actor_set_position (priv->info_label, h + PAD, h/2); 
+      clutter_actor_set_width (priv->title_label, w - (h + (2*PAD)));
+      
+      g_free (info);
+      g_free (series);
+      g_free (episode);
+      g_date_free(date);
+
+      sync_thumbnail (row);
+
+      /* Force Update active look */
+      priv->active = ~priv->active;
+      wh_video_row_renderer_set_active (row, ~priv->active); 
     }
 }
 
@@ -171,22 +258,15 @@ wh_video_row_renderer_class_init (WHVideoRowRendererClass *klass)
 static void
 wh_video_row_renderer_init (WHVideoRowRenderer *self)
 {
+  ClutterColor color = { 0xff, 0xff, 0xff, 0xff };
   WHVideoRowRendererPrivate *priv;  
   
   priv = VIDEO_ROW_RENDERER_PRIVATE(self);
 
-  if (_default_video_thumbnail == NULL)
-    _default_video_thumbnail = util_actor_from_file ("video.png", -1, -1);
-
-  if (_default_video_thumbnail == NULL)
-    g_error ("Unable to load video.png");
-
-  /* FIXME: have below set on realize/unrealize */
-
-  priv->thumbnail 
-    = clutter_clone_texture_new (CLUTTER_TEXTURE(_default_video_thumbnail));
+  priv->thumbnail = clutter_rectangle_new_with_color(&color);
 
   priv->title_label = clutter_label_new();
+  priv->info_label = clutter_label_new();
 
   priv->container = clutter_group_new();
   clutter_actor_set_parent (priv->container, CLUTTER_ACTOR(self));
@@ -194,9 +274,45 @@ wh_video_row_renderer_init (WHVideoRowRenderer *self)
   clutter_group_add_many (CLUTTER_GROUP(priv->container), 
 			  priv->thumbnail,
 			  priv->title_label,
+			  priv->info_label,
 			  NULL);
 
   clutter_actor_show_all (priv->container);
+}
+
+void
+wh_video_row_renderer_set_active (WHVideoRowRenderer *renderer, 
+				  gboolean            setting)
+{
+  /* FIXME: should be prop */
+  WHVideoRowRendererPrivate *priv = VIDEO_ROW_RENDERER_PRIVATE(renderer);
+
+  ClutterColor inactive_col = { 0xff, 0xff, 0xff, 0xff };
+  ClutterColor   active_col = { 0xb4, 0xe2, 0xff, 0xff };
+  ClutterColor info_inactive_col = { 0xdd, 0xdd, 0xee, 0xff };
+  ClutterColor info_active_col   = { 0xff, 0xff, 0xff, 0xff };
+
+  if (priv->active == setting)
+    return;
+
+  priv->active = setting;
+
+  if (setting)
+    {
+      clutter_label_set_color (CLUTTER_LABEL(priv->title_label), 
+			       &active_col);
+      clutter_label_set_color (CLUTTER_LABEL(priv->info_label), 
+			       &info_active_col);
+      clutter_actor_set_opacity (CLUTTER_ACTOR(renderer), 0xff);
+    }
+  else
+    {
+      clutter_label_set_color (CLUTTER_LABEL(priv->title_label), 
+			       &inactive_col);
+      clutter_label_set_color (CLUTTER_LABEL(priv->info_label), 
+			       &info_inactive_col);
+      clutter_actor_set_opacity (CLUTTER_ACTOR(renderer), 0xcc);
+    }
 }
 
 WHVideoRowRenderer*

@@ -2,104 +2,6 @@
 #include "wh-video-model.h"
 #include "util.h"
 
-#define CLUTTER_TYPE_BEHAVIOUR_SPINNER (clutter_behaviour_spinner_get_type ())
-
-#define CLUTTER_BEHAVIOUR_SPINNER(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), \
-  CLUTTER_TYPE_BEHAVIOUR_SPINNER, ClutterBehaviourSpinner))
-
-#define CLUTTER_BEHAVIOUR_SPINNER_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), \
-  CLUTTER_TYPE_BEHAVIOUR_SPINNER, ClutterBehaviourSpinnerClass))
-
-#define CLUTTER_IS_BEHAVIOUR_SPINNER(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
-  CLUTTER_TYPE_BEHAVIOUR_SPINNER))
-
-#define CLUTTER_IS_BEHAVIOUR_SPINNER_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), \
-  CLUTTER_TYPE_BEHAVIOUR_SPINNER))
-
-#define CLUTTER_BEHAVIOUR_SPINNER_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), \
-  CLUTTER_TYPE_BEHAVIOUR_SPINNER, ClutterBehaviourSpinnerClass))
-
-typedef struct _ClutterBehaviourSpinner        ClutterBehaviourSpinner;
-typedef struct _ClutterBehaviourSpinnerClass   ClutterBehaviourSpinnerClass;
- 
-struct _ClutterBehaviourSpinner
-{
-  ClutterBehaviour             parent;
-  gdouble                      start;
-  gdouble                      end;
-};
-
-struct _ClutterBehaviourSpinnerClass
-{
-  ClutterBehaviourClass   parent_class;
-};
-
-GType clutter_behaviour_spinner_get_type (void) G_GNUC_CONST;
-
-G_DEFINE_TYPE (ClutterBehaviourSpinner,   \
-               clutter_behaviour_spinner, \
-               CLUTTER_TYPE_BEHAVIOUR);
-
-static void
-clutter_behaviour_alpha_notify (ClutterBehaviour *behave,
-                                guint32           alpha_value)
-{
-  ClutterBehaviourSpinner *spin = CLUTTER_BEHAVIOUR_SPINNER(behave);
-  gint                     i, n_actors;
-  ClutterActor            *actor;
-  gdouble                  ang;
-
-  ang = (gdouble) alpha_value * (spin->end - spin->start) 
-                         / (gdouble)CLUTTER_ALPHA_MAX_ALPHA;
-  ang += spin->start;
-
-  n_actors = clutter_behaviour_get_n_actors(behave);
-
-  for (i=0; i < n_actors; i++)
-    {
-      actor = clutter_behaviour_get_nth_actor (behave, i);
-      clutter_actor_rotate_y(actor, ang, 
-			     clutter_actor_get_width (actor)/2, 
-			     0);
-    }
-}
-
-static void
-clutter_behaviour_spinner_class_init (ClutterBehaviourSpinnerClass *klass)
-{
-  ClutterBehaviourClass *behave_class = CLUTTER_BEHAVIOUR_CLASS (klass);
-
-  behave_class->alpha_notify = clutter_behaviour_alpha_notify;
-}
-
-static void
-clutter_behaviour_spinner_init (ClutterBehaviourSpinner *self)
-{
-  ;
-}
-
-static ClutterBehaviour*
-clutter_behaviour_spinner_new (ClutterAlpha       *alpha,
-			       gdouble             angle_start,
-			       gdouble             angle_end)
-{
-  ClutterBehaviourSpinner *spin_behave;
-
-  spin_behave = g_object_new (CLUTTER_TYPE_BEHAVIOUR_SPINNER, 
-			      "alpha", alpha,
-			      NULL);
-
-  spin_behave->start = angle_start;
-  spin_behave->end   = angle_end;
-
-  return CLUTTER_BEHAVIOUR(spin_behave);
-}
-
 G_DEFINE_TYPE (WHVideoView, wh_video_view, CLUTTER_TYPE_ACTOR);
 
 #define WH_VIDEO_VIEW_GET_PRIVATE(obj)                \
@@ -130,9 +32,15 @@ struct _WHVideoViewPrivate
   ClutterBehaviour  *behave_switch_in;
   gulong             switch_signal;
 
+  /* Selection tracking */
   gint               active_item_num;
   gint               pending_item_num;
   gint               current_offset;
+  gint               n_items; 	
+
+  /* up/down 'buttons */
+  ClutterActor *up;
+  ClutterActor *down;
 };
 
 enum
@@ -160,6 +68,11 @@ ensure_layout (WHVideoView *view,
 
 static void
 on_model_rows_change (WHVideoModel *model, gpointer *userdata);
+
+static void
+on_model_row_added (WHVideoModel    *model, 
+		    WHVideoModelRow *row,
+		    gpointer         *userdata);
 
 static void
 wh_video_view_set_property (GObject      *object, 
@@ -194,6 +107,13 @@ wh_video_view_set_property (GObject      *object,
 			   "filter-changed",
 			   G_CALLBACK(on_model_rows_change), 
 			   view);
+
+	  /* FIXME: borked
+	  g_signal_connect(priv->model, 
+			   "row-added",
+			   G_CALLBACK(on_model_row_added), 
+			   view);
+	  */
 	}
       break;
     case PROP_N_ROWS:
@@ -241,6 +161,7 @@ ensure_layout (WHVideoView *view,
 	       gint         n_rows)
 {
   WHVideoViewPrivate *priv;
+  WHVideoModelRow    *row;
   gint                i, offset = 0;
   gboolean            size_change, n_rows_change;
 
@@ -264,28 +185,38 @@ ensure_layout (WHVideoView *view,
       renderer = clutter_group_get_nth_child (CLUTTER_GROUP(priv->rows), i);
 
       clutter_actor_set_position (renderer, 0, offset); 
-      clutter_actor_set_size (renderer, width, priv->row_height); 
+      clutter_actor_set_size (renderer, 
+			      width - clutter_actor_get_height (priv->up)- 10, 
+			      priv->row_height); 
       clutter_actor_show_all (renderer);  
 
       offset += priv->row_height;
     }
 
+  row = wh_video_model_get_row (priv->model, priv->active_item_num);
+  if (row)
+    wh_video_row_renderer_set_active (wh_video_model_row_get_renderer(row), 
+				      TRUE); 
+
   clutter_actor_show_all (priv->rows);
 
-  if (n_rows_change || size_change)
+  if (size_change)
     {
-      if (priv->selector)
-	g_object_unref (priv->selector);
-      
-      priv->selector = util_actor_from_file ("selector.svg", 
-					     width, 
-					     priv->row_height);
-      
-      clutter_actor_set_parent (priv->selector, CLUTTER_ACTOR(view));
-      
+      /* Selector and buttons - */
       clutter_actor_set_size (priv->selector, width, priv->row_height);
-      clutter_actor_set_position (priv->selector, 0, priv->row_height);        
-      
+      clutter_actor_set_position (priv->selector, 0, 0);  
+
+      clutter_actor_set_position 
+	(priv->up, 
+	 width - clutter_actor_get_width (priv->up) - 10, 
+	 0);  
+
+      clutter_actor_set_position 
+	(priv->down, 
+	 width - clutter_actor_get_width (priv->down) - 10, 
+	 priv->row_height - clutter_actor_get_height (priv->down));  
+
+      /* Set up new scroll path */
       priv->path_up[0].x = 0;   priv->path_up[0].y = 0; 
       priv->path_up[1].x = 0;   
       priv->path_up[1].y = -1 * (priv->row_height + (priv->row_height/4)); 
@@ -296,7 +227,7 @@ ensure_layout (WHVideoView *view,
       priv->path_down[1].y = (priv->row_height + (priv->row_height/4)); 
       priv->path_down[2].x = 0;   priv->path_down[2].y = priv->row_height; 
       
-      /* FIXME: unapply to any actors.. */
+      /* FIXME: unapply to any actors..? */
       if (priv->behave_up) g_object_unref (priv->behave_up);
       priv->behave_up = clutter_behaviour_path_new (priv->alpha, 
 						    priv->path_up, 3);
@@ -342,11 +273,18 @@ wh_video_view_paint (ClutterActor *actor)
 
   glPushMatrix();
 
-  if (priv->selector)
-    clutter_actor_paint (priv->selector);
+  if (priv->selector && priv->n_items)
+    {
+      clutter_actor_paint (priv->selector);
+
+      if (priv->active_item_num > 0)
+	clutter_actor_paint (priv->up);
+      if (priv->active_item_num < priv->n_items-1)
+	clutter_actor_paint (priv->down);
+    }
 
   glTranslatef(0.0, 
-	       (float)-1.0 * (view->priv->active_item_num - 1) 
+	       (float)-1.0 * (view->priv->active_item_num) 
 	                         * priv->row_height, 
 	       0.0);
 
@@ -430,6 +368,7 @@ wh_video_view_activate (WHVideoView  *view,
 			gint          entry_num)
 {
   WHVideoViewPrivate *priv;
+  WHVideoModelRow    *row;
 
   priv = WH_VIDEO_VIEW_GET_PRIVATE(view);
 
@@ -438,6 +377,10 @@ wh_video_view_activate (WHVideoView  *view,
 
   if (entry_num < 0  || entry_num >= wh_video_model_row_count (priv->model))
       return;
+
+  row = wh_video_model_get_row (priv->model, priv->active_item_num);
+  wh_video_row_renderer_set_active (wh_video_model_row_get_renderer(row), 
+				    FALSE); 
 
   priv->pending_item_num = entry_num;
 
@@ -463,6 +406,7 @@ scroll_timeline_completed (ClutterTimeline *timeline,
 {
   WHVideoView        *view = WH_VIDEO_VIEW(user_data);
   WHVideoViewPrivate *priv;
+  WHVideoModelRow    *row;
 
   priv = WH_VIDEO_VIEW_GET_PRIVATE(view);
 
@@ -471,7 +415,15 @@ scroll_timeline_completed (ClutterTimeline *timeline,
   else
     clutter_behaviour_remove (priv->behave_up, priv->rows);
 
+  row = wh_video_model_get_row (priv->model, priv->active_item_num);
+  wh_video_row_renderer_set_active (wh_video_model_row_get_renderer(row), 
+				    FALSE); 
+
   priv->active_item_num = priv->pending_item_num;
+
+  row = wh_video_model_get_row (priv->model, priv->active_item_num);
+  wh_video_row_renderer_set_active (wh_video_model_row_get_renderer(row), 
+				    TRUE); 
 
   clutter_actor_set_position (priv->rows, 0, 0);
 }
@@ -568,6 +520,9 @@ add_row_foreach (WHVideoModel    *model,
 
   renderer = wh_video_model_row_get_renderer (row);
 
+  /* Reset as could have been active previously */
+  wh_video_row_renderer_set_active (renderer, FALSE); 
+
   clutter_group_add (CLUTTER_GROUP(priv->rows), CLUTTER_ACTOR(renderer));
 }
 
@@ -577,6 +532,30 @@ wh_video_view_add_rows (WHVideoView *view)
   WHVideoViewPrivate *priv = WH_VIDEO_VIEW_GET_PRIVATE (view);
 
   wh_video_model_foreach (priv->model, add_row_foreach, (gpointer)view);
+
+  priv->n_items = wh_video_model_row_count (priv->model); /* cache */
+}
+
+static void
+on_model_row_added (WHVideoModel    *model, 
+		    WHVideoModelRow *row,
+		    gpointer         *userdata)
+{
+  WHVideoView        *view = WH_VIDEO_VIEW(userdata);
+  WHVideoViewPrivate *priv;
+  WHVideoRowRenderer *renderer;
+
+  priv = WH_VIDEO_VIEW_GET_PRIVATE (view);
+
+  renderer = wh_video_model_row_get_renderer (row);
+  wh_video_row_renderer_set_active (renderer, FALSE); 
+
+  clutter_group_add (CLUTTER_GROUP(priv->rows), CLUTTER_ACTOR(renderer));
+
+  ensure_layout (view,
+		 clutter_actor_get_width(CLUTTER_ACTOR(view)),
+		 clutter_actor_get_height(CLUTTER_ACTOR(view)),
+		 priv->n_rows_visible);
 }
 
 static void
@@ -584,13 +563,12 @@ on_model_rows_change (WHVideoModel *model, gpointer *userdata)
 {
   WHVideoView        *view = WH_VIDEO_VIEW(userdata);
   WHVideoViewPrivate *priv;
+  WHVideoModelRow    *row;
 
   priv = WH_VIDEO_VIEW_GET_PRIVATE (view);
 
   if (!priv->enable_model_change_anim)
     {
-      WHVideoModelRow *row;
-
       row = wh_video_model_get_row (priv->model, priv->active_item_num);
 
       wh_video_view_remove_rows (view);
@@ -622,6 +600,8 @@ static void
 wh_video_view_init (WHVideoView *self)
 {
   WHVideoViewPrivate *priv;
+  ClutterColor        col = { 0xb4, 0xe2, 0xff, 0xff };
+  ClutterColor rect_col   = { 0x88, 0x88, 0x97, 0xff };
 
   self->priv = priv = WH_VIDEO_VIEW_GET_PRIVATE (self);
 
@@ -661,6 +641,27 @@ wh_video_view_init (WHVideoView *self)
 			"completed",
 			G_CALLBACK (switch_timeline_completed_1),
 			self);
+
+  /* FIXME: global font/style settings  */
+#define FONT "VistaSansBook 75px"
+
+  priv->up = clutter_label_new_full (FONT, "<", &col);
+  clutter_actor_rotate_z (priv->up, 
+			90.0,
+			clutter_actor_get_width (priv->up)/2, 
+			clutter_actor_get_height (priv->up)/2);
+
+  priv->down = clutter_label_new_full (FONT, "<", &col);
+  clutter_actor_rotate_z (priv->down, 
+			270.0,
+			clutter_actor_get_width (priv->down)/2, 
+			clutter_actor_get_height (priv->down)/2);
+
+  clutter_actor_set_parent (priv->up, CLUTTER_ACTOR(self));
+  clutter_actor_set_parent (priv->down, CLUTTER_ACTOR(self));
+
+  priv->selector = clutter_rectangle_new_with_color (&rect_col);
+  clutter_actor_set_parent (priv->selector, CLUTTER_ACTOR(self));
 }
 
 ClutterActor*

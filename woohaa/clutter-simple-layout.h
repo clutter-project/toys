@@ -43,14 +43,6 @@ GType clutter_simple_layout_get_type (void);
 ClutterActor*
 clutter_simple_layout_new (void);
 
-void
-clutter_simple_layout_fade_out (ClutterSimpleLayout *self, 
-				ClutterAlpha        *alpha);
-
-void
-clutter_simple_layout_fade_in (ClutterSimpleLayout *self, 
-			       ClutterAlpha        *alpha);
-
 G_END_DECLS
 
 #endif /* _CLUTTER_SIMPLE_LAYOUT */

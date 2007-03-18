@@ -2,41 +2,30 @@
 #include <clutter-gst/clutter-gst.h>
 #include <gst/gst.h>
 #include <sqlite3.h>
+#include <string.h>
 
-#include "clutter-slider-menu.h"
+#include "wh-slider-menu.h"
 #include "clutter-simple-layout.h"
 #include "wh-video-model.h"
 #include "wh-video-model-row.h"
 #include "wh-video-view.h"
 #include "wh-db.h"
+#include "wh-screen-video.h"
+#include "wh-busy.h"
 #include "util.h"
 
-#define FONT "Sans Bold 56"
+#define FONT "VistaSansBook 75px"
 
-#define CSW() CLUTTER_STAGE_WIDTH()
-#define CSH() CLUTTER_STAGE_HEIGHT()
-
-typedef struct MovieApp
+typedef struct WooHaa
 {
   ClutterActor      *screen_browse, *screen_video;
   WHVideoModel      *model;
-  
   ClutterActor      *view;
   ClutterActor      *menu;
-  ClutterTimeline   *fade_timeline;
-  ClutterAlpha      *fade_alpha;
-
-  ClutterActor      *video;
-  ClutterActor      *video_busy;
-  ClutterActor      *video_seekbar;
-  ClutterActor      *video_controls;
-  ClutterTimeline   *video_busy_timeline, *foo_effect;
-  gboolean           video_playing;
-  gboolean           video_controls_visible;
-
-  sqlite3           *db;
+  ClutterActor      *busy;
+  WHDB              *db;
 }
-MovieApp;
+WooHaa;
 
 void 
 browse_input_cb (ClutterStage *stage,
@@ -51,262 +40,63 @@ video_input_cb (ClutterStage *stage,
 void
 foo_effect_cb (ClutterTimeline *timeline, 
 	       gint             frame_num, 
-	       MovieApp        *app)
+	       WooHaa          *wh)
 {
-  clutter_actor_rotate_y (app->video,
+  /*
+  clutter_actor_rotate_y (wh->video,
 			  frame_num * 12,
 			  CLUTTER_STAGE_WIDTH()/2,
 			  0);
+  */
 }
 
 void
-video_busy_timeline_cb (ClutterTimeline *timeline, 
-			gint             frame_num, 
-			MovieApp        *app)
+playback_finish_complete (ClutterActor *actor, WooHaa *wh)
 {
-  clutter_actor_rotate_z(app->video_busy, (float)frame_num * 2.0, 
-			 clutter_actor_get_width (app->video_busy)/2, 
-			 clutter_actor_get_height (app->video_busy)/2);
-}
-
-
-void
-video_size_change (ClutterTexture *texture, 
-		   gint            width,
-		   gint            height,
-		   gpointer        user_data)
-{
-  gint           new_x, new_y, new_width, new_height;
-  
-  new_height = ( height * CLUTTER_STAGE_WIDTH() ) / width;
-
-  if (new_height <= CLUTTER_STAGE_HEIGHT())
-    {
-      new_width = CLUTTER_STAGE_WIDTH();
-      new_x = 0;
-      new_y = (CLUTTER_STAGE_HEIGHT() - new_height) / 2;
-    }
-  else
-    {
-      new_width  = ( width * CLUTTER_STAGE_HEIGHT() ) / height;
-      new_height = CLUTTER_STAGE_HEIGHT();
-      
-      new_x = (CLUTTER_STAGE_WIDTH() - new_width) / 2;
-      new_y = 0;
-    }
-  
-  clutter_actor_set_position (CLUTTER_ACTOR (texture), new_x, new_y);
-  
-  clutter_actor_set_size (CLUTTER_ACTOR (texture),
-			  new_width,
-			  new_height);
-}
-
-
-void 
-video_tick (GObject      *object,
-	    GParamSpec   *pspec,
-	    MovieApp     *app)
-{
-  ClutterGstVideoTexture *vtex;
-  gint                    position, duration;
-
-  vtex = CLUTTER_GST_VIDEO_TEXTURE(object);
-
-  position = clutter_media_get_position (CLUTTER_MEDIA(vtex));
-  duration = clutter_media_get_duration (CLUTTER_MEDIA(vtex));
-
-  if (duration == 0 || position == 0)
-    return;
-
-  if (!app->video_playing && position > 0)
-    {
-      WHVideoModelRow *row = NULL;
-
-      util_actor_fade_in (app->screen_video);
-
-      clutter_timeline_stop (app->video_busy_timeline);
-#if 0
-      /* FIXME need a call back on the fade in complete call 
-       *       to simple hide..
-       * util_actor_fade_in () needs a 'complete' callback
-      */
-      util_actor_fade_out (app->video_busy);
-      util_actor_fade_out (app->screen_browse);
-#endif
-      /* Update underlying db */
-      row = wh_video_view_get_selected (WH_VIDEO_VIEW(app->view));
-
-      wh_video_view_enable_animation (WH_VIDEO_VIEW(app->view), FALSE);
-      wh_video_model_row_set_n_views (row, 
-				      wh_video_model_row_get_n_views(row)+1);
-      wh_video_model_row_set_vtime (row, time(NULL));
-      wh_db_sync_row (app->db, row);
-
-      app->video_playing = TRUE;
-    }
-
-  clutter_actor_set_size (app->video_seekbar, 
-			  (position * (CSW() - CSW()/4 - 20)) / duration, 
-			  20);  
+  wh_video_view_enable_animation (WH_VIDEO_VIEW(wh->view), TRUE);
 }
 
 void
-video_stop (MovieApp *app)
+on_video_playback_start (WHScreenVideo *video,
+			 WooHaa      *wh)
 {
-  clutter_media_set_playing (CLUTTER_MEDIA(app->video), FALSE);
+  clutter_actor_raise_top (wh->screen_browse);
 
-  g_signal_handlers_disconnect_by_func (app->video, 
-					G_CALLBACK (video_tick),
-					app);
+  util_actor_fade (wh->screen_browse, NULL, 0x99, 0, NULL);
+  util_actor_zoom (wh->screen_browse, NULL, 1.0, 0.5, NULL);
+  util_actor_fade (wh->screen_video, NULL, 0, 0xff, NULL);
 
-  app->video_playing = FALSE;
-  wh_video_view_enable_animation (WH_VIDEO_VIEW(app->view), TRUE);
+  wh_video_view_enable_animation (WH_VIDEO_VIEW(wh->view), FALSE);
 
-  util_actor_fade_out (app->screen_video);
+  /* Stop the busy 'cursor' */
+  util_actor_fade_out (wh->busy, NULL, NULL);
+}
 
-  clutter_simple_layout_fade_in
-    (CLUTTER_SIMPLE_LAYOUT(app->screen_browse), app->fade_alpha); 
+void
+on_video_playback_finish (WHScreenVideo *video,
+			  WooHaa        *wh)
+{
+  WHVideoModelRow *row;
 
-  clutter_actor_hide (app->video_busy);
-  clutter_actor_hide_all (app->video_controls);
-
-  g_signal_handlers_disconnect_by_func(clutter_stage_get_default(),
-				       video_input_cb,
-				       app);
-
-  g_signal_connect (clutter_stage_get_default(), 
+  g_signal_connect (clutter_stage_get_default(),
 		    "input-event",
 		    G_CALLBACK (browse_input_cb),
-		    app);
-}
+		    wh);
 
-void 
-video_input_cb (ClutterStage *stage,
-		ClutterEvent *event,
-		gpointer      user_data)
-{
-  MovieApp *app = (MovieApp*)user_data;
-
-  if (event->type == CLUTTER_KEY_RELEASE)
-    {
-      ClutterKeyEvent* kev = (ClutterKeyEvent *) event;
-
-      switch (clutter_key_event_symbol (kev))
-	{
-	case CLUTTER_p:
-	  clutter_media_set_playing 
-	    (CLUTTER_MEDIA(app->video),
-		  !clutter_media_get_playing (CLUTTER_MEDIA(app->video)));
-	  break;
-	case CLUTTER_Left:
-	  clutter_media_set_position 
-	    (CLUTTER_MEDIA(app->video),
-		  clutter_media_get_position (CLUTTER_MEDIA(app->video)) - 25);
-	  break;
-	case CLUTTER_Right:
-	  clutter_media_set_position 
-	    (CLUTTER_MEDIA(app->video),
-		  clutter_media_get_position (CLUTTER_MEDIA(app->video)) + 25);
-	  break;
-	case CLUTTER_Return:
-	  if (!app->video_playing)
-	    break;
-
-	  if (app->video_controls_visible)
-	    clutter_actor_hide_all (app->video_controls);
-	  else
-	    clutter_actor_show_all (app->video_controls);
-
-	  app->video_controls_visible = ~app->video_controls_visible;
-	  break;
-	case CLUTTER_e:
-	  if (!clutter_timeline_is_playing (app->foo_effect))
-	    clutter_timeline_start (app->foo_effect);
-	  break;
-	case CLUTTER_Escape:
-	  video_stop (app);
-	  break;
-	case CLUTTER_q:
-	  clutter_main_quit();
-	  break;
-	default:
-	  break;
-	}
-    }
-}
-
-void
-video_start (MovieApp *app)
-{
-  WHVideoModelRow *row = NULL;
-
-  row = wh_video_view_get_selected (WH_VIDEO_VIEW(app->view));
-
-  if (row == NULL || wh_video_model_row_get_path(row) == NULL)
-    return;
-
-  g_signal_handlers_disconnect_by_func(clutter_stage_get_default(),
-				       browse_input_cb,
-				       app);
-
-  g_signal_connect (clutter_stage_get_default(), 
-		    "input-event",
-		    G_CALLBACK (video_input_cb),
-		    app);
-
-  clutter_simple_layout_fade_out 
-    (CLUTTER_SIMPLE_LAYOUT(app->screen_browse), app->fade_alpha); 
-
-  util_actor_fade_in (app->video_busy);
-  clutter_timeline_start (app->video_busy_timeline);
-
-  g_signal_connect (app->video,
-		    "notify::position",
-		    G_CALLBACK (video_tick),
-		    app);
-
-  app->video_controls_visible = FALSE;
-
-  clutter_media_set_filename(CLUTTER_MEDIA(app->video), 
-			     wh_video_model_row_get_path(row));
-  clutter_media_set_playing (CLUTTER_MEDIA(app->video), TRUE);
-}
-
-void
-video_make_controls (MovieApp *app)
-{
-  ClutterActor *actor;
-  ClutterColor  bgcol = { 0xff, 0xff, 0xff, 0x99 },
-                 seekcol = { 0xcc, 0xcc, 0xcc, 0x99 },
-                fgcol = { 0, 0, 0, 0xff };
-
-  /* video controls */
-  app->video_controls = clutter_group_new();
+  /* update db */
+  row = wh_video_view_get_selected (WH_VIDEO_VIEW(wh->view));
+  wh_video_model_row_set_n_views (row, 
+				  wh_video_model_row_get_n_views(row)+1);
+  wh_video_model_row_set_vtime (row, time(NULL));
+  wh_db_sync_row (row);
   
-  actor = clutter_rectangle_new_with_color (&bgcol);
-  clutter_actor_set_size (actor, CSW() - CSW()/4, CSH()/8);
-  clutter_group_add (CLUTTER_GROUP(app->video_controls), actor);
+  clutter_actor_show (wh->screen_browse);
 
-  actor = clutter_rectangle_new_with_color (&seekcol);
-  clutter_actor_set_size (actor, CSW() - CSW()/4 - 20, 20);
-  clutter_actor_set_position (actor, 10, CSH()/8 - 40);
-  clutter_group_add (CLUTTER_GROUP(app->video_controls), actor);
-
-  app->video_seekbar = clutter_rectangle_new_with_color (&fgcol);
-  clutter_actor_set_size (app->video_seekbar, 0, 20);
-  clutter_actor_set_position (app->video_seekbar, 10, CSH()/8 - 40);
-  clutter_group_add (CLUTTER_GROUP(app->video_controls), app->video_seekbar);
-
-  clutter_group_add (CLUTTER_GROUP(clutter_stage_get_default ()), 
-		     app->video_controls);
-
-  clutter_actor_set_position (app->video_controls, CSW()/8, CSH() - CSH()/6);
-
-  app->foo_effect = clutter_timeline_new (30, 90);
-  g_signal_connect (app->foo_effect, "new-frame", 
-		    G_CALLBACK (foo_effect_cb), app);
-
+  util_actor_fade (wh->screen_browse, NULL, 0, 0xff, NULL);
+  util_actor_zoom (wh->screen_browse, NULL, 0.5, 1.0, NULL);
+  util_actor_fade (wh->screen_video, 
+		   (UtilAnimCompleteFunc)playback_finish_complete, 
+		   0xff, 0, wh);
 }
 
 void 
@@ -314,7 +104,7 @@ browse_input_cb (ClutterStage *stage,
 		 ClutterEvent *event,
 		 gpointer      user_data)
 {
-  MovieApp *app = (MovieApp*)user_data;
+  WooHaa *wh = (WooHaa*)user_data;
 
   if (event->type == CLUTTER_KEY_RELEASE)
     {
@@ -323,19 +113,27 @@ browse_input_cb (ClutterStage *stage,
       switch (clutter_key_event_symbol (kev))
 	{
 	case CLUTTER_Left:
-	  clutter_slider_menu_advance (CLUTTER_SLIDER_MENU(app->menu), -1);
+	  wh_slider_menu_advance (WH_SLIDER_MENU(wh->menu), -1);
 	  break;
 	case CLUTTER_Right:
-	  clutter_slider_menu_advance (CLUTTER_SLIDER_MENU(app->menu), 1);
+	  wh_slider_menu_advance (WH_SLIDER_MENU(wh->menu), 1);
 	  break;
 	case CLUTTER_Up:
-	  wh_video_view_advance (WH_VIDEO_VIEW(app->view), -1);
+	  wh_video_view_advance (WH_VIDEO_VIEW(wh->view), -1);
 	  break;
 	case CLUTTER_Down:
-	  wh_video_view_advance (WH_VIDEO_VIEW(app->view), 1);
+	  wh_video_view_advance (WH_VIDEO_VIEW(wh->view), 1);
 	  break;
 	case CLUTTER_Return:
-	  video_start (app);
+	  g_signal_handlers_disconnect_by_func(clutter_stage_get_default(),
+					       browse_input_cb,
+					       wh);
+
+	  wh_screen_video_activate (WH_SCREEN_VIDEO(wh->screen_video), 
+				    WH_VIDEO_VIEW(wh->view));
+
+	  util_actor_fade (wh->screen_browse, NULL, 0xff, 0x99, NULL);
+	  util_actor_fade_in (wh->busy, NULL, NULL);
 	  break;
 	case CLUTTER_q:
 	  clutter_main_quit();
@@ -346,6 +144,14 @@ browse_input_cb (ClutterStage *stage,
     }
 }
 
+void
+screen_fadeout_complete (ClutterActor *actor, WooHaa *wh)
+{
+  g_object_ref (wh->busy);
+  clutter_group_remove (CLUTTER_GROUP(actor), wh->busy);
+  clutter_group_add (CLUTTER_GROUP(clutter_stage_get_default()), wh->busy);
+  g_object_unref (wh->busy);
+}
 
 static gint
 model_sort_mtime (WHVideoModelRow *rowa, WHVideoModelRow *rowb, gpointer data)
@@ -369,14 +175,114 @@ model_recently_added_filter (WHVideoModel    *model,
 }
 
 static void
-view_recently_added_selected (ClutterSliderMenu *menu,
+view_recently_added_selected (WHSliderMenu *menu,
 			      ClutterActor      *actor,
 			      gpointer           userdata)
 {
-  MovieApp *app = (MovieApp*)userdata;
+  WooHaa *wh = (WooHaa*)userdata;
 
-  wh_video_model_set_filter (app->model, model_recently_added_filter, app);
-  wh_video_model_set_sort_func (app->model, model_sort_mtime, NULL);
+  wh_video_model_set_filter (wh->model, model_recently_added_filter, wh);
+  wh_video_model_set_sort_func (wh->model, model_sort_mtime, NULL);
+}
+
+static gint
+model_sort_alpha (WHVideoModelRow *rowa, WHVideoModelRow *rowb, gpointer data)
+{
+  return strcmp (wh_video_model_row_get_title(rowa),
+		 wh_video_model_row_get_title(rowb));
+}
+
+#define FILTER_AF 0
+#define FILTER_GL 1
+#define FILTER_MR 2
+#define FILTER_SZ 3
+
+static gboolean  
+model_alpha_filter (WHVideoModel    *model,
+		    WHVideoModelRow *row,
+		    gpointer         data)
+{
+  gint type = GPOINTER_TO_INT(data);
+  gchar lo, hi;
+  const gchar *title;
+
+  title = wh_video_model_row_get_title(row);
+
+  switch (type)
+    {
+    case FILTER_AF:
+      lo = 'a'; hi = 'f';
+      /* Also numerical titles */
+      if (g_ascii_tolower(title[0]) >= '0' && g_ascii_tolower(title[0]) <= '9')
+	return TRUE;
+      break;
+    case FILTER_GL:
+      lo = 'g'; hi = 'l';
+      break;
+    case FILTER_MR:
+      lo = 'm'; hi = 'r';
+      break;
+    case FILTER_SZ:
+      lo = 's'; hi = 'z';
+      break;
+    default:
+      lo = 's'; hi = 'z';
+      break;
+    }
+
+  /* FIXME UTF8 */
+  if (g_ascii_tolower(title[0]) >= lo && g_ascii_tolower(title[0]) <= hi)
+    return TRUE;
+
+  return FALSE;
+}
+
+static void
+view_af_selected (WHSliderMenu *menu,
+		  ClutterActor      *actor,
+		  gpointer           userdata)
+{
+  WooHaa *wh = (WooHaa*)userdata;
+
+  wh_video_model_set_filter (wh->model, model_alpha_filter, 
+			     GINT_TO_POINTER(FILTER_AF));
+  wh_video_model_set_sort_func (wh->model, model_sort_alpha, NULL);
+}
+
+static void
+view_gl_selected (WHSliderMenu *menu,
+		  ClutterActor      *actor,
+		  gpointer           userdata)
+{
+  WooHaa *wh = (WooHaa*)userdata;
+
+  wh_video_model_set_filter (wh->model, model_alpha_filter, 
+			     GINT_TO_POINTER(FILTER_GL));
+  wh_video_model_set_sort_func (wh->model, model_sort_alpha, NULL);
+}
+
+static void
+view_mr_selected (WHSliderMenu *menu,
+		  ClutterActor      *actor,
+		  gpointer           userdata)
+{
+  WooHaa *wh = (WooHaa*)userdata;
+
+  wh_video_model_set_filter (wh->model, model_alpha_filter, 
+			     GINT_TO_POINTER(FILTER_MR));
+  wh_video_model_set_sort_func (wh->model, model_sort_alpha, NULL);
+}
+
+static void
+view_sz_selected (WHSliderMenu *menu,
+		  ClutterActor      *actor,
+		  gpointer           userdata)
+{
+  WooHaa *wh = (WooHaa*)userdata;
+
+  wh_video_model_set_filter (wh->model, model_alpha_filter, 
+			     GINT_TO_POINTER(FILTER_SZ));
+  wh_video_model_set_sort_func (wh->model, model_sort_alpha, NULL);
 }
 
 static gint
@@ -404,14 +310,14 @@ model_recently_viewed_filter (WHVideoModel    *model,
 }
 
 void
-view_recently_viewed_selected (ClutterSliderMenu *menu,
-			      ClutterActor      *actor,
-			      gpointer           userdata)
+view_recently_viewed_selected (WHSliderMenu  *menu,
+			       ClutterActor  *actor,
+			       gpointer       userdata)
 {
-  MovieApp *app = (MovieApp*)userdata;
+  WooHaa *wh = (WooHaa*)userdata;
 
-  wh_video_model_set_filter (app->model, model_recently_viewed_filter, app);
-  wh_video_model_set_sort_func (app->model, model_sort_vtime, NULL);
+  wh_video_model_set_filter (wh->model, model_recently_viewed_filter, wh);
+  wh_video_model_set_sort_func (wh->model, model_sort_vtime, NULL);
 }
 
 static gboolean  
@@ -426,14 +332,14 @@ model_not_viewed_filter (WHVideoModel    *model,
 }
 
 void
-view_not_viewed_selected (ClutterSliderMenu *menu,
+view_not_viewed_selected (WHSliderMenu *menu,
 			  ClutterActor      *actor,
 			  gpointer           userdata)
 {
-  MovieApp *app = (MovieApp*)userdata;
+  WooHaa *wh = (WooHaa*)userdata;
 
-  wh_video_model_set_filter (app->model, model_not_viewed_filter, app);
-  wh_video_model_set_sort_func (app->model, model_sort_mtime, NULL);
+  wh_video_model_set_filter (wh->model, model_not_viewed_filter, wh);
+  wh_video_model_set_sort_func (wh->model, model_sort_mtime, NULL);
 }
 
 static gint
@@ -453,141 +359,213 @@ model_sort_popular (WHVideoModelRow *rowa,
 
 
 void
-view_popular_selected (ClutterSliderMenu *menu,
-		       ClutterActor      *actor,
-		       gpointer           userdata)
+view_popular_selected (WHSliderMenu *menu,
+		       ClutterActor *actor,
+		       gpointer      userdata)
 {
-  MovieApp *app = (MovieApp*)userdata;
+  WooHaa *wh = (WooHaa*)userdata;
 
-  wh_video_model_set_filter (app->model, model_recently_viewed_filter, app);
-  wh_video_model_set_sort_func (app->model, model_sort_popular, NULL);
+  wh_video_model_set_filter (wh->model, model_recently_viewed_filter, wh);
+  wh_video_model_set_sort_func (wh->model, model_sort_popular, NULL);
 }
+
+void
+on_db_row_created (WHDB *db, WHVideoModelRow *row, gpointer data)
+{
+  WooHaa *wh = (WooHaa *)data;
+
+  wh_video_model_row_set_renderer (row, wh_video_row_renderer_new (row)); 
+  wh_video_model_append_row (wh->model, row);
+}
+
 
 int
 main (int argc, char *argv[])
 {
-  MovieApp      *app;
-  ClutterActor  *stage, *label, *box;
-  GdkPixbuf     *pixbuf;
+  WooHaa        *wh;
+  ClutterActor  *stage, *bg, *screen_start, *desktop, *label;
+  gchar         **pathv;
+  gint           i = 0;
   ClutterColor   stage_color = { 0x4a, 0x52, 0x5a, 0xff },
-                 text_color   = { 0xff, 0xff, 0xff, 0xff },
-		 black       = { 0,0,0,255 };
+                 white_col   = { 0xff, 0xff, 0xff, 0xff};
 
   gst_init (&argc, &argv);
 
   clutter_init (&argc, &argv);
 
   if (argc < 2)
-      g_error ("Usage: %s <path to movie files>\n", argv[0]);
+    {
+      g_print ("Usage: %s <path to movie files>\n", argv[0]);
+      exit(-1);
+    }
 
-  app = g_new0(MovieApp, 1);
+  wh = g_new0(WooHaa, 1);
 
-  app->db = wh_db_init (argv[1]);
-  app->model = wh_video_model_new ();
-
-  wh_db_populate_model (app->db, app->model);
-
-  wh_video_model_set_filter (app->model, model_recently_added_filter, app);
-  wh_video_model_set_sort_func (app->model, model_sort_mtime, NULL);
+  wh->model = wh_video_model_new ();
+  wh->db    = wh_db_new ();
 
   stage = clutter_stage_get_default ();
-
   g_object_set (stage, "fullscreen", TRUE, NULL);
+  clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
 
-  clutter_stage_set_color (CLUTTER_STAGE (stage),
-		           &stage_color);
+  /* General setup */
 
-  app->screen_browse = clutter_simple_layout_new();
-  clutter_actor_set_size (app->screen_browse, CSW(), CSH());
+  bg = util_actor_from_file (PKGDATADIR "/bg.png", -1, -1);
 
-  app->menu = clutter_slider_menu_new ();
+  if (bg == NULL)
+        g_error ("unable to load resource '%s'", PKGDATADIR "/bg.png");
 
-  label = clutter_label_new_with_text (FONT, "Recently Added");
-  clutter_label_set_color (CLUTTER_LABEL(label), &text_color);
-  clutter_slider_menu_append_actor (CLUTTER_SLIDER_MENU(app->menu), 
-				    label, view_recently_added_selected, app);
+  clutter_actor_set_size (bg, CSW(), CSH());
+  clutter_group_add (CLUTTER_GROUP(stage), bg);
+  clutter_actor_show (bg);
 
-  label = clutter_label_new_with_text (FONT, "Recently Viewed");
-  clutter_label_set_color (CLUTTER_LABEL(label), &text_color);
-  clutter_slider_menu_append_actor (CLUTTER_SLIDER_MENU(app->menu), 
-				    label, view_recently_viewed_selected, app);
 
-  label = clutter_label_new_with_text (FONT, "Not Viewed");
-  clutter_label_set_color (CLUTTER_LABEL(label), &text_color);
-  clutter_slider_menu_append_actor (CLUTTER_SLIDER_MENU(app->menu), 
-				    label, view_not_viewed_selected, app);
+  /* Layout not really needed .. */
+  wh->screen_browse = clutter_simple_layout_new();
+  clutter_actor_set_size (wh->screen_browse, CSW(), CSH());
+  
+  /* Slider menu */
 
-  label = clutter_label_new_with_text (FONT, "Popular");
-  clutter_label_set_color (CLUTTER_LABEL(label), &text_color);
-  clutter_slider_menu_append_actor (CLUTTER_SLIDER_MENU(app->menu), 
-				    label, view_popular_selected, app);
+  wh->menu = wh_slider_menu_new ();
+  clutter_actor_set_size (wh->menu, CSW(), 100);
 
-  clutter_group_add (CLUTTER_GROUP(app->screen_browse), app->menu);
-  g_object_set(app->menu, "y", 25, NULL); 
+  wh_slider_menu_add_option (WH_SLIDER_MENU (wh->menu), 
+			     "Not Viewed",
+			     view_not_viewed_selected, 
+			     wh);
 
-  app->view = wh_video_view_new (app->model, 6);
-  clutter_actor_set_size (app->view, CSW() - (CSW()/8), 600);
-  clutter_group_add (CLUTTER_GROUP(app->screen_browse), app->view);
+  wh_slider_menu_add_option (WH_SLIDER_MENU (wh->menu), 
+			     "Recently Added",
+			     view_recently_added_selected, 
+			     wh);
 
-  g_object_set(app->view, "y", 
-	       clutter_actor_get_y(app->menu) 
-	         + clutter_actor_get_height(app->menu) + 25, NULL); 
+  wh_slider_menu_add_option (WH_SLIDER_MENU (wh->menu), 
+			     "A-F",
+			     view_af_selected,
+			     wh);
 
-  clutter_group_add (CLUTTER_GROUP (stage), app->screen_browse);
+  wh_slider_menu_add_option (WH_SLIDER_MENU (wh->menu), 
+			     "G-L",
+			     view_gl_selected,
+			     wh);
 
-  /* Busy */
-  pixbuf = gdk_pixbuf_new_from_file ("busy.png", NULL); 
+  wh_slider_menu_add_option (WH_SLIDER_MENU (wh->menu), 
+			     "M-R",
+			     view_mr_selected,
+			     wh);
 
-  app->video_busy = clutter_texture_new_from_pixbuf (pixbuf);
+  wh_slider_menu_add_option (WH_SLIDER_MENU (wh->menu), 
+			     "S-Z",
+			     view_sz_selected,
+			     wh);
 
-  clutter_actor_set_position 
-    (app->video_busy, 
-     (CSW() - clutter_actor_get_width (app->video_busy))/2,
-     (CSH() - clutter_actor_get_height (app->video_busy))/2);
+  wh_slider_menu_add_option (WH_SLIDER_MENU (wh->menu), 
+			     "Popular",
+			     view_popular_selected,
+			     wh);
 
-  clutter_group_add (CLUTTER_GROUP(stage), app->video_busy);
+  wh_slider_menu_add_option (WH_SLIDER_MENU (wh->menu), 
+			     "Recently Viewed",
+			     view_recently_viewed_selected, 
+			     wh);
 
-  app->video_busy_timeline = clutter_timeline_new (180, 120);
-  clutter_timeline_set_loop (app->video_busy_timeline, TRUE);
-  g_signal_connect (app->video_busy_timeline, 
-		    "new-frame", 
-		    G_CALLBACK (video_busy_timeline_cb), 
-		    app);
+  /* Sort the model to correspond to insitial menu option */
+  view_not_viewed_selected (WH_SLIDER_MENU (wh->menu), NULL, (gpointer)wh);
 
-  /* Video */
-  app->screen_video = clutter_group_new();
-  app->video        = clutter_gst_video_texture_new ();
+  clutter_group_add (CLUTTER_GROUP(wh->screen_browse), wh->menu);
+  g_object_set(wh->menu, "y", 25, NULL); 
 
-  /* Dont let the underlying pixbuf dictate size */
-  g_object_set (G_OBJECT(app->video), "sync-size", FALSE, NULL);
+  /* Video screen */
 
-  /* Handle it ourselves so can scale up for fullscreen better */
-  g_signal_connect (CLUTTER_TEXTURE(app->video), 
-		    "size-change",
-		    G_CALLBACK (video_size_change), NULL);
+  wh->screen_video = wh_screen_video_new ();
 
-  box = clutter_rectangle_new_with_color (&black);
-  clutter_actor_set_size (box, CLUTTER_STAGE_WIDTH(), CLUTTER_STAGE_HEIGHT());
+  g_signal_connect(wh->screen_video, 
+		   "playback-started",
+		   G_CALLBACK(on_video_playback_start), 
+		   wh);
 
-  clutter_group_add_many (CLUTTER_GROUP(app->screen_video), 
-			  box, app->video, NULL);
-  clutter_group_add (CLUTTER_GROUP(stage), app->screen_video);
+  g_signal_connect(wh->screen_video, 
+		   "playback-finished",
+		   G_CALLBACK(on_video_playback_finish), 
+		   wh);
 
-  video_make_controls (app);
+  clutter_group_add (CLUTTER_GROUP(stage), wh->screen_video);
 
-  /* Show our screen and stage */
+  /* Startup screen */
+
+  screen_start = clutter_group_new();
+
+  desktop = util_texture_from_root_window ();
+  clutter_group_add (CLUTTER_GROUP(stage), desktop);
+  clutter_actor_show (desktop);
+
+  wh->busy = wh_busy_new();
+  clutter_group_add (CLUTTER_GROUP(screen_start), wh->busy);
+  
+  label = clutter_label_new_full ("Sans 72px", "Importing Media..", 
+				  &white_col);
+  clutter_group_add (CLUTTER_GROUP(screen_start), label);
+  clutter_actor_set_position (label,
+			      (CSW() - clutter_actor_get_width (label))/2,
+			      CSH() - (3*clutter_actor_get_height (label)));
+
+  clutter_group_add (CLUTTER_GROUP(stage), screen_start);
+
+  util_actor_fade_in (screen_start, NULL, NULL);
+  util_actor_zoom (screen_start, NULL, 0.5, 1.0, NULL);
+  util_actor_fade (desktop, NULL, 0xff, 0x0, NULL);
+  util_actor_zoom (desktop, NULL, 1.0, 0.5, NULL);
+
+  /* show stage for desktop zoom  */
   clutter_actor_show (stage);
-  clutter_group_show_all (CLUTTER_GROUP (app->screen_browse));
 
-  /* General timeline */
-  app->fade_timeline = clutter_timeline_new (20, 120);
-  app->fade_alpha = clutter_alpha_new_full (app->fade_timeline,
-					    alpha_sine_inc_func,
-					    NULL, NULL);
+  /* below actually spins main loop (for busy icon)  */
+
+  g_signal_connect (wh->db, 
+		    "row-created", 
+		    G_CALLBACK (on_db_row_created), 
+		    wh);
+
+  pathv = g_strsplit (argv[1], ":", 0);
+  while (pathv[i] != NULL)
+    {
+      printf("importing '%s'\n", pathv[i]);
+      wh_db_import_uri (wh->db, pathv[i++]);
+    }
+  g_strfreev(pathv) ;
+
+  /* view widget */
+
+  /* FIXME: Should be able to do this before importing 
+   * and get a smoother transition, but something appears wrong
+   * with add signal.      
+  */
+
+  wh->view = wh_video_view_new (wh->model, 5);
+  clutter_actor_set_size (wh->view, CSW(), 600);
+  clutter_group_add (CLUTTER_GROUP(wh->screen_browse), wh->view);
+
+  g_object_set(wh->view, "y", 
+	       clutter_actor_get_y(wh->menu) 
+	         + clutter_actor_get_height(wh->menu) + 25, NULL); 
+
+  clutter_group_add (CLUTTER_GROUP (stage), wh->screen_browse);
+
+  /* Zoom to browse screen */
+
+  clutter_actor_raise_top (screen_start);
+
+  util_actor_zoom (screen_start, NULL, 1.0, 0.5, NULL);
+  util_actor_zoom (wh->screen_browse, NULL, 0.5, 1.0, NULL);
+  util_actor_fade_in (wh->screen_browse, NULL, NULL);
+  util_actor_fade_out (screen_start, 
+		       (UtilAnimCompleteFunc)screen_fadeout_complete, 
+		       wh);
+
   g_signal_connect (stage, 
 		    "input-event",
 		    G_CALLBACK (browse_input_cb),
-		    app);
+		    wh);
   clutter_main();
 
   return 0;

@@ -79,6 +79,23 @@ wh_video_model_row_set_renderer (WHVideoModelRow    *row,
 WHVideoRowRenderer*
 wh_video_model_row_get_renderer (WHVideoModelRow    *row);
 
+void
+wh_video_model_row_set_extended_info (WHVideoModelRow *row,
+				      const gchar     *series,
+				      const gchar     *episode);
+
+void
+wh_video_model_row_get_extended_info (WHVideoModelRow *row,
+				      gchar          **series,
+				      gchar          **episode);
+
+GdkPixbuf*
+wh_video_model_row_get_thumbnail (WHVideoModelRow *row);
+
+void
+wh_video_model_row_set_thumbnail (WHVideoModelRow *row,
+				  GdkPixbuf       *pixbuf);
+
 G_END_DECLS
 
 #endif /* _WH_VIDEO_MODEL_ROW */

@@ -41,6 +41,7 @@ typedef struct {
   void (*reordered) (WHVideoModel *model);
   void (*filter_change) (WHVideoModel *model);
   void (*row_change) (WHVideoModel *model, WHVideoModelRow *row);
+  void (*row_added) (WHVideoModel *model, WHVideoModelRow *row);
 
 } WHVideoModelClass;
 
