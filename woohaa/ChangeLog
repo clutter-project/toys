@@ -1,5 +1,12 @@
 2007-03-18  Matthew Allum  <mallum@openedhand.com>
 
+	* clutter-slider-menu.c:
+	* clutter-slider-menu.h:
+	* selector.svg:
+	Remove old uneeded files.
+
+2007-03-18  Matthew Allum  <mallum@openedhand.com>
+
 	* Makefile.am:
 	* clutter-simple-layout.c:
 	* clutter-simple-layout.h:
