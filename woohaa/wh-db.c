@@ -371,7 +371,8 @@ wh_db_parse_video_uri_info (const char *uri,
   size_t     nmatch = 4;
   regmatch_t pmatch[4];
 
-#define TV_REGEXP "(.+)\\.[Ss]+([0-9]+)[Ee]+([0-9]+)"
+  /* HAXOR Regexp to extract 'meta data' from common TV show naming  */
+#define TV_REGEXP "(.*)\\.?[Ss]+([0-9]+)[._\s]*[Ee]+[Pp]*([0-9]+)"
 
   base = g_path_get_basename (uri);
 
@@ -398,6 +399,23 @@ wh_db_parse_video_uri_info (const char *uri,
 		            pmatch[3].rm_eo - pmatch[3].rm_so);
 
       res = name;
+
+      if (res == NULL || *res == 0)
+	{
+	  char *dirname;
+
+	  /* Assume we have series & episode but no name so grab
+	   * name from parent direcory - handles show-name/s01e01.avi
+           * style naiming.
+           */  
+	  dirname = g_path_get_dirname (uri);
+	  name = g_path_get_basename (dirname);
+	  g_free (dirname);
+	  
+	  name = g_strdelimit (name, "._", ' ');
+      
+	  res = name;
+	}
 
       g_free (base);
     }

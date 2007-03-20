@@ -19,11 +19,12 @@ struct _WHScreenVideoPrivate
   ClutterActor      *bg;
   ClutterActor      *video_controls;
   ClutterActor      *video_seekbar;
+  ClutterActor      *video_seekbar_bg;
   ClutterActor      *duration, *title, *position;
   ClutterTimeline   *foo_effect;
   gboolean           video_playing;
   gboolean           video_controls_visible;
-
+  
   guint              controls_timeout;
   WHVideoModelRow   *video_row;
 };
@@ -91,7 +92,7 @@ video_tick (GObject        *object,
 {
   WHScreenVideoPrivate *priv  = SCREEN_VIDEO_PRIVATE(screen);
   ClutterGstVideoTexture *vtex;
-  gint                    position, duration;
+  gint                    position, duration, seek_width;
 
   vtex = CLUTTER_GST_VIDEO_TEXTURE(object);
 
@@ -116,8 +117,10 @@ video_tick (GObject        *object,
       g_free(duration_txt);
     }
 
+  seek_width = clutter_actor_get_width(priv->video_seekbar_bg);
+
   clutter_actor_set_size (priv->video_seekbar, 
-			  (position * (CSW() - CSW()/4 - 20)) / duration, 
+			  (position * seek_width) / duration, 
 			  20);  
 
   if (priv->video_controls_visible)
@@ -127,7 +130,7 @@ video_tick (GObject        *object,
       position_txt = nice_time (position);
       clutter_label_set_text (CLUTTER_LABEL(priv->position), position_txt);
       g_object_set (priv->position, "x",
-		    (position * (CSW() - CSW()/4 - 20)) / duration,
+		    ((position * seek_width) / duration) + 10,
 		    NULL);
       g_free(position_txt);
     }
@@ -331,21 +334,30 @@ video_make_controls (WHScreenVideo *screen)
 {
   WHScreenVideoPrivate *priv  = SCREEN_VIDEO_PRIVATE(screen);
   gchar                 font_desc[32];
-  gint                  h, w;
+  gint                  h, w, so;
   ClutterActor         *actor;
   ClutterColor          bgcol = { 0x4f, 0x4f, 0x68, 0x99 },
-                        seekcol = { 0xdd, 0xdd, 0xee, 0xff },
+                        seekcol = { 0x99, 0x99, 0xa8, 0xff },
                         txtcol = { 0xb4, 0xe2, 0xff, 0xff },
                         fgcol = { 0xff, 0xff, 0xff, 0xff };
 
   priv->video_controls = clutter_group_new();
 
+  /* And this code here is why some kind of optional simple layout engine 
+   * would be a good idea in cluter...
+  */
   h = CSH()/6;
   w = CSW() - CSW()/4;
   
   actor = clutter_rectangle_new_with_color (&bgcol);
   clutter_actor_set_size (actor, w, h);
   clutter_group_add (CLUTTER_GROUP(priv->video_controls), actor);
+
+  g_snprintf(font_desc, 32, "Sans %ipx", h/5); 
+  priv->duration = clutter_label_new_full (font_desc, "00:00", &fgcol);
+  priv->position = clutter_label_new_full (font_desc, "00:00", &fgcol);
+
+  so = clutter_actor_get_width (priv->position)/2 + 10;
 
   g_snprintf(font_desc, 32, "Sans %ipx", h/3); 
 
@@ -354,43 +366,36 @@ video_make_controls (WHScreenVideo *screen)
   clutter_label_set_line_wrap (CLUTTER_LABEL(priv->title), FALSE);
   clutter_label_set_ellipsize  (CLUTTER_LABEL(priv->title), 
 				PANGO_ELLIPSIZE_MIDDLE);
-  clutter_actor_set_width (priv->title, w-20);
-  clutter_actor_set_position (priv->title, 10, 10);
+  clutter_actor_set_width (priv->title, so * 2);
+  clutter_actor_set_position (priv->title, so, 10);
   clutter_group_add (CLUTTER_GROUP(priv->video_controls), priv->title);
 
-  actor = clutter_rectangle_new_with_color (&seekcol);
-  clutter_actor_set_size (actor, w - 20, 20);
-  clutter_actor_set_position (actor, 10, h/2);
-  clutter_group_add (CLUTTER_GROUP(priv->video_controls), actor);
+  /* Seek bar */
+  priv->video_seekbar_bg = clutter_rectangle_new_with_color (&seekcol);
+  clutter_actor_set_size (priv->video_seekbar_bg, w - (2*so), 20);
+  clutter_actor_set_position (priv->video_seekbar_bg, so, h/2);
+  clutter_group_add (CLUTTER_GROUP(priv->video_controls), 
+		     priv->video_seekbar_bg);
 
   priv->video_seekbar = clutter_rectangle_new_with_color (&fgcol);
   clutter_actor_set_size (priv->video_seekbar, 0, 20);
-  clutter_actor_set_position (priv->video_seekbar, 10, h/2);
+  clutter_actor_set_position (priv->video_seekbar, so, h/2);
   clutter_group_add (CLUTTER_GROUP(priv->video_controls), priv->video_seekbar);
 
-  g_snprintf(font_desc, 32, "Sans %ipx", h/4); 
 
-  priv->duration = clutter_label_new_full (font_desc, "00:00", &fgcol);
   clutter_group_add (CLUTTER_GROUP(priv->video_controls), priv->duration);
   clutter_actor_set_position (priv->duration, 
-			      w - clutter_actor_get_width (priv->duration) - 10, 
+			      w - clutter_actor_get_width (priv->duration)-10, 
 			      h/2 + 20);  
 
-  priv->position = clutter_label_new_full (font_desc, "00:00", &fgcol);
   clutter_group_add (CLUTTER_GROUP(priv->video_controls), priv->position);
-  clutter_actor_set_position (priv->position, 10, h/2 + 20);  
+  clutter_actor_set_position (priv->position, so, h/2 + 20);  
 
   clutter_actor_set_position (priv->video_controls, 
 			      CSW()/8, CSH() - CSH()/3);
 
   clutter_actor_set_parent (CLUTTER_ACTOR(priv->video_controls), 
 			    CLUTTER_ACTOR(screen)); 
-
-  /*  
-      priv->foo_effect = clutter_timeline_new (30, 90);
-      g_signal_connect (priv->foo_effect, "new-frame", 
-      G_CALLBACK (foo_effect_cb), priv);
-  */
 }
 
 static void
