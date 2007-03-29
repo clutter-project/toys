@@ -24,7 +24,6 @@ static WHTheme *_theme = NULL;
 void
 wh_theme_init()
 {
-  ClutterColor *col;
   GdkPixbuf    *pixbuf;
 
   _theme = g_new(WHTheme, 1);

@@ -372,7 +372,7 @@ wh_db_parse_video_uri_info (const char *uri,
   regmatch_t pmatch[4];
 
   /* HAXOR Regexp to extract 'meta data' from common TV show naming  */
-#define TV_REGEXP "(.*)\\.?[Ss]+([0-9]+)[._\s]*[Ee]+[Pp]*([0-9]+)"
+#define TV_REGEXP "(.*)\\.?[Ss]+([0-9]+)[._ ]*[Ee]+[Pp]*([0-9]+)"
 
   base = g_path_get_basename (uri);
 

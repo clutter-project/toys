@@ -274,7 +274,7 @@ wh_video_view_paint (ClutterActor *actor)
 {
   WHVideoView        *view;
   WHVideoViewPrivate *priv;
-  int                 i, start_item, end_item, y;
+  int                 i, start_item, end_item;
   
   view = WH_VIDEO_VIEW(actor);
   priv = WH_VIDEO_VIEW_GET_PRIVATE(view);
@@ -569,6 +569,7 @@ wh_video_view_add_rows (WHVideoView *view)
   priv->n_items = wh_video_model_row_count (priv->model); /* cache */
 }
 
+#if 0
 static void
 on_model_row_added (WHVideoModel    *model, 
 		    WHVideoModelRow *row,
@@ -590,6 +591,7 @@ on_model_row_added (WHVideoModel    *model,
 		 clutter_actor_get_height(CLUTTER_ACTOR(view)),
 		 priv->n_rows_visible);
 }
+#endif
 
 static void
 on_model_rows_change (WHVideoModel *model, gpointer *userdata)

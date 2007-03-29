@@ -1,5 +1,20 @@
 2007-03-29  Matthew Allum  <mallum@openedhand.com>
 
+	* wh-db.c:
+	Fix space in regexp
+
+	* wh-screen-video.c:
+	Disable thumbnail generation on video stop.
+	Add volume control via up/down arrows
+
+	* wh-theme.c:
+	* wh-video-model.c:
+	* wh-video-thumbnailer.c:
+	* wh-video-view.c:
+	Clean up warnings.	
+
+2007-03-29  Matthew Allum  <mallum@openedhand.com>
+
 	* data/Makefile.am:
 	Add defualt thumbnail image.
 

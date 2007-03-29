@@ -215,6 +215,16 @@ video_input_cb (ClutterStage *stage,
 	    (CLUTTER_MEDIA(priv->video),
 	      clutter_media_get_position (CLUTTER_MEDIA(priv->video)) + 25);
 	  break;
+	case CLUTTER_Up:
+	  clutter_media_set_volume 
+	    (CLUTTER_MEDIA(priv->video),
+	     clutter_media_get_volume (CLUTTER_MEDIA(priv->video)) + 0.1);
+	  break;
+	case CLUTTER_Down:
+	  clutter_media_set_volume 
+	    (CLUTTER_MEDIA(priv->video),
+	     clutter_media_get_volume (CLUTTER_MEDIA(priv->video)) - 0.1);
+	  break;
 	case CLUTTER_Return:
 	  video_show_controls (screen);
 	  if (!priv->video_playing)
@@ -438,7 +448,6 @@ void
 wh_screen_video_deactivate (WHScreenVideo *screen)
 {
   WHScreenVideoPrivate *priv  = SCREEN_VIDEO_PRIVATE(screen);
-  GdkPixbuf            *shot;
 
   clutter_media_set_playing (CLUTTER_MEDIA(priv->video), FALSE);
 
@@ -446,11 +455,17 @@ wh_screen_video_deactivate (WHScreenVideo *screen)
 					G_CALLBACK (video_tick),
 					screen);
 
+#if 0
+  /* FIXME: Can cause crashes with current thumbnailer code so  
+   * disabled. Need to investigate further.       
+   *
+  */
   if (priv->video 
       && (wh_video_model_row_get_thumbnail (priv->video_row) == NULL
 	  || wh_video_model_row_get_thumbnail (priv->video_row) != 
 	                      wh_theme_get_pixbuf("default-thumbnail")))
     {
+      GdkPixbuf *shot;
       shot = clutter_texture_get_pixbuf (CLUTTER_TEXTURE(priv->video));
       
       if (shot)
@@ -490,7 +505,7 @@ wh_screen_video_deactivate (WHScreenVideo *screen)
 	  g_object_unref (pic);
 	}
     }
-
+#endif
 
   priv->video_playing = FALSE;
 

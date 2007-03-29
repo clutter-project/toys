@@ -27,6 +27,7 @@ main (int argc, char *argv[])
 	      */
 
   gst_init (&argc, &argv);
+
   clutter_init (&argc, &argv);
 
   if (argc < 3)

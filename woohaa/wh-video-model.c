@@ -224,7 +224,7 @@ wh_video_model_append_row (WHVideoModel *model, WHVideoModelRow *row)
   if (priv->sort)
     iter = egg_sequence_insert_sorted (priv->rows,
 				       (gpointer)row,
-				       priv->sort,
+				       (GCompareDataFunc)priv->sort,
 				       priv->sort_data);
   else
     iter = egg_sequence_append (priv->rows, (gpointer)row);
