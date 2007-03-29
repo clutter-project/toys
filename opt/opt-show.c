@@ -386,8 +386,9 @@ transition_completed_cb (OptTransition   *trans,
 
   /* Remove as to free up resources. */
 
-  clutter_group_remove (CLUTTER_GROUP(stage), CLUTTER_ACTOR(from));
   clutter_group_hide_all (CLUTTER_GROUP(from));
+  clutter_group_remove (CLUTTER_GROUP(stage), CLUTTER_ACTOR(from));
+
 
   /* Reset any tranforms to be safe */
   clutter_actor_rotate_x (CLUTTER_ACTOR(from), 0, 0, 0);
@@ -503,9 +504,14 @@ opt_show_skip (OptShow *self, gint n_slides)
 gboolean
 opt_show_export (OptShow *self, const char *path, GError **error)
 {
+#define HTML "<html><head><title>Slide %i</title></head>\n"       \
+             "<body><p><center><img src=\"%s\"></center></p>\n"   \
+             "<p><center><strong>%s%s</strong></center></p>\n"    \
+             "</body></html>"
+
   GList          *slide;
   OptShowPrivate *priv;
-  ClutterActor *stage;
+  ClutterActor   *stage;
   gint            i = 0;
 
   priv = self->priv;
@@ -524,6 +530,7 @@ opt_show_export (OptShow *self, const char *path, GError **error)
       GdkPixbuf      *pixb = NULL;
       gchar           name[32];
       gchar          *filename = NULL;
+      gchar           html[2048], html_next[512], html_prev[512];
 
       e = CLUTTER_ACTOR(slide->data);
 
@@ -554,6 +561,24 @@ opt_show_export (OptShow *self, const char *path, GError **error)
 	  if (filename) g_free (filename);
 	  return FALSE;
 	}
+
+      html_next[0] = html_prev[0] = '\0';
+      
+      if (i > 0)
+	snprintf(html_prev, 512, 
+		 "<a href=\"slide-%02i.html\">Prev</a> |", i-1);
+
+      if (slide->next)
+	snprintf(html_next, 512, 
+		 " <a href=\"slide-%02i.html\">Next</a>", i+1);
+
+      g_snprintf(html, 2048, HTML, i, name, html_prev, html_next);
+      g_snprintf(name, 32, "slide-%02i.html", i);
+      g_free (filename);
+
+      filename = g_build_filename(path, name, NULL);
+
+      g_file_set_contents (filename, html, -1, NULL);
 
       g_print ("wrote '%s'\n", filename);
 

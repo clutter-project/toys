@@ -1,1 +1,6 @@
-O.P.T - ' Openedhand Presentation Tool' - Toy clutter slide show app..
+O.P.T - ' Openedhand Presentation Tool'
+======================================
+
+An experimental toy clutter based presentaion app..
+
+For more info, run './opt demo.xml'.

@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<!DOCTYPE opt SYSTEM "opt.dtd">
+<opt>
+
+  <defaults>
+    <title  color="#444444ff" font="VistaSansMed 50" />
+    <bullet color="#444444ff" font="VistaSansMed 40" /> 
+    <transition style="flip" />  
+    <background src="bg.png" />
+  </defaults>
+
+  <slide>
+    <title>Hello!</title>
+    <bullet>This is a simple 'OPT' demo presentation</bullet> 
+    <bullet>OPT is a simple presentation program built with Clutter by folks at OH.</bullet> 
+    <bullet>Presentations are built with simple XML files.</bullet> 
+    <bullet>Press any key to go on...</bullet> 
+  </slide>
+
+  <slide>
+    <title>Navigating with OPT.</title>
+    <bullet>Any key to advance to next slide.</bullet>
+    <bullet>'r' or left arrow to go back.</bullet>
+    <bullet>'m' for menu, 'q' quits.</bullet>
+    <bullet>You can also use mouse buttons.</bullet>
+
+    <transition style="fade" />	
+  </slide>
+
+  <slide>
+    <title>Features 1</title>
+    <bullet>You can embed images;</bullet>
+    <img src="powers.png" /> 
+    <bullet>And have different transition effects.</bullet>
+
+    <transition style="zoom" />	
+  </slide>
+
+  <slide>
+    <title>Features 2</title>
+    <bullet>You can display source code</bullet>
+    <bullet font="mono 20" symbol="none">clutter_label_set_text_extents (CLUTTER_LABEL(bullet),
+				  width - symbol_width,
+				  0);
+
+clutter_actor_set_position (bullet, x, y);
+clutter_group_add (CLUTTER_GROUP(slide), bullet);
+
+clutter_actor_show(bullet);
+clutter_actor_show(symbol);
+</bullet>
+
+  </slide>
+
+  <slide>
+    <title color="#ff4444ff">Features 3</title>
+    <bullet>You can change</bullet>
+    <bullet color="#4444ffff">colors</bullet>
+    <bullet font="mono 40">and fonts</bullet>
+  </slide>
+
+  <slide>
+    <title>Thats all folks.</title>
+    <bullet>Dont forget to check the demo.xml source for making your own presentations.</bullet>
+    <bullet>And send patches to improve OPT further!</bullet>
+  </slide>
+
+</opt>

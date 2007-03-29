@@ -1,3 +1,18 @@
+2007-03-29  Matthew Allum  <mallum@openedhand.com>
+
+	* Makefile:
+	Remove.
+	* Makefile.am:
+	* autogen.sh:
+	* configure.ac:
+	Autofooify.
+
+	* demo.xml:
+	Add a simple demo show with instructions.
+
+	* opt-show.c:
+	Improve export to generate simple XML.
+
 2007-02-28  Tomas Frydrych  <tf@openedhand.com>
 
 	* Makefile:
