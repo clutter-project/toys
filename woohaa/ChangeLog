@@ -1,3 +1,39 @@
+2007-03-29  Matthew Allum  <mallum@openedhand.com>
+
+	* data/Makefile.am:
+	Add defualt thumbnail image.
+
+	* configure.ac:
+	Pull in gconf.
+
+	* wh-video-model.c:
+	* wh-video-model.h:
+	* wh-screen-video.c:
+	* wh-screen-video.h:
+	* wh-video-model-row.c:
+	* wh-video-row-renderer.c:
+	Various thumbnail related tweaks.
+
+	* wh-video-view.c:
+	Speed up painting via only paint on screen rows.
+
+	* wh-video-thumbnailer.c:
+	* woohaa.c:
+	Add a seperate thumbnailer process and handle it.
+
+	* Makefile.am:
+	* wh-theme.c:
+	* wh-theme.h:
+	Add a *very* simple initial theme 'framework'.
+
+2007-03-20  Matthew Allum  <mallum@openedhand.com>
+
+	* wh-db.c: (wh_db_parse_video_uri_info):
+	Improve filename parsing for video title including parent directory 
+	name if deemed useful. (via patch from Iain). 
+	* wh-screen-video.c:
+	Improve layout of video controls.
+
 2007-03-18  Matthew Allum  <mallum@openedhand.com>
 
 	* clutter-slider-menu.c:

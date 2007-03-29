@@ -457,6 +457,9 @@ wh_video_model_row_set_thumbnail (WHVideoModelRow *row,
   if (priv->thumbnail)
     g_object_unref (priv->thumbnail);
 
+  if (pixbuf == NULL)
+    g_warning("got a null pixbuf so I will now likely crash");
+
   priv->thumbnail = pixbuf;
   g_object_ref (pixbuf);
 

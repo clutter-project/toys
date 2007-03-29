@@ -54,7 +54,7 @@ sync_thumbnail (WHVideoRowRenderer *renderer)
 			      priv->height - (PAD*2) - 4);
       clutter_group_add(CLUTTER_GROUP(priv->container),
 			priv->thumbnail_image);
-      clutter_actor_show (priv->thumbnail_image);
+      util_actor_fade_in (priv->thumbnail_image, NULL, NULL); 
     }
 }
 

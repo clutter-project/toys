@@ -193,6 +193,10 @@ on_row_changed (GObject      *obj,
 
   priv = VIDEO_MODEL_PRIVATE(model);
 
+  /* thumbnail changing does not effect ordering */
+  if (!strcmp(g_param_spec_get_name(arg1), "thumbnail"))
+    return;
+
   if (priv->sort)
     {
       egg_sequence_sort (priv->rows, 
@@ -243,9 +247,10 @@ wh_video_model_foreach (WHVideoModel      *model,
     while (!egg_sequence_iter_is_end (iter))
     {
       if (check_filter (model, iter))
-	func (model, 
-	      (WHVideoModelRow*)egg_sequence_get (iter),
-	      data);
+	if (func (model, 
+		  (WHVideoModelRow*)egg_sequence_get (iter),
+		  data) == FALSE)
+	  return;
 	
       iter = egg_sequence_iter_next (iter);
     }

@@ -447,7 +447,9 @@ wh_screen_video_deactivate (WHScreenVideo *screen)
 					screen);
 
   if (priv->video 
-      && wh_video_model_row_get_thumbnail (priv->video_row) == NULL)
+      && (wh_video_model_row_get_thumbnail (priv->video_row) == NULL
+	  || wh_video_model_row_get_thumbnail (priv->video_row) != 
+	                      wh_theme_get_pixbuf("default-thumbnail")))
     {
       shot = clutter_texture_get_pixbuf (CLUTTER_TEXTURE(priv->video));
       
@@ -501,6 +503,14 @@ wh_screen_video_deactivate (WHScreenVideo *screen)
 				       screen);
 
   g_signal_emit (screen, _screen_signals[PLAYBACK_FINISHED], 0);
+}
+
+gboolean
+wh_screen_video_get_playing (WHScreenVideo *screen)
+{
+  WHScreenVideoPrivate *priv  = SCREEN_VIDEO_PRIVATE(screen);
+
+  return priv->video_playing;
 }
 
 void

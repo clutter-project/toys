@@ -53,9 +53,9 @@ typedef gboolean  (*WHFilterRowFunc) (WHVideoModel    *model,
 				      WHVideoModelRow *row,
 				      gpointer         data);
 
-typedef void (*WHForeachRowFunc) (WHVideoModel    *model,
-				  WHVideoModelRow *row,
-				  gpointer         data);
+typedef gboolean (*WHForeachRowFunc) (WHVideoModel    *model,
+				      WHVideoModelRow *row,
+				      gpointer         data);
 
 GType wh_video_model_get_type (void);
 

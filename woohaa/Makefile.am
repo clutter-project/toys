@@ -1,6 +1,6 @@
 SUBDIRS=data
 
-bin_PROGRAMS=woohaa
+bin_PROGRAMS=woohaa wh-video-thumbnailer
 
 PKGDATADIR = $(datadir)/woohaa
 
@@ -26,10 +26,15 @@ woohaa_SOURCES = woohaa.c               \
 		wh-video-row-renderer.h \
 		wh-db.c                 \
 		wh-db.h                 \
+		wh-theme.c              \
+		wh-theme.h              \
 		eggsequence.c	        \
 		eggsequence.h           \
 		util.c                  \
 		util.h                  
+
+wh_video_thumbnailer_LDADD = $(DEPS_LIBS) 
+wh_video_thumbnailer_SOURCES = wh-video-thumbnailer.c
 
 MAINTAINERCLEANFILES = aclocal.m4 compile config.guess config.sub configure depcomp install-sh ltmain.sh Makefile.in missing
 

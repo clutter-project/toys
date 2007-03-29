@@ -1,8 +1,12 @@
 #include <clutter/clutter.h>
 #include <clutter-gst/clutter-gst.h>
+#include <gconf/gconf-client.h>
 #include <gst/gst.h>
 #include <sqlite3.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <glib/gstdio.h>
 
 #include "wh-slider-menu.h"
 #include "clutter-simple-layout.h"
@@ -12,9 +16,11 @@
 #include "wh-db.h"
 #include "wh-screen-video.h"
 #include "wh-busy.h"
+#include "wh-theme.h"
 #include "util.h"
 
 #define FONT "VistaSansBook 75px"
+#define WOOHAA_GCONF_PREFIX   "/apps/woohaa"
 
 typedef struct WooHaa
 {
@@ -24,6 +30,11 @@ typedef struct WooHaa
   ClutterActor      *menu;
   ClutterActor      *busy;
   WHDB              *db;
+
+  /* For thumbnailer */
+  gint             tn_pending_child_pid;
+  WHVideoModelRow *tn_pending_row;
+  gint             tn_trys;
 }
 WooHaa;
 
@@ -36,6 +47,9 @@ void
 video_input_cb (ClutterStage *stage,
 		ClutterEvent *event,
 		gpointer      user_data);
+
+static void
+thumbnail_find_empty (WooHaa *wh);
 
 void
 foo_effect_cb (ClutterTimeline *timeline, 
@@ -50,10 +64,139 @@ foo_effect_cb (ClutterTimeline *timeline,
   */
 }
 
+static gboolean
+check_thumbnailer_child(gpointer data)
+{
+  WooHaa    *wh = (WooHaa *)data;
+  GdkPixbuf *pixbuf;
+  gint       status;
+
+  if (wh->tn_pending_child_pid == 0 || wh->tn_pending_row == NULL)
+    return FALSE;
+
+  if (waitpid (wh->tn_pending_child_pid, 
+	       &status, 
+	       WNOHANG) != wh->tn_pending_child_pid)
+    {
+      /* Try again soon */
+      wh->tn_trys++;
+
+      if (wh->tn_trys > 5)
+	{
+	  g_warning("timed out making thumbnail");
+	  /* Insert a blank pixbuf */
+	  wh_video_model_row_set_thumbnail 
+	    (wh->tn_pending_row, wh_theme_get_pixbuf("default-thumbnail"));
+	  kill (wh->tn_pending_child_pid, SIGKILL);
+	  waitpid (wh->tn_pending_child_pid, &status, 0);
+	  goto cleanup;
+	}
+      return TRUE;
+    }
+
+  pixbuf = gdk_pixbuf_new_from_file ("/tmp/wh-thumb.png", NULL);
+
+  if (pixbuf == NULL)
+    {
+      /* Insert a blank pixbuf */
+      wh_video_model_row_set_thumbnail 
+	(wh->tn_pending_row, wh_theme_get_pixbuf("default-thumbnail"));
+      g_warning("failed to load pixbuf from thumbnailed");
+      goto cleanup;
+    }
+
+  wh_video_model_row_set_thumbnail (wh->tn_pending_row, pixbuf);
+  g_object_unref (pixbuf);
+
+  wh_db_sync_row (wh->tn_pending_row);
+
+ cleanup:
+  g_object_unref(wh->tn_pending_row);
+  wh->tn_pending_child_pid = 0;
+  wh->tn_pending_row = NULL;
+  wh->tn_trys = 0;
+  g_remove ("/tmp/wh-thumb.png");
+
+  thumbnail_find_empty (wh);
+
+  /* All done */
+  return FALSE;
+}
+
+gboolean
+thumbnail_create (WooHaa *wh, WHVideoModelRow *row)
+{
+  gboolean result;
+  gchar  **argv;
+
+  if (wh->tn_pending_child_pid > 0 || wh->tn_pending_row != NULL)
+    return TRUE;
+
+  argv = g_new(gchar *, 4);
+  argv[0] = g_strdup("wh-video-thumbnailer");
+  argv[1] = g_strdup(wh_video_model_row_get_path(row));
+  argv[2] = g_strdup("/tmp/wh-thumb.png");
+  argv[3] = NULL;
+
+  result = g_spawn_async (NULL,
+			  argv,
+			  NULL,
+			  G_SPAWN_SEARCH_PATH|G_SPAWN_DO_NOT_REAP_CHILD,
+			  NULL,
+			  NULL,
+			  &wh->tn_pending_child_pid,
+			  NULL);
+  g_strfreev(argv);
+
+  if (result == FALSE)
+    {
+      g_warning("failed to spawn wh-video-thumbnailer");
+
+      wh_video_model_row_set_thumbnail 
+	(row, wh_theme_get_pixbuf("default-thumbnail"));
+
+      wh->tn_pending_row       = NULL;
+      wh->tn_pending_child_pid = 0;
+
+      return FALSE;
+    }
+
+  wh->tn_pending_row = row;
+  g_object_ref(row);
+  g_timeout_add (2500, check_thumbnailer_child, wh);
+
+  return TRUE;
+}
+
+static gboolean
+thumbnail_find_empty_foreach (WHVideoModel    *model,
+			      WHVideoModelRow *row,
+			      gpointer         data)
+{
+  if (wh_video_model_row_get_thumbnail (row) == NULL)
+    {
+      if (thumbnail_create ((WooHaa *)data, row))
+	return FALSE;
+    }
+
+  return TRUE;
+}
+
+static void
+thumbnail_find_empty (WooHaa *wh)
+{
+  if (!wh_screen_video_get_playing(WH_SCREEN_VIDEO(wh->screen_video))
+      && wh->tn_pending_child_pid == 0)
+    wh_video_model_foreach (wh->model, 
+			    thumbnail_find_empty_foreach, 
+			    (gpointer)wh); 
+}
+
 void
 playback_finish_complete (ClutterActor *actor, WooHaa *wh)
 {
   wh_video_view_enable_animation (WH_VIDEO_VIEW(wh->view), TRUE);
+  thumbnail_find_empty(wh);
 }
 
 void
@@ -114,9 +257,11 @@ browse_input_cb (ClutterStage *stage,
 	{
 	case CLUTTER_Left:
 	  wh_slider_menu_advance (WH_SLIDER_MENU(wh->menu), -1);
+	  thumbnail_find_empty (wh);
 	  break;
 	case CLUTTER_Right:
 	  wh_slider_menu_advance (WH_SLIDER_MENU(wh->menu), 1);
+	  thumbnail_find_empty (wh);
 	  break;
 	case CLUTTER_Up:
 	  wh_video_view_advance (WH_VIDEO_VIEW(wh->view), -1);
@@ -384,20 +529,35 @@ main (int argc, char *argv[])
 {
   WooHaa        *wh;
   ClutterActor  *stage, *bg, *screen_start, *desktop, *label;
+  gchar         *gconf_paths;
   gchar         **pathv;
   gint           i = 0;
+  GError        *error = NULL;
   ClutterColor   stage_color = { 0x4a, 0x52, 0x5a, 0xff },
                  white_col   = { 0xff, 0xff, 0xff, 0xff};
-
+		 
   gst_init (&argc, &argv);
 
   clutter_init (&argc, &argv);
 
-  if (argc < 2)
+  gconf_paths = gconf_client_get_string (gconf_client_get_default (),
+					 WOOHAA_GCONF_PREFIX "/paths",
+					 &error);
+
+  if (gconf_paths == NULL)
     {
-      g_print ("Usage: %s <path to movie files>\n", argv[0]);
+      g_printf("\n ***************************************************************************\n");
+      g_printf("  To run woohaa you must set the GConf key; \n");
+      g_printf("    '" WOOHAA_GCONF_PREFIX "/paths' \n");
+      g_printf("  to a ':' seprated list of paths containing movie files.\n\n");
+      g_printf("  To set the key, run;\n\n");
+      g_printf("    gconftool-2 -s " WOOHAA_GCONF_PREFIX "/paths --type string <paths> \n");
+      g_printf("\n ***************************************************************************\n\n");
+
       exit(-1);
     }
+
+  wh_theme_init();
 
   wh = g_new0(WooHaa, 1);
 
@@ -405,6 +565,7 @@ main (int argc, char *argv[])
   wh->db    = wh_db_new ();
 
   stage = clutter_stage_get_default ();
+  /* clutter_actor_set_size (stage, 640, 480); */
   g_object_set (stage, "fullscreen", TRUE, NULL);
   clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
 
@@ -526,10 +687,9 @@ main (int argc, char *argv[])
 		    G_CALLBACK (on_db_row_created), 
 		    wh);
 
-  pathv = g_strsplit (argv[1], ":", 0);
+  pathv = g_strsplit (gconf_paths, ":", 0);
   while (pathv[i] != NULL)
     {
-      printf("importing '%s'\n", pathv[i]);
       wh_db_import_uri (wh->db, pathv[i++]);
     }
   g_strfreev(pathv) ;
@@ -566,7 +726,13 @@ main (int argc, char *argv[])
 		    "input-event",
 		    G_CALLBACK (browse_input_cb),
 		    wh);
+
+  g_remove ("/tmp/wh-thumb.png");
+  thumbnail_find_empty(wh);
+
   clutter_main();
+
+  g_remove ("/tmp/wh-thumb.png");
 
   return 0;
 }

@@ -217,6 +217,7 @@ ensure_layout (WHVideoView *view,
 	 priv->row_height - clutter_actor_get_height (priv->down));  
 
       /* Set up new scroll path */
+#if 0
       priv->path_up[0].x = 0;   priv->path_up[0].y = 0; 
       priv->path_up[1].x = 0;   
       priv->path_up[1].y = -1 * (priv->row_height + (priv->row_height/4)); 
@@ -226,15 +227,21 @@ ensure_layout (WHVideoView *view,
       priv->path_down[1].x = 0;   
       priv->path_down[1].y = (priv->row_height + (priv->row_height/4)); 
       priv->path_down[2].x = 0;   priv->path_down[2].y = priv->row_height; 
+#endif
+      priv->path_up[0].x = 0;   priv->path_up[0].y = 0; 
+      priv->path_up[1].x = 0;   priv->path_up[1].y = -1 * priv->row_height; 
+      
+      priv->path_down[0].x = 0;   priv->path_down[0].y = 0; 
+      priv->path_down[1].x = 0;   priv->path_down[1].y = priv->row_height; 
       
       /* FIXME: unapply to any actors..? */
       if (priv->behave_up) g_object_unref (priv->behave_up);
       priv->behave_up = clutter_behaviour_path_new (priv->alpha, 
-						    priv->path_up, 3);
+						    priv->path_up, 2);
       
       if (priv->behave_down) g_object_unref (priv->behave_down);
       priv->behave_down = clutter_behaviour_path_new (priv->alpha,  
-						      priv->path_down, 3);
+						      priv->path_down, 2);
     }
 }
 
@@ -267,7 +274,8 @@ wh_video_view_paint (ClutterActor *actor)
 {
   WHVideoView        *view;
   WHVideoViewPrivate *priv;
-
+  int                 i, start_item, end_item, y;
+  
   view = WH_VIDEO_VIEW(actor);
   priv = WH_VIDEO_VIEW_GET_PRIVATE(view);
 
@@ -282,13 +290,36 @@ wh_video_view_paint (ClutterActor *actor)
       if (priv->active_item_num < priv->n_items-1)
 	clutter_actor_paint (priv->down);
     }
+  else 
+    {
+      glPopMatrix();
+      return;
+    }
+
+  /* Custom paint code to speed things up avoiding attempting to 
+   * offscreen entrys.
+  */
 
   glTranslatef(0.0, 
 	       (float)-1.0 * (view->priv->active_item_num) 
 	                         * priv->row_height, 
 	       0.0);
 
-  clutter_actor_paint (priv->rows);
+  start_item = priv->active_item_num - 1;
+  if (start_item < 0) start_item = 0;
+
+  end_item = priv->active_item_num + 6;
+
+  glTranslatef(0.0, clutter_actor_get_y (priv->rows), 0.0);
+
+  for (i = start_item; i < end_item; i++)
+    {
+      ClutterActor* child;
+
+      child = clutter_group_get_nth_child (CLUTTER_GROUP(priv->rows), i);
+      if (child)
+	clutter_actor_paint (child);
+    }
 
   glPopMatrix();
 }
@@ -507,7 +538,7 @@ wh_video_view_remove_rows (WHVideoView *view)
   clutter_group_remove_all (CLUTTER_GROUP(priv->rows));
 }
 
-static void
+static gboolean
 add_row_foreach (WHVideoModel    *model,
 		 WHVideoModelRow *row,
 		 gpointer         data)
@@ -524,6 +555,8 @@ add_row_foreach (WHVideoModel    *model,
   wh_video_row_renderer_set_active (renderer, FALSE); 
 
   clutter_group_add (CLUTTER_GROUP(priv->rows), CLUTTER_ACTOR(renderer));
+
+  return TRUE;
 }
 
 static void
@@ -610,7 +643,7 @@ wh_video_view_init (WHVideoView *self)
 
   /* Scrolling */
 
-  priv->timeline = clutter_timeline_new (15, 60);
+  priv->timeline = clutter_timeline_new (10, 60);
 
   priv->alpha = clutter_alpha_new_full (priv->timeline,
 					alpha_sine_inc_func,

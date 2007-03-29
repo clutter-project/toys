@@ -50,6 +50,9 @@ wh_screen_video_activate (WHScreenVideo *screen, WHVideoView *view);
 void
 wh_screen_video_deactivate (WHScreenVideo *screen);
 
+gboolean
+wh_screen_video_get_playing (WHScreenVideo *screen);
+
 G_END_DECLS
 
 #endif
