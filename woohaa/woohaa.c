@@ -566,7 +566,7 @@ main (int argc, char *argv[])
 
   stage = clutter_stage_get_default ();
   /* clutter_actor_set_size (stage, 640, 480); */
-  g_object_set (stage, "fullscreen", TRUE, NULL);
+  g_object_set (stage, "fullscreen", TRUE, "hide-cursor", TRUE, NULL);
   clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
 
   /* General setup */

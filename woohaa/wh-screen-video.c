@@ -444,16 +444,39 @@ wh_screen_video_new (void)
   return CLUTTER_ACTOR(g_object_new (WH_TYPE_SCREEN_VIDEO, NULL));
 }
 
+static void
+on_wh_screen_video_error (WHScreenVideo *screen)
+{
+  WHScreenVideoPrivate *priv  = SCREEN_VIDEO_PRIVATE(screen);
+
+  /* Hack to stop looping on an unplayable file. 
+   * FIXME: Need much better error handling..
+  */
+
+  g_signal_emit (screen, _screen_signals[PLAYBACK_STARTED], 0);
+
+  g_signal_handlers_disconnect_by_func (priv->video, 
+					G_CALLBACK (video_tick),
+					screen);
+
+  g_signal_handlers_disconnect_by_func(clutter_stage_get_default(),
+				       video_input_cb,
+				       screen);
+
+  g_signal_emit (screen, _screen_signals[PLAYBACK_FINISHED], 0);
+}
+
+
 void
 wh_screen_video_deactivate (WHScreenVideo *screen)
 {
   WHScreenVideoPrivate *priv  = SCREEN_VIDEO_PRIVATE(screen);
 
-  clutter_media_set_playing (CLUTTER_MEDIA(priv->video), FALSE);
-
   g_signal_handlers_disconnect_by_func (priv->video, 
 					G_CALLBACK (video_tick),
 					screen);
+
+  clutter_media_set_playing (CLUTTER_MEDIA(priv->video), FALSE);
 
 #if 0
   /* FIXME: Can cause crashes with current thumbnailer code so  
@@ -557,7 +580,7 @@ wh_screen_video_activate (WHScreenVideo *screen, WHVideoView *view)
 
   g_signal_connect_swapped (priv->video,
 		    "error",
-		    G_CALLBACK (wh_screen_video_deactivate),
+		    G_CALLBACK (on_wh_screen_video_error),
 		    screen);
 
   priv->video_controls_visible = FALSE;
