@@ -663,7 +663,7 @@ main (int argc, char *argv[])
   wh->busy = wh_busy_new();
   clutter_group_add (CLUTTER_GROUP(screen_start), wh->busy);
   
-  label = clutter_label_new_full ("Sans 72px", "Importing Media..", 
+  label = clutter_label_new_full ("Sans 72px", "Syncing Media..", 
 				  &white_col);
   clutter_group_add (CLUTTER_GROUP(screen_start), label);
   clutter_actor_set_position (label,

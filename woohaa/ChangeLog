@@ -1,5 +1,10 @@
 2007-03-30  Matthew Allum  <mallum@openedhand.com>
 
+	* woohaa.c: (main):
+	Importing -> Syncing copy change.
+
+2007-03-30  Matthew Allum  <mallum@openedhand.com>
+
 	* wh-screen-video.c:
 	Hack to prevent bad video files causing crazed looping. 
 	* woohaa.c:
