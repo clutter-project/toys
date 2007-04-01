@@ -1,3 +1,8 @@
+2007-04-01  Matthew Allum  <mallum@openedhand.com>
+
+	* wh-screen-video.c:
+	Fix Audio/Picture sync on movie playback startup
+
 2007-03-30  Matthew Allum  <mallum@openedhand.com>
 
 	* woohaa.c: (main):

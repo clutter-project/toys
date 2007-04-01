@@ -68,6 +68,19 @@ video_size_change (ClutterTexture *texture,
   clutter_actor_set_size (CLUTTER_ACTOR (texture), new_width, new_height);
 }
 
+void
+video_pixbuf_change (ClutterTexture *texture, WHScreenVideo  *screen)
+{
+  WHScreenVideoPrivate *priv  = SCREEN_VIDEO_PRIVATE(screen);
+
+  g_signal_emit (screen, _screen_signals[PLAYBACK_STARTED], 0);
+  util_actor_fade_in (CLUTTER_ACTOR(screen), NULL, NULL);
+
+  g_signal_handlers_disconnect_by_func (priv->video, 
+					G_CALLBACK (video_pixbuf_change),
+					screen);
+} 
+
 static gchar*
 nice_time (int time)
 {
@@ -105,6 +118,13 @@ video_tick (GObject        *object,
   if (!priv->video_playing && position > 0)
     {
       char *duration_txt;
+      duration_txt = nice_time (duration);
+      clutter_label_set_text (CLUTTER_LABEL(priv->duration), duration_txt);
+      g_free(duration_txt);
+
+      priv->video_playing = TRUE;
+#if 0
+      char *duration_txt;
 
       g_signal_emit (screen, _screen_signals[PLAYBACK_STARTED], 0);
 
@@ -115,6 +135,7 @@ video_tick (GObject        *object,
       duration_txt = nice_time (duration);
       clutter_label_set_text (CLUTTER_LABEL(priv->duration), duration_txt);
       g_free(duration_txt);
+#endif
     }
 
   seek_width = clutter_actor_get_width(priv->video_seekbar_bg);
@@ -581,6 +602,11 @@ wh_screen_video_activate (WHScreenVideo *screen, WHVideoView *view)
   g_signal_connect_swapped (priv->video,
 		    "error",
 		    G_CALLBACK (on_wh_screen_video_error),
+		    screen);
+
+  g_signal_connect (priv->video,
+		    "pixbuf-change",
+		    G_CALLBACK(video_pixbuf_change),
 		    screen);
 
   priv->video_controls_visible = FALSE;
