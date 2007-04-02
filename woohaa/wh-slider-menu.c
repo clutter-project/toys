@@ -1,7 +1,7 @@
 #include "wh-slider-menu.h"
 #include "util.h"
 
-#define FONT "VistaSansBook 75px"
+#define FONT "Sans 75px"
 #define SELECTED_OFFSET (8)
 
 typedef struct WHSliderMenuEntry
@@ -309,6 +309,7 @@ wh_slider_menu_add_option (WHSliderMenu            *menu,
 
   actor = clutter_label_new_with_text (priv->font, text);
   clutter_label_set_color (CLUTTER_LABEL(actor), priv->font_color);
+  clutter_label_set_line_wrap (CLUTTER_LABEL(actor), FALSE);
 
   entry = g_new0(WHSliderMenuEntry, 1);
   entry->actor = actor;
@@ -317,7 +318,7 @@ wh_slider_menu_add_option (WHSliderMenu            *menu,
 
   if (clutter_actor_get_height(actor) > menu->priv->entry_height)
       menu->priv->entry_height = clutter_actor_get_height(actor);
-  
+
   for (iter = menu->priv->entrys;
        iter != NULL;
        iter = iter->next)
@@ -329,10 +330,11 @@ wh_slider_menu_add_option (WHSliderMenu            *menu,
       data->offset = xoff = offset;
 
       yoff = (menu->priv->entry_height - clutter_actor_get_height(child))/2;
-
+      
       clutter_actor_set_position (child, xoff, yoff);
 
-      offset += clutter_actor_get_width(child) + pad;
+      offset += (clutter_actor_get_width(child) + pad);
+
       i++;
     }
 
@@ -349,15 +351,17 @@ wh_slider_menu_add_option (WHSliderMenu            *menu,
   else
     clutter_actor_set_opacity (actor, 0x99);
 
+  clutter_actor_set_parent (actor, CLUTTER_ACTOR (menu));
+
   menu->priv->entrys = g_list_append (menu->priv->entrys, entry);
 
   clutter_actor_set_position (actor, 
-                              offset,
+			      offset, 
 			      (menu->priv->entry_height 
-			            - clutter_actor_get_height(actor))/2);
+			          - clutter_actor_get_height(actor))/2);
+
   menu->priv->n_entrys++;
 
-  clutter_actor_set_parent (actor, CLUTTER_ACTOR (menu));
   clutter_actor_show (actor);
 }
 
@@ -372,7 +376,6 @@ wh_slider_menu_activate (WHSliderMenu *menu,
 
   if (!clutter_timeline_is_playing(menu->priv->timeline))
     clutter_timeline_start (menu->priv->timeline);    
-
   current 
     = (WHSliderMenuEntry *)g_list_nth_data(menu->priv->entrys, 
 					   menu->priv->active_entry_num);
