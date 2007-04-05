@@ -1,3 +1,33 @@
+2007-04-06  Matthew Allum  <mallum@openedhand.com>
+
+	* wh-screen-video.c:
+	Re-add cheesy easter egg effect (via 'e' key).
+
+	* wh-slider-menu.c:
+	* wh-slider-menu.h:
+	* woohaa.c:
+	* wh-video-view.c:
+	Improve layout/scalability on various sized displays.
+
+	* wh-video-row-renderer.c:
+	Simple glow effect on selected video.
+
+	* wh-video-thumbnailer.c:
+	Clean up a couple of warnings.
+
+2007-04-06  Matthew Allum  <mallum@openedhand.com>
+
+	reviewed by: <delete if not using a buddy>
+
+	* wh-slider-menu.c: (wh_slider_menu_init), (wh_slider_menu_new),
+	(wh_slider_menu_add_option):
+	* wh-slider-menu.h:
+	* wh-video-row-renderer.c: (wh_video_row_renderer_init),
+	(wh_video_row_renderer_set_active):
+	* wh-video-view.c: (ensure_layout), (wh_video_view_paint),
+	(wh_video_view_init):
+	* woohaa.c: (main):
+
 2007-04-03  Matthew Allum  <mallum@openedhand.com>
 
 	* wh-slider-menu.c:

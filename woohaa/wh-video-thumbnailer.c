@@ -1,5 +1,6 @@
 #include <clutter/clutter.h>
 #include <clutter-gst/clutter-gst.h>
+#include <gst/gst.h>
 #include <signal.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -98,7 +99,7 @@ main (int argc, char *argv[])
       
       if (!gdk_pixbuf_save (thumb, argv[2], "png", NULL, NULL))
 	{
-	  g_error ("Pixbuf save failed\n", argv[0]);
+	  g_error ("%s: Pixbuf save failed\n", argv[0]);
 	  exit(-1);
 	}
 

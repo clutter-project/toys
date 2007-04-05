@@ -79,7 +79,7 @@ typedef void (*WHSliderMenuSelectedFunc) (WHSliderMenu *menu,
 					  gpointer           userdata);
 
 ClutterActor*
-wh_slider_menu_new (void);
+wh_slider_menu_new (const gchar *font);
 
 void
 wh_slider_menu_add_option (WHSliderMenu            *menu, 

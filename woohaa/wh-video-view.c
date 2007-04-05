@@ -39,8 +39,10 @@ struct _WHVideoViewPrivate
   gint               n_items; 	
 
   /* up/down 'buttons */
+#if 0
   ClutterActor *up;
   ClutterActor *down;
+#endif
 };
 
 enum
@@ -169,7 +171,7 @@ ensure_layout (WHVideoView *view,
 
   n_rows_change = (priv->n_rows_visible != n_rows);
   size_change = (clutter_actor_get_width(CLUTTER_ACTOR(view)) != width 
-		 || clutter_actor_get_width(CLUTTER_ACTOR(view)) != height);
+		 || clutter_actor_get_height(CLUTTER_ACTOR(view)) != height);
 
   priv->n_rows_visible = n_rows;
 
@@ -186,7 +188,7 @@ ensure_layout (WHVideoView *view,
 
       clutter_actor_set_position (renderer, 0, offset); 
       clutter_actor_set_size (renderer, 
-			      width - clutter_actor_get_height (priv->up)- 10, 
+			      width, 
 			      priv->row_height); 
       clutter_actor_show_all (renderer);  
 
@@ -205,16 +207,6 @@ ensure_layout (WHVideoView *view,
       /* Selector and buttons - */
       clutter_actor_set_size (priv->selector, width, priv->row_height);
       clutter_actor_set_position (priv->selector, 0, 0);  
-
-      clutter_actor_set_position 
-	(priv->up, 
-	 width - clutter_actor_get_width (priv->up) - 10, 
-	 0);  
-
-      clutter_actor_set_position 
-	(priv->down, 
-	 width - clutter_actor_get_width (priv->down) - 10, 
-	 priv->row_height - clutter_actor_get_height (priv->down));  
 
       /* Set up new scroll path */
 #if 0
@@ -285,10 +277,12 @@ wh_video_view_paint (ClutterActor *actor)
     {
       clutter_actor_paint (priv->selector);
 
+#if 0
       if (priv->active_item_num > 0)
-	clutter_actor_paint (priv->up);
+        clutter_actor_paint (priv->up);
       if (priv->active_item_num < priv->n_items-1)
 	clutter_actor_paint (priv->down);
+#endif
     }
   else 
     {
@@ -635,8 +629,7 @@ static void
 wh_video_view_init (WHVideoView *self)
 {
   WHVideoViewPrivate *priv;
-  ClutterColor        col = { 0xb4, 0xe2, 0xff, 0xff };
-  ClutterColor rect_col   = { 0x88, 0x88, 0x97, 0xff };
+  ClutterColor   rect_col = { 0x88, 0x88, 0x97, 0xff };
 
   self->priv = priv = WH_VIDEO_VIEW_GET_PRIVATE (self);
 
@@ -677,23 +670,13 @@ wh_video_view_init (WHVideoView *self)
 			G_CALLBACK (switch_timeline_completed_1),
 			self);
 
-  /* FIXME: global font/style settings  */
-#define FONT "VistaSansBook 75px"
-
-  priv->up = clutter_label_new_full (FONT, "<", &col);
-  clutter_actor_rotate_z (priv->up, 
-			90.0,
-			clutter_actor_get_width (priv->up)/2, 
-			clutter_actor_get_height (priv->up)/2);
-
-  priv->down = clutter_label_new_full (FONT, "<", &col);
-  clutter_actor_rotate_z (priv->down, 
-			270.0,
-			clutter_actor_get_width (priv->down)/2, 
-			clutter_actor_get_height (priv->down)/2);
+#if 0
+  priv->up = clutter_label_new_full ("Sans 10pt", "<", &col);
+  priv->down = clutter_label_new_full ("Sans 10pt", ">", &col);
 
   clutter_actor_set_parent (priv->up, CLUTTER_ACTOR(self));
   clutter_actor_set_parent (priv->down, CLUTTER_ACTOR(self));
+#endif
 
   priv->selector = clutter_rectangle_new_with_color (&rect_col);
   clutter_actor_set_parent (priv->selector, CLUTTER_ACTOR(self));

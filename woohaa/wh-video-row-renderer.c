@@ -280,6 +280,18 @@ wh_video_row_renderer_init (WHVideoRowRenderer *self)
   clutter_actor_show_all (priv->container);
 }
 
+static void 
+thumb_anim_complete (ClutterActor *clone, WHVideoRowRenderer *renderer)
+{
+  WHVideoRowRendererPrivate *priv = VIDEO_ROW_RENDERER_PRIVATE(renderer);
+
+  util_actor_fade (priv->thumbnail_image,
+		   NULL,
+		   0xcc,
+		   0xff,
+		   NULL);  
+}
+
 void
 wh_video_row_renderer_set_active (WHVideoRowRenderer *renderer, 
 				  gboolean            setting)
@@ -304,6 +316,15 @@ wh_video_row_renderer_set_active (WHVideoRowRenderer *renderer,
       clutter_label_set_color (CLUTTER_LABEL(priv->info_label), 
 			       &info_active_col);
       clutter_actor_set_opacity (CLUTTER_ACTOR(renderer), 0xff);
+
+      if (priv->thumbnail_image)
+	{
+	  util_actor_fade (priv->thumbnail_image,
+			   (UtilAnimCompleteFunc)thumb_anim_complete,
+			   0xff,
+			   0xcc,
+			   renderer);  
+	}
     }
   else
     {
@@ -313,6 +334,9 @@ wh_video_row_renderer_set_active (WHVideoRowRenderer *renderer,
 			       &info_inactive_col);
       clutter_actor_set_opacity (CLUTTER_ACTOR(renderer), 0xcc);
     }
+
+
+
 }
 
 WHVideoRowRenderer*

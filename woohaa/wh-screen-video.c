@@ -27,6 +27,9 @@ struct _WHScreenVideoPrivate
   
   guint              controls_timeout;
   WHVideoModelRow   *video_row;
+
+  /* Effects */
+  ClutterTimeline   *cheese_timeline;
 };
 
 enum
@@ -38,6 +41,18 @@ enum
 
 static guint _screen_signals[LAST_SIGNAL] = { 0 };
 
+void
+cheese_cb (ClutterTimeline *timeline, 
+	   gint             frame_num, 
+	   WHScreenVideo   *screen)
+{
+  WHScreenVideoPrivate *priv  = SCREEN_VIDEO_PRIVATE(screen);
+
+  clutter_actor_rotate_y (priv->video,
+			  frame_num * 12,
+			  CLUTTER_STAGE_WIDTH()/2,
+			  0);
+}
 
 static void
 video_size_change (ClutterTexture *texture, 
@@ -252,10 +267,8 @@ video_input_cb (ClutterStage *stage,
 	    break;
 	  break;
 	case CLUTTER_e:
-	  /*
-	  if (!clutter_timeline_is_playing (screen->foo_effect))
-	    clutter_timeline_start (screen->foo_effect);
-	  */
+	  if (!clutter_timeline_is_playing (priv->cheese_timeline))
+	    clutter_timeline_start (priv->cheese_timeline);
 	  break;
 	case CLUTTER_Escape:
 	  wh_screen_video_deactivate (screen);
@@ -457,6 +470,11 @@ wh_screen_video_init (WHScreenVideo *self)
 
   /* Make  */
   video_make_controls (self);
+
+  /* Cheap effect */
+  priv->cheese_timeline = clutter_timeline_new (30, 90);
+  g_signal_connect (priv->cheese_timeline, "new-frame", 
+		    G_CALLBACK (cheese_cb), self);
 }
 
 ClutterActor*

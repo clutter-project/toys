@@ -150,7 +150,7 @@ wh_slider_menu_request_coords (ClutterActor    *self,
 
 static void
 wh_slider_menu_allocate_coords (ClutterActor    *self,
-				     ClutterActorBox *box)
+				ClutterActorBox *box)
 {
   WHSliderMenuPrivate *priv;
 
@@ -284,13 +284,18 @@ wh_slider_menu_init (WHSliderMenu *self)
 }
 
 ClutterActor*
-wh_slider_menu_new (void)
+wh_slider_menu_new (const gchar *font)
 {
   ClutterActor         *menu;
   WHSliderMenuPrivate  *priv;
 
   menu = g_object_new (WH_TYPE_SLIDER_MENU, NULL);
   priv = WH_SLIDER_MENU_GET_PRIVATE (menu);
+
+  /* FIXME: Should be prop */
+  priv->font = g_strdup(font);
+  clutter_label_set_font_name (CLUTTER_LABEL(priv->prev), priv->font);
+  clutter_label_set_font_name (CLUTTER_LABEL(priv->next), priv->font);
 
   return menu;
 }
@@ -304,7 +309,7 @@ wh_slider_menu_add_option (WHSliderMenu            *menu,
   WHSliderMenuPrivate  *priv = WH_SLIDER_MENU_GET_PRIVATE (menu);
   WHSliderMenuEntry    *entry;
   ClutterActor         *actor;
-  gint                  i = 0, offset =0, pad = 100;
+  gint                  i = 0, offset =0, pad;;
   GList                *iter;
 
   actor = clutter_label_new_with_text (priv->font, text);
@@ -318,6 +323,8 @@ wh_slider_menu_add_option (WHSliderMenu            *menu,
 
   if (clutter_actor_get_height(actor) > menu->priv->entry_height)
       menu->priv->entry_height = clutter_actor_get_height(actor);
+
+  pad = (clutter_actor_get_width (priv->next) * 3) / 2;
 
   for (iter = menu->priv->entrys;
        iter != NULL;

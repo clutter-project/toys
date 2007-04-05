@@ -530,8 +530,8 @@ main (int argc, char *argv[])
   WooHaa        *wh;
   ClutterActor  *stage, *bg, *screen_start, *desktop, *label;
   gchar         *gconf_paths;
-  gchar         **pathv;
-  gint           i = 0;
+  gchar         **pathv, *font_str;
+  gint           i = 0, menu_h, browse_h, padding = 20;
   GError        *error = NULL;
   ClutterColor   stage_color = { 0x4a, 0x52, 0x5a, 0xff },
                  white_col   = { 0xff, 0xff, 0xff, 0xff};
@@ -565,7 +565,7 @@ main (int argc, char *argv[])
   wh->db    = wh_db_new ();
 
   stage = clutter_stage_get_default ();
-  /* clutter_actor_set_size (stage, 640, 480); */
+  // clutter_actor_set_size (stage, 640, 480); 
   g_object_set (stage, "fullscreen", TRUE, "hide-cursor", TRUE, NULL);
   clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
 
@@ -580,15 +580,18 @@ main (int argc, char *argv[])
   clutter_group_add (CLUTTER_GROUP(stage), bg);
   clutter_actor_show (bg);
 
-
   /* Layout not really needed .. */
   wh->screen_browse = clutter_simple_layout_new();
   clutter_actor_set_size (wh->screen_browse, CSW(), CSH());
+
+  padding    = 0;  
+  menu_h     = CSH()/12;
+  browse_h   = CSH() - menu_h - (2 *padding);
+  font_str   = g_strdup_printf("Sans %ipx", menu_h);
   
   /* Slider menu */
-
-  wh->menu = wh_slider_menu_new ();
-  clutter_actor_set_size (wh->menu, CSW(), 100);
+  wh->menu = wh_slider_menu_new (font_str);
+  clutter_actor_set_size (wh->menu, CSW(), menu_h);
 
   wh_slider_menu_add_option (WH_SLIDER_MENU (wh->menu), 
 			     "Not Viewed",
@@ -634,7 +637,6 @@ main (int argc, char *argv[])
   view_not_viewed_selected (WH_SLIDER_MENU (wh->menu), NULL, (gpointer)wh);
 
   clutter_group_add (CLUTTER_GROUP(wh->screen_browse), wh->menu);
-  g_object_set(wh->menu, "y", 25, NULL); 
 
   /* Video screen */
 
@@ -663,7 +665,7 @@ main (int argc, char *argv[])
   wh->busy = wh_busy_new();
   clutter_group_add (CLUTTER_GROUP(screen_start), wh->busy);
   
-  label = clutter_label_new_full ("Sans 72px", "Syncing Media..", 
+  label = clutter_label_new_full (font_str, "Syncing Media..", 
 				  &white_col);
   clutter_group_add (CLUTTER_GROUP(screen_start), label);
   clutter_actor_set_position (label,
@@ -700,14 +702,13 @@ main (int argc, char *argv[])
    * and get a smoother transition, but something appears wrong
    * with add signal.      
   */
-
   wh->view = wh_video_view_new (wh->model, 5);
-  clutter_actor_set_size (wh->view, CSW(), 600);
+  clutter_actor_set_size (wh->view, CSW(), browse_h - 24);
   clutter_group_add (CLUTTER_GROUP(wh->screen_browse), wh->view);
 
   g_object_set(wh->view, "y", 
 	       clutter_actor_get_y(wh->menu) 
-	         + clutter_actor_get_height(wh->menu) + 25, NULL); 
+	         + clutter_actor_get_height(wh->menu) + 10, NULL); 
 
   clutter_group_add (CLUTTER_GROUP (stage), wh->screen_browse);
 
