@@ -224,7 +224,7 @@ opt_menu_new (OptShow * show)
   menu->priv->behaviour_s =
     clutter_behaviour_scale_new (menu->priv->alpha,
                                  0.0, 1.0,
-                                 CLUTTER_GRAVITY_SOUTH_WEST); 
+                                 CLUTTER_GRAVITY_NORTH_WEST); 
 
   clutter_behaviour_apply (menu->priv->behaviour_s, CLUTTER_ACTOR (menu));
 

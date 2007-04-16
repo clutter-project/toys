@@ -1,3 +1,8 @@
+2007-04-16  Tomas Frydrych  <tf@openedhand.com>
+
+	* opt-menu.c:
+	Changed scaling gravity from SW to NW.
+	
 2007-03-29  Matthew Allum  <mallum@openedhand.com>
 
 	* Makefile:
