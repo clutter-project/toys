@@ -26,9 +26,9 @@
 
 /* Some stock stuff obtained from flickr. That's public, really */
 
-#define                         NFLICK_FLICKR_API_KEY "9dab4c07b676141e059c092e10693e05"
+#define                         NFLICK_FLICKR_API_KEY "97f40c6445ca8243d52fff461308fb18"
 
-#define                         NFLICK_FLICKR_SHARED_SECRET "8e608a77989c0397"
+#define                         NFLICK_FLICKR_SHARED_SECRET "2d434592f898e1ab"
 
 #define                         NFLICK_FLICKR_HOST "www.flickr.com"
 

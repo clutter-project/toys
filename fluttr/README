@@ -1,2 +1,4 @@
 A clutter-based flickr viewer.
 
+All of the 'flickr' code (anything starting with nflick-*), has been taken from the excellent NFlick Flickr browser for the n800 by mdk (https://garage.maemo.org/projects/nflick).
+

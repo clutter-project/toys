@@ -1,5 +1,26 @@
 2007-04-30  Neil J. Patel  <njp@o-hand.com>
 
+	* README:
+	Added explaination of where the Flickr code came from.
+
+	* src/Makefile.am:
+	* src/fluttr-auth.c:
+	* src/fluttr-auth.h:
+	Added a FluttrAuth class which handles Flickr authorisations and uses
+	signals to provide feedback.
+	
+	* src/main.c: (_auth_timeout):Starts the FluttrAuth class.
+	(main):Added checks for authorisation.
+	(check_credentials): Loads up a .fluttr keyfile which contains the
+	username, fullname, token and usernsid of the previous session.
+	(auth_successful): Will save the new details in the .fluttr keyfile
+	(auth_error): FluttrAuth error handler.
+	
+	* src/nflick-flickr.h:
+	Changed the values to authorise for fluttr and not nflic.
+
+2007-04-30  Neil J. Patel  <njp@o-hand.com>
+
 	* configure.ac:
 	* prepare-ChangeLog.pl:
 	* src/Makefile.am:

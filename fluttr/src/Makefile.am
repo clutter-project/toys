@@ -10,9 +10,11 @@ AM_CFLAGS = \
 fluttr_LDADD  = $(DEPS_LIBS)
 fluttr_SOURCES = \
 	main.c					\
+	fluttr-auth.c				\
+	fluttr-auth.h				\
 	nflick-api-request.c			\
 	nflick-api-request.h			\
-	nflick-apt-request-private.h		\
+	nflick-api-request-private.h		\
 	nflick-api-response.c			\
 	nflick-api-response.h			\
 	nflick-api-response-private.h		\
