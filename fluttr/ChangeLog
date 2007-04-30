@@ -1,3 +1,28 @@
+2007-04-30  Neil J. Patel  <njp@o-hand.com>
+
+	* configure.ac:
+	* prepare-ChangeLog.pl:
+	* src/Makefile.am:
+	* src/main.c: (main):
+	* src/nflick-api-request-private.h:
+	* src/nflick-api-request.c:
+	* src/nflick-api-request.h:
+	* src/nflick-api-response-private.h:
+	* src/nflick-api-response.c:
+	* src/nflick-api-response.h:
+	* src/nflick-auth-worker-private.h:
+	* src/nflick-auth-worker.c:
+	* src/nflick-auth-worker.h:
+	* src/nflick-flickr.h:
+	* src/nflick-gft-response-private.h:
+	* src/nflick-gft-response.c:
+	* src/nflick-gft-response.h:
+	* src/nflick-types.h:
+	* src/nflick-worker-private.h:
+	* src/nflick-worker.c:
+	* src/nflick-worker.h:
+	Import of nflick's Flickr code, made it compile.
+
 2007-04-27  Neil J. Patel  <njp@o-hand.com>
 
 	* Inital Import:

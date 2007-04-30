@@ -9,12 +9,12 @@ AC_ISC_POSIX
 AC_PROG_CC
 AC_STDC_HEADERS
 
-PKG_CHECK_MODULES(DEPS, clutter-0.2 gdk-2.0)
+PKG_CHECK_MODULES(DEPS, clutter-0.2 gdk-2.0 gtk+-2.0 neon libxml-2.0)
 AC_SUBST(DEPS_CFLAGS)
 AC_SUBST(DEPS_LIBS)
 
 if test "x$GCC" = "xyes"; then
-        GCC_FLAGS="-g -Wall -Werror"
+        GCC_FLAGS="-g -Wall"
 fi
 
 AC_SUBST(GCC_FLAGS)
