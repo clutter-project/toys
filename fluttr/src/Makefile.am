@@ -12,6 +12,8 @@ fluttr_SOURCES = \
 	main.c					\
 	fluttr-auth.c				\
 	fluttr-auth.h				\
+	fluttr-list.c				\
+	fluttr-list.h				\
 	nflick-api-request.c			\
 	nflick-api-request.h			\
 	nflick-api-request-private.h		\
@@ -25,6 +27,26 @@ fluttr_SOURCES = \
 	nflick-gft-response.c			\
 	nflick-gft-response.h			\
 	nflick-gft-response-private.h		\
+	nflick-no-set-response.c		\
+	nflick-no-set-response.h		\
+	nflick-no-set-response-private.h	\
+	nflick-photo-data.c			\
+	nflick-photo-data.h			\
+	nflick-photo-list-response.c		\
+	nflick-photo-list-response.h		\
+	nflick-photo-list-private.h		\
+	nflick-photo-list-worker.c		\
+	nflick-photo-list-worker.h		\
+	nflick-photo-list-worker-private.h	\
+	nflick-photo-set.c			\
+	nflick-photo-set.h			\
+	nflick-photo-set-private.h		\
+	nflick-set-list-response.c		\
+	nflick-set-list-response.h		\
+	nflick-set-list-response-private.h	\
+	nflick-set-list-worker.c		\
+	nflick-set-list-worker.h		\
+	nflick-set-list-worker-private.h	\
 	nflick-types.h				\
 	nflick-worker.c				\
 	nflick-worker.h				\

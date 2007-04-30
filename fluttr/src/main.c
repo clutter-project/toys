@@ -10,10 +10,17 @@
 #include <clutter/clutter.h>
 
 #include "fluttr-auth.h"
+#include "fluttr-list.h"
+
+#include "nflick-photo-data.h"
+#include "nflick-photo-set.h"
+#include "nflick-set-list-worker.h"
+#include "nflick-worker.h"
 
 typedef struct {
 	ClutterActor 		*stage;
 	ClutterActor 		*auth;
+	ClutterActor		*list;
 	
 	/* Flickr info */
 	gchar 			*username;
@@ -29,6 +36,12 @@ static void		auth_successful (FluttrAuth *auth, gchar *null,
 					 Fluttr *fluttr);
 static void		auth_error (FluttrAuth *auth, gchar *msg, 
 				    Fluttr *fluttr);
+				    
+static void		list_get_successful (FluttrAuth *auth, 
+					     NFlickWorker *worker, 
+					     Fluttr *fluttr);
+static void		list_get_error (FluttrAuth *auth, gchar *msg, 
+				    	Fluttr *fluttr);
 
 
 static gboolean
@@ -41,6 +54,7 @@ int
 main (int argc, char **argv)
 {
  	Fluttr *fluttr = g_new0 (Fluttr, 1);
+ 	ClutterActor *stage, *list;
 	ClutterColor stage_color = { 0x00, 0x00, 0x00, 0xff };
 	
 	g_thread_init (NULL);
@@ -54,9 +68,10 @@ main (int argc, char **argv)
 		return 0;
 	}
 	
-	fluttr->stage = clutter_stage_get_default ();
-	clutter_actor_set_size (fluttr->stage, 800, 440);
-	clutter_stage_set_color (CLUTTER_STAGE (fluttr->stage), &stage_color);
+	stage = clutter_stage_get_default ();
+	fluttr->stage = stage;
+	clutter_actor_set_size (stage, 800, 440);
+	clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
 	
 	if (fluttr->username == NULL) {
 		/* Authorise the mini-token */
@@ -75,6 +90,30 @@ main (int argc, char **argv)
 			       (gpointer)fluttr);
 	}
 	
+	
+	/* Set up the list worker */
+	list = fluttr_list_new ();
+	fluttr->list = list;
+	g_object_set (G_OBJECT (list),
+		      "username", fluttr->username,
+		      "fullname", fluttr->fullname,
+		      "token", fluttr->token,
+		      "usernsid", fluttr->usernsid,
+		      NULL);	
+	g_signal_connect (G_OBJECT (list), "successful",
+				  G_CALLBACK (list_get_successful), fluttr);
+	g_signal_connect (G_OBJECT (list), "error",
+				  G_CALLBACK (list_get_error), fluttr);
+				  
+	clutter_actor_set_size (list, 800, 480);
+	clutter_actor_set_position (list, 0, 0);
+	clutter_group_add (CLUTTER_GROUP (fluttr->stage), list);
+	
+	/* If we have a username etc, we want to start the list fetcher */
+	if (fluttr->username != NULL) {
+		fluttr_list_go (FLUTTR_LIST (fluttr->list));
+	}
+
 	clutter_actor_show_all (fluttr->stage);	    
 	
 	clutter_main();	
@@ -144,6 +183,7 @@ check_credentials (Fluttr *fluttr)
 	}
 }
 
+/* Authorisation Call backs */
 static void		
 auth_successful (FluttrAuth *auth, gchar *null, Fluttr *fluttr)
 {
@@ -178,11 +218,61 @@ auth_successful (FluttrAuth *auth, gchar *null, Fluttr *fluttr)
 		 fluttr->fullname,
 		 fluttr->token,
 		 fluttr->usernsid);
+
+	/* Start the list fetcher */
+	g_object_set (G_OBJECT (fluttr->list),
+		      "username", fluttr->username,
+		      "fullname", fluttr->fullname,
+		      "token", fluttr->token,
+		      "usernsid", fluttr->usernsid,
+		      NULL);		
+	fluttr_list_go (FLUTTR_LIST (fluttr->list));	
 }
 
 static void		
 auth_error (FluttrAuth *auth, gchar *msg, Fluttr *fluttr)
 {
-	g_print ("Auth Unsuccessful : %s\n", msg);
+	g_critical ("Auth Unsuccessful : %s\n", msg);
+}
+
+/* get list callbacks */
+
+static void		
+list_get_successful (FluttrAuth *auth, NFlickWorker *worker, Fluttr *fluttr)
+{
+	GList *list = NULL;
+	GList *l = NULL;
+	list = nflick_set_list_worker_take_list ((NFlickSetListWorker*) worker);
+	gint i = 0;
+	gint j = 0;
+	
+	sleep (4);
+	for (l = list; l != NULL; l = l->next) {
+		gchar *id = NULL;
+		g_object_get (G_OBJECT (l->data), "combotext", &id, NULL);
+		g_print ("%s\n", id);	
+	
+		GList *photos = NULL;
+		GList *photo;
+		g_object_get (G_OBJECT (l->data), "list", &photos, NULL);
+		g_print ("%d\n", g_list_length (photos));
+		for (photo = photos; photo!=NULL ;photo = photo->next) {
+			NFlickPhotoData *p = (NFlickPhotoData*)photo->data;
+			if (p->Id)
+				g_print ("\t%s ", p->Id);
+			if (p->Name)
+				g_print (p->Name);
+			g_print ("\n");
+			i++;
+		}
+		j++;
+	}
+	g_print ("%d Photo(s)\n in %d set(s)", i, j);
+}
+
+static void
+list_get_error (FluttrAuth *auth, gchar *msg, Fluttr *fluttr)
+{
+	g_critical ("Auth Unsuccessful : %s\n", msg);
 }
 

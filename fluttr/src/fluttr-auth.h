@@ -56,8 +56,8 @@ struct _FluttrAuthClass
 
 	void (*successful) (FluttrAuth *auth, gchar *null);
 	void (*error) (FluttrAuth *auth, gchar *msg);
-	void (*_juke_slider_3) (void);
-	void (*_juke_slider_4) (void);
+	void (*_fluttr_auth_3) (void);
+	void (*_fluttr_auth_4) (void);
 }; 
 
 GType fluttr_auth_get_type (void) G_GNUC_CONST;

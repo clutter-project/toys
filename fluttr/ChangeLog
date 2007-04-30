@@ -1,5 +1,22 @@
 2007-04-30  Neil J. Patel  <njp@o-hand.com>
 
+	* src/Makefile.am
+	Imported missing files from NFlick.
+
+	* src/fluttr-auth.h:
+	Fixed typo from copy.
+
+	* src/fluttr-list.c: 
+	* src/fluttr-list.h:
+	An actor which wraps nflick_set_list_worker, sends signals on
+	completion.
+	
+	* src/main.c: (main), (auth_successful), (auth_error),
+	(list_get_successful), (list_get_error):
+	Added the ability to get a list of photos and print them out.
+
+2007-04-30  Neil J. Patel  <njp@o-hand.com>
+
 	* README:
 	Added explaination of where the Flickr code came from.
 
