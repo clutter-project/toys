@@ -1,3 +1,49 @@
+2007-05-01  Neil J. Patel  <njp@o-hand.com>
+
+	* data/Makefile.am:
+	* data/background.svg:
+	* data/message.svg:
+	* data/spinner.svg:
+	Added some nice pictures.
+	
+	* src/Makefile.am:
+	* src/fluttr-auth.c:
+	Removed unneeded header.
+
+	* src/fluttr-behave.c: (alpha_sine_inc_func),
+	(alpha_linear_inc_func), (fluttr_behave_alpha_notify),
+	(fluttr_behave_class_init), (fluttr_behave_init),
+	(fluttr_behave_new):
+	* src/fluttr-behave.h:
+	A utility behaviour class witch will call a custom function on each
+	iteration of the timeline.
+
+	* src/fluttr-library-row.h:
+	Removed unused headers.
+
+	* src/fluttr-list.c: (close_message_window),
+	(on_thread_abort_idle), (on_thread_ok_idle),
+	(on_thread_error_idle), (on_thread_msg_change_idle),
+	(fluttr_list_go), (fluttr_list_alpha_func),
+	(fluttr_list_text_alpha_func), (fluttr_list_init),
+	(fluttr_list_new):
+	Added a startup spinning effect while the photo data is being
+	downloaded from flickr.
+
+	* src/fluttr-spinner.c: (fluttr_spinner_spin),
+	(fluttr_spinner_alpha_func), (fluttr_spinner_dispose),
+	(fluttr_spinner_finalize), (fluttr_spinner_class_init),
+	(fluttr_spinner_init), (fluttr_spinner_new):
+	* src/fluttr-spinner.h:
+	A basic spinner widget.
+
+	* src/main.c: (main), (create_background):
+	Added a background.
+
+	* src/nflick-worker.c: (thread_start):
+	Changed the thread for OkIdle to be called with a higher priority.
+
+
 2007-04-30  Neil J. Patel  <njp@o-hand.com>
 
 	* src/Makefile.am

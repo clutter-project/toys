@@ -30,8 +30,9 @@ struct _FluttrAuthPrivate
 	NFlickWorker		*worker;
 
 	GdkPixbuf		*logo;
-	ClutterActor		*text;
+	ClutterActor		*messagebox;
 	ClutterActor		*throbber;
+	ClutterActor		*text;
 	
 	ClutterTimeline		*timeline;
 	ClutterAlpha		*alpha;

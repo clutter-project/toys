@@ -227,8 +227,15 @@ static void                     thread_start (NFlickWorker *self)
                 case NFLICK_WORKER_STATUS_OK:
                 /* Fire ok func */
                 if (self->Private->OkIdle != NULL) 
-                        g_idle_add ((GSourceFunc) self->Private->OkIdle, 
-                                    (self->Private->CustomData != NULL) ? self->Private->CustomData : self);
+                        /*g_idle_add ((GSourceFunc) self->Private->OkIdle, 
+                                    (self->Private->CustomData != NULL) ? self->Private->CustomData : self);*/
+			g_timeout_add_full (G_PRIORITY_HIGH_IDLE,
+                                            1000,
+                                            (GSourceFunc) self->Private->OkIdle,
+                                            (self->Private->CustomData 
+                                            != NULL) ? self->Private->CustomData 
+                                            	: self,
+                                            NULL);
 
                 break;
                 

@@ -7,6 +7,9 @@
 
 #include "fluttr-list.h"
 
+#include "fluttr-spinner.h"
+#include "fluttr-behave.h"
+
 #include "nflick-worker.h"
 #include "nflick-set-list-worker.h"
 
@@ -30,12 +33,20 @@ struct _FluttrListPrivate
 	NFlickWorker		*worker;
 
 	GdkPixbuf		*logo;
+	ClutterActor		*group;
+	ClutterActor		*message;
+	ClutterActor		*spinner;
 	ClutterActor		*text;
-	ClutterActor		*throbber;
+	gchar			*msg;
+	gboolean		 popping;
 	
 	ClutterTimeline		*timeline;
 	ClutterAlpha		*alpha;
 	ClutterBehaviour 	*behave;
+	
+	ClutterTimeline		*text_time;
+	ClutterAlpha		*text_alpha;
+	ClutterBehaviour 	*text_behave;	
 };
 
 enum
@@ -57,10 +68,25 @@ enum
 
 static guint _list_signals[LAST_SIGNAL] = { 0 };
 
+static void
+close_message_window (FluttrList *list)
+{
+        FluttrListPrivate *priv;
+        
+        g_return_if_fail (FLUTTR_IS_LIST (list));
+        priv = FLUTTR_LIST_GET_PRIVATE(list);
+        
+        priv->popping = FALSE;
+        clutter_timeline_start (priv->timeline);
+	fluttr_spinner_spin (FLUTTR_SPINNER (priv->spinner), FALSE);
+}
+
 static gboolean                 
 on_thread_abort_idle (FluttrList *list)
 {
         g_return_val_if_fail (FLUTTR_IS_LIST (list), FALSE);
+        
+        close_message_window (list);
 
 	g_signal_emit (list, _list_signals[ERROR], 0, "Aborted");	
 
@@ -75,6 +101,8 @@ on_thread_ok_idle (FluttrList *list)
         g_return_val_if_fail (FLUTTR_IS_LIST (list), FALSE);
         priv = FLUTTR_LIST_GET_PRIVATE(list);
         
+        close_message_window (list);
+                
         g_signal_emit (list, _list_signals[SUCCESSFUL], 0, priv->worker);
 
         return FALSE;
@@ -88,6 +116,8 @@ on_thread_error_idle (FluttrList *list)
         
         g_return_val_if_fail (FLUTTR_IS_LIST (list), FALSE);
         priv = FLUTTR_LIST_GET_PRIVATE(list);
+        
+        close_message_window (list);
         
         /* Get the actual error */
         g_object_get (G_OBJECT (priv->worker), "error", &error, NULL);
@@ -106,7 +136,7 @@ static gboolean
 on_thread_msg_change_idle (FluttrList *list)
 {
         FluttrListPrivate *priv;
-        gchar *msg = NULL;
+        gchar *msg;
         
         g_return_val_if_fail (FLUTTR_IS_LIST (list), FALSE);
         priv = FLUTTR_LIST_GET_PRIVATE(list);
@@ -116,10 +146,15 @@ on_thread_msg_change_idle (FluttrList *list)
         if (msg != NULL) {
                 g_print ("%s", msg);
         }
+        priv->msg = g_strdup (msg);
         
-        g_free (msg);
+        if (clutter_timeline_is_playing (priv->text_time))
+        	clutter_timeline_rewind (priv->text_time);
+       
+        else
+        	clutter_timeline_start (priv->text_time);
 
-        return FALSE;
+	return FALSE;
 }
 
 
@@ -135,6 +170,11 @@ fluttr_list_go (FluttrList *list)
         
        	g_return_if_fail (FLUTTR_IS_LIST (list));
 	priv = FLUTTR_LIST_GET_PRIVATE(list);
+	
+	/* Set to opaque and start spinner */
+	fluttr_spinner_spin (FLUTTR_SPINNER (priv->spinner), TRUE);
+	clutter_timeline_start (priv->timeline);
+	clutter_actor_set_opacity (CLUTTER_ACTOR (list), 255);		
 	
 	/* Create the worker */
         worker = (NFlickWorker*)nflick_set_list_worker_new (priv->usernsid,
@@ -186,8 +226,89 @@ fluttr_list_alpha_func (ClutterBehaviour *behave,
 		       	      guint		alpha_value,
 		              gpointer		data)
 {
-	return;
-} 		
+	FluttrListPrivate *priv;
+	gfloat scale;
+	gfloat factor;
+	guint width, height;	
+	gint x, y;
+	
+       	g_return_if_fail (FLUTTR_IS_LIST (data));
+	priv = FLUTTR_LIST_GET_PRIVATE(data);
+	
+	factor = (gfloat)alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
+	
+	if (priv->popping) 
+		scale = factor;
+	else
+		scale = 1.0 - factor;
+	
+	clutter_actor_set_scale (CLUTTER_ACTOR (priv->group), scale, scale);
+	
+	/* Set new size */
+	clutter_actor_get_size (CLUTTER_ACTOR (priv->group), &width, &height);
+	width *= scale;
+	height *= scale;
+	
+	x = (CLUTTER_STAGE_WIDTH () /2) - (width /2);
+	y = (CLUTTER_STAGE_HEIGHT () /2) - (height /2);
+	
+	g_object_set (G_OBJECT (priv->group), 
+		      "y", y, 
+		      "x", x,
+		      NULL);
+	clutter_actor_set_opacity (CLUTTER_ACTOR (priv->group), 255 * scale);
+	clutter_actor_set_opacity (CLUTTER_ACTOR (priv->text), 255 * scale);
+	
+	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(data)))
+		clutter_actor_queue_redraw (CLUTTER_ACTOR(data));	
+}
+
+/* Fade out text, change text, then fade in, all within one play of the timeline
+   just to keep things interesting :) */
+static void
+fluttr_list_text_alpha_func (ClutterBehaviour *behave,
+		       	     guint		alpha_value,
+		             gpointer		data)
+{
+	FluttrListPrivate *priv;
+	gfloat factor;
+	
+       	g_return_if_fail (FLUTTR_IS_LIST (data));
+	priv = FLUTTR_LIST_GET_PRIVATE(data);
+	
+	factor = (gfloat) alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
+	
+	if (priv->msg != NULL && factor > 0.5) {
+		gchar *text = priv->msg;
+		gint x, y;
+		clutter_label_set_text (CLUTTER_LABEL (priv->text),
+					text);
+	
+		/* Calculate the new position */
+		x = (CLUTTER_STAGE_WIDTH () /2) 
+				- (clutter_actor_get_width (priv->text)/2);
+		y = (CLUTTER_STAGE_HEIGHT () /20) * 18;
+			clutter_actor_set_position (priv->text, x, y);
+			clutter_actor_set_position (priv->text, x, y);
+		g_free (priv->msg);
+		priv->msg = NULL;
+		
+	}
+	if (factor < 0.5) {
+		factor *= 2;
+	} else {
+		factor -= 0.5;
+		factor /= 0.5;
+	}
+	clutter_actor_set_opacity (CLUTTER_ACTOR (priv->text), 255 * factor);
+	/*clutter_actor_rotate_x (CLUTTER_ACTOR (priv->text), 
+				360 * factor,
+			clutter_actor_get_height (CLUTTER_ACTOR (priv->text))/2,
+			0);
+	*/
+	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(data)))
+		clutter_actor_queue_redraw (CLUTTER_ACTOR(data));	
+} 	
 		
 /* GObject Stuff */
 
@@ -407,9 +528,79 @@ static void
 fluttr_list_init (FluttrList *self)
 {
 	FluttrListPrivate *priv;
+	gint size = CLUTTER_STAGE_HEIGHT ()/9;
+	gint width, height;
+	ClutterActor *message;
+	GdkPixbuf *msg_buf = NULL;
+	guint font_size;
+	gchar *font;
+	ClutterColor text_color = { 0xff, 0xff, 0xff, 0xff };	
+	
 	priv = FLUTTR_LIST_GET_PRIVATE (self);
 	
 	priv->mini_token = NULL;
+
+	width = CLUTTER_STAGE_WIDTH ()/4;
+	height = CLUTTER_STAGE_HEIGHT ()/4;
+		
+	/* Group */
+	priv->group = clutter_group_new ();
+	clutter_group_add (CLUTTER_GROUP (self),priv->group); 
+	clutter_actor_set_size (priv->group, width, height);
+	clutter_actor_set_position (priv->group, 
+				    (CLUTTER_STAGE_WIDTH ()/2) - (width/2),
+				    (CLUTTER_STAGE_HEIGHT ()/2) - (height/2));	
+	
+	/* message box */
+	message = clutter_texture_new ();
+	priv->message = message;
+	msg_buf = gdk_pixbuf_new_from_file_at_scale (PKGDATADIR \
+  						    	"/message.svg",
+  						    width,
+  						    height,
+  						    FALSE,
+  						    NULL);
+	clutter_texture_set_pixbuf (CLUTTER_TEXTURE (message), msg_buf);
+	clutter_group_add (CLUTTER_GROUP (priv->group),message); 
+	clutter_actor_set_size (message, width, height);
+	clutter_actor_set_position (message, -(width/2),-(height/2));
+	
+	
+	/* Spinner */
+	priv->spinner = fluttr_spinner_new ();
+	clutter_group_add (CLUTTER_GROUP (priv->group), priv->spinner);
+	clutter_actor_set_size (priv->spinner, size, size);
+	clutter_actor_set_position (priv->spinner, -(size/2), -(size/2));
+				    
+	priv->timeline = clutter_timeline_new (40, 80);
+	priv->alpha = clutter_alpha_new_full (priv->timeline,
+					      alpha_sine_inc_func,
+					      NULL, NULL);
+	priv->behave = fluttr_behave_new (priv->alpha,
+					  fluttr_list_alpha_func,
+					  (gpointer)self);
+	priv->popping = TRUE;
+	
+	/* This is the msg label */
+	font_size = CLUTTER_STAGE_HEIGHT () /20;
+	font = g_strdup_printf ("%s %d", FONT, font_size);
+	
+	priv->text = clutter_label_new_full (font, " ", &text_color);
+	clutter_actor_set_opacity (priv->text, 0);
+	clutter_label_set_line_wrap (CLUTTER_LABEL (priv->text), FALSE);
+	clutter_group_add (CLUTTER_GROUP (self), priv->text);
+	clutter_actor_set_size (priv->text, 
+				CLUTTER_STAGE_WIDTH (),
+			        font_size * 2);	
+	
+	priv->text_time = clutter_timeline_new (40, 50);
+	priv->text_alpha = clutter_alpha_new_full (priv->text_time,
+					      alpha_sine_inc_func,
+					      NULL, NULL);
+	priv->text_behave = fluttr_behave_new (priv->text_alpha,
+					  fluttr_list_text_alpha_func,
+					  (gpointer)self);	
+	g_free (font);	
 }
 
 ClutterActor*
@@ -419,7 +610,9 @@ fluttr_list_new (void)
 
 	list = g_object_new (FLUTTR_TYPE_LIST, 
 			     NULL);
-	if (0) fluttr_list_alpha_func (NULL, 0, NULL);
+	
+	clutter_actor_set_opacity (CLUTTER_ACTOR (list), 0);
+	
 	return CLUTTER_ACTOR (list);
 }
 

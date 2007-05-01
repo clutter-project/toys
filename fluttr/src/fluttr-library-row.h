@@ -23,6 +23,7 @@ typedef struct _FluttrLibraryRow FluttrLibraryRow;
 struct _FluttrLibraryRow {
 	gchar 			*id;
 	gchar 			*name;
+	ClutterActor		*photo;
 	
 	NFlickPhotoSet		*set;
 	

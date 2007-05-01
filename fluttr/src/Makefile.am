@@ -14,6 +14,8 @@ fluttr_SOURCES = \
 	eggsequence.h				\
 	fluttr-auth.c				\
 	fluttr-auth.h				\
+	fluttr-behave.c				\
+	fluttr-behave.h				\
 	fluttr-library.c			\
 	fluttr-library.h			\
 	fluttr-library-row.c			\
@@ -22,6 +24,8 @@ fluttr_SOURCES = \
 	fluttr-list.h				\
 	fluttr-photo.c				\
 	fluttr-photo.h				\
+	fluttr-spinner.c			\
+	fluttr-spinner.h			\
 	nflick-api-request.c			\
 	nflick-api-request.h			\
 	nflick-api-request-private.h		\

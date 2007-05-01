@@ -30,6 +30,10 @@ typedef struct {
 
 } Fluttr;
 
+static void   	 	create_background (ClutterActor *bg,
+				    	   guint width, 
+				    	   guint height);
+
 static gboolean 	check_credentials (Fluttr *fluttr);
 
 static void		auth_successful (FluttrAuth *auth, gchar *null, 
@@ -54,7 +58,7 @@ int
 main (int argc, char **argv)
 {
  	Fluttr *fluttr = g_new0 (Fluttr, 1);
- 	ClutterActor *stage, *list;
+ 	ClutterActor *stage, *background, *list;
 	ClutterColor stage_color = { 0x00, 0x00, 0x00, 0xff };
 	
 	g_thread_init (NULL);
@@ -90,6 +94,12 @@ main (int argc, char **argv)
 			       (gpointer)fluttr);
 	}
 	
+	/* Background */
+	background = clutter_texture_new ();
+	clutter_actor_set_position (background, 0, 0);
+	create_background (background, CLUTTER_STAGE_WIDTH (), 
+				       CLUTTER_STAGE_HEIGHT ());	
+	clutter_group_add (CLUTTER_GROUP (stage), background);		
 	
 	/* Set up the list worker */
 	list = fluttr_list_new ();
@@ -273,5 +283,22 @@ static void
 list_get_error (FluttrAuth *auth, gchar *msg, Fluttr *fluttr)
 {
 	g_critical ("Auth Unsuccessful : %s\n", msg);
+}
+
+static void 
+create_background (ClutterActor *bg, guint width, guint height)
+{
+  	GdkPixbuf *pixbuf = NULL;
+  	
+  	pixbuf = gdk_pixbuf_new_from_file_at_scale (PKGDATADIR \
+  						    	"/background.svg",
+  						    width,
+  						    height,
+  						    FALSE,
+  						    NULL);
+	if (pixbuf)
+		clutter_texture_set_pixbuf (CLUTTER_TEXTURE (bg), pixbuf);
+	else
+		g_print ("Could not load pixbuf\n");		
 }
 
