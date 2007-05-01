@@ -10,10 +10,18 @@ AM_CFLAGS = \
 fluttr_LDADD  = $(DEPS_LIBS)
 fluttr_SOURCES = \
 	main.c					\
+	eggsequence.c				\
+	eggsequence.h				\
 	fluttr-auth.c				\
 	fluttr-auth.h				\
+	fluttr-library.c			\
+	fluttr-library.h			\
+	fluttr-library-row.c			\
+	fluttr-library-row.h			\
 	fluttr-list.c				\
 	fluttr-list.h				\
+	fluttr-photo.c				\
+	fluttr-photo.h				\
 	nflick-api-request.c			\
 	nflick-api-request.h			\
 	nflick-api-request-private.h		\

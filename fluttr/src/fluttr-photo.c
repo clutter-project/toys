@@ -5,33 +5,33 @@
  * Author: Neil J. Patel  <njp@o-hand.com>
  */
 
-#include "fluttr-list.h"
+#include "fluttr-photo.h"
 
 #include "nflick-worker.h"
-#include "nflick-set-list-worker.h"
 
-G_DEFINE_TYPE (FluttrList, fluttr_list, CLUTTER_TYPE_GROUP);
+G_DEFINE_TYPE (FluttrPhoto, fluttr_photo, CLUTTER_TYPE_GROUP);
 
-#define FLUTTR_LIST_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj),\
-	FLUTTR_TYPE_LIST, \
-	FluttrListPrivate))
+#define FLUTTR_PHOTO_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj),\
+	FLUTTR_TYPE_PHOTO, \
+	FluttrPhotoPrivate))
 	
 #define FONT "DejaVu Sans Book"
 
 
-struct _FluttrListPrivate
+struct _FluttrPhotoPrivate
 {
+	gchar			*id;
+	gchar			*name;
 	gchar 			*mini_token;
 	gchar 			*username;
 	gchar			*fullname;
 	gchar			*token;
 	gchar			*usernsid;
+	NFlickPhotoSet		*set;
 	
 	NFlickWorker		*worker;
 
-	GdkPixbuf		*logo;
-	ClutterActor		*text;
-	ClutterActor		*throbber;
+	GdkPixbuf		*pixbuf;
 	
 	ClutterTimeline		*timeline;
 	ClutterAlpha		*alpha;
@@ -41,53 +41,64 @@ struct _FluttrListPrivate
 enum
 {
 	PROP_0,
+	PROP_ID,
+	PROP_NAME,
 	PROP_MINI_TOKEN,
 	PROP_USERNAME,
 	PROP_FULLNAME,
 	PROP_TOKEN,
-	PROP_USERNSID
+	PROP_USERNSID,
+	PROP_PIXBUF,
+	PROP_SET
 };
 
 enum
 {
-	SUCCESSFUL,
+	LOADED,
 	ERROR,
 	LAST_SIGNAL
 };
 
-static guint _list_signals[LAST_SIGNAL] = { 0 };
+static guint _photo_signals[LAST_SIGNAL] = { 0 };
 
 static gboolean                 
-on_thread_abort_idle (FluttrList *list)
+on_thread_abort_idle (FluttrPhoto *photo)
 {
-        g_return_val_if_fail (FLUTTR_IS_LIST (list), FALSE);
+        g_return_val_if_fail (FLUTTR_IS_PHOTO (photo), FALSE);
 
-	g_signal_emit (list, _list_signals[ERROR], 0, "Aborted");	
+	g_signal_emit (photo, _photo_signals[ERROR], 0, "Aborted");	
 
         return FALSE;
 }
 
 static gboolean                 
-on_thread_ok_idle (FluttrList *list)
+on_thread_ok_idle (FluttrPhoto *photo)
 {
-        FluttrListPrivate *priv;
+        FluttrPhotoPrivate *priv;
         
-        g_return_val_if_fail (FLUTTR_IS_LIST (list), FALSE);
-        priv = FLUTTR_LIST_GET_PRIVATE(list);
+        g_return_val_if_fail (FLUTTR_IS_PHOTO (photo), FALSE);
+        priv = FLUTTR_PHOTO_GET_PRIVATE(photo);
         
-        g_signal_emit (list, _list_signals[SUCCESSFUL], 0, priv->worker);
+        g_object_get (G_OBJECT (priv->worker), 
+                      "username", &priv->username, 
+                      "fullname", &priv->fullname, 
+                      "token", &priv->token, 
+                      "usernsid", &priv->usernsid, 
+                      NULL);
+
+        g_signal_emit (photo, _photo_signals[LOADED], 0, "");
 
         return FALSE;
 }
 
 static gboolean                 
-on_thread_error_idle (FluttrList *list)
+on_thread_error_idle (FluttrPhoto *photo)
 {
-        FluttrListPrivate *priv;
+        FluttrPhotoPrivate *priv;
         gchar *error = NULL;
         
-        g_return_val_if_fail (FLUTTR_IS_LIST (list), FALSE);
-        priv = FLUTTR_LIST_GET_PRIVATE(list);
+        g_return_val_if_fail (FLUTTR_IS_PHOTO (photo), FALSE);
+        priv = FLUTTR_PHOTO_GET_PRIVATE(photo);
         
         /* Get the actual error */
         g_object_get (G_OBJECT (priv->worker), "error", &error, NULL);
@@ -95,7 +106,7 @@ on_thread_error_idle (FluttrList *list)
                 error = g_strdup_printf (gettext ("Internal error. "));
                 g_warning ("No error set on worker!");
         }
-	g_signal_emit (list, _list_signals[ERROR], 0, error);
+	g_signal_emit (photo, _photo_signals[ERROR], 0, error);
 
         g_free (error);
 
@@ -103,13 +114,13 @@ on_thread_error_idle (FluttrList *list)
 }
 
 static gboolean                 
-on_thread_msg_change_idle (FluttrList *list)
+on_thread_msg_change_idle (FluttrPhoto *photo)
 {
-        FluttrListPrivate *priv;
+        FluttrPhotoPrivate *priv;
         gchar *msg = NULL;
         
-        g_return_val_if_fail (FLUTTR_IS_LIST (list), FALSE);
-        priv = FLUTTR_LIST_GET_PRIVATE(list);
+        g_return_val_if_fail (FLUTTR_IS_PHOTO (photo), FALSE);
+        priv = FLUTTR_PHOTO_GET_PRIVATE(photo);
         
         /* Get the new message */
         g_object_get (G_OBJECT (priv->worker), "message", &msg, NULL);
@@ -123,66 +134,17 @@ on_thread_msg_change_idle (FluttrList *list)
 }
 
 
-/* This function does th emain work of creating and configuring the worker 
-   thread. the majority of this code is taken from
-   NFlick the n800 Flickr photo browser by MDK (see: README) */
+/* Start the pixbuf worker */
 void
-fluttr_list_go (FluttrList *list)
+fluttr_photo_fetch_pixbuf (FluttrPhoto *photo)
 {
-	FluttrListPrivate *priv;
-	NFlickWorker *worker;
-        NFlickWorkerStatus status;
-        
-       	g_return_if_fail (FLUTTR_IS_LIST (list));
-	priv = FLUTTR_LIST_GET_PRIVATE(list);
-	
-	/* Create the worker */
-        worker = (NFlickWorker*)nflick_set_list_worker_new (priv->usernsid,
-        						    priv->token);
-        
-        /* Check if the worker is in the right state */
-        g_object_get (G_OBJECT (worker), "status", &status, NULL);
-        
-        if (status != NFLICK_WORKER_STATUS_IDLE) {
-                g_warning ("Bad worker status"); 
-                return;
-        }
-        
-        g_object_ref (worker);
-        priv->worker = worker;
-        
-        /* Get the initial message */
-        gchar *msg = NULL;
-        g_object_get (G_OBJECT (priv->worker), "message", &msg, NULL);
-        if (msg != NULL) {
-                /* FIXME Escape markup */
-        	g_print ("%s", msg);
-        }
-        
-        /* Set the callback functions */
-        nflick_worker_set_custom_data (worker, list);
-        nflick_worker_set_aborted_idle (worker, 
-        			   (NFlickWorkerIdleFunc) on_thread_abort_idle);
-        
-        nflick_worker_set_error_idle (worker, 
-        			   (NFlickWorkerIdleFunc) on_thread_error_idle);
-        
-        nflick_worker_set_ok_idle (worker, 
-        			      (NFlickWorkerIdleFunc) on_thread_ok_idle);
-        
-        nflick_worker_set_msg_change_idle (worker, 
-        		      (NFlickWorkerIdleFunc) on_thread_msg_change_idle);
-                                        
-        nflick_worker_start (priv->worker);
-        
-        /* Free */
-        g_free (msg);
+	;
 }
 
 
 /* Slide in or out the notification popp, depending on priv->pop_visible */
 static void
-fluttr_list_alpha_func (ClutterBehaviour *behave,
+fluttr_photo_alpha_func (ClutterBehaviour *behave,
 		       	      guint		alpha_value,
 		              gpointer		data)
 {
@@ -192,17 +154,27 @@ fluttr_list_alpha_func (ClutterBehaviour *behave,
 /* GObject Stuff */
 
 static void
-fluttr_list_set_property (GObject      *object, 
+fluttr_photo_set_property (GObject      *object, 
 			  guint         prop_id,
 			  const GValue *value, 
 			  GParamSpec   *pspec)
 {
-	FluttrListPrivate *priv;
+	FluttrPhotoPrivate *priv;
 
-	g_return_if_fail (FLUTTR_IS_LIST (object));
-	priv = FLUTTR_LIST_GET_PRIVATE(object);
+	g_return_if_fail (FLUTTR_IS_PHOTO (object));
+	priv = FLUTTR_PHOTO_GET_PRIVATE(object);
 
 	switch (prop_id) {
+		case PROP_ID:
+			if (priv->id != NULL)
+				g_free (priv->id);
+			priv->id = g_strdup (g_value_get_string (value));
+			break;
+		case PROP_NAME:
+			if (priv->name != NULL)
+				g_free (priv->name);
+			priv->name =g_strdup (g_value_get_string (value));
+			break;	
 		case PROP_MINI_TOKEN:
 			if (priv->mini_token != NULL)
 				g_free (priv->mini_token);
@@ -231,6 +203,15 @@ fluttr_list_set_property (GObject      *object,
 				g_free (priv->usernsid);
 			priv->usernsid =g_strdup (g_value_get_string (value));
 			break;
+		case PROP_PIXBUF:
+			if (priv->pixbuf != NULL)
+				g_object_unref (G_OBJECT (priv->pixbuf));
+			priv->pixbuf = g_value_get_object (value);
+			break;
+		
+		case PROP_SET:
+			priv->set = g_value_get_object (value);
+			break;		
 		default:
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, 
 							   pspec);
@@ -239,20 +220,28 @@ fluttr_list_set_property (GObject      *object,
 }
 
 static void
-fluttr_list_get_property (GObject    *object, 
+fluttr_photo_get_property (GObject    *object, 
 			  guint       prop_id,
 			  GValue     *value, 
 			  GParamSpec *pspec)
 {
-	FluttrListPrivate *priv;
+	FluttrPhotoPrivate *priv;
 	
-	g_return_if_fail (FLUTTR_IS_LIST (object));
-	priv = FLUTTR_LIST_GET_PRIVATE(object);
+	g_return_if_fail (FLUTTR_IS_PHOTO (object));
+	priv = FLUTTR_PHOTO_GET_PRIVATE(object);
 
 	switch (prop_id) {
+		case PROP_ID:
+			g_value_set_string (value, priv->id);
+			break;
+		
+		case PROP_NAME:
+			g_value_set_string (value, priv->name);
+			
 		case PROP_MINI_TOKEN:
 			g_value_set_string (value, priv->mini_token);
 			break;
+			
 		case PROP_USERNAME:
 			g_value_set_string (value, priv->username);
 			break;
@@ -267,7 +256,16 @@ fluttr_list_get_property (GObject    *object,
 		
 		case PROP_USERNSID:
 			g_value_set_string (value, priv->usernsid);
-			break;			
+			break;		
+		
+		case PROP_PIXBUF:
+			g_value_set_object (value, G_OBJECT (priv->pixbuf));
+			break;
+			
+		case PROP_SET:
+			g_value_set_object (value, G_OBJECT (priv->set));
+			break;
+			
 		default:
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id,
 							   pspec);
@@ -276,14 +274,14 @@ fluttr_list_get_property (GObject    *object,
 }
 
 static void
-fluttr_list_paint (ClutterActor *actor)
+fluttr_photo_paint (ClutterActor *actor)
 {
-	FluttrList        *list;
-	FluttrListPrivate *priv;
+	FluttrPhoto        *photo;
+	FluttrPhotoPrivate *priv;
 
-	list = FLUTTR_LIST(actor);
+	photo = FLUTTR_PHOTO(actor);
 
-	priv = FLUTTR_LIST_GET_PRIVATE(list);
+	priv = FLUTTR_PHOTO_GET_PRIVATE(photo);
 
 	glPushMatrix();
 	
@@ -302,41 +300,59 @@ fluttr_list_paint (ClutterActor *actor)
 }
 
 static void 
-fluttr_list_dispose (GObject *object)
+fluttr_photo_dispose (GObject *object)
 {
-	FluttrList         *self = FLUTTR_LIST(object);
-	FluttrListPrivate  *priv;  
+	FluttrPhoto         *self = FLUTTR_PHOTO(object);
+	FluttrPhotoPrivate  *priv;  
 
 	priv = self->priv;
   
-	G_OBJECT_CLASS (fluttr_list_parent_class)->dispose (object);
+	G_OBJECT_CLASS (fluttr_photo_parent_class)->dispose (object);
 }
 
 static void 
-fluttr_list_finalize (GObject *object)
+fluttr_photo_finalize (GObject *object)
 {
-	G_OBJECT_CLASS (fluttr_list_parent_class)->finalize (object);
+	G_OBJECT_CLASS (fluttr_photo_parent_class)->finalize (object);
 }
 
 static void
-fluttr_list_class_init (FluttrListClass *klass)
+fluttr_photo_class_init (FluttrPhotoClass *klass)
 {
 	GObjectClass        *gobject_class = G_OBJECT_CLASS (klass);
 	ClutterActorClass   *actor_class = CLUTTER_ACTOR_CLASS (klass);
 	ClutterActorClass   *parent_class; 
 
-	parent_class = CLUTTER_ACTOR_CLASS (fluttr_list_parent_class);
+	parent_class = CLUTTER_ACTOR_CLASS (fluttr_photo_parent_class);
 
-	actor_class->paint           = fluttr_list_paint;
+	actor_class->paint           = fluttr_photo_paint;
 	
-	gobject_class->finalize     = fluttr_list_finalize;
-	gobject_class->dispose      = fluttr_list_dispose;
-	gobject_class->get_property = fluttr_list_get_property;
-	gobject_class->set_property = fluttr_list_set_property;	
+	gobject_class->finalize     = fluttr_photo_finalize;
+	gobject_class->dispose      = fluttr_photo_dispose;
+	gobject_class->get_property = fluttr_photo_get_property;
+	gobject_class->set_property = fluttr_photo_set_property;	
 
-	g_type_class_add_private (gobject_class, sizeof (FluttrListPrivate));
+	g_type_class_add_private (gobject_class, sizeof (FluttrPhotoPrivate));
 	
 	/* Class properties */
+	g_object_class_install_property 
+		(gobject_class,
+		 PROP_ID,
+		 g_param_spec_string ("id",
+		 "ID",
+		 "The Flickr photo id",
+		 NULL,
+		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));	
+		 
+	g_object_class_install_property 
+		(gobject_class,
+		 PROP_NAME,
+		 g_param_spec_string ("name",
+		 "Name",
+		 "The Flickr photo name",
+		 NULL,
+		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));	
+		 	
 	g_object_class_install_property 
 		(gobject_class,
 		 PROP_MINI_TOKEN,
@@ -378,25 +394,34 @@ fluttr_list_class_init (FluttrListClass *klass)
 		 PROP_USERNSID,
 		 g_param_spec_string ("usernsid",
 		 "Usernsid",
-		 "The Flickr usernsid",
+		 "The pixbuf of the photo",
 		 NULL,
-		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));			 		 		 
+		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));		
+
+	g_object_class_install_property 
+		(gobject_class,
+		 PROP_USERNSID,
+		 g_param_spec_object ("pixbuf",
+		 "Pixbuf",
+		 "The Flickr usernsid",
+		 GDK_TYPE_PIXBUF,
+		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));		 		 		 
 
 	/* Class signals */
-	_list_signals[SUCCESSFUL] =
-		g_signal_new ("successful",
+	_photo_signals[LOADED] =
+		g_signal_new ("pixbuf-loaded",
 			     G_OBJECT_CLASS_TYPE (gobject_class),
 			     G_SIGNAL_RUN_FIRST,
-			     G_STRUCT_OFFSET (FluttrListClass, successful),
+			     G_STRUCT_OFFSET (FluttrPhotoClass, pixbuf_loaded),
 			     NULL, NULL,
-			     g_cclosure_marshal_VOID__OBJECT,
-			     G_TYPE_NONE, 1, NFLICK_TYPE_WORKER);
+			     g_cclosure_marshal_VOID__STRING,
+			     G_TYPE_NONE, 1, G_TYPE_STRING);
 			     
-	_list_signals[ERROR] =
+	_photo_signals[ERROR] =
 		g_signal_new ("error",
 			     G_OBJECT_CLASS_TYPE (gobject_class),
 			     G_SIGNAL_RUN_FIRST,
-			     G_STRUCT_OFFSET (FluttrListClass, error),
+			     G_STRUCT_OFFSET (FluttrPhotoClass, fetch_error),
 			     NULL, NULL,
 			     g_cclosure_marshal_VOID__STRING,
 			     G_TYPE_NONE, 1, G_TYPE_STRING);			     
@@ -404,22 +429,23 @@ fluttr_list_class_init (FluttrListClass *klass)
 }
 
 static void
-fluttr_list_init (FluttrList *self)
+fluttr_photo_init (FluttrPhoto *self)
 {
-	FluttrListPrivate *priv;
-	priv = FLUTTR_LIST_GET_PRIVATE (self);
+	FluttrPhotoPrivate *priv;
+	priv = FLUTTR_PHOTO_GET_PRIVATE (self);
 	
 	priv->mini_token = NULL;
 }
 
 ClutterActor*
-fluttr_list_new (void)
+fluttr_photo_new (const char *mini_token)
 {
-	ClutterGroup         *list;
+	ClutterGroup         *photo;
 
-	list = g_object_new (FLUTTR_TYPE_LIST, 
-			     NULL);
-	if (0) fluttr_list_alpha_func (NULL, 0, NULL);
-	return CLUTTER_ACTOR (list);
+	photo = g_object_new (FLUTTR_TYPE_PHOTO, 
+			     "mini-token", mini_token,
+			      NULL);
+	if (0) fluttr_photo_alpha_func (NULL, 0, NULL);
+	return CLUTTER_ACTOR (photo);
 }
 

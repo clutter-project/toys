@@ -246,7 +246,6 @@ list_get_successful (FluttrAuth *auth, NFlickWorker *worker, Fluttr *fluttr)
 	gint i = 0;
 	gint j = 0;
 	
-	sleep (4);
 	for (l = list; l != NULL; l = l->next) {
 		gchar *id = NULL;
 		g_object_get (G_OBJECT (l->data), "combotext", &id, NULL);
