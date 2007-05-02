@@ -297,6 +297,7 @@ fluttr_list_text_alpha_func (ClutterBehaviour *behave,
 	}
 	if (factor < 0.5) {
 		factor *= 2;
+		factor = 1.0 - factor;
 	} else {
 		factor -= 0.5;
 		factor /= 0.5;

@@ -20,6 +20,7 @@ G_DEFINE_TYPE (FluttrPhoto, fluttr_photo, CLUTTER_TYPE_GROUP);
 	FluttrPhotoPrivate))
 	
 #define FONT "DejaVu Sans Book"
+#define FRAME 5
 
 static GdkPixbuf	*default_pic = NULL;
 
@@ -41,14 +42,16 @@ struct _FluttrPhotoPrivate
 	ClutterAlpha		*trans_alpha;
 	ClutterBehaviour	*trans_behave;
 
-	ClutterTimeline		*timeline;
-	ClutterAlpha		*alpha;
-	ClutterBehaviour 	*behave;
 	
 	/* The actual actors */
 	ClutterActor		*frame;
 	ClutterActor		*texture;
 	ClutterActor		*options; /* The 'flip' side */
+	
+	/* Swap pixbuf code */
+	ClutterTimeline		*swap_time;
+	ClutterAlpha		*swap_alpha;
+	ClutterBehaviour	*swap_behave;	
 };
 
 enum
@@ -146,6 +149,59 @@ fluttr_photo_trans_alpha_func (ClutterBehaviour *behave,
         }
         
         clutter_actor_set_position (CLUTTER_ACTOR (data), x, y);
+        
+	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(data)))
+		clutter_actor_queue_redraw (CLUTTER_ACTOR(data));        
+}
+
+/* Fade out text, change text, then fade in, all within one play of the timeline
+   just to keep things interesting :) */
+static void
+fluttr_photo_swap_alpha_func (ClutterBehaviour *behave,
+		       	      guint		alpha_value,
+		              gpointer		data)
+{
+        FluttrPhotoPrivate *priv;
+	gfloat factor;
+	gint height = (CLUTTER_STAGE_HEIGHT ()/4);
+	gint width =  height * 1.5; 
+	gint w, h;
+	
+        g_return_if_fail (FLUTTR_IS_PHOTO (data));
+        priv = FLUTTR_PHOTO_GET_PRIVATE(data);
+	
+	factor = (gfloat) alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
+	
+	if (priv->pixbuf != NULL && factor > 0.5) {
+		w = gdk_pixbuf_get_width (priv->pixbuf);
+		h = gdk_pixbuf_get_height (priv->pixbuf);
+		
+		clutter_actor_set_size (priv->frame,
+					w + (FRAME*2),
+					h + (FRAME*2));
+		clutter_actor_set_position (priv->frame, 
+					    (width/2) - ((w+(FRAME*2))/2),
+					    (height/2) - ((h+(FRAME*2))/2));
+		
+		clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture),
+					    priv->pixbuf);
+		clutter_actor_set_position (priv->texture, 
+					    (width/2) - (w/2),
+					    (height/2) - (h/2));    
+	}
+	if (factor < 0.5) {
+		factor *= 2;
+		factor = 1.0 - factor;
+	} else {
+		factor -= 0.5;
+		factor /= 0.5;
+	}
+	
+	clutter_actor_set_opacity (CLUTTER_ACTOR (priv->texture), 255 * factor);
+	clutter_actor_set_opacity (CLUTTER_ACTOR (priv->frame), 255 * factor);
+	
+	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(priv->texture)))
+		clutter_actor_queue_redraw (CLUTTER_ACTOR(priv->texture));	
 }
 
 
@@ -167,16 +223,24 @@ on_thread_ok_idle (FluttrPhoto *photo)
         
         g_return_val_if_fail (FLUTTR_IS_PHOTO (photo), FALSE);
         priv = FLUTTR_PHOTO_GET_PRIVATE(photo);
-        g_signal_emit (photo, _photo_signals[LOADED], 0, "");
         
         /* Get pixbuf from worker */
         g_object_get (G_OBJECT (priv->worker), "pixbuf", &pixbuf, NULL);
-        
-        clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture), pixbuf);
+        priv->pixbuf = pixbuf;        
         
         g_print ("%d %d\n", gdk_pixbuf_get_width (pixbuf), 
         		    gdk_pixbuf_get_height (pixbuf));
+	
+	if (clutter_timeline_is_playing (priv->swap_time))
+        	;//clutter_timeline_rewind (priv->text_time);
+       
+        else
+        	clutter_timeline_start (priv->swap_time);
 
+
+	g_signal_emit (photo, _photo_signals[LOADED], 0, "");
+                		
+        
         return FALSE;
 }
 
@@ -235,8 +299,8 @@ fluttr_photo_fetch_pixbuf (FluttrPhoto *photo)
         gchar *token = NULL;
 	gint height = (CLUTTER_STAGE_HEIGHT ()/4);
 	gint width =  height * 1.5; 
-	height -= 10;
-	width -= 10;
+	height -= FRAME *2;
+	width -= FRAME *2;
         
         g_return_if_fail (FLUTTR_IS_PHOTO (photo));
         priv = FLUTTR_PHOTO_GET_PRIVATE(photo);	
@@ -512,14 +576,24 @@ fluttr_photo_init (FluttrPhoto *self)
 	clutter_actor_set_size (priv->texture, width -10, height -10);
 	clutter_actor_set_position (priv->texture, 5, 5);
 	
-	/* Setup the transformation code */
+	/* Setup the transformation */
 	priv->new_x = priv->new_y = priv->new_scale = 0;
 	priv->trans_time = clutter_timeline_new (40, 80);
 	priv->trans_alpha = clutter_alpha_new_full (priv->trans_time,
 					      alpha_linear_inc_func,
 					      NULL, NULL);
-	priv->behave = fluttr_behave_new (priv->trans_alpha,
+	priv->trans_behave = fluttr_behave_new (priv->trans_alpha,
 					  fluttr_photo_trans_alpha_func,
+					  (gpointer)self);	
+					  
+	/* Setup the pixbuf swap */
+	priv->pixbuf = NULL;
+	priv->swap_time = clutter_timeline_new (40, 40);
+	priv->swap_alpha = clutter_alpha_new_full (priv->swap_time,
+					      alpha_linear_inc_func,
+					      NULL, NULL);
+	priv->swap_behave = fluttr_behave_new (priv->swap_alpha,
+					  fluttr_photo_swap_alpha_func,
 					  (gpointer)self);	
 }
 
