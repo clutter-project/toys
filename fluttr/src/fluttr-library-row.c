@@ -32,6 +32,7 @@ enum
 	PROP_0,
 	PROP_ID,
 	PROP_NAME,
+	PROP_PHOTO,
 	PROP_SET
 };
 
@@ -58,7 +59,11 @@ fluttr_library_row_set_property (GObject      *object,
 			if (priv->name != NULL)
 				g_free (priv->name);
 			priv->name =g_strdup (g_value_get_string (value));
-			break;	
+			break;
+		
+		case PROP_PHOTO:
+			priv->photo = g_value_get_object (value);
+			break;
 	
 		case PROP_SET:
 			priv->set = g_value_get_object (value);
@@ -88,6 +93,11 @@ fluttr_library_row_get_property (GObject    *object,
 		
 		case PROP_NAME:
 			g_value_set_string (value, priv->name);
+			break;
+			
+		case PROP_PHOTO:
+			g_value_set_object (value, G_OBJECT (priv->photo));
+			break;
 			
 		case PROP_SET:
 			g_value_set_object (value, G_OBJECT (priv->set));
@@ -148,6 +158,15 @@ fluttr_library_row_class_init (FluttrLibraryRowClass *klass)
 		 "The Flickr photo name",
 		 NULL,
 		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));	
+		 
+	g_object_class_install_property 
+		(gobject_class,
+		 PROP_PHOTO,
+		 g_param_spec_object ("photo",
+		 "Photo",
+		 "The FluttrPhoto actor",
+		 CLUTTER_TYPE_ACTOR,
+		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));			 
 		 	
 	g_object_class_install_property 
 		(gobject_class,
@@ -164,6 +183,7 @@ fluttr_library_row_init (FluttrLibraryRow *self)
 {
 	FluttrLibraryRowPrivate *priv;
 	priv = FLUTTR_LIBRARY_ROW_GET_PRIVATE (self);
+	
 }
 
 FluttrLibraryRow*

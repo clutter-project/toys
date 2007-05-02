@@ -13,6 +13,7 @@
 #include "fluttr-library.h"
 #include "fluttr-library-row.h"
 #include "fluttr-list.h"
+#include "fluttr-list-view.h"
 #include "fluttr-photo.h"
 #include "fluttr-settings.h"
 
@@ -86,6 +87,7 @@ main (int argc, char **argv)
 	fluttr->stage = stage;
 	clutter_actor_set_size (stage, 800, 440);
 	clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
+	//g_object_set (stage, "fullscreen", TRUE, NULL);
 	
 	if (fluttr->username == NULL) {
 		/* Authorise the mini-token */
@@ -142,6 +144,14 @@ main (int argc, char **argv)
 		fluttr_list_go (FLUTTR_LIST (fluttr->list));
 	}
 	
+	/* The list view */
+	fluttr->list = fluttr_list_view_new (fluttr->library);
+	clutter_group_add (CLUTTER_GROUP (fluttr->stage), fluttr->list);
+	clutter_actor_set_size (fluttr->list, CLUTTER_STAGE_WIDTH (),
+				CLUTTER_STAGE_HEIGHT ());
+	clutter_actor_set_position (fluttr->list, 0, 0);	
+	
+	/*
 	photo = fluttr_photo_new ();
 	clutter_group_add (CLUTTER_GROUP (fluttr->stage), photo);
 	clutter_actor_set_position (photo, 10, 10);
@@ -150,7 +160,7 @@ main (int argc, char **argv)
 		fluttr_photo_fetch_pixbuf (FLUTTR_PHOTO (photo));
 		fluttr_photo_update_position (FLUTTR_PHOTO (photo), 600, 500);
 	}
-	
+	*/
 	clutter_actor_show_all (fluttr->stage);	    
 	
 	clutter_main();	
@@ -321,7 +331,8 @@ list_get_successful (FluttrAuth *auth, NFlickWorker *worker, Fluttr *fluttr)
 			i++;
 		}
 		j++;
-	}	
+	}
+	fluttr_list_view_advance (FLUTTR_LIST_VIEW (fluttr->list), 0);
 	g_print ("%d Photo(s)\n in %d set(s)", i, j);
 }
 

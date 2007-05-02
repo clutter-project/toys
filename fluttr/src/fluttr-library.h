@@ -71,7 +71,7 @@ FluttrLibrary*
 fluttr_library_new ();
 
 guint
-fluttr_library_library_row_count (FluttrLibrary *library);
+fluttr_library_row_count (FluttrLibrary *library);
 
 FluttrLibraryRow*
 fluttr_library_get_library_row (FluttrLibrary *library, gint index);

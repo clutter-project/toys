@@ -143,7 +143,7 @@ check_filter (FluttrLibrary *library, EggSequenceIter *iter)
 }
 
 guint
-fluttr_library_library_row_count (FluttrLibrary *library)
+fluttr_library_row_count (FluttrLibrary *library)
 {
 	FluttrLibraryPrivate *priv = LIBRARY_PRIVATE(library);  
 	EggSequenceIter     *iter;

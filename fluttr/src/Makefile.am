@@ -22,6 +22,8 @@ fluttr_SOURCES = \
 	fluttr-library-row.h			\
 	fluttr-list.c				\
 	fluttr-list.h				\
+	fluttr-list-view.c			\
+	fluttr-list-view.h			\
 	fluttr-photo.c				\
 	fluttr-photo.h				\
 	fluttr-settings.c			\

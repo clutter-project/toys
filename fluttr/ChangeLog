@@ -1,3 +1,23 @@
+2007-05-02  Neil J Patel,,,  <njp@oh-hp-laptop>
+
+	* src/Makefile.am:
+	* src/fluttr-library-row.c:
+	Fixed pixbuf swapping effect. Lowered fps.
+	
+	* src/fluttr-library.c:
+	* src/fluttr-library.h:
+	Changed function names.
+	
+	* src/fluttr-list-view.c: 
+	* src/fluttr-list-view.h:
+	A table widget to show photos. Handles positioning.
+	
+	* src/fluttr-photo.c:
+	Changed fps to be faster. Send signal when finished.
+	
+	* src/main.c:
+	Commented out the test code.
+
 2007-05-02  Neil J. Patel  <njp@o-hand.com>
 
 	* src/fluttr-list.c: (fluttr_list_text_alpha_func):
