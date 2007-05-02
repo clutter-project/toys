@@ -132,6 +132,7 @@ on_thread_error_idle (FluttrList *list)
         return FALSE;
 }
 
+/* Copy the new message and start the fade effect if not already started */
 static gboolean                 
 on_thread_msg_change_idle (FluttrList *list)
 {
@@ -149,7 +150,7 @@ on_thread_msg_change_idle (FluttrList *list)
         priv->msg = g_strdup (msg);
         
         if (clutter_timeline_is_playing (priv->text_time))
-        	clutter_timeline_rewind (priv->text_time);
+        	;//clutter_timeline_rewind (priv->text_time);
        
         else
         	clutter_timeline_start (priv->text_time);

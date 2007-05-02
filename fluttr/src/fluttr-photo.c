@@ -7,7 +7,11 @@
 
 #include "fluttr-photo.h"
 
+#include "fluttr-behave.h"
+#include "fluttr-settings.h"
+
 #include "nflick-worker.h"
+#include "nflick-show-worker.h"
 
 G_DEFINE_TYPE (FluttrPhoto, fluttr_photo, CLUTTER_TYPE_GROUP);
 
@@ -17,25 +21,34 @@ G_DEFINE_TYPE (FluttrPhoto, fluttr_photo, CLUTTER_TYPE_GROUP);
 	
 #define FONT "DejaVu Sans Book"
 
+static GdkPixbuf	*default_pic = NULL;
 
 struct _FluttrPhotoPrivate
 {
-	gchar			*id;
+	gchar			*photoid;
 	gchar			*name;
-	gchar 			*mini_token;
-	gchar 			*username;
-	gchar			*fullname;
-	gchar			*token;
-	gchar			*usernsid;
 	NFlickPhotoSet		*set;
 	
+	/* The all-important pixbuf fetching variables */
 	NFlickWorker		*worker;
-
 	GdkPixbuf		*pixbuf;
 	
+	/* Transformation code */
+	gint 			 new_x;
+	gint			 new_y;
+	gfloat			 new_scale;
+	ClutterTimeline		*trans_time;
+	ClutterAlpha		*trans_alpha;
+	ClutterBehaviour	*trans_behave;
+
 	ClutterTimeline		*timeline;
 	ClutterAlpha		*alpha;
 	ClutterBehaviour 	*behave;
+	
+	/* The actual actors */
+	ClutterActor		*frame;
+	ClutterActor		*texture;
+	ClutterActor		*options; /* The 'flip' side */
 };
 
 enum
@@ -43,11 +56,6 @@ enum
 	PROP_0,
 	PROP_ID,
 	PROP_NAME,
-	PROP_MINI_TOKEN,
-	PROP_USERNAME,
-	PROP_FULLNAME,
-	PROP_TOKEN,
-	PROP_USERNSID,
 	PROP_PIXBUF,
 	PROP_SET
 };
@@ -60,6 +68,86 @@ enum
 };
 
 static guint _photo_signals[LAST_SIGNAL] = { 0 };
+
+/* Set the new x and y position of the actor, and start (or rewind) the main
+   timeline */
+void
+fluttr_photo_update_position (FluttrPhoto *photo, gint x, gint y)
+{
+        FluttrPhotoPrivate *priv;
+        
+        g_return_if_fail (FLUTTR_IS_PHOTO (photo));
+        priv = FLUTTR_PHOTO_GET_PRIVATE(photo);
+        
+        priv->new_x = x;
+        priv->new_y = y;
+        
+        if (clutter_timeline_is_playing (priv->trans_time))
+        	clutter_timeline_rewind (priv->trans_time);
+        else	
+        	clutter_timeline_start (priv->trans_time);	
+}
+
+/* Allows smooth transforms (position & size) on th widget...looks goooood*/
+static void
+fluttr_photo_trans_alpha_func (ClutterBehaviour *behave,
+			       guint		 alpha_value,
+			       gpointer		 data)
+{
+        FluttrPhotoPrivate *priv;
+        gfloat factor;
+        gint old_x, old_y;
+        gint x, y;
+        
+        
+        g_return_if_fail (FLUTTR_IS_PHOTO (data));
+        priv = FLUTTR_PHOTO_GET_PRIVATE(data);
+        
+        /* Calculate the factor */
+        factor = (gfloat)alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
+        
+        /* Load up the orignal values */
+        old_x = clutter_actor_get_x (CLUTTER_ACTOR (data));
+        old_y = clutter_actor_get_y (CLUTTER_ACTOR (data));
+        
+        
+        /* We first calculate the new x pos */
+        if (old_x == priv->new_x)
+        	x = old_x;
+        else if (old_x < priv->new_x) {
+        	/* We're moving to the positive */
+        	if (old_x < 0)
+        		x = ((-1*old_x)+priv->new_x) * factor;
+        	else
+        		x = (priv->new_x - old_x) * factor;
+        } else {
+        	/* We're moving to the left */
+        	if (priv->new_x < 0) 
+        		x = ((-1*priv->new_x)+old_x) * -1 * factor;
+        	else
+        		x = (old_x - priv->new_x) * -1 * factor;
+        }
+        
+        /* Then the new y pos */
+        if (old_y == priv->new_y)
+        	y = old_y;
+        else if (old_y < priv->new_y) {
+        	/* We're moving to the bottom */
+        	if (old_y < 0)
+        		y = ((-1*old_y)+priv->new_y) * factor;
+        	else
+        		y = (priv->new_y - old_y) * factor;
+        } else {
+        	/* We're moving to the top */
+        	if (priv->new_y < 0) 
+        		y = ((-1*priv->new_y)+old_y) * -1 * factor;
+        	else
+        		y = (old_y - priv->new_y) * -1 * factor;
+        }
+        
+        clutter_actor_set_position (CLUTTER_ACTOR (data), x, y);
+}
+
 
 static gboolean                 
 on_thread_abort_idle (FluttrPhoto *photo)
@@ -75,18 +163,19 @@ static gboolean
 on_thread_ok_idle (FluttrPhoto *photo)
 {
         FluttrPhotoPrivate *priv;
+        GdkPixbuf *pixbuf;
         
         g_return_val_if_fail (FLUTTR_IS_PHOTO (photo), FALSE);
         priv = FLUTTR_PHOTO_GET_PRIVATE(photo);
-        
-        g_object_get (G_OBJECT (priv->worker), 
-                      "username", &priv->username, 
-                      "fullname", &priv->fullname, 
-                      "token", &priv->token, 
-                      "usernsid", &priv->usernsid, 
-                      NULL);
-
         g_signal_emit (photo, _photo_signals[LOADED], 0, "");
+        
+        /* Get pixbuf from worker */
+        g_object_get (G_OBJECT (priv->worker), "pixbuf", &pixbuf, NULL);
+        
+        clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture), pixbuf);
+        
+        g_print ("%d %d\n", gdk_pixbuf_get_width (pixbuf), 
+        		    gdk_pixbuf_get_height (pixbuf));
 
         return FALSE;
 }
@@ -138,20 +227,67 @@ on_thread_msg_change_idle (FluttrPhoto *photo)
 void
 fluttr_photo_fetch_pixbuf (FluttrPhoto *photo)
 {
-	;
+        FluttrPhotoPrivate *priv;
+        FluttrSettings *settings = fluttr_settings_get_default ();
+	NFlickWorker *worker;
+        NFlickWorkerStatus status;
+              
+        gchar *token = NULL;
+	gint height = (CLUTTER_STAGE_HEIGHT ()/4);
+	gint width =  height * 1.5; 
+	height -= 10;
+	width -= 10;
+        
+        g_return_if_fail (FLUTTR_IS_PHOTO (photo));
+        priv = FLUTTR_PHOTO_GET_PRIVATE(photo);	
+	
+	g_object_get (G_OBJECT (settings), "token", &token, NULL);
+	
+	worker = (NFlickWorker *)nflick_show_worker_new (priv->photoid, 
+							       width, 
+							       height, 
+							       token);
+        /* Check if the worker is in the right state */
+        g_object_get (G_OBJECT (worker), "status", &status, NULL);
+        
+        if (status != NFLICK_WORKER_STATUS_IDLE) {
+                g_warning ("Bad worker status"); 
+                return;
+        }
+        
+        g_object_ref (worker);
+        priv->worker = worker;
+        
+        /* Get the initial message */
+        gchar *msg = NULL;
+        g_object_get (G_OBJECT (priv->worker), "message", &msg, NULL);
+        if (msg != NULL) {
+                /* FIXME Escape markup */
+        	g_print ("%s", msg);
+        }
+        
+        /* Set the callback functions */
+        nflick_worker_set_custom_data (worker, photo);
+        nflick_worker_set_aborted_idle (worker, 
+        			   (NFlickWorkerIdleFunc) on_thread_abort_idle);
+        
+        nflick_worker_set_error_idle (worker, 
+        			   (NFlickWorkerIdleFunc) on_thread_error_idle);
+        
+        nflick_worker_set_ok_idle (worker, 
+        			      (NFlickWorkerIdleFunc) on_thread_ok_idle);
+        
+        nflick_worker_set_msg_change_idle (worker, 
+        		      (NFlickWorkerIdleFunc) on_thread_msg_change_idle);
+                                        
+        nflick_worker_start (priv->worker);
+        
+        /* Free */
+        g_free (msg);
 }
 
 
-/* Slide in or out the notification popp, depending on priv->pop_visible */
-static void
-fluttr_photo_alpha_func (ClutterBehaviour *behave,
-		       	      guint		alpha_value,
-		              gpointer		data)
-{
-	return;
-} 		
-		
-/* GObject Stuff */
+/* Stuff */
 
 static void
 fluttr_photo_set_property (GObject      *object, 
@@ -166,43 +302,15 @@ fluttr_photo_set_property (GObject      *object,
 
 	switch (prop_id) {
 		case PROP_ID:
-			if (priv->id != NULL)
-				g_free (priv->id);
-			priv->id = g_strdup (g_value_get_string (value));
+			if (priv->photoid != NULL)
+				g_free (priv->photoid);
+			priv->photoid = g_strdup (g_value_get_string (value));
 			break;
 		case PROP_NAME:
 			if (priv->name != NULL)
 				g_free (priv->name);
 			priv->name =g_strdup (g_value_get_string (value));
 			break;	
-		case PROP_MINI_TOKEN:
-			if (priv->mini_token != NULL)
-				g_free (priv->mini_token);
-			priv->mini_token =g_strdup (g_value_get_string (value));
-			break;
-		case PROP_USERNAME:
-			if (priv->username != NULL)
-				g_free (priv->username);
-			priv->username =g_strdup (g_value_get_string (value));
-			break;
-
-		case PROP_FULLNAME:
-			if (priv->fullname != NULL)
-				g_free (priv->fullname);
-			priv->fullname =g_strdup (g_value_get_string (value));
-			break;
-		
-		case PROP_TOKEN:
-			if (priv->token != NULL)
-				g_free (priv->token);
-			priv->token =g_strdup (g_value_get_string (value));
-			break;
-		
-		case PROP_USERNSID:
-			if (priv->usernsid != NULL)
-				g_free (priv->usernsid);
-			priv->usernsid =g_strdup (g_value_get_string (value));
-			break;
 		case PROP_PIXBUF:
 			if (priv->pixbuf != NULL)
 				g_object_unref (G_OBJECT (priv->pixbuf));
@@ -232,32 +340,12 @@ fluttr_photo_get_property (GObject    *object,
 
 	switch (prop_id) {
 		case PROP_ID:
-			g_value_set_string (value, priv->id);
+			g_value_set_string (value, priv->photoid);
 			break;
 		
 		case PROP_NAME:
 			g_value_set_string (value, priv->name);
 			
-		case PROP_MINI_TOKEN:
-			g_value_set_string (value, priv->mini_token);
-			break;
-			
-		case PROP_USERNAME:
-			g_value_set_string (value, priv->username);
-			break;
-
-		case PROP_FULLNAME:
-			g_value_set_string (value, priv->fullname);
-			break;
-		
-		case PROP_TOKEN:
-			g_value_set_string (value, priv->token);
-			break;
-		
-		case PROP_USERNSID:
-			g_value_set_string (value, priv->usernsid);
-			break;		
-		
 		case PROP_PIXBUF:
 			g_value_set_object (value, G_OBJECT (priv->pixbuf));
 			break;
@@ -338,8 +426,8 @@ fluttr_photo_class_init (FluttrPhotoClass *klass)
 	g_object_class_install_property 
 		(gobject_class,
 		 PROP_ID,
-		 g_param_spec_string ("id",
-		 "ID",
+		 g_param_spec_string ("photoid",
+		 "PhotoID",
 		 "The Flickr photo id",
 		 NULL,
 		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));	
@@ -355,56 +443,20 @@ fluttr_photo_class_init (FluttrPhotoClass *klass)
 		 	
 	g_object_class_install_property 
 		(gobject_class,
-		 PROP_MINI_TOKEN,
-		 g_param_spec_string ("mini-token",
-		 "Mini Token",
-		 "The Flickr mini-token",
-		 NULL,
-		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));	
-		 
-	g_object_class_install_property 
-		(gobject_class,
-		 PROP_USERNAME,
-		 g_param_spec_string ("username",
-		 "Username",
-		 "The Flickr username",
-		 NULL,
-		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));			 
-		 
-	g_object_class_install_property 
-		(gobject_class,
-		 PROP_FULLNAME,
-		 g_param_spec_string ("fullname",
-		 "Fullname",
-		 "The users full name",
-		 NULL,
-		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));	
-		 
-	g_object_class_install_property 
-		(gobject_class,
-		 PROP_TOKEN,
-		 g_param_spec_string ("token",
-		 "Token",
-		 "The Flickr token",
-		 NULL,
-		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));	
-		 
-	g_object_class_install_property 
-		(gobject_class,
-		 PROP_USERNSID,
-		 g_param_spec_string ("usernsid",
-		 "Usernsid",
-		 "The pixbuf of the photo",
-		 NULL,
+		 PROP_PIXBUF,
+		 g_param_spec_object ("pixbuf",
+		 "Pixbuf",
+		 "The GdkPixbuf of the photo",
+		 GDK_TYPE_PIXBUF,
 		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));		
 
 	g_object_class_install_property 
 		(gobject_class,
-		 PROP_USERNSID,
-		 g_param_spec_object ("pixbuf",
-		 "Pixbuf",
-		 "The Flickr usernsid",
-		 GDK_TYPE_PIXBUF,
+		 PROP_SET,
+		 g_param_spec_object ("set",
+		 "Set",
+		 "The Flickr set",
+		 NFLICK_TYPE_PHOTO_SET,
 		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));		 		 		 
 
 	/* Class signals */
@@ -432,20 +484,52 @@ static void
 fluttr_photo_init (FluttrPhoto *self)
 {
 	FluttrPhotoPrivate *priv;
+	ClutterColor rect_col   = { 0xff, 0xff, 0xff, 0xff };
+	gint height = (CLUTTER_STAGE_HEIGHT ()/4);
+	gint width = height * 1.5;
+	
 	priv = FLUTTR_PHOTO_GET_PRIVATE (self);
 	
-	priv->mini_token = NULL;
+	/* The white frame */
+	priv->frame = clutter_rectangle_new_with_color (&rect_col);
+	clutter_group_add (CLUTTER_GROUP (self), priv->frame);	
+	clutter_actor_set_size (priv->frame, width, height);
+	clutter_actor_set_position (priv->frame, 0, 0);
+	
+	/*Load the default pixbuf */
+	if (default_pic == NULL) {
+		default_pic = gdk_pixbuf_new_from_file_at_scale (PKGDATADIR \
+  						    	"/picture.svg",
+  						        width -10,
+  						        height -10,
+  						        FALSE,
+  						        NULL);
+	}
+	
+	/* The pixture texture */
+	priv->texture = clutter_texture_new_from_pixbuf (default_pic);
+	clutter_group_add (CLUTTER_GROUP (self), priv->texture);
+	clutter_actor_set_size (priv->texture, width -10, height -10);
+	clutter_actor_set_position (priv->texture, 5, 5);
+	
+	/* Setup the transformation code */
+	priv->new_x = priv->new_y = priv->new_scale = 0;
+	priv->trans_time = clutter_timeline_new (40, 80);
+	priv->trans_alpha = clutter_alpha_new_full (priv->trans_time,
+					      alpha_linear_inc_func,
+					      NULL, NULL);
+	priv->behave = fluttr_behave_new (priv->trans_alpha,
+					  fluttr_photo_trans_alpha_func,
+					  (gpointer)self);	
 }
 
 ClutterActor*
-fluttr_photo_new (const char *mini_token)
+fluttr_photo_new (void)
 {
 	ClutterGroup         *photo;
 
 	photo = g_object_new (FLUTTR_TYPE_PHOTO, 
-			     "mini-token", mini_token,
-			      NULL);
-	if (0) fluttr_photo_alpha_func (NULL, 0, NULL);
+			     NULL);
 	return CLUTTER_ACTOR (photo);
 }
 

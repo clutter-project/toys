@@ -10,7 +10,11 @@
 #include <clutter/clutter.h>
 
 #include "fluttr-auth.h"
+#include "fluttr-library.h"
+#include "fluttr-library-row.h"
 #include "fluttr-list.h"
+#include "fluttr-photo.h"
+#include "fluttr-settings.h"
 
 #include "nflick-photo-data.h"
 #include "nflick-photo-set.h"
@@ -18,6 +22,8 @@
 #include "nflick-worker.h"
 
 typedef struct {
+	FluttrLibrary		*library;
+	
 	ClutterActor 		*stage;
 	ClutterActor 		*auth;
 	ClutterActor		*list;
@@ -46,7 +52,7 @@ static void		list_get_successful (FluttrAuth *auth,
 					     Fluttr *fluttr);
 static void		list_get_error (FluttrAuth *auth, gchar *msg, 
 				    	Fluttr *fluttr);
-
+static ClutterActor *photo = NULL;
 
 static gboolean
 _auth_timeout (Fluttr *fluttr)
@@ -60,6 +66,7 @@ main (int argc, char **argv)
  	Fluttr *fluttr = g_new0 (Fluttr, 1);
  	ClutterActor *stage, *background, *list;
 	ClutterColor stage_color = { 0x00, 0x00, 0x00, 0xff };
+	FluttrSettings *settings = NULL;
 	
 	g_thread_init (NULL);
 	clutter_init (&argc, &argv);		
@@ -71,6 +78,9 @@ main (int argc, char **argv)
 			  "http://www.flickr.com/auth-72157600141007022\n\n");
 		return 0;
 	}
+	
+	/* Create a new library */
+	fluttr->library = fluttr_library_new ();
 	
 	stage = clutter_stage_get_default ();
 	fluttr->stage = stage;
@@ -121,9 +131,26 @@ main (int argc, char **argv)
 	
 	/* If we have a username etc, we want to start the list fetcher */
 	if (fluttr->username != NULL) {
+		/* We update the settings singleton */
+		settings = fluttr_settings_get_default ();
+		g_object_set (G_OBJECT (settings),
+			      "username", fluttr->username,
+			      "fullname", fluttr->fullname,
+			      "token", fluttr->token,
+			      "usernsid", fluttr->usernsid,
+			      NULL);
 		fluttr_list_go (FLUTTR_LIST (fluttr->list));
 	}
-
+	
+	photo = fluttr_photo_new ();
+	clutter_group_add (CLUTTER_GROUP (fluttr->stage), photo);
+	clutter_actor_set_position (photo, 10, 10);
+	if (fluttr->username != NULL) {
+		g_object_set (G_OBJECT (photo), "photoid", "422650691", NULL);
+		fluttr_photo_fetch_pixbuf (FLUTTR_PHOTO (photo));
+		fluttr_photo_update_position (FLUTTR_PHOTO (photo), 600, 500);
+	}
+	
 	clutter_actor_show_all (fluttr->stage);	    
 	
 	clutter_main();	
@@ -200,6 +227,7 @@ auth_successful (FluttrAuth *auth, gchar *null, Fluttr *fluttr)
 	gchar *c;
 	GKeyFile *kf = g_key_file_new();
 	gchar *file = g_build_filename(g_get_home_dir(), ".fluttr", NULL);
+	FluttrSettings *settings;
 
 	/* Load the details */
 	g_object_get (G_OBJECT (fluttr->auth), 
@@ -236,6 +264,15 @@ auth_successful (FluttrAuth *auth, gchar *null, Fluttr *fluttr)
 		      "token", fluttr->token,
 		      "usernsid", fluttr->usernsid,
 		      NULL);		
+
+	/* We update the settings singleton */
+	settings = fluttr_settings_get_default ();
+	g_object_set (G_OBJECT (settings),
+		      "username", fluttr->username,
+		      "fullname", fluttr->fullname,
+		      "token", fluttr->token,
+		      "usernsid", fluttr->usernsid,
+		      NULL);
 	fluttr_list_go (FLUTTR_LIST (fluttr->list));	
 }
 
@@ -247,6 +284,9 @@ auth_error (FluttrAuth *auth, gchar *msg, Fluttr *fluttr)
 
 /* get list callbacks */
 
+
+/* Go through the list of sets, and poplulate the Fluttr library with 
+   FluttrLibraryRows */
 static void		
 list_get_successful (FluttrAuth *auth, NFlickWorker *worker, Fluttr *fluttr)
 {
@@ -267,6 +307,12 @@ list_get_successful (FluttrAuth *auth, NFlickWorker *worker, Fluttr *fluttr)
 		g_print ("%d\n", g_list_length (photos));
 		for (photo = photos; photo!=NULL ;photo = photo->next) {
 			NFlickPhotoData *p = (NFlickPhotoData*)photo->data;
+			FluttrLibraryRow *row;
+			row = fluttr_library_row_new (p->Id, 
+						      p->Name, 
+						      (NFlickPhotoSet*)l->data);
+			fluttr_library_append_library_row (fluttr->library, 
+							   row);
 			if (p->Id)
 				g_print ("\t%s ", p->Id);
 			if (p->Name)
@@ -275,7 +321,7 @@ list_get_successful (FluttrAuth *auth, NFlickWorker *worker, Fluttr *fluttr)
 			i++;
 		}
 		j++;
-	}
+	}	
 	g_print ("%d Photo(s)\n in %d set(s)", i, j);
 }
 

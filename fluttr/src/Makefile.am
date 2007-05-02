@@ -24,6 +24,8 @@ fluttr_SOURCES = \
 	fluttr-list.h				\
 	fluttr-photo.c				\
 	fluttr-photo.h				\
+	fluttr-settings.c			\
+	fluttr-settings.h			\
 	fluttr-spinner.c			\
 	fluttr-spinner.h			\
 	nflick-api-request.c			\
@@ -36,6 +38,9 @@ fluttr_SOURCES = \
 	nflick-auth-worker.h			\
 	nflick-auth-worker-private.h		\
 	nflick-flickr.h				\
+	nflick-get-sizes-response.c		\
+	nflick-get-sizes-response.h		\
+	nflick-get-sizes-response-private.h	\
 	nflick-gft-response.c			\
 	nflick-gft-response.h			\
 	nflick-gft-response-private.h		\
@@ -53,12 +58,18 @@ fluttr_SOURCES = \
 	nflick-photo-set.c			\
 	nflick-photo-set.h			\
 	nflick-photo-set-private.h		\
+	nflick-pixbuf-fetch.c			\
+	nflick-pixbuf-fetch.h			\
+	nflick-pixbuf-fetch-private.h		\
 	nflick-set-list-response.c		\
 	nflick-set-list-response.h		\
 	nflick-set-list-response-private.h	\
 	nflick-set-list-worker.c		\
 	nflick-set-list-worker.h		\
 	nflick-set-list-worker-private.h	\
+	nflick-show-worker.c			\
+	nflick-show-worker.h			\
+	nflick-show-worker-private.h		\
 	nflick-types.h				\
 	nflick-worker.c				\
 	nflick-worker.h				\

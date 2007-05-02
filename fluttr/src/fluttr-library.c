@@ -218,8 +218,6 @@ fluttr_library_append_library_row (FluttrLibrary *library, FluttrLibraryRow *lib
 	FluttrLibraryPrivate *priv = LIBRARY_PRIVATE(library);
 	EggSequenceIter     *iter;
 
-	g_signal_connect (library_row, "notify", G_CALLBACK (on_library_row_changed), library);
-
 	g_object_ref (library_row);
 
 	if (priv->sort)

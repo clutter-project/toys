@@ -1,3 +1,33 @@
+2007-05-02  Neil J. Patel  <njp@o-hand.com>
+
+	* data/Makefile.am:
+	* src/Makefile.am:
+	* src/fluttr-library-row.c:
+	* src/fluttr-library-row.h:
+	* src/fluttr-library.c:
+	Added library interface, with a FluttrLibraryRow class which is created
+	or every photo.
+	
+	* src/fluttr-list.c:
+	Adjusted timeline fps to allow other threads to work properly.
+	
+	* src/fluttr-photo.c:
+	* src/fluttr-photo.h:
+	A class representing a photo *on* the stage, it is created & destroyed
+	as needed.
+	
+	* src/fluttr-settings.c:
+	* src/fluttr-settings.h:
+	A singleton containing the current sessions auth properties.
+	
+	* src/main.c:
+	Added a test case for downloading a picture.
+	
+	* src/nflick-show-worker-private.h:
+	* src/nflick-show-worker.c:
+	* src/nflick-show-worker.h:
+	Added missing files from NFlick to allow downloading of photos.
+
 2007-05-01  Neil J. Patel  <njp@o-hand.com>
 
 	* data/Makefile.am:

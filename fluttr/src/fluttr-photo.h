@@ -65,10 +65,13 @@ struct _FluttrPhotoClass
 GType fluttr_photo_get_type (void) G_GNUC_CONST;
 
 ClutterActor* 
-fluttr_photo_new (const char *mini_token);
+fluttr_photo_new (void);
 
 void
 fluttr_photo_fetch_pixbuf (FluttrPhoto *photo);
+
+void
+fluttr_photo_update_position (FluttrPhoto *photo, gint x, gint y);
 
 G_END_DECLS
 
