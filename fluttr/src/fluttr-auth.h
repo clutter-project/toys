@@ -2,7 +2,7 @@
  * Copyright (C) 2007 Neil J. Patel
  * Copyright (C) 2007 OpenedHand Ltd
  *
- * Author: Neil J. Patel  <njp@o-`hand.com>
+ * Author: Neil J. Patel  <njp@o-hand.com>
  */
 
 #include <config.h>

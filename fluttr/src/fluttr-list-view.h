@@ -70,8 +70,18 @@ GType fluttr_list_view_get_type (void) G_GNUC_CONST;
 ClutterActor* 
 fluttr_list_view_new (FluttrLibrary *library);
 
+FluttrPhoto*
+fluttr_list_view_get_active (FluttrListView *list_view);
+
 void 
 fluttr_list_view_advance (FluttrListView *list_view, gint n);
+
+void
+fluttr_list_view_advance_row (FluttrListView *list_view, gint n);
+
+void
+fluttr_list_view_advance_col (FluttrListView *list_view, gint n);
+
 
 G_END_DECLS
 

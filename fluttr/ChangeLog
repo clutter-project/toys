@@ -1,5 +1,29 @@
 2007-05-03  Neil J. Patel  <njp@o-hand.com>
 
+	* libnflick/nflick-show-worker.c:
+	Stop spitting out annoying messages.
+	
+	* src/fluttr-auth.h:
+	* src/fluttr-library-row.c:
+	Added a GdkPixbuf property.
+	
+	* src/fluttr-list-view.c:
+	* src/fluttr-list-view.h:
+	Ability to control table size.
+	Added calls to allow you to move n numbr os rows or columns.
+	Ability to get the currently selected FluttrPhoto.
+	
+	* src/fluttr-photo.c:
+	* src/fluttr-photo.h:
+	Added the 'options' widget at the correct rotation.
+	Function to set the options widget.
+	
+	* src/main.c:
+	Responds to keystrokes.
+	
+
+2007-05-03  Neil J. Patel  <njp@o-hand.com>
+
 	* Makefile.am:
 	* config.guess:
 	* config.sub:

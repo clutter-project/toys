@@ -34,6 +34,10 @@ typedef struct {
 
 } Fluttr;
 
+static void      	browse_input_cb (ClutterStage *stage, 
+				  	 ClutterEvent *event,
+		      	 	  	 Fluttr	      *fluttr);
+
 static void   	 	create_background (ClutterActor *bg,
 				    	   guint width, 
 				    	   guint height);
@@ -128,6 +132,7 @@ main (int argc, char **argv)
 	clutter_actor_set_position (list, 0, 0);
 	clutter_group_add (CLUTTER_GROUP (fluttr->stage), list);
 	
+	
 	/* If we have a username etc, we want to start the list fetcher */
 	if (fluttr->username != NULL) {
 		/* We update the settings singleton */
@@ -149,6 +154,12 @@ main (int argc, char **argv)
 	clutter_actor_set_position (fluttr->list, 0, 0);	
 	
 	clutter_actor_show_all (fluttr->stage);	    
+	
+	/* Receive all input events */
+	g_signal_connect (stage, 
+		          "input-event",
+		          G_CALLBACK (browse_input_cb),
+		          (gpointer)fluttr);	
 	
 	clutter_main();	
 	return 0;
@@ -328,6 +339,84 @@ list_get_error (FluttrAuth *auth, gchar *msg, Fluttr *fluttr)
 {
 	g_critical ("Auth Unsuccessful : %s\n", msg);
 }
+
+static void
+_set_options (FluttrPhoto *photo)
+{
+	ClutterColor col   = { 0xff, 0x11, 0x11, 0xff };
+	ClutterColor txt_col   = { 0xff, 0xff, 0xff, 0xff };	
+	guint size = fluttr_photo_get_default_size ();
+	//size *= 3;
+	ClutterActor *group = clutter_group_new ();
+	clutter_actor_set_size (group, size, size);
+	clutter_actor_rotate_x (CLUTTER_ACTOR (group), 180, size/2, 0);
+	
+	ClutterActor *rect = clutter_rectangle_new_with_color (&col);
+	clutter_actor_set_size (rect, size, size);
+	clutter_group_add (CLUTTER_GROUP (group), rect);
+	clutter_actor_set_position (rect, 0, 0);
+		
+	ClutterActor *text = clutter_label_new_full ("Sans 30", 
+						     "Options", &txt_col);
+	clutter_actor_set_size (text, size, size);
+	clutter_group_add (CLUTTER_GROUP (group), text);
+	
+	//clutter_actor_set_scale (group, 1/3, 1/3);
+	clutter_actor_set_position (text, 0, 0);
+	fluttr_photo_set_options (photo, group);	
+	
+	clutter_actor_rotate_x (CLUTTER_ACTOR (photo), 70, size/2, 0);
+	//clutter_actor_set_scale (CLUTTER_ACTOR (photo), 3, 3);
+	clutter_actor_set_depth (CLUTTER_ACTOR (photo), 20);	
+	//clutter_actor_set_position (CLUTTER_ACTOR (photo), 200, -200);
+	clutter_actor_raise_top (CLUTTER_ACTOR (photo));
+}
+
+static void 
+browse_input_cb (ClutterStage *stage,
+		 ClutterEvent *event,
+		 Fluttr	      *fluttr)
+{
+	FluttrPhoto *photo = NULL;
+	
+	
+	/* First check for app wide keybinding */
+	if (event->type == CLUTTER_KEY_RELEASE)	{
+		ClutterKeyEvent* kev = (ClutterKeyEvent *) event;
+
+		switch (clutter_key_event_symbol (kev)) {
+		case CLUTTER_Left:
+			fluttr_list_view_advance_col 
+					(FLUTTR_LIST_VIEW (fluttr->list), -1);
+			break;
+		case CLUTTER_Right:
+			fluttr_list_view_advance_col 
+					(FLUTTR_LIST_VIEW (fluttr->list), 1);
+			break;
+		case CLUTTER_Up:
+			fluttr_list_view_advance_row 
+					(FLUTTR_LIST_VIEW (fluttr->list), -1);
+			break;
+		case CLUTTER_Down:
+			fluttr_list_view_advance_row 
+					(FLUTTR_LIST_VIEW (fluttr->list), 1);
+			break;
+		case CLUTTER_Return:
+		case CLUTTER_space:
+		case CLUTTER_KP_Enter:
+			photo = fluttr_list_view_get_active 
+					(FLUTTR_LIST_VIEW (fluttr->list));
+			_set_options (photo);
+			break;
+		case CLUTTER_Escape:
+			clutter_main_quit();
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 
 static void 
 create_background (ClutterActor *bg, guint width, guint height)

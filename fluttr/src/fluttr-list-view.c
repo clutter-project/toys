@@ -18,6 +18,7 @@ struct _FluttrListViewPrivate
 	FluttrLibrary		*library;
 	
 	gint 			 active_photo;
+	gint			 active_col;
 };
 
 enum
@@ -26,14 +27,31 @@ enum
 	PROP_LIBRARY
 };
 
+#define N_COLS 5
+
 static ClutterGroupClass	*parent_class = NULL;
 
-static void
-_pixbuf_loaded (FluttrPhoto *photo, gchar *null, FluttrListView *view)
+FluttrPhoto*
+fluttr_list_view_get_active (FluttrListView *list_view)
 {
-	ClutterActor *stage = clutter_stage_get_default ();
-	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(stage)))
-		clutter_actor_queue_redraw (CLUTTER_ACTOR(stage)); 
+	FluttrListViewPrivate *priv;
+	ClutterActor *actor;
+		
+	g_return_if_fail (FLUTTR_IS_LIST_VIEW (list_view));
+	priv = FLUTTR_LIST_VIEW_GET_PRIVATE(list_view);
+	
+	actor = clutter_group_get_nth_child (CLUTTER_GROUP (list_view),
+					     priv->active_photo);
+	
+	return FLUTTR_PHOTO (actor);
+}
+
+static void
+_pixbuf_loaded (FluttrPhoto *photo, gchar *null, FluttrLibraryRow *row)
+{
+	GdkPixbuf *pixbuf = NULL;
+	g_object_get (G_OBJECT (photo), "pixbuf", &pixbuf, NULL);
+	g_object_set (G_OBJECT (row), "pixbuf", pixbuf, NULL);
 }
 
 void 
@@ -45,12 +63,13 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 	FluttrLibraryRow *lrow = NULL;
 	ClutterActor *photo = NULL;
 	ClutterActor *active = NULL;
-	ClutterActor *stage = clutter_stage_get_default ();
 	guint size = fluttr_photo_get_default_size ();
-	gint x1, x2, x3, x4;
+	gint x1;
+	gint active_row = 0;
 	gint offset = size/2;
 	gint x_center = CLUTTER_STAGE_WIDTH () /2;
 	gint y_center = CLUTTER_STAGE_HEIGHT ()/2;
+	gint padding = size /4;
 		
 	g_return_if_fail (FLUTTR_IS_LIST_VIEW (list_view));
 	priv = FLUTTR_LIST_VIEW_GET_PRIVATE(list_view);
@@ -65,21 +84,37 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 		priv->active_photo = len -1;
 	} else
 		;
+	/* Find the magic row */	
+	active_row = 0;
+	gint row = 0;
+	gint col = 0;
 	
-	/* Figure out the three 'x' values for each column */
-
-	x1 = (CLUTTER_STAGE_WIDTH ()/2) - (size/4) - (size);
-	x2 = x1 + (size*2) + (size/2);
-	x3 = x2 + (size*2) + (size/2);
-	x4 = x3 + (size*2) + (size/2);
+	for (i = 0; i < len; i++) {
+		if (i == priv->active_photo) {
+			active_row = row;
+			break;
+		}
+		col++;
+		if (col > (N_COLS-1)) {
+			col = 0;
+			row++;
+		}
+	}
+	
+	/* Figure out the base x value */
+	x1 = ((size) * N_COLS ) + (padding*(N_COLS-1));
+	x1 = (CLUTTER_STAGE_WIDTH ()/2)-(x1/2);
 	
 	/* Iterate through actors, calculating their new x positions, and make
 	   sure they are on the right place (left, right or center)
 	*/
-	gint col = 0;
-	gint row = 0;
+	col = 0;
+	row = 0;
 	gint less = priv->active_photo - 10;
 	gint more = priv->active_photo + 12;
+	
+	offset = -1 * ((size) + padding) * active_row;
+	
 	for (i = 0; i < len; i++) {
 		lrow = fluttr_library_get_library_row (priv->library, i);
 		photo = NULL;
@@ -91,6 +126,7 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 		 	
 		 	photo = fluttr_photo_new ();
 		 	clutter_group_add (CLUTTER_GROUP (list_view), photo);
+		 	clutter_actor_set_size (photo, size, size);
 		 	clutter_actor_set_position (photo, x_center, y_center);
 		 	clutter_actor_show_all (CLUTTER_ACTOR (photo	));
 		 	
@@ -103,31 +139,46 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 			
 				
 		}
-		
-	 	if (col == 0)
-	 		fluttr_photo_update_position (FLUTTR_PHOTO (photo),
-	 					      x1, offset);
-		else if (col == 1)
-			fluttr_photo_update_position (FLUTTR_PHOTO (photo),
-	 					      x2, offset);
-		else if (col == 2)
-			fluttr_photo_update_position (FLUTTR_PHOTO (photo),
-	 					      x3, offset);
-		else	
-			fluttr_photo_update_position (FLUTTR_PHOTO (photo),
-	 					      x4, offset);
+		gint x = x1 + (col * (size + padding));
+		gint y = offset;
+		fluttr_photo_update_position (FLUTTR_PHOTO (photo), x, y);
 		
 		col++;
-		if (col > 3) {
+		if (col > (N_COLS-1)) {
 			col = 0;
 			row++;
-			offset += (size*2) + (size/2);
+			offset += size + padding;
 		}	
 		if ((i > less) && (i < more)) {
-			fluttr_photo_fetch_pixbuf (FLUTTR_PHOTO (photo));
+			GdkPixbuf *pixbuf = NULL;
+			g_object_get (G_OBJECT (lrow), "pixbuf", &pixbuf, NULL);
+			
+			if (pixbuf != NULL) {
+				g_object_set (G_OBJECT (photo), "pixbuf",
+					      pixbuf, NULL);
+				/*g_print ("Got pixbuf\n");*/
+			} else {
+				fluttr_photo_fetch_pixbuf (FLUTTR_PHOTO (photo));
+				g_signal_connect (G_OBJECT (photo), 
+						  "pixbuf-loaded",
+				  		  G_CALLBACK (_pixbuf_loaded),
+				  		  lrow);
+			}
 		}
 	}
 	
+}
+
+void
+fluttr_list_view_advance_row (FluttrListView *list_view, gint n)
+{
+	fluttr_list_view_advance (list_view, (N_COLS * n));
+}
+
+void
+fluttr_list_view_advance_col (FluttrListView *list_view, gint n)
+{
+	fluttr_list_view_advance (list_view, n);
 }
 
 /* GObject Stuff */
@@ -230,9 +281,9 @@ fluttr_list_view_class_init (FluttrListViewClass *klass)
 	GObjectClass        *gobject_class = G_OBJECT_CLASS (klass);
 	ClutterActorClass   *actor_class = CLUTTER_ACTOR_CLASS (klass);
 	
-	parent_class = CLUTTER_ACTOR_CLASS (klass);
+	parent_class = CLUTTER_GROUP_CLASS (klass);
 
-	//actor_class->paint           = fluttr_list_view_paint;
+	actor_class->paint           = fluttr_list_view_paint;
 	
 	gobject_class->finalize     = fluttr_list_view_finalize;
 	gobject_class->dispose      = fluttr_list_view_dispose;
@@ -259,6 +310,9 @@ fluttr_list_view_init (FluttrListView *self)
 	FluttrListViewPrivate *priv;
 
 	priv = FLUTTR_LIST_VIEW_GET_PRIVATE (self);
+	
+	priv->active_photo = 0;
+	priv->active_col = 0;
 	
 }
 

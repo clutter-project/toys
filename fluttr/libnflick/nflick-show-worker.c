@@ -77,7 +77,8 @@ static void                     nflick_show_worker_init (NFlickShowWorker *self)
         
         if (private_init (self, priv) == TRUE) {
                 self->Private = priv;
-                nflick_worker_set_message ((NFlickWorker *) self, gettext ("Loading photo..."));
+                nflick_worker_set_message ((NFlickWorker *) self, 
+                			    gettext ("Loading photo..."));
         } else {
                 private_dispose (priv);
                 g_free (priv);

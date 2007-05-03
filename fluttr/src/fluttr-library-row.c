@@ -21,6 +21,7 @@ struct _FluttrLibraryRowPrivate
 	gchar			*id;
 	gchar			*name;
 	NFlickPhotoSet		*set;
+	GdkPixbuf		*pixbuf;
 	
 	ClutterActor		*photo;
 };
@@ -31,7 +32,8 @@ enum
 	PROP_ID,
 	PROP_NAME,
 	PROP_PHOTO,
-	PROP_SET
+	PROP_SET,
+	PROP_PIXBUF
 };
 
 /* GObject Stuff */
@@ -65,7 +67,13 @@ fluttr_library_row_set_property (GObject      *object,
 	
 		case PROP_SET:
 			priv->set = g_value_get_object (value);
-			break;		
+			break;
+			
+		case PROP_PIXBUF:
+			if (priv->pixbuf)
+				g_object_unref (priv->pixbuf);
+			priv->pixbuf = g_value_get_object (value);
+			break;	
 		default:
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, 
 							   pspec);
@@ -100,7 +108,10 @@ fluttr_library_row_get_property (GObject    *object,
 		case PROP_SET:
 			g_value_set_object (value, G_OBJECT (priv->set));
 			break;
-			
+		
+		case PROP_PIXBUF:
+			g_value_set_object (value, G_OBJECT (priv->pixbuf));
+			break;
 		default:
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id,
 							   pspec);
@@ -174,6 +185,15 @@ fluttr_library_row_class_init (FluttrLibraryRowClass *klass)
 		 "The NFlick photo set",
 		 NFLICK_TYPE_PHOTO_SET,
 		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));	
+		 
+	g_object_class_install_property 
+		(gobject_class,
+		 PROP_PIXBUF,
+		 g_param_spec_object ("pixbuf",
+		 "Pixbuf",
+		 "The GdkPixbuf representing this photo",
+		 GDK_TYPE_PIXBUF,
+		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));			 
 }
 
 static void
@@ -182,6 +202,8 @@ fluttr_library_row_init (FluttrLibraryRow *self)
 	FluttrLibraryRowPrivate *priv;
 	priv = FLUTTR_LIBRARY_ROW_GET_PRIVATE (self);
 	
+	priv->set = NULL;
+	priv->pixbuf = NULL;
 }
 
 FluttrLibraryRow*
