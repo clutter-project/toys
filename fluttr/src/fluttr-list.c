@@ -10,9 +10,6 @@
 #include "fluttr-spinner.h"
 #include "fluttr-behave.h"
 
-#include "nflick-worker.h"
-#include "nflick-set-list-worker.h"
-
 G_DEFINE_TYPE (FluttrList, fluttr_list, CLUTTER_TYPE_GROUP);
 
 #define FLUTTR_LIST_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj),\

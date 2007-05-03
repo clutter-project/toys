@@ -10,8 +10,6 @@
 #include "fluttr-behave.h"
 #include "fluttr-settings.h"
 
-#include "nflick-worker.h"
-#include "nflick-show-worker.h"
 
 G_DEFINE_TYPE (FluttrPhoto, fluttr_photo, CLUTTER_TYPE_GROUP);
 

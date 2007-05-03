@@ -1,5 +1,116 @@
 2007-05-03  Neil J. Patel  <njp@o-hand.com>
 
+	* Makefile.am:
+	* config.guess:
+	* config.sub:
+	* configure.ac:
+	* libnflick/Makefile.am:
+	* libnflick/nflick-api-request-private.h:
+	* libnflick/nflick-api-request.c:
+	* libnflick/nflick-api-request.h:
+	* libnflick/nflick-api-response-private.h:
+	* libnflick/nflick-api-response.c:
+	* libnflick/nflick-auth-worker.h:
+	* libnflick/nflick-flickr.h:
+	* libnflick/nflick-get-sizes-response-private.h:
+	* libnflick/nflick-get-sizes-response.c:
+	* libnflick/nflick-get-sizes-response.h:
+	* libnflick/nflick-gft-response-private.h:
+	* libnflick/nflick-gft-response.c:
+	* libnflick/nflick-gft-response.h:
+	* libnflick/nflick-no-set-response-private.h:
+	* libnflick/nflick-no-set-response.c:
+	* libnflick/nflick-no-set-response.h:
+	* libnflick/nflick-photo-data.c:
+	* libnflick/nflick-photo-data.h:
+	* libnflick/nflick-photo-list-response-private.h:
+	* libnflick/nflick-photo-list-response.c:
+	* libnflick/nflick-photo-list-response.h:
+	* libnflick/nflick-photo-list-worker-private.h:
+	* libnflick/nflick-photo-list-worker.c:
+	* libnflick/nflick-photo-list-worker.h:
+	* libnflick/nflick-photo-set-private.h:
+	* libnflick/nflick-photo-set.c:
+	* libnflick/nflick-photo-set.h:
+	* libnflick/nflick-pixbuf-fetch-private.h:
+	* libnflick/nflick-pixbuf-fetch.c:
+	* libnflick/nflick-pixbuf-fetch.h:
+	* libnflick/nflick-set-list-response-private.h:
+	* libnflick/nflick-set-list-response.c:
+	* libnflick/nflick-set-list-response.h:
+	* libnflick/nflick-set-list-worker-private.h:
+	* libnflick/nflick-set-list-worker.c:
+	* libnflick/nflick-set-list-worker.h:
+	* libnflick/nflick-show-worker-private.h:
+	* libnflick/nflick-show-worker.c:
+	* libnflick/nflick-show-worker.h:
+	* libnflick/nflick-types.h:
+	* libnflick/nflick-worker-private.h:
+	* libnflick/nflick-worker.c:
+	* libnflick/nflick-worker.h:
+	* libnflick/nflick.h:
+	* ltmain.sh:
+	* src/Makefile.am:
+	* src/fluttr-auth.c:
+	* src/fluttr-library-row.c:
+	* src/fluttr-library-row.h:
+	* src/fluttr-list-view.h:
+	* src/fluttr-list.c:
+	* src/fluttr-list.h:
+	* src/fluttr-photo.c:
+	* src/fluttr-photo.h:
+	* src/main.c:
+	* src/nflick-api-request-private.h:
+	* src/nflick-api-request.c:
+	* src/nflick-api-request.h:
+	* src/nflick-api-response-private.h:
+	* src/nflick-api-response.c:
+	* src/nflick-api-response.h:
+	* src/nflick-auth-worker-private.h:
+	* src/nflick-auth-worker.c:
+	* src/nflick-auth-worker.h:
+	* src/nflick-flickr.h:
+	* src/nflick-get-sizes-response-private.h:
+	* src/nflick-get-sizes-response.c:
+	* src/nflick-get-sizes-response.h:
+	* src/nflick-gft-response-private.h:
+	* src/nflick-gft-response.c:
+	* src/nflick-gft-response.h:
+	* src/nflick-no-set-response-private.h:
+	* src/nflick-no-set-response.c:
+	* src/nflick-no-set-response.h:
+	* src/nflick-photo-data.c:
+	* src/nflick-photo-data.h:
+	* src/nflick-photo-list-response-private.h:
+	* src/nflick-photo-list-response.c:
+	* src/nflick-photo-list-response.h:
+	* src/nflick-photo-list-worker-private.h:
+	* src/nflick-photo-list-worker.c:
+	* src/nflick-photo-list-worker.h:
+	* src/nflick-photo-set-private.h:
+	* src/nflick-photo-set.c:
+	* src/nflick-photo-set.h:
+	* src/nflick-pixbuf-fetch-private.h:
+	* src/nflick-pixbuf-fetch.c:
+	* src/nflick-pixbuf-fetch.h:
+	* src/nflick-set-list-response-private.h:
+	* src/nflick-set-list-response.c:
+	* src/nflick-set-list-response.h:
+	* src/nflick-set-list-worker-private.h:
+	* src/nflick-set-list-worker.c:
+	* src/nflick-set-list-worker.h:
+	* src/nflick-show-worker-private.h:
+	* src/nflick-show-worker.c:
+	* src/nflick-show-worker.h:
+	* src/nflick-types.h:
+	* src/nflick-worker-private.h:
+	* src/nflick-worker.c:
+	* src/nflick-worker.h:
+	Pulled all nflick files into its own directory.
+	Updated sources to reflect change.
+
+2007-05-03  Neil J. Patel  <njp@o-hand.com>
+
 	* data/picture.svg:
 	Changed to lighter colour, and added clock picture (from Tango icon).
 	

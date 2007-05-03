@@ -10,7 +10,7 @@
 #include <glib.h>
 #include <clutter/clutter.h>
 
-#include "nflick-photo-set.h"
+#include <libnflick/nflick.h>
 
 #ifndef _HAVE_FLUTTR_LIBRARY_ROW_H
 #define _HAVE_FLUTTR_LIBRARY_ROW_H

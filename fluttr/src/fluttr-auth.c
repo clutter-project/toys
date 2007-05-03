@@ -7,8 +7,7 @@
 
 #include "fluttr-auth.h"
 
-#include "nflick-worker.h"
-#include "nflick-auth-worker.h"
+#include <libnflick/nflick.h>
 
 G_DEFINE_TYPE (FluttrAuth, fluttr_auth, CLUTTER_TYPE_GROUP);
 

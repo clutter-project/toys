@@ -17,10 +17,7 @@
 #include "fluttr-photo.h"
 #include "fluttr-settings.h"
 
-#include "nflick-photo-data.h"
-#include "nflick-photo-set.h"
-#include "nflick-set-list-worker.h"
-#include "nflick-worker.h"
+#include <libnflick/nflick.h>
 
 typedef struct {
 	FluttrLibrary		*library;

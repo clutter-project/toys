@@ -8,6 +8,7 @@ AM_MAINTAINER_MODE
 AC_ISC_POSIX
 AC_PROG_CC
 AC_STDC_HEADERS
+AC_PROG_LIBTOOL
 
 PKG_CHECK_MODULES(DEPS, clutter-0.2 gdk-2.0 gtk+-2.0 neon libxml-2.0)
 AC_SUBST(DEPS_CFLAGS)
@@ -22,5 +23,6 @@ AC_SUBST(GCC_FLAGS)
 AC_OUTPUT([
 Makefile
 data/Makefile
+libnflick/Makefile
 src/Makefile
 ])

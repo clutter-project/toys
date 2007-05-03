@@ -7,8 +7,6 @@
 
 #include "fluttr-library-row.h"
 
-#include "nflick-worker.h"
-
 G_DEFINE_TYPE (FluttrLibraryRow, fluttr_library_row, G_TYPE_OBJECT);
 
 #define FLUTTR_LIBRARY_ROW_GET_PRIVATE(obj) \

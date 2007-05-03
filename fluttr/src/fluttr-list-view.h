@@ -10,8 +10,9 @@
 #include <clutter/clutter.h>
 
 #include "fluttr-library.h"
-#include "fluttr-library-row.h"
 #include "fluttr-photo.h"
+
+#include <libnflick/nflick.h>
 
 #ifndef _HAVE_FLUTTR_LIST_VIEW_H
 #define _HAVE_FLUTTR_LIST_VIEW_H

@@ -9,7 +9,7 @@
 #include <glib.h>
 #include <clutter/clutter.h>
 
-#include "nflick-worker.h"
+#include <libnflick/nflick.h>
 
 #ifndef _HAVE_FLUTTR_LIST_H
 #define _HAVE_FLUTTR_LIST_H
