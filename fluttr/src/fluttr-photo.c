@@ -20,7 +20,7 @@ G_DEFINE_TYPE (FluttrPhoto, fluttr_photo, CLUTTER_TYPE_GROUP);
 	FluttrPhotoPrivate))
 	
 #define FONT "DejaVu Sans Book"
-#define FRAME 5
+#define FRAME 2
 
 static GdkPixbuf	*default_pic = NULL;
 
@@ -45,6 +45,7 @@ struct _FluttrPhotoPrivate
 	
 	/* The actual actors */
 	ClutterActor		*frame;
+	ClutterActor		*clip;
 	ClutterActor		*texture;
 	ClutterActor		*options; /* The 'flip' side */
 	
@@ -163,8 +164,7 @@ fluttr_photo_swap_alpha_func (ClutterBehaviour *behave,
 {
         FluttrPhotoPrivate *priv;
 	gfloat factor;
-	gint height = (CLUTTER_STAGE_HEIGHT ()/4);
-	gint width =  height * 1.5; 
+	guint size = fluttr_photo_get_default_size ();
 	gint w, h;
 	
         g_return_if_fail (FLUTTR_IS_PHOTO (data));
@@ -176,18 +176,11 @@ fluttr_photo_swap_alpha_func (ClutterBehaviour *behave,
 		w = gdk_pixbuf_get_width (priv->pixbuf);
 		h = gdk_pixbuf_get_height (priv->pixbuf);
 		
-		clutter_actor_set_size (priv->frame,
-					w + (FRAME*2),
-					h + (FRAME*2));
-		clutter_actor_set_position (priv->frame, 
-					    (width/2) - ((w+(FRAME*2))/2),
-					    (height/2) - ((h+(FRAME*2))/2));
-		
 		clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture),
 					    priv->pixbuf);
 		clutter_actor_set_position (priv->texture, 
-					    (width/2) - (w/2),
-					    (height/2) - (h/2));    
+					    (size/2) - (w/2),
+					    (size/2) - (h/2));    
 	}
 	if (factor < 0.5) {
 		factor *= 2;
@@ -239,7 +232,6 @@ on_thread_ok_idle (FluttrPhoto *photo)
 
 
 	g_signal_emit (photo, _photo_signals[LOADED], 0, "");
-        g_print ("got\n");      		
         
         return FALSE;
 }
@@ -297,10 +289,8 @@ fluttr_photo_fetch_pixbuf (FluttrPhoto *photo)
         NFlickWorkerStatus status;
               
         gchar *token = NULL;
-	gint height = (CLUTTER_STAGE_HEIGHT ()/4);
-	gint width =  height * 1.5; 
-	height -= FRAME *2;
-	width -= FRAME *2;
+	guint size = fluttr_photo_get_default_size ();
+	size *= 1.5;
         
         g_return_if_fail (FLUTTR_IS_PHOTO (photo));
         priv = FLUTTR_PHOTO_GET_PRIVATE(photo);	
@@ -311,8 +301,8 @@ fluttr_photo_fetch_pixbuf (FluttrPhoto *photo)
 	g_object_get (G_OBJECT (settings), "token", &token, NULL);
 	
 	worker = (NFlickWorker *)nflick_show_worker_new (priv->photoid, 
-							       width, 
-							       height, 
+							       size, 
+							       size, 
 							       token);
         /* Check if the worker is in the right state */
         g_object_get (G_OBJECT (worker), "status", &status, NULL);
@@ -353,8 +343,20 @@ fluttr_photo_fetch_pixbuf (FluttrPhoto *photo)
         g_free (msg);
 }
 
+/* Will return the default size of the FluttrPhoto square for the current stage */
+guint
+fluttr_photo_get_default_size (void)
+{
+	guint width = CLUTTER_STAGE_WIDTH ();
+	guint height = CLUTTER_STAGE_HEIGHT ();
+	
+	if (width > height)
+		return height/4;
+	else
+		return width /4;
+}
 
-/* Stuff */
+/* GObject Stuff */
 
 static void
 fluttr_photo_set_property (GObject      *object, 
@@ -552,8 +554,7 @@ fluttr_photo_init (FluttrPhoto *self)
 {
 	FluttrPhotoPrivate *priv;
 	ClutterColor rect_col   = { 0xff, 0xff, 0xff, 0xff };
-	gint height = (CLUTTER_STAGE_HEIGHT ()/4);
-	gint width = height * 1.5;
+	guint size = fluttr_photo_get_default_size ();
 	
 	priv = FLUTTR_PHOTO_GET_PRIVATE (self);
 	
@@ -562,25 +563,36 @@ fluttr_photo_init (FluttrPhoto *self)
 	/* The white frame */
 	priv->frame = clutter_rectangle_new_with_color (&rect_col);
 	clutter_group_add (CLUTTER_GROUP (self), priv->frame);	
-	clutter_actor_set_size (priv->frame, width, height);
+	clutter_actor_set_size (priv->frame, size, size);
 	clutter_actor_set_position (priv->frame, 0, 0);
 	
 	/*Load the default pixbuf */
 	if (default_pic == NULL) {
 		default_pic = gdk_pixbuf_new_from_file_at_scale (PKGDATADIR \
   						    	"/picture.svg",
-  						        width -(FRAME*2),
-  						        height -(FRAME*2),
+  						        size -(FRAME*2),
+  						        size -(FRAME*2),
   						        FALSE,
   						        NULL);
 	}
+	/* The picture clip region */
+	priv->clip = clutter_group_new ();
+	clutter_group_add (CLUTTER_GROUP (self),priv->clip);
+	clutter_actor_set_size (priv->clip, 
+				size -(FRAME*2), 
+				size -(FRAME*2));
+	clutter_actor_set_position (priv->clip, 0, 0);
+	clutter_actor_set_clip (priv->clip,
+				FRAME, FRAME,
+				size -(FRAME*2),
+				size -(FRAME*2));
 	
 	/* The pixture texture */
 	priv->texture = clutter_texture_new_from_pixbuf (default_pic);
-	clutter_group_add (CLUTTER_GROUP (self), priv->texture);
+	clutter_group_add (CLUTTER_GROUP (priv->clip), priv->texture);
 	clutter_actor_set_size (priv->texture, 
-				width -(FRAME*2), 
-				height -(FRAME*2));
+				size -(FRAME*2), 
+				size -(FRAME*2));
 	clutter_actor_set_position (priv->texture, FRAME, FRAME);
 	
 	/* Setup the transformation */

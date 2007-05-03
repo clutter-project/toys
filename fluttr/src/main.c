@@ -53,7 +53,6 @@ static void		list_get_successful (FluttrAuth *auth,
 					     Fluttr *fluttr);
 static void		list_get_error (FluttrAuth *auth, gchar *msg, 
 				    	Fluttr *fluttr);
-static ClutterActor *photo = NULL;
 
 static gboolean
 _auth_timeout (Fluttr *fluttr)
@@ -61,6 +60,7 @@ _auth_timeout (Fluttr *fluttr)
 	fluttr_auth_go (FLUTTR_AUTH (fluttr->auth));
 	return FALSE;
 }
+
 int
 main (int argc, char **argv)
 {
@@ -151,16 +151,6 @@ main (int argc, char **argv)
 				CLUTTER_STAGE_HEIGHT ());
 	clutter_actor_set_position (fluttr->list, 0, 0);	
 	
-	/*
-	photo = fluttr_photo_new ();
-	clutter_group_add (CLUTTER_GROUP (fluttr->stage), photo);
-	clutter_actor_set_position (photo, 10, 10);
-	if (fluttr->username != NULL) {
-		g_object_set (G_OBJECT (photo), "photoid", "422650691", NULL);
-		fluttr_photo_fetch_pixbuf (FLUTTR_PHOTO (photo));
-		fluttr_photo_update_position (FLUTTR_PHOTO (photo), 600, 500);
-	}
-	*/
 	clutter_actor_show_all (fluttr->stage);	    
 	
 	clutter_main();	

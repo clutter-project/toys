@@ -73,6 +73,9 @@ fluttr_photo_fetch_pixbuf (FluttrPhoto *photo);
 void
 fluttr_photo_update_position (FluttrPhoto *photo, gint x, gint y);
 
+guint
+fluttr_photo_get_default_size (void);
+
 G_END_DECLS
 
 #endif

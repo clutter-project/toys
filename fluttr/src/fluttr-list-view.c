@@ -46,11 +46,12 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 	ClutterActor *photo = NULL;
 	ClutterActor *active = NULL;
 	ClutterActor *stage = clutter_stage_get_default ();
-	gint height = (CLUTTER_STAGE_HEIGHT ()/4);
-	gint width = height * 1.5;
-	gint x1, x2, x3;
-	gint y = 10;	
-	
+	guint size = fluttr_photo_get_default_size ();
+	gint x1, x2, x3, x4;
+	gint offset = size/2;
+	gint x_center = CLUTTER_STAGE_WIDTH () /2;
+	gint y_center = CLUTTER_STAGE_HEIGHT ()/2;
+		
 	g_return_if_fail (FLUTTR_IS_LIST_VIEW (list_view));
 	priv = FLUTTR_LIST_VIEW_GET_PRIVATE(list_view);
 
@@ -66,20 +67,19 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 		;
 	
 	/* Figure out the three 'x' values for each column */
-	i = (CLUTTER_STAGE_WIDTH () - (3 * width))/4;
-	width *= 2;
-	
-	x1 = i;
-	x2 = i + width + i;
-	x3 = i + width + i + width + i;
+
+	x1 = (CLUTTER_STAGE_WIDTH ()/2) - (size/4) - (size);
+	x2 = x1 + (size*2) + (size/2);
+	x3 = x2 + (size*2) + (size/2);
+	x4 = x3 + (size*2) + (size/2);
 	
 	/* Iterate through actors, calculating their new x positions, and make
 	   sure they are on the right place (left, right or center)
 	*/
 	gint col = 0;
 	gint row = 0;
-	gint less = priv->active_photo - 7;
-	gint more = priv->active_photo + 10;
+	gint less = priv->active_photo - 10;
+	gint more = priv->active_photo + 12;
 	for (i = 0; i < len; i++) {
 		lrow = fluttr_library_get_library_row (priv->library, i);
 		photo = NULL;
@@ -91,6 +91,8 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 		 	
 		 	photo = fluttr_photo_new ();
 		 	clutter_group_add (CLUTTER_GROUP (list_view), photo);
+		 	clutter_actor_set_position (photo, x_center, y_center);
+		 	clutter_actor_show_all (CLUTTER_ACTOR (photo	));
 		 	
 		 	if (photo) {
 		 		g_object_set (G_OBJECT (lrow), "photo", 
@@ -101,28 +103,31 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 			
 				
 		}
+		
 	 	if (col == 0)
 	 		fluttr_photo_update_position (FLUTTR_PHOTO (photo),
-	 					      x1, row * (height * 2.5));
+	 					      x1, offset);
 		else if (col == 1)
 			fluttr_photo_update_position (FLUTTR_PHOTO (photo),
-	 					      x2, row * (height *2.5));
-		else
+	 					      x2, offset);
+		else if (col == 2)
 			fluttr_photo_update_position (FLUTTR_PHOTO (photo),
-	 					      x3, row * (height *2.5));
+	 					      x3, offset);
+		else	
+			fluttr_photo_update_position (FLUTTR_PHOTO (photo),
+	 					      x4, offset);
+		
 		col++;
-		if (col > 2) {
+		if (col > 3) {
 			col = 0;
 			row++;
+			offset += (size*2) + (size/2);
 		}	
 		if ((i > less) && (i < more)) {
 			fluttr_photo_fetch_pixbuf (FLUTTR_PHOTO (photo));
-			/*g_signal_connect (photo, "pixbuf_loaded", 
-					  _pixbuf_loaded, (gpointer)list_view);
-			*/g_print ("get %d\n", i);
 		}
 	}
-	clutter_actor_show_all (CLUTTER_ACTOR (list_view));
+	
 }
 
 /* GObject Stuff */

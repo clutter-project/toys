@@ -1,4 +1,24 @@
-2007-05-02  Neil J Patel,,,  <njp@oh-hp-laptop>
+2007-05-03  Neil J. Patel  <njp@o-hand.com>
+
+	* data/picture.svg:
+	Changed to lighter colour, and added clock picture (from Tango icon).
+	
+	* src/fluttr-list-view.c: (fluttr_list_view_advance):
+	Changed to make a grid of 4x3 icons.
+	
+	* src/fluttr-photo.c: (fluttr_photo_swap_alpha_func),
+	(on_thread_ok_idle), (fluttr_photo_fetch_pixbuf),
+	(fluttr_photo_get_default_size), (fluttr_photo_init):
+	Changed the sizing to be a square with a set size, rather than a
+	resizable rectangle. The downloaded picture is now set in the middle
+	of a clip region.
+	
+	* src/fluttr-photo.h:
+	Added a utility function to get the default size of the photo square for
+	the current stage width & height.
+	
+
+2007-05-02  Neil J. Patel  <njp@o-hand.com>
 
 	* src/Makefile.am:
 	* src/fluttr-library-row.c:
