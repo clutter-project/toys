@@ -19,6 +19,7 @@ G_DEFINE_TYPE (FluttrPhoto, fluttr_photo, CLUTTER_TYPE_GROUP);
 	
 #define FONT "DejaVu Sans Book"
 #define FRAME 2
+#define X_ANGLE 80
 
 static GdkPixbuf	*default_pic = NULL;
 
@@ -53,7 +54,7 @@ struct _FluttrPhotoPrivate
 	ClutterBehaviour	*swap_behave;
 	
 	/* Activate animation */
-	gint 			 act_x;
+	gfloat			 scale;
 	ClutterTimeline		*act_time;
 	ClutterAlpha		*act_alpha;
 	ClutterBehaviour	*act_behave;	
@@ -222,14 +223,22 @@ fluttr_photo_act_alpha_func (ClutterBehaviour *behave,
         FluttrPhotoPrivate *priv;
 	gfloat factor;
 	guint size = fluttr_photo_get_default_size ();
-	gint w, h, x, y;
+	gfloat x_angle;
+	gfloat y_angle;
+	gfloat scale;
 	
         g_return_if_fail (FLUTTR_IS_PHOTO (data));
         priv = FLUTTR_PHOTO_GET_PRIVATE(data);
 	
 	factor = (gfloat) alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
 	
+	x_angle = (X_ANGLE) * factor;
+	y_angle = 360 * factor;
+	//priv->scale = 1.0 * factor;
+	//priv->scale += 1.0;
 	
+	clutter_actor_rotate_x (CLUTTER_ACTOR (data), x_angle, size/2, 0);
+	//clutter_actor_rotate_y (CLUTTER_ACTOR (data), y_angle, size/2, 0);
 	
 	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(data)))
 		clutter_actor_queue_redraw (CLUTTER_ACTOR(data));	
@@ -405,6 +414,9 @@ fluttr_photo_set_options (FluttrPhoto *photo, ClutterActor *options)
 	clutter_group_add (CLUTTER_GROUP (priv->options), options);
 	clutter_actor_show_all (priv->options);
 	clutter_actor_set_position (options, 0, 0);
+	
+	if (!clutter_timeline_is_playing (priv->act_time))
+		clutter_timeline_start (priv->act_time);
 }
 
 /* GObject Stuff */
@@ -492,6 +504,9 @@ fluttr_photo_paint (ClutterActor *actor)
 	priv = FLUTTR_PHOTO_GET_PRIVATE(photo);
 
 	glPushMatrix();
+	
+	glTranslatef (0, 0, 0);
+	glScalef (priv->scale, priv->scale, priv->scale);
 	
 	gint i;
 	gint len = clutter_group_get_n_children (CLUTTER_GROUP (actor)); 
@@ -610,6 +625,7 @@ fluttr_photo_init (FluttrPhoto *self)
 	priv = FLUTTR_PHOTO_GET_PRIVATE (self);
 	
 	priv->pixbuf = NULL;
+	priv->scale = 1.0;
 	
 	/* The white frame */
 	priv->frame = clutter_rectangle_new_with_color (&rect_col);
@@ -674,12 +690,11 @@ fluttr_photo_init (FluttrPhoto *self)
 					  (gpointer)self);
 					  
 	/* Setup the activating line */
-	priv->act_x = 0;
-	priv->act_time = clutter_timeline_new (40, 80);
-	priv->act_alpha = clutter_alpha_new_full (priv->swap_time,
+	priv->act_time = clutter_timeline_new (40, 120);
+	priv->act_alpha = clutter_alpha_new_full (priv->act_time,
 					      	   alpha_linear_inc_func,
 					      	   NULL, NULL);
-	priv->act_behave = fluttr_behave_new (priv->swap_alpha,
+	priv->act_behave = fluttr_behave_new (priv->act_alpha,
 					       fluttr_photo_act_alpha_func,
 					       (gpointer)self);
 }

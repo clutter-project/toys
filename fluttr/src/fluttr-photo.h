@@ -79,6 +79,7 @@ fluttr_photo_get_default_size (void);
 void
 fluttr_photo_set_options (FluttrPhoto *photo, ClutterActor *options);
 
+
 G_END_DECLS
 
 #endif

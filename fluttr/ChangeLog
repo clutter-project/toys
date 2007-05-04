@@ -1,3 +1,17 @@
+2007-05-04  Neil J. Patel  <njp@o-hand.com>
+
+	* src/fluttr-photo.c: (fluttr_photo_act_alpha_func),
+	(fluttr_photo_set_options), (fluttr_photo_paint),
+	(fluttr_photo_init):
+	* src/fluttr-photo.h:
+	Adjusted to use glScale over a timeline, rather than
+	clutter_actor_set_scale.
+	After settings the options, FluttrPhoto will automatically start the
+	'active' timeline.
+	
+	* src/main.c: (_set_options):
+	Sets a test 'options' widget upon pressing enter.
+
 2007-05-03  Neil J. Patel  <njp@o-hand.com>
 
 	* libnflick/nflick-show-worker.c:

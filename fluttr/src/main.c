@@ -361,13 +361,13 @@ _set_options (FluttrPhoto *photo)
 	clutter_actor_set_size (text, size, size);
 	clutter_group_add (CLUTTER_GROUP (group), text);
 	
-	//clutter_actor_set_scale (group, 1/3, 1/3);
-	clutter_actor_set_position (text, 0, 0);
+	//clutter_actor_set_scale (text, 1/3, 1/3);
+	clutter_actor_set_position (text, 0, 30);
 	fluttr_photo_set_options (photo, group);	
 	
-	clutter_actor_rotate_x (CLUTTER_ACTOR (photo), 70, size/2, 0);
-	//clutter_actor_set_scale (CLUTTER_ACTOR (photo), 3, 3);
-	clutter_actor_set_depth (CLUTTER_ACTOR (photo), 20);	
+	
+	//clutter_actor_set_scale (CLUTTER_ACTOR (photo), 2, 2);
+	//clutter_actor_set_depth (CLUTTER_ACTOR (photo), 1000);	
 	//clutter_actor_set_position (CLUTTER_ACTOR (photo), 200, -200);
 	clutter_actor_raise_top (CLUTTER_ACTOR (photo));
 }
