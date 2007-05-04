@@ -1,5 +1,20 @@
 2007-05-04  Neil J. Patel  <njp@o-hand.com>
 
+	reviewed by: <delete if not using a buddy>
+
+	* src/fluttr-list-view.c:
+	Changed the 'falling photos' code so it moves up first, then down.
+	
+	* src/fluttr-photo.c:
+	Fixed some silly resize errors, removed the 'flipping' code when
+	activated.
+	
+	* src/main.c:
+	Stopped activation from calling the fluttr_photo_set_options.
+	
+
+2007-05-04  Neil J. Patel  <njp@o-hand.com>
+
 	* src/fluttr-list-view.c: (fluttr_list_view_get_active),
 	(fluttr_list_view_advance), (fluttr_list_view_activate):
 	* src/fluttr-list-view.h:

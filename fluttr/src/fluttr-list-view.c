@@ -173,6 +173,17 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 	
 }
 
+static gboolean
+_peg (ClutterActor *photo)
+{
+	guint size = fluttr_photo_get_default_size ();
+				fluttr_photo_update_position 
+					(FLUTTR_PHOTO (photo), 
+					 clutter_actor_get_x (photo), 
+					 CLUTTER_STAGE_HEIGHT () + size);
+	return FALSE;
+}
+
 /* We make all the 'viewable' photos fall down, leaving just the main one */
 void
 fluttr_list_view_activate (FluttrListView *list_view)
@@ -226,10 +237,18 @@ fluttr_list_view_activate (FluttrListView *list_view)
 		} else {
 			if ((row >= active_row-1) && (row <= active_row +3)) {
 							
+												
 				fluttr_photo_update_position 
 					(FLUTTR_PHOTO (photo), 
 					 clutter_actor_get_x (photo), 
-					 CLUTTER_STAGE_HEIGHT () + size);
+					 clutter_actor_get_y (photo) - 20);
+
+				/*fluttr_photo_update_position 
+					(FLUTTR_PHOTO (photo), 
+					 clutter_actor_get_x (photo), 
+					 CLUTTER_STAGE_HEIGHT () + size);*/
+				g_timeout_add (300, (GSourceFunc)_peg, photo);
+
 			}
 		}
 		col++;

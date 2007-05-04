@@ -346,36 +346,23 @@ list_get_error (FluttrAuth *auth, gchar *msg, Fluttr *fluttr)
 static void
 _set_options (FluttrPhoto *photo)
 {
-	ClutterColor col   = { 0xff, 0x11, 0x11, 0xff };
-	ClutterColor txt_col   = { 0xff, 0xff, 0xff, 0xff };	
+	ClutterColor col   = { 0xff, 0xff, 0xff, 0xff };
+	ClutterColor txt_col   = { 0x00, 0x00, 0x00, 0xff };	
 	guint size = fluttr_photo_get_default_size ();
-	gint x, y;
-	//size *= 1.5;
-	ClutterActor *group = clutter_group_new ();
-	clutter_actor_set_size (group, size, size);
-	clutter_actor_rotate_x (CLUTTER_ACTOR (group), 180, size/2, 0);
 	
 	ClutterActor *rect = clutter_rectangle_new_with_color (&col);
 	clutter_actor_set_size (rect, size, size);
-	clutter_group_add (CLUTTER_GROUP (group), rect);
-	clutter_actor_set_position (rect, 0, 0);
 		
 	ClutterActor *text = clutter_label_new_full ("Sans 30", 
 						     "Options", &txt_col);
 	clutter_actor_set_size (text, size, size);
-	clutter_group_add (CLUTTER_GROUP (group), text);
 	
-	//clutter_actor_set_scale (group, 0.75, 0.75);
-	//clutter_actor_set_scale (text, 0.5, 0.5);
+	//clutter_actor_set_scale (group, 0.666, 0.666);
+	clutter_actor_set_scale (text, 0.666, 0.666);
 	clutter_actor_set_position (text, 0, 30);
-	fluttr_photo_set_options (photo, group);	
+	fluttr_photo_set_options (photo, text);	
+	clutter_actor_set_opacity (text, 0);
 	
-	clutter_actor_get_abs_position (group, &x, &y);
-	//g_print ("%d, %d\n", x, y);
-	
-	//clutter_actor_set_scale (CLUTTER_ACTOR (photo), 2, 2);
-	//clutter_actor_set_depth (CLUTTER_ACTOR (photo), 1000);	
-	//clutter_actor_set_position (CLUTTER_ACTOR (photo), 200, -200);
 	clutter_actor_raise_top (CLUTTER_ACTOR (photo));
 }
 
