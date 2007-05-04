@@ -312,6 +312,7 @@ fluttr_photo_opt_alpha_func (ClutterBehaviour *behave,
         FluttrPhotoPrivate *priv;
 	gfloat factor;
 	guint size = fluttr_photo_get_default_size ();
+	gint ssize;
 	gfloat x_angle;
 	gfloat y_angle;
 	gfloat scale;
@@ -323,10 +324,11 @@ fluttr_photo_opt_alpha_func (ClutterBehaviour *behave,
 	
 	x_angle = (X_ANGLE) * factor;
 	y_angle = 360 * factor;
-	priv->scale = 1.0 * factor;
+	priv->scale = 0.5 * factor;
 	priv->scale += 1.0;
 	
-	clutter_actor_rotate_x (CLUTTER_ACTOR (data), x_angle, size/2, 0);
+	ssize = size * priv->scale;
+	clutter_actor_rotate_x (CLUTTER_ACTOR (data), x_angle, 0, 0);
 	//clutter_actor_rotate_y (CLUTTER_ACTOR (data), y_angle, size/2, 0);
 	
 	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(data)))
@@ -357,15 +359,8 @@ on_thread_ok_idle (FluttrPhoto *photo)
         g_object_get (G_OBJECT (priv->worker), "pixbuf", &pixbuf, NULL);
         priv->pixbuf = pixbuf;        
         
-        /*g_print ("%d %d\n", gdk_pixbuf_get_width (pixbuf), 
-        		    gdk_pixbuf_get_height (pixbuf));
-	*/
-	if (clutter_timeline_is_playing (priv->swap_time))
-        	;//clutter_timeline_rewind (priv->text_time);
-       
-        else
+	if (!clutter_timeline_is_playing (priv->swap_time))
         	clutter_timeline_start (priv->swap_time);
-
 
 	g_signal_emit (photo, _photo_signals[LOADED], 0, "");
         
@@ -741,7 +736,7 @@ fluttr_photo_init (FluttrPhoto *self)
 		
 	/* Setup the transformation */
 	priv->new_x = priv->new_y = priv->new_scale = 0;
-	priv->trans_time = clutter_timeline_new (40, 80);
+	priv->trans_time = clutter_timeline_new (40, 40);
 	priv->trans_alpha = clutter_alpha_new_full (priv->trans_time,
 					      alpha_linear_inc_func,
 					      NULL, NULL);

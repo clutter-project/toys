@@ -350,7 +350,7 @@ _set_options (FluttrPhoto *photo)
 	ClutterColor txt_col   = { 0xff, 0xff, 0xff, 0xff };	
 	guint size = fluttr_photo_get_default_size ();
 	gint x, y;
-	size *= 2;
+	//size *= 1.5;
 	ClutterActor *group = clutter_group_new ();
 	clutter_actor_set_size (group, size, size);
 	clutter_actor_rotate_x (CLUTTER_ACTOR (group), 180, size/2, 0);
@@ -365,8 +365,8 @@ _set_options (FluttrPhoto *photo)
 	clutter_actor_set_size (text, size, size);
 	clutter_group_add (CLUTTER_GROUP (group), text);
 	
-	clutter_actor_set_scale (group, 0.5, 0.5);
-	clutter_actor_set_scale (text, 0.5, 0.5);
+	//clutter_actor_set_scale (group, 0.75, 0.75);
+	//clutter_actor_set_scale (text, 0.5, 0.5);
 	clutter_actor_set_position (text, 0, 30);
 	fluttr_photo_set_options (photo, group);	
 	
@@ -411,6 +411,9 @@ browse_input_cb (ClutterStage *stage,
 		case CLUTTER_Return:
 		case CLUTTER_space:
 		case CLUTTER_KP_Enter:
+			fluttr_list_view_activate (FLUTTR_LIST_VIEW 
+								(fluttr->list));
+			break;
 			photo = fluttr_list_view_get_active 
 					(FLUTTR_LIST_VIEW (fluttr->list));
 			_set_options (photo);

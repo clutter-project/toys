@@ -73,6 +73,9 @@ fluttr_list_view_new (FluttrLibrary *library);
 FluttrPhoto*
 fluttr_list_view_get_active (FluttrListView *list_view);
 
+void
+fluttr_list_view_activate (FluttrListView *list_view);
+
 void 
 fluttr_list_view_advance (FluttrListView *list_view, gint n);
 

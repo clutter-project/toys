@@ -1,5 +1,31 @@
 2007-05-04  Neil J. Patel  <njp@o-hand.com>
 
+	* src/fluttr-list-view.c: (fluttr_list_view_get_active),
+	(fluttr_list_view_advance), (fluttr_list_view_activate):
+	* src/fluttr-list-view.h:
+	Added a call to 'activate' the current photo. Activation consists of
+	letting the other photos 'fall' away, and the centering the main photo.
+	
+	* src/fluttr-photo.c: (fluttr_photo_opt_alpha_func),
+	(on_thread_ok_idle), (fluttr_photo_init):
+	Cleaned up some over-the-top printing.
+	
+	* src/main.c: (_set_options), (browse_input_cb):
+	Changed to 'activate the list view when enter is pressed.
+
+2007-05-04  Neil J. Patel  <njp@o-hand.com>
+
+	reviewed by: <delete if not using a buddy>
+
+	* src/fluttr-list-view.c: (fluttr_list_view_get_active),
+	(fluttr_list_view_advance), (fluttr_list_view_activate):
+	* src/fluttr-list-view.h:
+	* src/fluttr-photo.c: (fluttr_photo_opt_alpha_func),
+	(on_thread_ok_idle), (fluttr_photo_init):
+	* src/main.c: (_set_options), (browse_input_cb):
+
+2007-05-04  Neil J. Patel  <njp@o-hand.com>
+
 	reviewed by: <delete if not using a buddy>
 
 	* src/fluttr-list-view.c: (fluttr_list_view_get_active),

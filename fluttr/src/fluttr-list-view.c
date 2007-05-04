@@ -18,6 +18,7 @@ struct _FluttrListViewPrivate
 	FluttrLibrary		*library;
 	
 	gint 			 active_photo;
+	ClutterActor		*active_actor;
 	gint			 active_col;
 };
 
@@ -35,15 +36,11 @@ FluttrPhoto*
 fluttr_list_view_get_active (FluttrListView *list_view)
 {
 	FluttrListViewPrivate *priv;
-	ClutterActor *actor;
 		
 	g_return_val_if_fail (FLUTTR_IS_LIST_VIEW (list_view), NULL);
 	priv = FLUTTR_LIST_VIEW_GET_PRIVATE(list_view);
 	
-	actor = clutter_group_get_nth_child (CLUTTER_GROUP (list_view),
-					     priv->active_photo);
-	
-	return FLUTTR_PHOTO (actor);
+	return FLUTTR_PHOTO (priv->active_actor);
 }
 
 static void
@@ -62,7 +59,7 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 	gint i = 0;
 	FluttrLibraryRow *lrow = NULL;
 	ClutterActor *photo = NULL;
-	ClutterActor *active = NULL;
+	/*ClutterActor *active = NULL;*/
 	guint size = fluttr_photo_get_default_size ();
 	gint x1;
 	gint active_row = 0;
@@ -113,7 +110,7 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 	gint more = priv->active_photo + (N_COLS * 3);
 	
 	offset = -1 * ((size) + padding) * active_row;
-	offset += padding; /* Some additional padding on the top */
+	offset += padding + size + padding; /* Some additional padding on the top */
 	
 	for (i = 0; i < len; i++) {
 		lrow = fluttr_library_get_library_row (priv->library, i);
@@ -167,12 +164,80 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 			}
 		}
 		
-		if (i == priv->active_photo)
+		if (i == priv->active_photo) {
 			fluttr_photo_set_active (FLUTTR_PHOTO (photo), TRUE);
-		else
+			priv->active_actor = photo;
+		} else
 			fluttr_photo_set_active (FLUTTR_PHOTO (photo), FALSE);
 	}
 	
+}
+
+/* We make all the 'viewable' photos fall down, leaving just the main one */
+void
+fluttr_list_view_activate (FluttrListView *list_view)
+{
+	FluttrListViewPrivate *priv;
+	gint len;
+	gint i = 0;
+	FluttrLibraryRow *lrow = NULL;
+	ClutterActor *photo = NULL;
+	gint active_row = 0;
+	guint size = fluttr_photo_get_default_size ();
+	gint x_center = (CLUTTER_STAGE_WIDTH () /2) - (size /2);
+	gint y_center = (CLUTTER_STAGE_HEIGHT ()/2) - (size /2);
+		
+	g_return_if_fail (FLUTTR_IS_LIST_VIEW (list_view));
+	priv = FLUTTR_LIST_VIEW_GET_PRIVATE(list_view);
+
+	len = fluttr_library_row_count (priv->library);
+	
+	/* Find the active row */	
+	active_row = 0;
+	gint row = 0;
+	gint col = 0;
+	
+	for (i = 0; i < len; i++) {
+		if (i == priv->active_photo) {
+			active_row = row;
+			break;
+		}
+		col++;
+		if (col > (N_COLS-1)) {
+			col = 0;
+			row++;
+		}
+	}
+	
+	/* Iterate through actors, calculating their new x positions, and make
+	   sure they are on the right place (left, right or center) */
+	col = 0;
+	row = 0;
+	
+	for (i = 0; i < len; i++) {
+		lrow = fluttr_library_get_library_row (priv->library, i);
+		photo = NULL;
+		g_object_get (G_OBJECT (lrow), "photo", &photo, NULL);
+		 
+		if (i == priv->active_photo) {
+			fluttr_photo_update_position (FLUTTR_PHOTO (photo),
+						      x_center, y_center);
+		
+		} else {
+			if ((row >= active_row-1) && (row <= active_row +3)) {
+							
+				fluttr_photo_update_position 
+					(FLUTTR_PHOTO (photo), 
+					 clutter_actor_get_x (photo), 
+					 CLUTTER_STAGE_HEIGHT () + size);
+			}
+		}
+		col++;
+		if (col > (N_COLS-1)) {
+			col = 0;
+			row++;
+		}		
+	}
 }
 
 void
