@@ -102,12 +102,23 @@ fluttr_photo_get_default_size (void)
 		return width /4;
 }
 
+guint
+fluttr_photo_get_default_width (void)
+{
+	return fluttr_photo_get_default_size ();
+}
+
+guint
+fluttr_photo_get_default_height (void)
+{
+	return fluttr_photo_get_default_width () * 0.8;
+}
+
 void
 fluttr_photo_set_options (FluttrPhoto *photo, ClutterActor *options)
 {
 	FluttrPhotoPrivate *priv;
-	guint size = fluttr_photo_get_default_size ();
-
+	
 	g_return_if_fail (FLUTTR_IS_PHOTO (photo));
 	priv = FLUTTR_PHOTO_GET_PRIVATE(photo);
 	
@@ -241,8 +252,9 @@ fluttr_photo_swap_alpha_func (ClutterBehaviour *behave,
 {
         FluttrPhotoPrivate *priv;
 	gfloat factor;
-	guint size = fluttr_photo_get_default_size ();
-	gint w, h;
+	guint width = fluttr_photo_get_default_width ();
+	guint height = fluttr_photo_get_default_height ();
+	guint w, h;
 	
         g_return_if_fail (FLUTTR_IS_PHOTO (data));
         priv = FLUTTR_PHOTO_GET_PRIVATE(data);
@@ -252,13 +264,12 @@ fluttr_photo_swap_alpha_func (ClutterBehaviour *behave,
 	if (priv->pixbuf != NULL && factor > 0.5) {
 		clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture),
 					    priv->pixbuf);
-		clutter_actor_set_scale (priv->texture, 0.66, 0.66);
+		clutter_actor_set_scale (priv->texture, 0.6, 0.6);
 		clutter_actor_get_abs_size (priv->texture, &w, &h);
 		
-		
 		clutter_actor_set_position (priv->texture, 
-					    (size/2) - (w/2),
-					    (size/2) - (h/2));    
+					    (width/2) - (w/2),
+					    (height/2) - (h/2));    
 	}
 	if (factor < 0.5) {
 		factor *= 2;
@@ -284,10 +295,8 @@ fluttr_photo_act_alpha_func (ClutterBehaviour *behave,
         FluttrPhotoPrivate *priv;
 	gfloat factor;
 	guint size = fluttr_photo_get_default_size ();
-	gfloat scale;
-	gint x, y, w, h;
 	
-        g_return_if_fail (FLUTTR_IS_PHOTO (data));
+	g_return_if_fail (FLUTTR_IS_PHOTO (data));
         priv = FLUTTR_PHOTO_GET_PRIVATE(data);
 	
 	factor = (gfloat) alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
@@ -316,16 +325,14 @@ fluttr_photo_opt_alpha_func (ClutterBehaviour *behave,
         FluttrPhotoPrivate *priv;
 	gfloat factor;
 	guint size = fluttr_photo_get_default_size ();
-	gint ssize;
-	gfloat sw, sh;
-	gfloat scale;
+	gfloat sw;
 	
         g_return_if_fail (FLUTTR_IS_PHOTO (data));
         priv = FLUTTR_PHOTO_GET_PRIVATE(data);
 	
 	factor = (gfloat) alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
 	
-	gint w, h;
+	guint w, h;
 	clutter_actor_get_abs_size (CLUTTER_ACTOR (data), &w, &h);
 	
 	sw = (CLUTTER_STAGE_WIDTH ()/(float)w) * factor;
@@ -577,14 +584,19 @@ fluttr_photo_paint (ClutterActor *actor)
 
 	glPushMatrix();
 	
-	gfloat x;
-	guint size = fluttr_photo_get_default_size ();
+	gfloat x, y;
+	guint width = fluttr_photo_get_default_width ();
+	guint height = fluttr_photo_get_default_height ();
 	
-	x = (priv->scale * size) - (size);
+	x = (priv->scale * width) - (width);
 	x /= 2;
 	x *= -1;
 	
-	glTranslatef (x, x, 0);
+	y = (priv->scale * height) - (height);
+	y /= 2;
+	y *= -1;	
+	
+	glTranslatef (x, y, 0);
 	glScalef (priv->scale, priv->scale, 1);
 	
 	gint i;
@@ -699,8 +711,9 @@ fluttr_photo_init (FluttrPhoto *self)
 {
 	FluttrPhotoPrivate *priv;
 	ClutterColor rect_col   = { 0xff, 0xff, 0xff, 0xff };
-	guint size = fluttr_photo_get_default_size ();
-	
+	gint width = fluttr_photo_get_default_width ();
+	gint height = fluttr_photo_get_default_height ();
+		
 	priv = FLUTTR_PHOTO_GET_PRIVATE (self);
 	
 	priv->pixbuf = NULL;
@@ -709,15 +722,15 @@ fluttr_photo_init (FluttrPhoto *self)
 	/* The white frame */
 	priv->frame = clutter_rectangle_new_with_color (&rect_col);
 	clutter_group_add (CLUTTER_GROUP (self), priv->frame);	
-	clutter_actor_set_size (priv->frame, size, size);
+	clutter_actor_set_size (priv->frame, width, height);
 	clutter_actor_set_position (priv->frame, 0, 0);
 
 	/*Load the default pixbuf */
 	if (default_pic == NULL) {
 		default_pic = gdk_pixbuf_new_from_file_at_scale (PKGDATADIR \
   						    	"/picture.svg",
-  						        size -(FRAME*2),
-  						        size -(FRAME*2),
+  						        width -(FRAME*2),
+  						        height -(FRAME*2),
   						        FALSE,
   						        NULL);
 	}
@@ -725,28 +738,28 @@ fluttr_photo_init (FluttrPhoto *self)
 	priv->clip = clutter_group_new ();
 	clutter_group_add (CLUTTER_GROUP (self),priv->clip);
 	clutter_actor_set_size (priv->clip, 
-				size -(FRAME*2), 
-				size -(FRAME*2));
+				width -(FRAME*2), 
+				height -(FRAME*2));
 	clutter_actor_set_position (priv->clip, 0, 0);
 	clutter_actor_set_clip (priv->clip,
 				FRAME, FRAME,
-				size -(FRAME*2),
-				size -(FRAME*2));
+				width -(FRAME*2),
+				height -(FRAME*2));
 	
 	/* The pixture texture */
 	priv->texture = clutter_texture_new_from_pixbuf (default_pic);
 	clutter_group_add (CLUTTER_GROUP (priv->clip), priv->texture);
 	clutter_actor_set_size (priv->texture, 
-				size -(FRAME*2), 
-				size -(FRAME*2));
+				width -(FRAME*2), 
+				height -(FRAME*2));
 	clutter_actor_set_position (priv->texture, FRAME, FRAME);
 	
 	/* Set up options */
 	priv->options = clutter_group_new ();
 	clutter_group_add (CLUTTER_GROUP (self), priv->options);
-	clutter_actor_set_size (priv->options, size, size);
+	clutter_actor_set_size (priv->options, width, height);
 	clutter_actor_set_position (priv->options, 0, 0);
-	clutter_actor_rotate_x (priv->options, 90, size, 0);		
+	clutter_actor_rotate_x (priv->options, 90, height, 0);		
 		
 	/* Setup the transformation */
 	priv->new_x = priv->new_y = priv->new_scale = 0;

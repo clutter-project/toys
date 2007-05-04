@@ -76,6 +76,12 @@ fluttr_photo_update_position (FluttrPhoto *photo, gint x, gint y);
 guint
 fluttr_photo_get_default_size (void);
 
+guint
+fluttr_photo_get_default_width (void);
+
+guint
+fluttr_photo_get_default_height (void);
+
 void
 fluttr_photo_set_options (FluttrPhoto *photo, ClutterActor *options);
 

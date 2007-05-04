@@ -1,5 +1,15 @@
 2007-05-04  Neil J. Patel  <njp@o-hand.com>
 
+	* src/fluttr-list-view.c: (fluttr_list_view_advance):
+	* src/fluttr-photo.c: (fluttr_photo_get_default_width),
+	(fluttr_photo_get_default_height), (fluttr_photo_swap_alpha_func),
+	(fluttr_photo_paint), (fluttr_photo_init):
+	* src/fluttr-photo.h:
+	Photos are w>h again, instead of squares. Looks nicer.
+	
+	
+2007-05-04  Neil J. Patel  <njp@o-hand.com>
+
 	reviewed by: <delete if not using a buddy>
 
 	* src/fluttr-list-view.c:

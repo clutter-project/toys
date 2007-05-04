@@ -28,7 +28,7 @@ enum
 	PROP_LIBRARY
 };
 
-#define N_COLS 5
+#define N_COLS 4
 
 static ClutterGroupClass	*parent_class = NULL;
 
@@ -59,14 +59,14 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 	gint i = 0;
 	FluttrLibraryRow *lrow = NULL;
 	ClutterActor *photo = NULL;
-	/*ClutterActor *active = NULL;*/
-	guint size = fluttr_photo_get_default_size ();
+	guint width = fluttr_photo_get_default_width ();
+	guint height = fluttr_photo_get_default_height ();
 	gint x1;
 	gint active_row = 0;
-	gint offset = size/2;
+	gint offset = height/2;
 	gint x_center = CLUTTER_STAGE_WIDTH () /2;
 	gint y_center = CLUTTER_STAGE_HEIGHT ()/2;
-	gint padding = size /4;
+	gint padding = width /6;
 		
 	g_return_if_fail (FLUTTR_IS_LIST_VIEW (list_view));
 	priv = FLUTTR_LIST_VIEW_GET_PRIVATE(list_view);
@@ -99,7 +99,7 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 	}
 	
 	/* Figure out the base x value */
-	x1 = ((size) * N_COLS ) + (padding*(N_COLS-1));
+	x1 = ((width) * N_COLS ) + (padding*(N_COLS-1));
 	x1 = (CLUTTER_STAGE_WIDTH ()/2)-(x1/2);
 	
 	/* Iterate through actors, calculating their new x positions, and make
@@ -109,8 +109,8 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 	gint less = priv->active_photo - (N_COLS * 2);
 	gint more = priv->active_photo + (N_COLS * 3);
 	
-	offset = -1 * ((size) + padding) * active_row;
-	offset += padding + size + padding; /* Some additional padding on the top */
+	offset = -1 * ((height) + padding) * active_row;
+	offset += padding + height + padding; /* Some additional padding on the top */
 	
 	for (i = 0; i < len; i++) {
 		lrow = fluttr_library_get_library_row (priv->library, i);
@@ -123,7 +123,7 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 		 	
 		 	photo = fluttr_photo_new ();
 		 	clutter_group_add (CLUTTER_GROUP (list_view), photo);
-		 	clutter_actor_set_size (photo, size, size);
+		 	clutter_actor_set_size (photo, width, height);
 		 	clutter_actor_set_position (photo, x_center, y_center);
 		 	clutter_actor_show_all (CLUTTER_ACTOR (photo	));
 		 	
@@ -136,7 +136,7 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 			
 				
 		}
-		gint x = x1 + (col * (size + padding));
+		gint x = x1 + (col * (width + padding));
 		gint y = offset;
 		fluttr_photo_update_position (FLUTTR_PHOTO (photo), x, y);
 		
@@ -144,7 +144,7 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 		if (col > (N_COLS-1)) {
 			col = 0;
 			row++;
-			offset += size + padding;
+			offset += height + padding;
 		}	
 		if ((i > less) && (i < more)) {
 			GdkPixbuf *pixbuf = NULL;
@@ -167,10 +167,11 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 		if (i == priv->active_photo) {
 			fluttr_photo_set_active (FLUTTR_PHOTO (photo), TRUE);
 			priv->active_actor = photo;
+			
 		} else
 			fluttr_photo_set_active (FLUTTR_PHOTO (photo), FALSE);
 	}
-	
+	clutter_actor_raise_top (priv->active_actor);
 }
 
 static gboolean
