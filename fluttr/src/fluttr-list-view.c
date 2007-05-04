@@ -28,7 +28,7 @@ enum
 	PROP_LIBRARY
 };
 
-#define N_COLS 4
+#define N_COLS 5
 
 static ClutterGroupClass	*parent_class = NULL;
 
@@ -110,7 +110,7 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 	gint more = priv->active_photo + (N_COLS * 3);
 	
 	offset = -1 * ((height) + padding) * active_row;
-	offset += padding + height + padding; /* Some additional padding on the top */
+	offset += (CLUTTER_STAGE_HEIGHT () /2) - (height/2);
 	
 	for (i = 0; i < len; i++) {
 		lrow = fluttr_library_get_library_row (priv->library, i);
@@ -236,7 +236,7 @@ fluttr_list_view_activate (FluttrListView *list_view)
 						      x_center, y_center);
 		
 		} else {
-			if ((row >= active_row-1) && (row <= active_row +3)) {
+			if ((row >= active_row-2) && (row <= active_row +3)) {
 							
 												
 				fluttr_photo_update_position 

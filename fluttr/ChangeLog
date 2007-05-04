@@ -1,5 +1,11 @@
 2007-05-04  Neil J. Patel  <njp@o-hand.com>
 
+	* src/fluttr-list-view.c: (fluttr_list_view_advance),
+	(fluttr_list_view_activate):
+	All visible rows will 'fall' when a photo is activated.
+
+2007-05-04  Neil J. Patel  <njp@o-hand.com>
+
 	* src/fluttr-list-view.c: (fluttr_list_view_advance):
 	* src/fluttr-photo.c: (fluttr_photo_get_default_width),
 	(fluttr_photo_get_default_height), (fluttr_photo_swap_alpha_func),
