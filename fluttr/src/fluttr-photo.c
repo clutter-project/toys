@@ -19,7 +19,9 @@ G_DEFINE_TYPE (FluttrPhoto, fluttr_photo, CLUTTER_TYPE_GROUP);
 	
 #define FONT "DejaVu Sans Book"
 #define FRAME 2
-#define X_ANGLE 80
+#define X_ANGLE 90
+
+#define ACT_SCALE 0.3
 
 static GdkPixbuf	*default_pic = NULL;
 
@@ -54,10 +56,16 @@ struct _FluttrPhotoPrivate
 	ClutterBehaviour	*swap_behave;
 	
 	/* Activate animation */
+	gboolean		 active;
 	gfloat			 scale;
 	ClutterTimeline		*act_time;
 	ClutterAlpha		*act_alpha;
 	ClutterBehaviour	*act_behave;	
+	
+	/* Activate animation */
+	ClutterTimeline		*opt_time;
+	ClutterAlpha		*opt_alpha;
+	ClutterBehaviour	*opt_behave;	
 };
 
 enum
@@ -77,6 +85,55 @@ enum
 };
 
 static guint _photo_signals[LAST_SIGNAL] = { 0 };
+
+/* Will return the default size of the FluttrPhoto square for the current stage */
+guint
+fluttr_photo_get_default_size (void)
+{
+	guint width = CLUTTER_STAGE_WIDTH ();
+	guint height = CLUTTER_STAGE_HEIGHT ();
+	
+	if (width > height)
+		return height/4;
+	else
+		return width /4;
+}
+
+void
+fluttr_photo_set_options (FluttrPhoto *photo, ClutterActor *options)
+{
+	FluttrPhotoPrivate *priv;
+
+	g_return_if_fail (FLUTTR_IS_PHOTO (photo));
+	priv = FLUTTR_PHOTO_GET_PRIVATE(photo);
+	
+	clutter_group_add (CLUTTER_GROUP (priv->options), options);
+	clutter_actor_show_all (priv->options);
+	clutter_actor_set_position (options, 0, 
+					   -1 *fluttr_photo_get_default_size ());
+	
+	if (!clutter_timeline_is_playing (priv->opt_time))
+		clutter_timeline_start (priv->opt_time);
+}
+
+/* If active, scale the photo, if not, scale it down */
+void
+fluttr_photo_set_active (FluttrPhoto *photo, gboolean active)
+{
+	FluttrPhotoPrivate *priv;
+
+	g_return_if_fail (FLUTTR_IS_PHOTO (photo));
+	priv = FLUTTR_PHOTO_GET_PRIVATE(photo);
+	
+	if (priv->active == active)
+		return;
+	
+	priv->active = active;
+	
+	if (!clutter_timeline_is_playing (priv->act_time))
+		clutter_timeline_start (priv->act_time);
+}
+
 
 /* Set the new x and y position of the actor, and start (or rewind) the main
    timeline */
@@ -223,6 +280,38 @@ fluttr_photo_act_alpha_func (ClutterBehaviour *behave,
         FluttrPhotoPrivate *priv;
 	gfloat factor;
 	guint size = fluttr_photo_get_default_size ();
+	gfloat scale;
+	gint x, y, w, h;
+	
+        g_return_if_fail (FLUTTR_IS_PHOTO (data));
+        priv = FLUTTR_PHOTO_GET_PRIVATE(data);
+	
+	factor = (gfloat) alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
+	
+	if (priv->active)
+		priv->scale = 1 + (ACT_SCALE * factor);
+	else
+		priv->scale = (1 +ACT_SCALE)- (ACT_SCALE *factor);
+	
+	
+	size = size * priv->scale;
+	
+	
+	//clutter_actor_set_scale (CLUTTER_ACTOR (data), y
+	//clutter_actor_set_position (CLUTTER_ACTOR (data), x, y);
+	
+	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(data)))
+		clutter_actor_queue_redraw (CLUTTER_ACTOR(data));
+}
+
+static void
+fluttr_photo_opt_alpha_func (ClutterBehaviour *behave,
+		       	      guint		alpha_value,
+		              gpointer		data)
+{
+        FluttrPhotoPrivate *priv;
+	gfloat factor;
+	guint size = fluttr_photo_get_default_size ();
 	gfloat x_angle;
 	gfloat y_angle;
 	gfloat scale;
@@ -234,8 +323,8 @@ fluttr_photo_act_alpha_func (ClutterBehaviour *behave,
 	
 	x_angle = (X_ANGLE) * factor;
 	y_angle = 360 * factor;
-	//priv->scale = 1.0 * factor;
-	//priv->scale += 1.0;
+	priv->scale = 1.0 * factor;
+	priv->scale += 1.0;
 	
 	clutter_actor_rotate_x (CLUTTER_ACTOR (data), x_angle, size/2, 0);
 	//clutter_actor_rotate_y (CLUTTER_ACTOR (data), y_angle, size/2, 0);
@@ -342,9 +431,10 @@ fluttr_photo_fetch_pixbuf (FluttrPhoto *photo)
         g_return_if_fail (FLUTTR_IS_PHOTO (photo));
         priv = FLUTTR_PHOTO_GET_PRIVATE(photo);	
         
-        if (priv->pixbuf != NULL)
+        if (priv->pixbuf != NULL) {
+        	g_warning ("Pixbuf already set");
         	return;
-	
+	}
 	g_object_get (G_OBJECT (settings), "token", &token, NULL);
 	
 	worker = (NFlickWorker *)nflick_show_worker_new (priv->photoid, 
@@ -367,7 +457,7 @@ fluttr_photo_fetch_pixbuf (FluttrPhoto *photo)
         g_object_get (G_OBJECT (priv->worker), "message", &msg, NULL);
         if (msg != NULL) {
                 /* FIXME Escape markup */
-        	g_print ("%s", msg);
+        	//g_print ("%s", msg);
         }
         
         /* Set the callback functions */
@@ -390,34 +480,6 @@ fluttr_photo_fetch_pixbuf (FluttrPhoto *photo)
         g_free (msg);
 }
 
-/* Will return the default size of the FluttrPhoto square for the current stage */
-guint
-fluttr_photo_get_default_size (void)
-{
-	guint width = CLUTTER_STAGE_WIDTH ();
-	guint height = CLUTTER_STAGE_HEIGHT ();
-	
-	if (width > height)
-		return height/4;
-	else
-		return width /4;
-}
-
-void
-fluttr_photo_set_options (FluttrPhoto *photo, ClutterActor *options)
-{
-	FluttrPhotoPrivate *priv;
-
-	g_return_if_fail (FLUTTR_IS_PHOTO (photo));
-	priv = FLUTTR_PHOTO_GET_PRIVATE(photo);
-	
-	clutter_group_add (CLUTTER_GROUP (priv->options), options);
-	clutter_actor_show_all (priv->options);
-	clutter_actor_set_position (options, 0, 0);
-	
-	if (!clutter_timeline_is_playing (priv->act_time))
-		clutter_timeline_start (priv->act_time);
-}
 
 /* GObject Stuff */
 
@@ -447,6 +509,7 @@ fluttr_photo_set_property (GObject      *object,
 			if (priv->pixbuf != NULL)
 				g_object_unref (G_OBJECT (priv->pixbuf));
 			priv->pixbuf = g_value_get_object (value);
+			clutter_timeline_start (priv->swap_time);
 			break;
 		
 		case PROP_SET:
@@ -505,8 +568,15 @@ fluttr_photo_paint (ClutterActor *actor)
 
 	glPushMatrix();
 	
-	glTranslatef (0, 0, 0);
-	glScalef (priv->scale, priv->scale, priv->scale);
+	gfloat x;
+	guint size = fluttr_photo_get_default_size ();
+	
+	x = (priv->scale * size) - (size);
+	x /= 2;
+	x *= -1;
+	
+	glTranslatef (x, x, 0);
+	glScalef (priv->scale, priv->scale, 1);
 	
 	gint i;
 	gint len = clutter_group_get_n_children (CLUTTER_GROUP (actor)); 
@@ -690,12 +760,21 @@ fluttr_photo_init (FluttrPhoto *self)
 					  (gpointer)self);
 					  
 	/* Setup the activating line */
-	priv->act_time = clutter_timeline_new (40, 120);
+	priv->act_time = clutter_timeline_new (60, 240);
 	priv->act_alpha = clutter_alpha_new_full (priv->act_time,
 					      	   alpha_linear_inc_func,
 					      	   NULL, NULL);
 	priv->act_behave = fluttr_behave_new (priv->act_alpha,
 					       fluttr_photo_act_alpha_func,
+					       (gpointer)self);
+					       
+	/* Setup the activating line */
+	priv->opt_time = clutter_timeline_new (60, 240);
+	priv->opt_alpha = clutter_alpha_new_full (priv->opt_time,
+					      	   alpha_linear_inc_func,
+					      	   NULL, NULL);
+	priv->opt_behave = fluttr_behave_new (priv->opt_alpha,
+					       fluttr_photo_opt_alpha_func,
 					       (gpointer)self);
 }
 

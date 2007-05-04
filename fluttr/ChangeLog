@@ -1,5 +1,19 @@
 2007-05-04  Neil J. Patel  <njp@o-hand.com>
 
+	reviewed by: <delete if not using a buddy>
+
+	* src/fluttr-list-view.c: (fluttr_list_view_get_active),
+	(fluttr_list_view_advance):
+	* src/fluttr-photo.c: (fluttr_photo_get_default_size),
+	(fluttr_photo_set_options), (fluttr_photo_set_active),
+	(fluttr_photo_act_alpha_func), (fluttr_photo_opt_alpha_func),
+	(fluttr_photo_fetch_pixbuf), (fluttr_photo_set_property),
+	(fluttr_photo_paint), (fluttr_photo_init):
+	* src/fluttr-photo.h:
+	* src/main.c: (_set_options):
+
+2007-05-04  Neil J. Patel  <njp@o-hand.com>
+
 	* src/fluttr-photo.c: (fluttr_photo_act_alpha_func),
 	(fluttr_photo_set_options), (fluttr_photo_paint),
 	(fluttr_photo_init):

@@ -37,7 +37,7 @@ fluttr_list_view_get_active (FluttrListView *list_view)
 	FluttrListViewPrivate *priv;
 	ClutterActor *actor;
 		
-	g_return_if_fail (FLUTTR_IS_LIST_VIEW (list_view));
+	g_return_val_if_fail (FLUTTR_IS_LIST_VIEW (list_view), NULL);
 	priv = FLUTTR_LIST_VIEW_GET_PRIVATE(list_view);
 	
 	actor = clutter_group_get_nth_child (CLUTTER_GROUP (list_view),
@@ -106,14 +106,14 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 	x1 = (CLUTTER_STAGE_WIDTH ()/2)-(x1/2);
 	
 	/* Iterate through actors, calculating their new x positions, and make
-	   sure they are on the right place (left, right or center)
-	*/
+	   sure they are on the right place (left, right or center) */
 	col = 0;
 	row = 0;
-	gint less = priv->active_photo - 10;
-	gint more = priv->active_photo + 12;
+	gint less = priv->active_photo - (N_COLS * 2);
+	gint more = priv->active_photo + (N_COLS * 3);
 	
 	offset = -1 * ((size) + padding) * active_row;
+	offset += padding; /* Some additional padding on the top */
 	
 	for (i = 0; i < len; i++) {
 		lrow = fluttr_library_get_library_row (priv->library, i);
@@ -153,10 +153,11 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 			GdkPixbuf *pixbuf = NULL;
 			g_object_get (G_OBJECT (lrow), "pixbuf", &pixbuf, NULL);
 			
-			if (pixbuf != NULL) {
-				g_object_set (G_OBJECT (photo), "pixbuf",
-					      pixbuf, NULL);
-				/*g_print ("Got pixbuf\n");*/
+			if (pixbuf) {
+				/*g_object_set (G_OBJECT (photo), "pixbuf",
+					      pixbuf, NULL);*/
+				//g_print ("Got pixbuf\n");
+				;
 			} else {
 				fluttr_photo_fetch_pixbuf (FLUTTR_PHOTO (photo));
 				g_signal_connect (G_OBJECT (photo), 
@@ -165,6 +166,11 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 				  		  lrow);
 			}
 		}
+		
+		if (i == priv->active_photo)
+			fluttr_photo_set_active (FLUTTR_PHOTO (photo), TRUE);
+		else
+			fluttr_photo_set_active (FLUTTR_PHOTO (photo), FALSE);
 	}
 	
 }

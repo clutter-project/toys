@@ -307,7 +307,7 @@ list_get_successful (FluttrAuth *auth, NFlickWorker *worker, Fluttr *fluttr)
 	for (l = list; l != NULL; l = l->next) {
 		gchar *id = NULL;
 		g_object_get (G_OBJECT (l->data), "combotext", &id, NULL);
-		g_print ("%s\n", id);	
+		g_print ("\n%s\n", id);	
 	
 		GList *photos = NULL;
 		GList *photo;
@@ -320,12 +320,15 @@ list_get_successful (FluttrAuth *auth, NFlickWorker *worker, Fluttr *fluttr)
 						      p->Name, 
 						      (NFlickPhotoSet*)l->data);
 			fluttr_library_append_library_row (fluttr->library, 
+			
 							   row);
+			/*
 			if (p->Id)
 				g_print ("\t%s ", p->Id);
 			if (p->Name)
 				g_print (p->Name);
 			g_print ("\n");
+			*/
 			i++;
 		}
 		j++;
@@ -346,7 +349,8 @@ _set_options (FluttrPhoto *photo)
 	ClutterColor col   = { 0xff, 0x11, 0x11, 0xff };
 	ClutterColor txt_col   = { 0xff, 0xff, 0xff, 0xff };	
 	guint size = fluttr_photo_get_default_size ();
-	//size *= 3;
+	gint x, y;
+	size *= 2;
 	ClutterActor *group = clutter_group_new ();
 	clutter_actor_set_size (group, size, size);
 	clutter_actor_rotate_x (CLUTTER_ACTOR (group), 180, size/2, 0);
@@ -361,10 +365,13 @@ _set_options (FluttrPhoto *photo)
 	clutter_actor_set_size (text, size, size);
 	clutter_group_add (CLUTTER_GROUP (group), text);
 	
-	//clutter_actor_set_scale (text, 1/3, 1/3);
+	clutter_actor_set_scale (group, 0.5, 0.5);
+	clutter_actor_set_scale (text, 0.5, 0.5);
 	clutter_actor_set_position (text, 0, 30);
 	fluttr_photo_set_options (photo, group);	
 	
+	clutter_actor_get_abs_position (group, &x, &y);
+	//g_print ("%d, %d\n", x, y);
 	
 	//clutter_actor_set_scale (CLUTTER_ACTOR (photo), 2, 2);
 	//clutter_actor_set_depth (CLUTTER_ACTOR (photo), 1000);	
