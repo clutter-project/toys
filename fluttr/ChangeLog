@@ -1,3 +1,9 @@
+2007-05-08  Neil J.Patel  <njp@o-hand.com>
+
+	* src/fluttr-photo.c: (fluttr_photo_set_active),
+	(_fluttr_photo_fetch_pixbuf): Fixed problem where the photo fetching
+	worker was being called repeatedly affecting performance.
+
 2007-05-04  Neil J. Patel  <njp@o-hand.com>
 
 	* src/fluttr-list-view.c: (fluttr_list_view_advance),

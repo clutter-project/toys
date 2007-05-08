@@ -146,6 +146,8 @@ fluttr_photo_set_active (FluttrPhoto *photo, gboolean active)
 	
 	if (!clutter_timeline_is_playing (priv->act_time))
 		clutter_timeline_start (priv->act_time);
+	else
+		clutter_timeline_rewind (priv->act_time);
 }
 
 
@@ -439,9 +441,14 @@ _fluttr_photo_fetch_pixbuf (FluttrPhoto *photo, guint width, guint height)
         priv = FLUTTR_PHOTO_GET_PRIVATE(photo);	
         
         if (priv->pixbuf != NULL) {
-        	g_warning ("Pixbuf already set");
+        	/*g_warning ("Pixbuf already set");*/
         	return;
 	}
+	
+	if (priv->worker != NULL) {
+		/*g_warning ("Fetching has already started");*/
+		return;
+	}	
 	g_object_get (G_OBJECT (settings), "token", &token, NULL);
 	
 	worker = (NFlickWorker *)nflick_show_worker_new (priv->photoid, 
