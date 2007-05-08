@@ -235,39 +235,51 @@ static NFlickWorkerStatus       thread_func (NFlickSetListWorker *self)
         }
         /* Now let's try fetching the photos for first photo set */
         nflick_worker_set_message ((NFlickWorker *) self, gettext ("Loading photoset data..."));
-        first_set = self->Private->PhotoSets->data;
-        g_object_get (G_OBJECT (first_set), "id", &first_id, NULL);
-
-        first_photolist_request = nflick_api_request_new (NFLICK_FLICKR_API_METHOD_PHOTOSETS_GET_PHOTOS);
-        if (first_photolist_request == NULL)
-                goto Error;
         
-        nflick_api_request_add_parameter (first_photolist_request, 
+        GList *sets = self->Private->PhotoSets;
+        GList *set;
+        gint i = g_list_length (sets);
+        
+        for (set = sets; set != NULL; set = set->next) {
+        	first_set = (NFlickPhotoSet*)set->data;
+        
+        	g_object_get (G_OBJECT (first_set), "id", &first_id, NULL);
+
+        	first_photolist_request = nflick_api_request_new
+        			 (NFLICK_FLICKR_API_METHOD_PHOTOSETS_GET_PHOTOS);
+        	if (first_photolist_request == NULL)
+                	goto Error;
+        
+        	nflick_api_request_add_parameter (first_photolist_request, 
                                           NFLICK_FLICKR_API_PARAM_TOKEN, 
                                           self->Private->Token);
 
-        nflick_api_request_add_parameter (first_photolist_request, 
+        	nflick_api_request_add_parameter (first_photolist_request, 
                                           NFLICK_FLICKR_API_PARAM_PHOTOSET_ID, 
                                           first_id);
 
-        nflick_api_request_sign (first_photolist_request);
-        if (nflick_api_request_exec (first_photolist_request) != TRUE) {
-                nflick_worker_set_network_error ((NFlickWorker *) self);
-                goto Error;
+        	nflick_api_request_sign (first_photolist_request);
+        	if (nflick_api_request_exec (first_photolist_request) != TRUE) {
+                	nflick_worker_set_network_error ((NFlickWorker *) self);
+                	g_warning ("Error : %s", first_id);
+        	}
+
+        	if (nflick_worker_is_aborted ((NFlickWorker *) self) == TRUE)
+                	g_warning ("Abort : %s", first_id);
+
+        	first_photo_list_response = nflick_api_response_new_from_request 
+        	     (NFLICK_TYPE_PHOTO_LIST_RESPONSE, first_photolist_request);
+        	if (first_photo_list_response == NULL)
+                	g_warning ("No photos : %s", first_id);
+
+        	if (nflick_worker_parse_api_response ((NFlickWorker*) self, 
+        				first_photo_list_response) == FALSE)
+                	g_warning ("Abort : No Photos %s", first_id);
+
+        	first_list = nflick_photo_list_response_take_list
+        	        ((NFlickPhotoListResponse *) first_photo_list_response);
+        	nflick_photo_set_give_list (first_set, first_list);
         }
-
-        if (nflick_worker_is_aborted ((NFlickWorker *) self) == TRUE)
-                goto Abort;
-
-        first_photo_list_response = nflick_api_response_new_from_request (NFLICK_TYPE_PHOTO_LIST_RESPONSE, first_photolist_request);
-        if (first_photo_list_response == NULL)
-                goto Error;
-
-        if (nflick_worker_parse_api_response ((NFlickWorker*) self, first_photo_list_response) == FALSE)
-                goto Error;
-
-        first_list = nflick_photo_list_response_take_list ((NFlickPhotoListResponse *) first_photo_list_response);
-        nflick_photo_set_give_list (first_set, first_list);
 
         /* All ok */
         goto Done;

@@ -292,7 +292,6 @@ auth_error (FluttrAuth *auth, gchar *msg, Fluttr *fluttr)
 
 /* get list callbacks */
 
-
 /* Go through the list of sets, and poplulate the Fluttr library with 
    FluttrLibraryRows */
 static void		
@@ -313,6 +312,7 @@ list_get_successful (FluttrAuth *auth, NFlickWorker *worker, Fluttr *fluttr)
 		GList *photo;
 		g_object_get (G_OBJECT (l->data), "list", &photos, NULL);
 		g_print ("%d\n", g_list_length (photos));
+		
 		for (photo = photos; photo!=NULL ;photo = photo->next) {
 			NFlickPhotoData *p = (NFlickPhotoData*)photo->data;
 			FluttrLibraryRow *row;
@@ -322,13 +322,14 @@ list_get_successful (FluttrAuth *auth, NFlickWorker *worker, Fluttr *fluttr)
 			fluttr_library_append_library_row (fluttr->library, 
 			
 							   row);
-			/*
-			if (p->Id)
-				g_print ("\t%s ", p->Id);
-			if (p->Name)
-				g_print (p->Name);
-			g_print ("\n");
-			*/
+			if (g_list_length (photos) == 0) {
+			
+				if (p->Id)
+					g_print ("\t%s ", p->Id);
+				if (p->Name)
+					g_print (p->Name);
+				g_print (" 0 \n");
+			}
 			i++;
 		}
 		j++;

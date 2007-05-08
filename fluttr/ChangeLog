@@ -1,5 +1,12 @@
 2007-05-08  Neil J.Patel  <njp@o-hand.com>
 
+	* libnflick/nflick-set-list-worker.c: (thread_func): Changed to download
+	photo information for every set rather than just the first set.
+	
+	* src/main.c: (list_get_successful): Chhanged data output.
+
+2007-05-08  Neil J.Patel  <njp@o-hand.com>
+
 	* src/fluttr-photo.c: (fluttr_photo_set_active),
 	(_fluttr_photo_fetch_pixbuf): Fixed problem where the photo fetching
 	worker was being called repeatedly affecting performance.
