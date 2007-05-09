@@ -36,4 +36,6 @@ fluttr_SOURCES = \
 	fluttr-settings.c			\
 	fluttr-settings.h			\
 	fluttr-spinner.c			\
-	fluttr-spinner.h			
+	fluttr-spinner.h			\
+	fluttr-viewer.c				\
+	fluttr-viewer.h				

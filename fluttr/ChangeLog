@@ -1,5 +1,15 @@
 2007-05-09  Neil J.Patel  <njp@o-hand.com>
 
+	* src/Makefile.am:
+	* src/fluttr-photo.c: 
+	* src/fluttr-photo.h:
+	* src/fluttr-viewer.c:
+	* src/fluttr-viewer.h:
+	* src/main.c:
+	Added basic fullscreen photo viewing capability.
+
+2007-05-09  Neil J.Patel  <njp@o-hand.com>
+
 	* libnflick/nflick-set-list-worker.c: (thread_func):
 	Removed useless status messages.
 	

@@ -63,6 +63,7 @@ struct _FluttrPhotoPrivate
 	ClutterBehaviour	*act_behave;	
 	
 	/* Activate animation */
+	gboolean		 opt_in;
 	ClutterTimeline		*opt_time;
 	ClutterAlpha		*opt_alpha;
 	ClutterBehaviour	*opt_behave;	
@@ -115,19 +116,21 @@ fluttr_photo_get_default_height (void)
 }
 
 void
-fluttr_photo_set_options (FluttrPhoto *photo, ClutterActor *options)
+fluttr_photo_show_options (FluttrPhoto *photo, gboolean show)
 {
 	FluttrPhotoPrivate *priv;
 	
 	g_return_if_fail (FLUTTR_IS_PHOTO (photo));
 	priv = FLUTTR_PHOTO_GET_PRIVATE(photo);
 	
-	clutter_group_add (CLUTTER_GROUP (priv->options), options);
-	clutter_actor_show_all (priv->options);
-	clutter_actor_set_position (options, 0, 0);
+	if (priv->opt_in == show)
+		return;
+	priv->opt_in = show;
 	
 	if (!clutter_timeline_is_playing (priv->opt_time))
 		clutter_timeline_start (priv->opt_time);
+	else
+		clutter_timeline_rewind (priv->opt_time);
 }
 
 /* If active, scale the photo, if not, scale it down */
@@ -311,9 +314,6 @@ fluttr_photo_act_alpha_func (ClutterBehaviour *behave,
 	
 	size = size * priv->scale;
 	
-	clutter_actor_rotate_y (CLUTTER_ACTOR (data), 180 * factor,
-			clutter_actor_get_width (CLUTTER_ACTOR (data))/2, 0);
-	
 	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(data)))
 		clutter_actor_queue_redraw (CLUTTER_ACTOR(data));
 }
@@ -325,7 +325,7 @@ fluttr_photo_opt_alpha_func (ClutterBehaviour *behave,
 {
         FluttrPhotoPrivate *priv;
 	gfloat factor;
-	guint size = fluttr_photo_get_default_size ();
+	guint width = fluttr_photo_get_default_width ();
 	gfloat sw;
 	
         g_return_if_fail (FLUTTR_IS_PHOTO (data));
@@ -333,15 +333,23 @@ fluttr_photo_opt_alpha_func (ClutterBehaviour *behave,
 	
 	factor = (gfloat) alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
 	
-	guint w, h;
-	clutter_actor_get_abs_size (CLUTTER_ACTOR (data), &w, &h);
-	
-	sw = (CLUTTER_STAGE_WIDTH ()/(float)w) * factor;
+	if (priv->opt_in) {
+		sw = (CLUTTER_STAGE_WIDTH ()/(float)width) * factor;
+		if (sw > priv->scale)
+			priv->scale = sw;
+		clutter_actor_set_opacity (priv->texture, 255-(255*factor));
 		
-	priv->scale = sw;
-	
-	clutter_actor_rotate_y (CLUTTER_ACTOR(data), 180 * factor,
-				size/2, 0);
+		clutter_actor_rotate_y (CLUTTER_ACTOR (data), 180 *factor,
+					width /2, 0);
+	} else {
+		sw = (CLUTTER_STAGE_WIDTH ()/(float)width) * (1.0 - factor);
+		if (sw >ACT_SCALE + 1.0)
+			priv->scale = sw;
+		clutter_actor_set_opacity (priv->texture, (255*factor));
+		
+		clutter_actor_rotate_y (CLUTTER_ACTOR (data), 180 *factor,
+					width /2, 0);			
+	}
 	
 	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(data)))
 		clutter_actor_queue_redraw (CLUTTER_ACTOR(data));	
@@ -717,6 +725,7 @@ fluttr_photo_init (FluttrPhoto *self)
 {
 	FluttrPhotoPrivate *priv;
 	ClutterColor rect_col   = { 0xff, 0xff, 0xff, 0xff };
+	ClutterColor black   = { 0x00, 0x00, 0x00, 0xff };
 	gint width = fluttr_photo_get_default_width ();
 	gint height = fluttr_photo_get_default_height ();
 		
@@ -797,7 +806,7 @@ fluttr_photo_init (FluttrPhoto *self)
 					       (gpointer)self);
 					       
 	/* Setup the option line */
-	priv->opt_time = clutter_timeline_new (60, 120);
+	priv->opt_time = clutter_timeline_new (60, 80);
 	priv->opt_alpha = clutter_alpha_new_full (priv->opt_time,
 					      	   alpha_linear_inc_func,
 					      	   NULL, NULL);

@@ -18,12 +18,14 @@
 #include "fluttr-settings.h"
 #include "fluttr-set-view.h"
 #include "fluttr-set.h"
+#include "fluttr-viewer.h"
 
 #include <libnflick/nflick.h>
 
 typedef enum {
 	FLUTTR_VIEW_SETS,
-	FLUTTR_VIEW_PHOTOS
+	FLUTTR_VIEW_PHOTOS,
+	FLUTTR_VIEW_PHOTO
 
 } FluttrView;
 
@@ -34,6 +36,7 @@ typedef struct {
 	ClutterActor 		*auth;
 	ClutterActor		*sets;
 	ClutterActor		*list;
+	ClutterActor		*viewer;
 	
 	/* Current view info */
 	FluttrView		 view;
@@ -177,6 +180,16 @@ main (int argc, char **argv)
 	clutter_actor_set_opacity (fluttr->list, 0);	
 	
 	clutter_actor_show_all (fluttr->stage);	    
+	
+	/* The viewer */
+	fluttr->viewer = fluttr_viewer_new ();
+	clutter_group_add (CLUTTER_GROUP (fluttr->stage), fluttr->viewer);
+	clutter_actor_set_size (fluttr->viewer, CLUTTER_STAGE_WIDTH (),
+						CLUTTER_STAGE_HEIGHT ());
+	clutter_actor_set_position (fluttr->viewer, 0, 0);
+	clutter_actor_set_opacity (fluttr->viewer, 0);	
+	
+	clutter_actor_show_all (fluttr->stage);	  
 	
 	/* Receive all input events */
 	g_signal_connect (stage, 
@@ -363,27 +376,39 @@ list_get_error (FluttrAuth *auth, gchar *msg, Fluttr *fluttr)
 	g_critical ("Auth Unsuccessful : %s\n", msg);
 }
 
-static void
-_set_options (FluttrPhoto *photo)
+static void 
+photo_input_cb (ClutterStage *stage,
+		 ClutterEvent *event,
+		 Fluttr	      *fluttr)
 {
-	ClutterColor col   = { 0xff, 0xff, 0xff, 0xff };
-	ClutterColor txt_col   = { 0x00, 0x00, 0x00, 0xff };	
-	guint size = fluttr_photo_get_default_size ();
+	FluttrPhoto *photo = NULL;
 	
-	ClutterActor *rect = clutter_rectangle_new_with_color (&col);
-	clutter_actor_set_size (rect, size, size);
-		
-	ClutterActor *text = clutter_label_new_full ("Sans 30", 
-						     "Options", &txt_col);
-	clutter_actor_set_size (text, size, size);
 	
-	//clutter_actor_set_scale (group, 0.666, 0.666);
-	clutter_actor_set_scale (text, 0.666, 0.666);
-	clutter_actor_set_position (text, 0, 30);
-	fluttr_photo_set_options (photo, text);	
-	clutter_actor_set_opacity (text, 0);
-	
-	clutter_actor_raise_top (CLUTTER_ACTOR (photo));
+	/* First check for app wide keybinding */
+	if (event->type == CLUTTER_KEY_RELEASE)	{
+		ClutterKeyEvent* kev = (ClutterKeyEvent *) event;
+
+		switch (clutter_key_event_symbol (kev)) {
+		case CLUTTER_Left:
+		case CLUTTER_Right:
+		case CLUTTER_Up:
+		case CLUTTER_Down:
+		case CLUTTER_Return:
+		case CLUTTER_space:
+		case CLUTTER_KP_Enter:
+		case CLUTTER_Escape:
+			fluttr_list_view_advance_col 
+					(FLUTTR_LIST_VIEW (fluttr->list), 0);
+			photo = fluttr_list_view_get_active 
+					(FLUTTR_LIST_VIEW (fluttr->list));
+			fluttr_photo_show_options (photo, FALSE);
+			fluttr->view = FLUTTR_VIEW_PHOTOS;
+			clutter_actor_set_opacity (fluttr->viewer, 0);
+			break;
+		default:
+			break;
+		}
+	}
 }
 
 static void 
@@ -420,10 +445,13 @@ list_input_cb (ClutterStage *stage,
 		case CLUTTER_KP_Enter:
 			fluttr_list_view_activate (FLUTTR_LIST_VIEW 
 								(fluttr->list));
-			break;
 			photo = fluttr_list_view_get_active 
 					(FLUTTR_LIST_VIEW (fluttr->list));
-			_set_options (photo);
+			fluttr_photo_show_options (photo, TRUE);
+			fluttr->view = FLUTTR_VIEW_PHOTO;
+			
+			fluttr_viewer_go (FLUTTR_VIEWER (fluttr->viewer),photo);
+			clutter_actor_set_opacity (fluttr->viewer, 255);
 			break;
 		case CLUTTER_Escape:
 			clutter_actor_set_opacity (fluttr->list, 0);
@@ -517,8 +545,10 @@ browse_input_cb (ClutterStage *stage,
 	/* if we have got here, we can pass the input onto the right place */
 	if (fluttr->view == FLUTTR_VIEW_SETS)
 		sets_input_cb (stage, event, fluttr);
-	else
+	else if (fluttr->view == FLUTTR_VIEW_PHOTOS)
 		list_input_cb (stage, event, fluttr);
+	else
+		photo_input_cb (stage, event, fluttr);
 }
 
 static void 

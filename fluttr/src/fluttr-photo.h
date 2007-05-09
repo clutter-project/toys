@@ -83,7 +83,7 @@ guint
 fluttr_photo_get_default_height (void);
 
 void
-fluttr_photo_set_options (FluttrPhoto *photo, ClutterActor *options);
+fluttr_photo_show_options (FluttrPhoto *photo, gboolean show);
 
 void
 fluttr_photo_set_active (FluttrPhoto *photo, gboolean active);
