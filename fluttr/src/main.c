@@ -40,6 +40,7 @@ typedef struct {
 	
 	/* Current view info */
 	FluttrView		 view;
+	gulong			 sig;
 	
 	/* Flickr info */
 	gchar 			*username;
@@ -401,14 +402,24 @@ photo_input_cb (ClutterStage *stage,
 					(FLUTTR_LIST_VIEW (fluttr->list), 0);
 			photo = fluttr_list_view_get_active 
 					(FLUTTR_LIST_VIEW (fluttr->list));
-			fluttr_photo_show_options (photo, FALSE);
 			fluttr->view = FLUTTR_VIEW_PHOTOS;
-			clutter_actor_set_opacity (fluttr->viewer, 0);
+			fluttr_viewer_show (FLUTTR_VIEWER (fluttr->viewer),
+					    FALSE);
+			fluttr_photo_show_options (photo, FALSE);
+			
 			break;
 		default:
 			break;
 		}
 	}
+}
+
+static void
+_show_viewer (FluttrPhoto *photo, gchar *null, Fluttr *fluttr)
+{
+	fluttr_viewer_show (FLUTTR_VIEWER (fluttr->viewer), TRUE);
+	
+	g_signal_handler_disconnect (G_OBJECT (photo), fluttr->sig);
 }
 
 static void 
@@ -451,7 +462,8 @@ list_input_cb (ClutterStage *stage,
 			fluttr->view = FLUTTR_VIEW_PHOTO;
 			
 			fluttr_viewer_go (FLUTTR_VIEWER (fluttr->viewer),photo);
-			clutter_actor_set_opacity (fluttr->viewer, 255);
+			fluttr->sig = g_signal_connect (photo, "activated",
+					  G_CALLBACK (_show_viewer), fluttr);
 			break;
 		case CLUTTER_Escape:
 			clutter_actor_set_opacity (fluttr->list, 0);

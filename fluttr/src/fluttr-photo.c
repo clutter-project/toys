@@ -82,6 +82,7 @@ enum
 {
 	LOADED,
 	ERROR,
+	ACTIVATED,
 	LAST_SIGNAL
 };
 
@@ -350,6 +351,9 @@ fluttr_photo_opt_alpha_func (ClutterBehaviour *behave,
 		clutter_actor_rotate_y (CLUTTER_ACTOR (data), 180 *factor,
 					width /2, 0);			
 	}
+	
+	if (factor > 0.9)
+		g_signal_emit (data, _photo_signals[ACTIVATED], 0, "");
 	
 	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(data)))
 		clutter_actor_queue_redraw (CLUTTER_ACTOR(data));	
@@ -716,7 +720,16 @@ fluttr_photo_class_init (FluttrPhotoClass *klass)
 			     G_STRUCT_OFFSET (FluttrPhotoClass, fetch_error),
 			     NULL, NULL,
 			     g_cclosure_marshal_VOID__STRING,
-			     G_TYPE_NONE, 1, G_TYPE_STRING);			     
+			     G_TYPE_NONE, 1,G_TYPE_STRING);
+			     
+	_photo_signals[ACTIVATED] =
+		g_signal_new ("activated",
+			     G_OBJECT_CLASS_TYPE (gobject_class),
+			     G_SIGNAL_RUN_FIRST,
+			     G_STRUCT_OFFSET (FluttrPhotoClass, activated),
+			     NULL, NULL,
+			     g_cclosure_marshal_VOID__STRING,
+			     G_TYPE_NONE, 1,G_TYPE_STRING);
 
 }
 
@@ -725,7 +738,6 @@ fluttr_photo_init (FluttrPhoto *self)
 {
 	FluttrPhotoPrivate *priv;
 	ClutterColor rect_col   = { 0xff, 0xff, 0xff, 0xff };
-	ClutterColor black   = { 0x00, 0x00, 0x00, 0xff };
 	gint width = fluttr_photo_get_default_width ();
 	gint height = fluttr_photo_get_default_height ();
 		

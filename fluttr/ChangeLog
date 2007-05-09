@@ -1,5 +1,21 @@
 2007-05-09  Neil J.Patel  <njp@o-hand.com>
 
+	* src/fluttr-photo.c: (fluttr_photo_opt_alpha_func),
+	(fluttr_photo_class_init), (fluttr_photo_init):
+	* src/fluttr-photo.h:
+	Emits signal when the activation effect is complete.
+	
+	* src/fluttr-viewer.c: (fluttr_viewer_show),
+	(close_message_window), (on_thread_ok_idle), (fluttr_viewer_go),
+	(fluttr_viewer_alpha_func), (fluttr_viewer_swap_alpha_func),
+	(fluttr_viewer_set_property), (fluttr_viewer_get_property),
+	(fluttr_viewer_class_init), (fluttr_viewer_init):	
+	* src/main.c: (photo_input_cb), (_show_viewer), (list_input_cb):
+	Fixed bug where the viewer was not hiding properly, and blockign the 
+	current view.
+
+2007-05-09  Neil J.Patel  <njp@o-hand.com>
+
 	* src/fluttr-viewer.c: (on_thread_abort_idle), (on_thread_ok_idle),
 	(on_thread_error_idle), (fluttr_viewer_go),
 	(fluttr_viewer_swap_alpha_func), (fluttr_viewer_init):

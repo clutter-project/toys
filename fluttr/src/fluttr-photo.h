@@ -58,7 +58,7 @@ struct _FluttrPhotoClass
 
 	void (*pixbuf_loaded) (FluttrPhoto *photo, gchar *null);
 	void (*fetch_error) (FluttrPhoto *photo, gchar *msg);
-	void (*_fluttr_photo_3) (void);
+	void (*activated) (FluttrPhoto *photo, gchar *msg);
 	void (*_fluttr_photo_4) (void);
 }; 
 

@@ -38,6 +38,7 @@ struct _FluttrViewerPrivate
 	gchar			*msg;
 
 	gboolean		 popping;
+	gboolean		 show;
 	
 	ClutterTimeline		*timeline;
 	ClutterAlpha		*alpha;
@@ -47,18 +48,14 @@ struct _FluttrViewerPrivate
 	GdkPixbuf		*pixbuf;
 	ClutterTimeline		*swap_time;
 	ClutterAlpha		*swap_alpha;
-	ClutterBehaviour	*swap_behave;	
+	ClutterBehaviour	*swap_behave;		
 
 };
 
 enum
 {
 	PROP_0,
-	PROP_MINI_TOKEN,
-	PROP_USERNAME,
-	PROP_FULLNAME,
-	PROP_TOKEN,
-	PROP_USERNSID
+	PROP_PIXBUF
 };
 
 enum
@@ -70,6 +67,20 @@ enum
 
 static guint _viewer_signals[LAST_SIGNAL] = { 0 };
 
+
+void
+fluttr_viewer_show (FluttrViewer *viewer, gboolean show)
+{
+        FluttrViewerPrivate *priv;
+        
+        g_return_if_fail (FLUTTR_IS_VIEWER (viewer));
+        priv = FLUTTR_VIEWER_GET_PRIVATE(viewer);
+        
+        priv->popping = show;
+        if (!clutter_timeline_is_playing (priv->timeline))
+        	clutter_timeline_start (priv->timeline);
+}	
+
 static void
 close_message_window (FluttrViewer *viewer)
 {
@@ -78,9 +89,6 @@ close_message_window (FluttrViewer *viewer)
         g_return_if_fail (FLUTTR_IS_VIEWER (viewer));
         priv = FLUTTR_VIEWER_GET_PRIVATE(viewer);
         
-        priv->popping = FALSE;
-        clutter_timeline_start (priv->timeline);
-	fluttr_spinner_spin (FLUTTR_SPINNER (priv->spinner), FALSE);
 }
 
 static gboolean                 
@@ -117,9 +125,6 @@ on_thread_ok_idle (FluttrViewer *viewer)
         
         g_signal_emit (viewer, _viewer_signals[SUCCESSFUL], 0, priv->worker);
         
-        g_print ("got pixbuf\n");
-              
-
         return FALSE;
 }
 
@@ -198,12 +203,10 @@ fluttr_viewer_go (FluttrViewer *viewer, FluttrPhoto *photo)
 	g_object_get (G_OBJECT (settings), "token", &token, NULL);
 	g_object_get (G_OBJECT (photo), "photoid", &photoid, NULL);
 	
-	g_print ("%s %s\n", photoid ,token);
-	
 	worker = (NFlickWorker *)nflick_show_worker_new (photoid, 
-							       width, 
-							       height, 
-							       token);
+							 width, 
+							 height, 
+							 token);
         /* Check if the worker is in the right state */
         g_object_get (G_OBJECT (worker), "status", &status, NULL);
         
@@ -251,36 +254,18 @@ fluttr_viewer_alpha_func (ClutterBehaviour *behave,
 		              gpointer		data)
 {
 	FluttrViewerPrivate *priv;
-	gfloat scale;
 	gfloat factor;
-	guint width, height;	
-	gint x, y;
-	
+
        	g_return_if_fail (FLUTTR_IS_VIEWER (data));
 	priv = FLUTTR_VIEWER_GET_PRIVATE(data);
 	
 	factor = (gfloat)alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
 	
 	if (priv->popping) 
-		scale = factor;
+		clutter_actor_set_opacity (CLUTTER_ACTOR (data), 255 * factor);
 	else
-		scale = 1.0 - factor;
-	
-	clutter_actor_set_scale (CLUTTER_ACTOR (priv->spinner), scale, scale);
-	
-	/* Set new size */
-	clutter_actor_get_size (CLUTTER_ACTOR (priv->spinner), &width, &height);
-	width *= scale;
-	height *= scale;
-	
-	x = (CLUTTER_STAGE_WIDTH () /2) - (width /2);
-	y = (CLUTTER_STAGE_HEIGHT () /2) - (height /2);
-	
-	g_object_set (G_OBJECT (priv->spinner), 
-		      "y", y, 
-		      "x", x,
-		      NULL);
-	clutter_actor_set_opacity (CLUTTER_ACTOR (priv->spinner), 255 * scale);
+		clutter_actor_set_opacity (CLUTTER_ACTOR (data), 
+					   255- (255*factor));
 	
 	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(data)))
 		clutter_actor_queue_redraw (CLUTTER_ACTOR(data));	
@@ -321,8 +306,9 @@ fluttr_viewer_swap_alpha_func (ClutterBehaviour *behave,
 		factor /= 0.5;
 	}
 	
-	clutter_actor_set_opacity (CLUTTER_ACTOR (priv->texture), 255 * factor);
-	//clutter_actor_set_opacity (CLUTTER_ACTOR (priv->frame), 255 * factor);
+	if (priv->popping)
+		clutter_actor_set_opacity (CLUTTER_ACTOR (priv->texture), 
+					   255 * factor);
 	
 	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(data)))
 		clutter_actor_queue_redraw (CLUTTER_ACTOR(data));	
@@ -343,33 +329,10 @@ fluttr_viewer_set_property (GObject      *object,
 	priv = FLUTTR_VIEWER_GET_PRIVATE(object);
 
 	switch (prop_id) {
-		case PROP_MINI_TOKEN:
-			if (priv->mini_token != NULL)
-				g_free (priv->mini_token);
-			priv->mini_token =g_strdup (g_value_get_string (value));
-			break;
-		case PROP_USERNAME:
-			if (priv->username != NULL)
-				g_free (priv->username);
-			priv->username =g_strdup (g_value_get_string (value));
-			break;
-
-		case PROP_FULLNAME:
-			if (priv->fullname != NULL)
-				g_free (priv->fullname);
-			priv->fullname =g_strdup (g_value_get_string (value));
-			break;
-		
-		case PROP_TOKEN:
-			if (priv->token != NULL)
-				g_free (priv->token);
-			priv->token =g_strdup (g_value_get_string (value));
-			break;
-		
-		case PROP_USERNSID:
-			if (priv->usernsid != NULL)
-				g_free (priv->usernsid);
-			priv->usernsid =g_strdup (g_value_get_string (value));
+		case PROP_PIXBUF:
+			if (priv->pixbuf != NULL)
+				g_object_unref (G_OBJECT (priv->pixbuf));
+			priv->pixbuf = g_value_get_object (value);
 			break;
 		default:
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, 
@@ -390,24 +353,9 @@ fluttr_viewer_get_property (GObject    *object,
 	priv = FLUTTR_VIEWER_GET_PRIVATE(object);
 
 	switch (prop_id) {
-		case PROP_MINI_TOKEN:
-			g_value_set_string (value, priv->mini_token);
-			break;
-		case PROP_USERNAME:
-			g_value_set_string (value, priv->username);
-			break;
-
-		case PROP_FULLNAME:
-			g_value_set_string (value, priv->fullname);
-			break;
-		
-		case PROP_TOKEN:
-			g_value_set_string (value, priv->token);
-			break;
-		
-		case PROP_USERNSID:
-			g_value_set_string (value, priv->usernsid);
-			break;			
+		case PROP_PIXBUF:
+			g_value_set_object (value, priv->pixbuf);
+			break;		
 		default:
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id,
 							   pspec);
@@ -479,48 +427,13 @@ fluttr_viewer_class_init (FluttrViewerClass *klass)
 	/* Class properties */
 	g_object_class_install_property 
 		(gobject_class,
-		 PROP_MINI_TOKEN,
-		 g_param_spec_string ("mini-token",
-		 "Mini Token",
-		 "The Flickr mini-token",
-		 NULL,
+		 PROP_PIXBUF,
+		 g_param_spec_object ("pixbuf",
+		 "Pixbuf",
+		 "The current pixbuf",
+		 GDK_TYPE_PIXBUF,
 		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));	
-		 
-	g_object_class_install_property 
-		(gobject_class,
-		 PROP_USERNAME,
-		 g_param_spec_string ("username",
-		 "Username",
-		 "The Flickr username",
-		 NULL,
-		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));			 
-		 
-	g_object_class_install_property 
-		(gobject_class,
-		 PROP_FULLNAME,
-		 g_param_spec_string ("fullname",
-		 "Fullname",
-		 "The users full name",
-		 NULL,
-		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));	
-		 
-	g_object_class_install_property 
-		(gobject_class,
-		 PROP_TOKEN,
-		 g_param_spec_string ("token",
-		 "Token",
-		 "The Flickr token",
-		 NULL,
-		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));	
-		 
-	g_object_class_install_property 
-		(gobject_class,
-		 PROP_USERNSID,
-		 g_param_spec_string ("usernsid",
-		 "Usernsid",
-		 "The Flickr usernsid",
-		 NULL,
-		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));			 		 		 
+		 		 		 		 
 
 	/* Class signals */
 	_viewer_signals[SUCCESSFUL] =
@@ -547,17 +460,13 @@ static void
 fluttr_viewer_init (FluttrViewer *self)
 {
 	FluttrViewerPrivate *priv;
-	gint size = CLUTTER_STAGE_HEIGHT ()/9;
 	gint width, height;
 	ClutterActor *message;
-	GdkPixbuf *msg_buf = NULL;
-	guint font_size;
-	gchar *font;
-	ClutterColor text_color = { 0xff, 0xff, 0xff, 0xff };	
 	
 	priv = FLUTTR_VIEWER_GET_PRIVATE (self);
 	
 	priv->mini_token = NULL;
+	priv->popping = FALSE;
 
 	width = CLUTTER_STAGE_WIDTH ();
 	height = CLUTTER_STAGE_HEIGHT ();
@@ -577,25 +486,17 @@ fluttr_viewer_init (FluttrViewer *self)
 	clutter_actor_set_size (message, width, height);
 	clutter_actor_set_position (message, -(width/2),-(height/2));
 	
-	
-	/* Spinner */
-	priv->spinner = fluttr_spinner_new ();
-	clutter_group_add (CLUTTER_GROUP (priv->group), priv->spinner);
-	clutter_actor_set_size (priv->spinner, size, size);
-	clutter_actor_set_position (priv->spinner, 
-				    (width/2)-(size/2), 
-				    (height/2)-(size/2));
 				    
 				    
 	/* Setup the pixbuf swap */
 	priv->pixbuf = NULL;
 	priv->swap_time = clutter_timeline_new (40, 40);
 	priv->swap_alpha = clutter_alpha_new_full (priv->swap_time,
-					      alpha_linear_inc_func,
-					      NULL, NULL);
+					           alpha_linear_inc_func,
+					           NULL, NULL);
 	priv->swap_behave = fluttr_behave_new (priv->swap_alpha,
-					  fluttr_viewer_swap_alpha_func,
-					  (gpointer)self);
+					       fluttr_viewer_swap_alpha_func,
+					       (gpointer)self);
 					  				    
 	priv->timeline = clutter_timeline_new (40, 80);
 	priv->alpha = clutter_alpha_new_full (priv->timeline,
