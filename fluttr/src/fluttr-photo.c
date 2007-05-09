@@ -311,9 +311,8 @@ fluttr_photo_act_alpha_func (ClutterBehaviour *behave,
 	
 	size = size * priv->scale;
 	
-	
-	//clutter_actor_set_scale (CLUTTER_ACTOR (data), y
-	//clutter_actor_set_position (CLUTTER_ACTOR (data), x, y);
+	clutter_actor_rotate_y (CLUTTER_ACTOR (data), 180 * factor,
+			clutter_actor_get_width (CLUTTER_ACTOR (data))/2, 0);
 	
 	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(data)))
 		clutter_actor_queue_redraw (CLUTTER_ACTOR(data));
