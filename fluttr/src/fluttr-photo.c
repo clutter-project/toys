@@ -348,7 +348,7 @@ fluttr_photo_opt_alpha_func (ClutterBehaviour *behave,
 			priv->scale = sw;
 		clutter_actor_set_opacity (priv->texture, (255*factor));
 		
-		clutter_actor_rotate_y (CLUTTER_ACTOR (data), 180 *factor,
+		clutter_actor_rotate_y (CLUTTER_ACTOR (data), 180+ (180*factor),
 					width /2, 0);			
 	}
 	
@@ -495,7 +495,6 @@ _fluttr_photo_fetch_pixbuf (FluttrPhoto *photo, guint width, guint height)
 	
 	priv->pixbuf = _check_cache (photo);
 	if (priv->pixbuf) {
-		g_print ("Loaded from cache\n");
 		if (!clutter_timeline_is_playing (priv->swap_time))
         		clutter_timeline_start (priv->swap_time);
 

@@ -77,6 +77,8 @@ fluttr_viewer_show (FluttrViewer *viewer, gboolean show)
         priv = FLUTTR_VIEWER_GET_PRIVATE(viewer);
         
         priv->popping = show;
+        if (show == TRUE)
+        	clutter_actor_set_opacity (priv->texture, 0);
         if (!clutter_timeline_is_playing (priv->timeline))
         	clutter_timeline_start (priv->timeline);
 }	
@@ -306,8 +308,7 @@ fluttr_viewer_swap_alpha_func (ClutterBehaviour *behave,
 		factor /= 0.5;
 	}
 	
-	if (priv->popping)
-		clutter_actor_set_opacity (CLUTTER_ACTOR (priv->texture), 
+	clutter_actor_set_opacity (CLUTTER_ACTOR (priv->texture), 
 					   255 * factor);
 	
 	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(data)))
@@ -319,9 +320,9 @@ fluttr_viewer_swap_alpha_func (ClutterBehaviour *behave,
 
 static void
 fluttr_viewer_set_property (GObject      *object, 
-			  guint         prop_id,
-			  const GValue *value, 
-			  GParamSpec   *pspec)
+			    guint         prop_id,
+			    const GValue *value, 
+			    GParamSpec   *pspec)
 {
 	FluttrViewerPrivate *priv;
 
@@ -471,18 +472,10 @@ fluttr_viewer_init (FluttrViewer *self)
 	width = CLUTTER_STAGE_WIDTH ();
 	height = CLUTTER_STAGE_HEIGHT ();
 		
-	/* Group */
-	priv->group = clutter_group_new ();
-	clutter_group_add (CLUTTER_GROUP (self),priv->group); 
-	clutter_actor_set_size (priv->group, width, height);
-	clutter_actor_set_position (priv->group, 
-				    (CLUTTER_STAGE_WIDTH ()/2) - (width/2),
-				    (CLUTTER_STAGE_HEIGHT ()/2) - (height/2));	
-	
 	/* message box */
 	message = clutter_texture_new ();
 	priv->texture = message;
-	clutter_group_add (CLUTTER_GROUP (priv->group),message); 
+	clutter_group_add (CLUTTER_GROUP (self),message); 
 	clutter_actor_set_size (message, width, height);
 	clutter_actor_set_position (message, -(width/2),-(height/2));
 	

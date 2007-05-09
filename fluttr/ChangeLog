@@ -1,5 +1,15 @@
 2007-05-09  Neil J.Patel  <njp@o-hand.com>
 
+	* src/fluttr-photo.c: (fluttr_photo_opt_alpha_func),
+	(_fluttr_photo_fetch_pixbuf):
+	Fixed transition.
+	
+	* src/fluttr-viewer.c: (fluttr_viewer_show),
+	(fluttr_viewer_swap_alpha_func), (fluttr_viewer_init):
+	Tweaked effect.
+
+2007-05-09  Neil J.Patel  <njp@o-hand.com>
+
 	* src/fluttr-photo.c: (on_thread_ok_idle), (_check_cache),
 	(_fluttr_photo_fetch_pixbuf):
 	Implemented caching for thumbnails.
