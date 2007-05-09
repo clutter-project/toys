@@ -1,5 +1,13 @@
 2007-05-09  Neil J.Patel  <njp@o-hand.com>
 
+	* src/fluttr-viewer.c: (on_thread_abort_idle), (on_thread_ok_idle),
+	(on_thread_error_idle), (fluttr_viewer_go),
+	(fluttr_viewer_swap_alpha_func), (fluttr_viewer_init):
+	Fixed bug which was stopping the active photo (and subsequent threads) 
+	from doing their work because of a timeline.
+
+2007-05-09  Neil J.Patel  <njp@o-hand.com>
+
 	* src/Makefile.am:
 	* src/fluttr-photo.c: 
 	* src/fluttr-photo.h:

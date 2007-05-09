@@ -42,6 +42,12 @@ struct _FluttrViewerPrivate
 	ClutterTimeline		*timeline;
 	ClutterAlpha		*alpha;
 	ClutterBehaviour 	*behave;
+	
+	/* Swap pixbuf code */
+	GdkPixbuf		*pixbuf;
+	ClutterTimeline		*swap_time;
+	ClutterAlpha		*swap_alpha;
+	ClutterBehaviour	*swap_behave;	
 
 };
 
@@ -85,6 +91,8 @@ on_thread_abort_idle (FluttrViewer *viewer)
         close_message_window (viewer);
 
 	g_signal_emit (viewer, _viewer_signals[ERROR], 0, "Aborted");	
+	
+	g_print ("Aborted\n");	
 
         return FALSE;
 }
@@ -100,12 +108,17 @@ on_thread_ok_idle (FluttrViewer *viewer)
         
         close_message_window (viewer);
                
+       /* Get pixbuf from worker */
         g_object_get (G_OBJECT (priv->worker), "pixbuf", &pixbuf, NULL);
+        priv->pixbuf = pixbuf;        
         
-        clutter_texture_set_pixbuf (CLUTTER_TEXTURE(priv->texture), pixbuf);
-        clutter_actor_set_position (priv->texture, 0, 0);
+	if (!clutter_timeline_is_playing (priv->swap_time))
+        	clutter_timeline_start (priv->swap_time);
         
         g_signal_emit (viewer, _viewer_signals[SUCCESSFUL], 0, priv->worker);
+        
+        g_print ("got pixbuf\n");
+              
 
         return FALSE;
 }
@@ -128,7 +141,9 @@ on_thread_error_idle (FluttrViewer *viewer)
                 g_warning ("No error set on worker!");
         }
 	g_signal_emit (viewer, _viewer_signals[ERROR], 0, error);
-
+	
+	g_print ("%s\n", error);
+	
         g_free (error);
 
         return FALSE;
@@ -174,9 +189,16 @@ fluttr_viewer_go (FluttrViewer *viewer, FluttrPhoto *photo)
         g_return_if_fail (FLUTTR_IS_VIEWER (viewer));
         priv = FLUTTR_VIEWER_GET_PRIVATE(viewer);
         
+        if (priv->worker)
+        	nflick_worker_request_abort (priv->worker);
+        
+        //fluttr_spinner_spin (FLUTTR_SPINNER (priv->spinner), TRUE);
+        
 		
 	g_object_get (G_OBJECT (settings), "token", &token, NULL);
 	g_object_get (G_OBJECT (photo), "photoid", &photoid, NULL);
+	
+	g_print ("%s %s\n", photoid ,token);
 	
 	worker = (NFlickWorker *)nflick_show_worker_new (photoid, 
 							       width, 
@@ -259,6 +281,48 @@ fluttr_viewer_alpha_func (ClutterBehaviour *behave,
 		      "x", x,
 		      NULL);
 	clutter_actor_set_opacity (CLUTTER_ACTOR (priv->spinner), 255 * scale);
+	
+	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(data)))
+		clutter_actor_queue_redraw (CLUTTER_ACTOR(data));	
+}
+
+/* Fade out text, change text, then fade in, all within one play of the timeline
+   just to keep things interesting :) */
+static void
+fluttr_viewer_swap_alpha_func (ClutterBehaviour *behave,
+		       	      guint		alpha_value,
+		              gpointer		data)
+{
+	FluttrViewerPrivate *priv;
+	gfloat factor;
+	guint width = CLUTTER_STAGE_WIDTH ();
+	guint height = CLUTTER_STAGE_HEIGHT ();
+	guint w, h;
+	
+       	g_return_if_fail (FLUTTR_IS_VIEWER (data));
+	priv = FLUTTR_VIEWER_GET_PRIVATE(data);
+	
+	factor = (gfloat) alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
+	
+	if (priv->pixbuf != NULL && factor > 0.5) {
+		clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture),
+					    priv->pixbuf);
+		clutter_actor_get_size (priv->texture, &w, &h);
+		
+		clutter_actor_set_position (priv->texture, 
+					    (width/2) - (w/2),
+					    (height/2) - (h/2));    
+	}
+	if (factor < 0.5) {
+		factor *= 2;
+		factor = 1.0 - factor;
+	} else {
+		factor -= 0.5;
+		factor /= 0.5;
+	}
+	
+	clutter_actor_set_opacity (CLUTTER_ACTOR (priv->texture), 255 * factor);
+	//clutter_actor_set_opacity (CLUTTER_ACTOR (priv->frame), 255 * factor);
 	
 	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(data)))
 		clutter_actor_queue_redraw (CLUTTER_ACTOR(data));	
@@ -518,8 +582,21 @@ fluttr_viewer_init (FluttrViewer *self)
 	priv->spinner = fluttr_spinner_new ();
 	clutter_group_add (CLUTTER_GROUP (priv->group), priv->spinner);
 	clutter_actor_set_size (priv->spinner, size, size);
-	clutter_actor_set_position (priv->spinner, -(size/2), -(size/2));
+	clutter_actor_set_position (priv->spinner, 
+				    (width/2)-(size/2), 
+				    (height/2)-(size/2));
 				    
+				    
+	/* Setup the pixbuf swap */
+	priv->pixbuf = NULL;
+	priv->swap_time = clutter_timeline_new (40, 40);
+	priv->swap_alpha = clutter_alpha_new_full (priv->swap_time,
+					      alpha_linear_inc_func,
+					      NULL, NULL);
+	priv->swap_behave = fluttr_behave_new (priv->swap_alpha,
+					  fluttr_viewer_swap_alpha_func,
+					  (gpointer)self);
+					  				    
 	priv->timeline = clutter_timeline_new (40, 80);
 	priv->alpha = clutter_alpha_new_full (priv->timeline,
 					      alpha_sine_inc_func,
