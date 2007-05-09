@@ -111,9 +111,12 @@ fluttr_set_view_advance (FluttrSetView *set_view, gint n)
 			row++;
 			offset += height + padding;
 		}
-		if (i == priv->active_set)
+		if (i == priv->active_set) {
 			priv->active_actor = set;	
-	
+			fluttr_set_set_active (FLUTTR_SET (set), TRUE);
+		} else
+			fluttr_set_set_active (FLUTTR_SET (set), FALSE);	
+			
 		/* Update the position of the ring */
 	}
 }
@@ -256,7 +259,6 @@ static void
 fluttr_set_view_init (FluttrSetView *self)
 {
 	FluttrSetViewPrivate *priv;
-
 	priv = FLUTTR_SET_VIEW_GET_PRIVATE (self);
 	
 	priv->active_set = 0;

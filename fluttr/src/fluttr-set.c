@@ -98,7 +98,9 @@ void
 fluttr_set_set_active (FluttrSet *set, gboolean active)
 {
 	FluttrSetPrivate *priv;
-
+	ClutterColor act   = { 0x00, 0x55, 0xff, 0xff };
+	ClutterColor inact   = { 0xff, 0xff, 0xff, 0xff };
+	
 	g_return_if_fail (FLUTTR_IS_SET (set));
 	priv = FLUTTR_SET_GET_PRIVATE(set);
 	
@@ -107,10 +109,10 @@ fluttr_set_set_active (FluttrSet *set, gboolean active)
 	
 	priv->active = active;
 	
-	if (!clutter_timeline_is_playing (priv->act_time))
-		clutter_timeline_start (priv->act_time);
+	if (active)
+		clutter_label_set_color (CLUTTER_LABEL (priv->text), &act);
 	else
-		clutter_timeline_rewind (priv->act_time);
+		clutter_label_set_color (CLUTTER_LABEL (priv->text), &inact);
 }
 
 
@@ -230,8 +232,7 @@ fluttr_set_act_alpha_func (ClutterBehaviour *behave,
 		priv->scale = (1 +ACT_SCALE)- (ACT_SCALE *factor);
 	
 	
-	size = size * priv->scale;
-	
+	priv->scale = size * priv->scale;
 	
 	//clutter_actor_set_scale (CLUTTER_ACTOR (data), y
 	//clutter_actor_set_position (CLUTTER_ACTOR (data), x, y);

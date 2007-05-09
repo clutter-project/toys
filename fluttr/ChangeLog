@@ -1,5 +1,20 @@
 2007-05-09  Neil J.Patel  <njp@o-hand.com>
 
+	* src/fluttr-photo.c: (on_thread_ok_idle), (_check_cache),
+	(_fluttr_photo_fetch_pixbuf):
+	Implemented caching for thumbnails.
+	
+	* src/fluttr-set-view.c: (fluttr_set_view_advance),
+	(fluttr_set_view_init):
+	* src/fluttr-set.c: (fluttr_set_set_active),
+	(fluttr_set_act_alpha_func):
+	Made the activated set have a different text colour.
+	
+	* src/main.c: (main):
+	Made sure the thumbnail directory is created.
+
+2007-05-09  Neil J.Patel  <njp@o-hand.com>
+
 	* src/fluttr-set-view.c: (fluttr_set_view_add_set):
 	All sets start from the middle of the stage.
 

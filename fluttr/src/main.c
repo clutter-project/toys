@@ -96,6 +96,7 @@ main (int argc, char **argv)
  	ClutterActor *stage, *background, *list;
 	ClutterColor stage_color = { 0x00, 0x00, 0x00, 0xff };
 	FluttrSettings *settings = NULL;
+	gchar *filename;
 	
 	g_thread_init (NULL);
 	clutter_init (&argc, &argv);		
@@ -107,6 +108,13 @@ main (int argc, char **argv)
 			  "http://www.flickr.com/auth-72157600141007022\n\n");
 		return 0;
 	}
+	
+	/* Make sure the thumbnail path is created */
+	filename = g_build_filename (g_get_home_dir (),
+				     ".fluttr-thumbs",
+				     NULL);	
+	g_mkdir (filename, 0775);
+	g_free (filename);
 	
 	/* Create a new library */
 	fluttr->library = NULL;

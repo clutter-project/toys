@@ -375,6 +375,7 @@ on_thread_ok_idle (FluttrPhoto *photo)
 {
         FluttrPhotoPrivate *priv;
         GdkPixbuf *pixbuf;
+        gchar *filename, *name;
         
         g_return_val_if_fail (FLUTTR_IS_PHOTO (photo), FALSE);
         priv = FLUTTR_PHOTO_GET_PRIVATE(photo);
@@ -390,7 +391,21 @@ on_thread_ok_idle (FluttrPhoto *photo)
         	clutter_timeline_start (priv->swap_time);
 
 	g_signal_emit (photo, _photo_signals[LOADED], 0, "");
-        
+	
+	/* Save the pixbuf */
+	GError *err = NULL;
+	name = g_strdup_printf ("%s.png", priv->photoid);
+	filename = g_build_filename (g_get_home_dir (),
+				     ".fluttr-thumbs",
+				     name,
+				     NULL);
+	gdk_pixbuf_save (pixbuf, filename, "png", &err, NULL);
+	
+	if (err)
+		g_print ("%s", err->message);
+
+	g_free (filename);
+	g_free (name);
         return FALSE;
 }
 
@@ -436,6 +451,28 @@ on_thread_msg_change_idle (FluttrPhoto *photo)
         return FALSE;
 }
 
+/* Check if we have already download the pixbuf */
+static GdkPixbuf*
+_check_cache (FluttrPhoto *photo)
+{
+        FluttrPhotoPrivate *priv;
+        GdkPixbuf *pixbuf = NULL;
+	
+	g_return_val_if_fail (FLUTTR_IS_PHOTO (photo), NULL);
+        priv = FLUTTR_PHOTO_GET_PRIVATE(photo);		gchar *name, *filename;
+	
+	name = g_strdup_printf ("%s.png", priv->photoid);
+	filename = g_build_filename (g_get_home_dir (),
+				     ".fluttr-thumbs",
+				     name,
+				     NULL);
+	pixbuf =  gdk_pixbuf_new_from_file (filename, NULL);
+	
+	g_free (filename);
+	g_free (name);
+	
+	return pixbuf;
+}
 
 /* Start the pixbuf worker */
 void
@@ -454,6 +491,16 @@ _fluttr_photo_fetch_pixbuf (FluttrPhoto *photo, guint width, guint height)
         if (priv->pixbuf != NULL) {
         	/*g_warning ("Pixbuf already set");*/
         	return;
+	}
+	
+	priv->pixbuf = _check_cache (photo);
+	if (priv->pixbuf) {
+		g_print ("Loaded from cache\n");
+		if (!clutter_timeline_is_playing (priv->swap_time))
+        		clutter_timeline_start (priv->swap_time);
+
+		g_signal_emit (photo, _photo_signals[LOADED], 0, "");	
+		return;	
 	}
 	
 	if (priv->worker != NULL) {
