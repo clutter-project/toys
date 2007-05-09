@@ -274,7 +274,7 @@ static NFlickWorkerStatus       thread_func (NFlickSetListWorker *self)
 
         	if (nflick_worker_parse_api_response ((NFlickWorker*) self, 
         				first_photo_list_response) == FALSE)
-                	g_warning ("Abort : No Photos %s", first_id);
+                	;
 
         	first_list = nflick_photo_list_response_take_list
         	        ((NFlickPhotoListResponse *) first_photo_list_response);

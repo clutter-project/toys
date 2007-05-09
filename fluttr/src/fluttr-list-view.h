@@ -11,6 +11,7 @@
 
 #include "fluttr-library.h"
 #include "fluttr-photo.h"
+#include "fluttr-set.h"
 
 #include <libnflick/nflick.h>
 
@@ -68,7 +69,7 @@ struct _FluttrListViewClass
 GType fluttr_list_view_get_type (void) G_GNUC_CONST;
 
 ClutterActor* 
-fluttr_list_view_new (FluttrLibrary *library);
+fluttr_list_view_new ();
 
 FluttrPhoto*
 fluttr_list_view_get_active (FluttrListView *list_view);

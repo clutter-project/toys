@@ -16,6 +16,8 @@ G_DEFINE_TYPE (FluttrListView, fluttr_list_view, CLUTTER_TYPE_GROUP);
 struct _FluttrListViewPrivate
 {
 	FluttrLibrary		*library;
+	FluttrSet		*set;
+	GList			*photos;
 	
 	gint 			 active_photo;
 	ClutterActor		*active_actor;
@@ -25,7 +27,8 @@ struct _FluttrListViewPrivate
 enum
 {
 	PROP_0,
-	PROP_LIBRARY
+	PROP_LIBRARY,
+	PROP_SET
 };
 
 #define N_COLS 5
@@ -57,21 +60,18 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 	FluttrListViewPrivate *priv;
 	gint len;
 	gint i = 0;
-	FluttrLibraryRow *lrow = NULL;
 	ClutterActor *photo = NULL;
 	guint width = fluttr_photo_get_default_width ();
 	guint height = fluttr_photo_get_default_height ();
 	gint x1;
 	gint active_row = 0;
 	gint offset = height/2;
-	gint x_center = CLUTTER_STAGE_WIDTH () /2;
-	gint y_center = CLUTTER_STAGE_HEIGHT ()/2;
 	gint padding = width /6;
 		
 	g_return_if_fail (FLUTTR_IS_LIST_VIEW (list_view));
 	priv = FLUTTR_LIST_VIEW_GET_PRIVATE(list_view);
 
-	len = fluttr_library_row_count (priv->library);
+	len = g_list_length (priv->photos);
 	
 	/* Make sure we are within the bounds of the number of albums */
 	priv->active_photo+= n;
@@ -113,29 +113,8 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 	offset += (CLUTTER_STAGE_HEIGHT () /2) - (height/2);
 	
 	for (i = 0; i < len; i++) {
-		lrow = fluttr_library_get_library_row (priv->library, i);
-		photo = NULL;
-		g_object_get (G_OBJECT (lrow), "photo", &photo, NULL);
+		photo = (ClutterActor*)g_list_nth_data (priv->photos, i);
 		 
-		if (!photo) {
-		 	gchar *id;
-		 	g_object_get(G_OBJECT (lrow), "id", &id, NULL);
-		 	
-		 	photo = fluttr_photo_new ();
-		 	clutter_group_add (CLUTTER_GROUP (list_view), photo);
-		 	clutter_actor_set_size (photo, width, height);
-		 	clutter_actor_set_position (photo, x_center, y_center);
-		 	clutter_actor_show_all (CLUTTER_ACTOR (photo	));
-		 	
-		 	if (photo) {
-		 		g_object_set (G_OBJECT (lrow), "photo", 
-		 			      photo, NULL);
-				g_object_set (G_OBJECT (photo),"photoid", 
-					      id, NULL);
-			}
-			
-				
-		}
 		gint x = x1 + (col * (width + padding));
 		gint y = offset;
 		fluttr_photo_update_position (FLUTTR_PHOTO (photo), x, y);
@@ -148,19 +127,12 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 		}	
 		if ((i > less) && (i < more)) {
 			GdkPixbuf *pixbuf = NULL;
-			g_object_get (G_OBJECT (lrow), "pixbuf", &pixbuf, NULL);
+			g_object_get (G_OBJECT (photo), 
+				      "pixbuf", &pixbuf, NULL);
 			
-			if (pixbuf) {
-				/*g_object_set (G_OBJECT (photo), "pixbuf",
-					      pixbuf, NULL);*/
-				//g_print ("Got pixbuf\n");
-				;
-			} else {
-				fluttr_photo_fetch_pixbuf (FLUTTR_PHOTO (photo));
-				g_signal_connect (G_OBJECT (photo), 
-						  "pixbuf-loaded",
-				  		  G_CALLBACK (_pixbuf_loaded),
-				  		  lrow);
+			if (!pixbuf) {
+				fluttr_photo_fetch_pixbuf (FLUTTR_PHOTO 
+						 		(photo));
 			}
 		}
 		
@@ -178,10 +150,9 @@ static gboolean
 _peg (ClutterActor *photo)
 {
 	guint size = fluttr_photo_get_default_size ();
-				fluttr_photo_update_position 
-					(FLUTTR_PHOTO (photo), 
-					 clutter_actor_get_x (photo), 
-					 CLUTTER_STAGE_HEIGHT () + size);
+	fluttr_photo_update_position (FLUTTR_PHOTO (photo), 
+				      clutter_actor_get_x (photo), 
+				      CLUTTER_STAGE_HEIGHT () + size);
 	return FALSE;
 }
 
@@ -192,7 +163,6 @@ fluttr_list_view_activate (FluttrListView *list_view)
 	FluttrListViewPrivate *priv;
 	gint len;
 	gint i = 0;
-	FluttrLibraryRow *lrow = NULL;
 	ClutterActor *photo = NULL;
 	gint active_row = 0;
 	guint size = fluttr_photo_get_default_size ();
@@ -202,7 +172,7 @@ fluttr_list_view_activate (FluttrListView *list_view)
 	g_return_if_fail (FLUTTR_IS_LIST_VIEW (list_view));
 	priv = FLUTTR_LIST_VIEW_GET_PRIVATE(list_view);
 
-	len = fluttr_library_row_count (priv->library);
+	len =  g_list_length (priv->photos);
 	
 	/* Find the active row */	
 	active_row = 0;
@@ -227,9 +197,7 @@ fluttr_list_view_activate (FluttrListView *list_view)
 	row = 0;
 	
 	for (i = 0; i < len; i++) {
-		lrow = fluttr_library_get_library_row (priv->library, i);
-		photo = NULL;
-		g_object_get (G_OBJECT (lrow), "photo", &photo, NULL);
+		photo = (ClutterActor*)g_list_nth_data (priv->photos, i);
 		 
 		if (i == priv->active_photo) {
 			fluttr_photo_update_position (FLUTTR_PHOTO (photo),
@@ -272,6 +240,72 @@ fluttr_list_view_advance_col (FluttrListView *list_view, gint n)
 	fluttr_list_view_advance (list_view, n);
 }
 
+/* Empty the group*/
+static void
+fluttr_list_view_empty (FluttrListView *view)
+{
+	FluttrListViewPrivate *priv;
+	gint i;
+	gint len = g_list_length (priv->photos);
+	ClutterActor* child;
+	
+	g_return_if_fail (FLUTTR_IS_LIST_VIEW (view));
+	priv = FLUTTR_LIST_VIEW_GET_PRIVATE(view);
+	
+	for (i = 0; i < len; i++) {
+		child = (ClutterActor*)g_list_nth_data (priv->photos, i);
+		clutter_group_remove (CLUTTER_GROUP (view), child);
+		
+	}
+	g_list_free (priv->photos);
+}
+			
+/* Populate the group */
+static void
+fluttr_list_view_populate (FluttrListView *view)
+{
+	FluttrListViewPrivate *priv;
+	GList *photos = NULL;
+	GList *p;
+	gint x =(CLUTTER_STAGE_WIDTH ()/2)-(fluttr_photo_get_default_width()/2);
+	gint y =(CLUTTER_STAGE_HEIGHT()/2)
+		-(fluttr_photo_get_default_height()/2);
+	
+	g_return_if_fail (FLUTTR_IS_LIST_VIEW (view));
+	priv = FLUTTR_LIST_VIEW_GET_PRIVATE(view);
+	
+	photos = fluttr_set_get_photos (FLUTTR_SET (priv->set));
+	priv->photos = NULL;
+	
+	/* Go through each photodata in the list, creating a FluttrPhoto, and 
+	   adding it to the group */
+	
+	for (p = photos; p != NULL; p = p->next) {
+		FluttrPhotoData *data = (FluttrPhotoData*)p->data;
+		ClutterActor *photo = fluttr_photo_new ();
+		clutter_actor_set_size (photo, 
+					fluttr_photo_get_default_width (),
+					fluttr_photo_get_default_height ());
+		clutter_actor_set_position (photo, x, y);
+		clutter_group_add (CLUTTER_GROUP (view), photo);
+		
+		g_object_set (G_OBJECT (photo), 
+			      "photoid", data->id,
+			      "name", data->name,
+			      NULL);
+		
+		/* Now lets set the pixbuf if we have it */
+		if (data->pixbuf)
+			g_object_set (G_OBJECT (photo), "pixbuf", data->pixbuf,
+			      NULL);
+		
+		clutter_actor_show_all (photo);
+		priv->photos = g_list_append (priv->photos, photo);
+	}
+	priv->active_photo = 0;
+	priv->active_actor = NULL;
+}
+
 /* GObject Stuff */
 
 static void
@@ -293,7 +327,22 @@ fluttr_list_view_set_property (GObject      *object,
 			g_object_ref (priv->library);
 			/* Connect to the library signals */
 			break;
-		
+			
+		case PROP_SET:
+			if (priv->set)
+				g_object_unref (priv->set);
+			priv->set = g_value_get_object (value);
+			if (priv->set != NULL) {
+				g_object_ref (priv->set);
+				/* Empty the group*/
+				fluttr_list_view_empty (
+						     FLUTTR_LIST_VIEW (object));
+				
+				/* Populate the group */
+				fluttr_list_view_populate (
+						    FLUTTR_LIST_VIEW (object));
+			}
+			break;
 		default:
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, 
 							   pspec);
@@ -315,7 +364,11 @@ fluttr_list_view_get_property (GObject    *object,
 	switch (prop_id) {
 		case PROP_LIBRARY:
 			g_value_set_object (value, priv->library);
-			break;			
+			break;	
+		
+		case PROP_SET:
+			g_value_set_object (value, priv->library);
+			break;		
 		default:
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id,
 							   pspec);
@@ -393,6 +446,15 @@ fluttr_list_view_class_init (FluttrListViewClass *klass)
 		 FLUTTR_TYPE_LIBRARY,
 		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));	
 
+	g_object_class_install_property 
+		(gobject_class,
+		 PROP_SET,
+		 g_param_spec_object ("set",
+		 "Set",
+		 "The underlying Fluttr Photo set",
+		 FLUTTR_TYPE_SET,
+		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));	
+
 }
 
 static void
@@ -404,16 +466,16 @@ fluttr_list_view_init (FluttrListView *self)
 	
 	priv->active_photo = 0;
 	priv->active_col = 0;
+	priv->set = NULL;
 	
 }
 
 ClutterActor*
-fluttr_list_view_new (FluttrLibrary *library)
+fluttr_list_view_new (void)
 {
 	ClutterGroup         *list_view;
 
 	list_view = g_object_new (FLUTTR_TYPE_LIST_VIEW, 
-			          "library", library,
 			          NULL);
 	
 	return CLUTTER_ACTOR (list_view);

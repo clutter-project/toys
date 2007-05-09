@@ -29,6 +29,10 @@ fluttr_SOURCES = \
 	fluttr-list-view.h			\
 	fluttr-photo.c				\
 	fluttr-photo.h				\
+	fluttr-set.c				\
+	fluttr-set.h				\
+	fluttr-set-view.c			\
+	fluttr-set-view.h			\
 	fluttr-settings.c			\
 	fluttr-settings.h			\
 	fluttr-spinner.c			\

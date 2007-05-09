@@ -142,7 +142,7 @@ on_thread_msg_change_idle (FluttrList *list)
         /* Get the new message */
         g_object_get (G_OBJECT (priv->worker), "message", &msg, NULL);
         if (msg != NULL) {
-                g_print ("%s", msg);
+                g_print ("%s\n", msg);
         }
         priv->msg = g_strdup (msg);
         

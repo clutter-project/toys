@@ -16,15 +16,27 @@
 #include "fluttr-list-view.h"
 #include "fluttr-photo.h"
 #include "fluttr-settings.h"
+#include "fluttr-set-view.h"
+#include "fluttr-set.h"
 
 #include <libnflick/nflick.h>
+
+typedef enum {
+	FLUTTR_VIEW_SETS,
+	FLUTTR_VIEW_PHOTOS
+
+} FluttrView;
 
 typedef struct {
 	FluttrLibrary		*library;
 	
 	ClutterActor 		*stage;
 	ClutterActor 		*auth;
+	ClutterActor		*sets;
 	ClutterActor		*list;
+	
+	/* Current view info */
+	FluttrView		 view;
 	
 	/* Flickr info */
 	gchar 			*username;
@@ -82,7 +94,8 @@ main (int argc, char **argv)
 	}
 	
 	/* Create a new library */
-	fluttr->library = fluttr_library_new ();
+	fluttr->library = NULL;
+	fluttr->view = FLUTTR_VIEW_SETS;
 	
 	stage = clutter_stage_get_default ();
 	fluttr->stage = stage;
@@ -146,12 +159,22 @@ main (int argc, char **argv)
 		fluttr_list_go (FLUTTR_LIST (fluttr->list));
 	}
 	
+	/* Sets view */
+	ClutterActor *sets = fluttr_set_view_new ();
+	fluttr->sets = sets;
+	clutter_group_add (CLUTTER_GROUP (fluttr->stage), sets);
+	clutter_actor_set_size (sets, 
+				CLUTTER_STAGE_WIDTH (),
+				CLUTTER_STAGE_HEIGHT());
+	clutter_actor_set_position (sets, 0, 0);
+	
 	/* The list view */
-	fluttr->list = fluttr_list_view_new (fluttr->library);
+	fluttr->list = fluttr_list_view_new ();
 	clutter_group_add (CLUTTER_GROUP (fluttr->stage), fluttr->list);
 	clutter_actor_set_size (fluttr->list, CLUTTER_STAGE_WIDTH (),
 				CLUTTER_STAGE_HEIGHT ());
-	clutter_actor_set_position (fluttr->list, 0, 0);	
+	clutter_actor_set_position (fluttr->list, 0, 0);
+	clutter_actor_set_opacity (fluttr->list, 0);	
 	
 	clutter_actor_show_all (fluttr->stage);	    
 	
@@ -303,39 +326,35 @@ list_get_successful (FluttrAuth *auth, NFlickWorker *worker, Fluttr *fluttr)
 	gint i = 0;
 	gint j = 0;
 	
+	g_print ("\n");
 	for (l = list; l != NULL; l = l->next) {
+		ClutterActor *set = fluttr_set_new (l->data);
+		GList *photos = NULL;
+		GList *photo;	
 		gchar *id = NULL;
 		g_object_get (G_OBJECT (l->data), "combotext", &id, NULL);
-		g_print ("\n%s\n", id);	
-	
-		GList *photos = NULL;
-		GList *photo;
+		g_print ("%s : ", id);
+		
 		g_object_get (G_OBJECT (l->data), "list", &photos, NULL);
-		g_print ("%d\n", g_list_length (photos));
+		
+		g_print ("%d loaded\n", g_list_length (photos));
 		
 		for (photo = photos; photo!=NULL ;photo = photo->next) {
 			NFlickPhotoData *p = (NFlickPhotoData*)photo->data;
-			FluttrLibraryRow *row;
-			row = fluttr_library_row_new (p->Id, 
-						      p->Name, 
-						      (NFlickPhotoSet*)l->data);
-			fluttr_library_append_library_row (fluttr->library, 
 			
-							   row);
-			if (g_list_length (photos) == 0) {
+			fluttr_set_append_photo (FLUTTR_SET (set),
+						 p->Id, 
+						 p->Name);
 			
-				if (p->Id)
-					g_print ("\t%s ", p->Id);
-				if (p->Name)
-					g_print (p->Name);
-				g_print (" 0 \n");
-			}
 			i++;
 		}
+		fluttr_set_view_add_set (FLUTTR_SET_VIEW (fluttr->sets), 
+					 FLUTTR_SET (set));
 		j++;
 	}
-	fluttr_list_view_advance (FLUTTR_LIST_VIEW (fluttr->list), 0);
-	g_print ("%d Photo(s)\n in %d set(s)", i, j);
+	fluttr_set_view_advance (FLUTTR_SET_VIEW (fluttr->sets), 0);
+	
+	g_print ("%d Photo(s) in %d set(s)\n", i, j);
 }
 
 static void
@@ -368,7 +387,7 @@ _set_options (FluttrPhoto *photo)
 }
 
 static void 
-browse_input_cb (ClutterStage *stage,
+list_input_cb (ClutterStage *stage,
 		 ClutterEvent *event,
 		 Fluttr	      *fluttr)
 {
@@ -407,6 +426,63 @@ browse_input_cb (ClutterStage *stage,
 			_set_options (photo);
 			break;
 		case CLUTTER_Escape:
+			clutter_actor_set_opacity (fluttr->list, 0);
+			clutter_actor_set_opacity (fluttr->sets, 255);
+			fluttr->view = FLUTTR_VIEW_SETS; 
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+static void 
+sets_input_cb (ClutterStage *stage,
+		 ClutterEvent *event,
+		 Fluttr	      *fluttr)
+{
+	FluttrSet *set = NULL;
+	
+	
+	/* First check for app wide keybinding */
+	if (event->type == CLUTTER_KEY_RELEASE)	{
+		ClutterKeyEvent* kev = (ClutterKeyEvent *) event;
+
+		switch (clutter_key_event_symbol (kev)) {
+		case CLUTTER_Left:
+			fluttr_set_view_advance_col 
+					(FLUTTR_SET_VIEW (fluttr->sets), -1);
+			break;
+		case CLUTTER_Right:
+			fluttr_set_view_advance_col 
+					(FLUTTR_SET_VIEW (fluttr->sets), 1);
+			break;
+		case CLUTTER_Up:
+			fluttr_set_view_advance_row 
+					(FLUTTR_SET_VIEW (fluttr->sets), -1);
+			break;
+		case CLUTTER_Down:
+			fluttr_set_view_advance_row 
+					(FLUTTR_SET_VIEW (fluttr->sets), 1);
+			break;
+		case CLUTTER_Return:
+		case CLUTTER_space:
+		case CLUTTER_KP_Enter:
+			fluttr_set_view_activate (FLUTTR_SET_VIEW 
+								(fluttr->sets));
+			set = fluttr_set_view_get_active (FLUTTR_SET_VIEW 
+								(fluttr->sets));
+			if (set) {
+				g_object_set (G_OBJECT (fluttr->list),
+					      "set", set, NULL);
+				clutter_actor_set_opacity (fluttr->list, 255);
+				clutter_actor_set_opacity (fluttr->sets, 0);
+				fluttr->view = FLUTTR_VIEW_PHOTOS; 
+				fluttr_list_view_advance 
+					(FLUTTR_LIST_VIEW (fluttr->list), 0);
+			}
+			break;
+		case CLUTTER_Escape:
 			clutter_main_quit();
 			break;
 		default:
@@ -415,6 +491,35 @@ browse_input_cb (ClutterStage *stage,
 	}
 }
 
+
+static void 
+browse_input_cb (ClutterStage *stage,
+		 ClutterEvent *event,
+		 Fluttr	      *fluttr)
+{
+	FluttrPhoto *photo = NULL;
+	
+	
+	/* First check for app wide keybinding */
+	if (event->type == CLUTTER_KEY_RELEASE)	{
+		ClutterKeyEvent* kev = (ClutterKeyEvent *) event;
+
+		switch (clutter_key_event_symbol (kev)) {
+		
+		case CLUTTER_Escape:
+			if (fluttr->view == FLUTTR_VIEW_SETS)
+				clutter_main_quit();
+			break;
+		default:
+			break;
+		}
+	}
+	/* if we have got here, we can pass the input onto the right place */
+	if (fluttr->view == FLUTTR_VIEW_SETS)
+		sets_input_cb (stage, event, fluttr);
+	else
+		list_input_cb (stage, event, fluttr);
+}
 
 static void 
 create_background (ClutterActor *bg, guint width, guint height)

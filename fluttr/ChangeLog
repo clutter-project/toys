@@ -1,3 +1,52 @@
+2007-05-09  Neil J.Patel  <njp@o-hand.com>
+
+	* libnflick/nflick-set-list-worker.c: (thread_func):
+	Removed useless status messages.
+	
+	* src/Makefile.am:
+	Added the new set-view files.
+	
+	* src/fluttr-list-view.c: (fluttr_list_view_advance), (_peg),
+	(fluttr_list_view_activate), (fluttr_list_view_empty),
+	(fluttr_list_view_populate), (fluttr_list_view_set_property),
+	(fluttr_list_view_get_property), (fluttr_list_view_class_init),
+	(fluttr_list_view_init), (fluttr_list_view_new):
+	* src/fluttr-list-view.h:
+	Amended code to use a FluttrSet as the underlying data-type rather than
+	a FluttrLibrary class.
+	
+	* src/fluttr-list.c: (on_thread_msg_change_idle):
+	Added a '\n' at the end of each message.
+	
+	* src/fluttr-set-view.c: (fluttr_set_view_get_active),
+	(fluttr_set_view_advance), (fluttr_set_view_activate),
+	(fluttr_set_view_advance_row), (fluttr_set_view_advance_col),
+	(fluttr_set_view_add_set), (fluttr_set_view_set_property),
+	(fluttr_set_view_get_property), (fluttr_set_view_paint),
+	(fluttr_set_view_dispose), (fluttr_set_view_finalize),
+	(fluttr_set_view_class_init), (fluttr_set_view_init),
+	(fluttr_set_view_new):
+	* src/fluttr-set-view.h:
+	A new view whihc is based on the list view, but handles FLuttrSets.
+	
+	* src/fluttr-set.c: (fluttr_set_get_default_size),
+	(fluttr_set_get_default_width), (fluttr_set_get_default_height),
+	(fluttr_set_set_active), (fluttr_set_update_position),
+	(fluttr_set_trans_alpha_func), (fluttr_set_act_alpha_func),
+	(_refresh_thumbs), (fluttr_set_append_photo),
+	(fluttr_set_get_photos), (_update_text), (fluttr_set_set_property),
+	(fluttr_set_get_property), (fluttr_set_dispose),
+	(fluttr_set_finalize), (fluttr_set_class_init), (fluttr_set_init),
+	(fluttr_set_new):
+	* src/fluttr-set.h:
+	A CluttrActor which is the representation of a Flickr set. It also
+	contains the list of photos belonging to that set.
+	
+	* src/main.c: (main), (list_get_successful), (list_input_cb),
+	(sets_input_cb), (browse_input_cb):
+	Added ability to browse sets and then photos belonging to the activated
+	set.
+
 2007-05-08  Neil J.Patel  <njp@o-hand.com>
 
 	* libnflick/nflick-set-list-worker.c: (thread_func): Changed to download
