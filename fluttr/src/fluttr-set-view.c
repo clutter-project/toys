@@ -140,10 +140,13 @@ fluttr_set_view_advance_col (FluttrSetView *set_view, gint n)
 void
 fluttr_set_view_add_set (FluttrSetView *set_view, FluttrSet *set)
 {
+	gint x = CLUTTER_STAGE_WIDTH () /2;
+	gint y = CLUTTER_STAGE_HEIGHT ()/2;
 	g_return_if_fail (FLUTTR_IS_SET_VIEW (set_view));
 	
+	
 	clutter_group_add (CLUTTER_GROUP (set_view), CLUTTER_ACTOR (set));
-	clutter_actor_set_position (CLUTTER_ACTOR (set), 0, 0);
+	clutter_actor_set_position (CLUTTER_ACTOR (set), x, y);
 	clutter_actor_show_all (CLUTTER_ACTOR (set));
 }
 

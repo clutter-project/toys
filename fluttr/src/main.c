@@ -10,6 +10,7 @@
 #include <clutter/clutter.h>
 
 #include "fluttr-auth.h"
+#include "fluttr-behave.h"
 #include "fluttr-library.h"
 #include "fluttr-library-row.h"
 #include "fluttr-list.h"
@@ -47,6 +48,13 @@ typedef struct {
 	gchar			*fullname;
 	gchar 			*token;
 	gchar 			*usernsid;
+	
+	/* The swapping timeline */
+	ClutterActor		*in;
+	ClutterActor		*out;
+	ClutterTimeline		*timeline;
+	ClutterAlpha		*alpha;
+	ClutterBehaviour	*behave;
 
 } Fluttr;
 
@@ -70,7 +78,10 @@ static void		list_get_successful (FluttrAuth *auth,
 					     Fluttr *fluttr);
 static void		list_get_error (FluttrAuth *auth, gchar *msg, 
 				    	Fluttr *fluttr);
-
+static void		_swap_alpha_func (ClutterBehaviour *behave,
+		  			guint		    alpha_value,
+		  			Fluttr	   *fluttr);
+		              	  	  
 static gboolean
 _auth_timeout (Fluttr *fluttr)
 {
@@ -192,6 +203,16 @@ main (int argc, char **argv)
 	
 	clutter_actor_show_all (fluttr->stage);	  
 	
+	/* Setup the view swa behaviour */
+	fluttr->in = fluttr->out = NULL;
+	fluttr->timeline = clutter_timeline_new (40, 60);
+	fluttr->alpha = clutter_alpha_new_full (fluttr->timeline,
+					      alpha_linear_inc_func,
+					      NULL, NULL);
+	fluttr->behave = fluttr_behave_new (fluttr->alpha,
+					  _swap_alpha_func,
+					  (gpointer)fluttr);	
+	
 	/* Receive all input events */
 	g_signal_connect (stage, 
 		          "input-event",
@@ -200,6 +221,25 @@ main (int argc, char **argv)
 	
 	clutter_main();	
 	return 0;
+}
+
+/* Fade out text, change text, then fade in, all within one play of the timeline
+   just to keep things interesting :) */
+static void
+_swap_alpha_func (ClutterBehaviour *behave,
+		  guint		    alpha_value,
+		  Fluttr	   *fluttr)
+{
+        gfloat factor;
+	factor = (gfloat) alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
+	ClutterActor *stage = clutter_stage_get_default ();
+	
+	clutter_actor_set_opacity (CLUTTER_ACTOR (fluttr->in), 255 * factor);
+	clutter_actor_set_opacity (CLUTTER_ACTOR (fluttr->out),
+				   255- (255*factor));
+	
+	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(stage)))
+		clutter_actor_queue_redraw (CLUTTER_ACTOR(stage));	
 }
 
 /* If available, load setting from the users key file */
@@ -466,8 +506,14 @@ list_input_cb (ClutterStage *stage,
 					  G_CALLBACK (_show_viewer), fluttr);
 			break;
 		case CLUTTER_Escape:
+			fluttr->in = fluttr->sets;
+			fluttr->out = fluttr->list;
+			if (!clutter_timeline_is_playing (fluttr->timeline))
+				clutter_timeline_start (fluttr->timeline);
+			/*
 			clutter_actor_set_opacity (fluttr->list, 0);
 			clutter_actor_set_opacity (fluttr->sets, 255);
+			*/
 			fluttr->view = FLUTTR_VIEW_SETS; 
 			break;
 		default:
@@ -515,8 +561,12 @@ sets_input_cb (ClutterStage *stage,
 			if (set) {
 				g_object_set (G_OBJECT (fluttr->list),
 					      "set", set, NULL);
-				clutter_actor_set_opacity (fluttr->list, 255);
-				clutter_actor_set_opacity (fluttr->sets, 0);
+				fluttr->in = fluttr->list;
+				fluttr->out = fluttr->sets;
+				if (!clutter_timeline_is_playing (
+							fluttr->timeline))
+					clutter_timeline_start (
+							fluttr->timeline);
 				fluttr->view = FLUTTR_VIEW_PHOTOS; 
 				fluttr_list_view_advance 
 					(FLUTTR_LIST_VIEW (fluttr->list), 0);

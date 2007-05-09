@@ -1,5 +1,14 @@
 2007-05-09  Neil J.Patel  <njp@o-hand.com>
 
+	* src/fluttr-set-view.c: (fluttr_set_view_add_set):
+	All sets start from the middle of the stage.
+
+	* src/main.c: (main), (_swap_alpha_func), (list_input_cb),
+	(sets_input_cb):
+	Smooth fading transition from sets<->list.	
+
+2007-05-09  Neil J.Patel  <njp@o-hand.com>
+
 	* src/fluttr-photo.c: (fluttr_photo_opt_alpha_func),
 	(fluttr_photo_class_init), (fluttr_photo_init):
 	* src/fluttr-photo.h:
