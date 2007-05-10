@@ -1,3 +1,12 @@
+2007-05-10  Neil J.Patel  <njp@o-hand.com>
+
+	reviewed by: <delete if not using a buddy>
+
+	* src/fluttr-list-view.c:
+	* src/fluttr-photo.c:
+	* src/fluttr-set-view.c:
+	* src/main.c: (main):
+
 2007-05-09  Neil J.Patel  <njp@o-hand.com>
 
 	* src/fluttr-photo.c: (fluttr_photo_opt_alpha_func),

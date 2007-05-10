@@ -27,7 +27,7 @@ enum
 	PROP_LIBRARY
 };
 
-#define N_COLS 3
+#define N_COLS 2
 
 static ClutterGroupClass	*parent_class = NULL;
 

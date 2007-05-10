@@ -124,7 +124,7 @@ main (int argc, char **argv)
 	fluttr->stage = stage;
 	clutter_actor_set_size (stage, 800, 440);
 	clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
-	//g_object_set (stage, "fullscreen", TRUE, NULL);
+	g_object_set (stage, "fullscreen", TRUE, NULL);
 	
 	if (fluttr->username == NULL) {
 		/* Authorise the mini-token */

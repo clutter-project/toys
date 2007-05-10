@@ -31,7 +31,7 @@ enum
 	PROP_SET
 };
 
-#define N_COLS 5
+#define N_COLS 4
 
 static ClutterGroupClass	*parent_class = NULL;
 

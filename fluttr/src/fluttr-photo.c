@@ -18,7 +18,7 @@ G_DEFINE_TYPE (FluttrPhoto, fluttr_photo, CLUTTER_TYPE_GROUP);
 	FluttrPhotoPrivate))
 	
 #define FONT "DejaVu Sans Book"
-#define FRAME 2
+#define FRAME 1
 #define X_ANGLE 90
 
 #define ACT_SCALE 0.3
