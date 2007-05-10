@@ -1,4 +1,29 @@
 A clutter-based flickr viewer.
 
+Authorising yourself with Flickr
+================================
+
+Type this url into your web-browser of choice:
+
+http://www.flickr.com/auth-72157600141007022
+
+You will then be askd to log into flickr (or not if you are already logged in).
+The next screen will ask you if you want to let Fluttr access your Flickr
+pictures, click "OK, I'll allow it", and Flickr will take you to a page which
+has a auth code in the middle like this:
+
+123-456-789
+
+Now, start fluttr with that code:
+
+$ fluttr 123-456-789
+
+Fluttr will then contact Flickr and save its settings. From now on, you can just run fluttr without any options.
+
+NB: You may need to restart fluttr after the initial authorisation.
+
+
+Credits
+=======
 All of the 'flickr' code (anything starting with nflick-*), has been taken from the excellent NFlick Flickr browser for the n800 by mdk (https://garage.maemo.org/projects/nflick).
 

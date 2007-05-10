@@ -1,6 +1,20 @@
-2007-05-10  Neil J.Patel  <njp@o-hand.com>
+2007-05-10  Neil J. Patel  <njp@o-hand.com>
 
-	reviewed by: <delete if not using a buddy>
+	* README:
+	* src/fluttr-set-view.c:
+	* src/main.c: (main):
+	Restored default column settings.
+	Added some more info to README.
+
+2007-05-10  Neil J Patel  <njp@o-hand.com>
+
+	* README:
+	Added authorisation instructions.
+	
+	* src/main.c: (main):
+	Removed 'forced' full screen.
+
+2007-05-10  Neil J.Patel  <njp@o-hand.com>
 
 	* src/fluttr-list-view.c:
 	* src/fluttr-photo.c:

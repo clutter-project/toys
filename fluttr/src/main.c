@@ -124,7 +124,9 @@ main (int argc, char **argv)
 	fluttr->stage = stage;
 	clutter_actor_set_size (stage, 800, 440);
 	clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
-	g_object_set (stage, "fullscreen", TRUE, NULL);
+
+	/*g_object_set (stage, "fullscreen", TRUE, NULL);*/
+
 	
 	if (fluttr->username == NULL) {
 		/* Authorise the mini-token */
@@ -139,7 +141,7 @@ main (int argc, char **argv)
 		clutter_actor_set_position (fluttr->auth, 0, 0);
 		clutter_group_add (CLUTTER_GROUP (fluttr->stage), fluttr->auth);
 	
-		g_timeout_add (1000, (GSourceFunc)_auth_timeout, 
+		g_timeout_add (1500, (GSourceFunc)_auth_timeout, 
 			       (gpointer)fluttr);
 	}
 	
