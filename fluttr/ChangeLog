@@ -1,5 +1,10 @@
 2007-05-10  Neil J. Patel  <njp@o-hand.com>
 
+	* src/main.c: (_swap_alpha_func), (browse_input_cb):
+	Removed unnecessary variables.
+
+2007-05-10  Neil J. Patel  <njp@o-hand.com>
+
 	* README:
 	* src/fluttr-set-view.c:
 	* src/main.c: (main):

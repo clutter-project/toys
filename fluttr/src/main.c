@@ -7,6 +7,7 @@
 
 #include <config.h>
 #include <glib.h>
+#include <glib/gstdio.h>
 #include <clutter/clutter.h>
 
 #include "fluttr-auth.h"
@@ -79,8 +80,8 @@ static void		list_get_successful (FluttrAuth *auth,
 static void		list_get_error (FluttrAuth *auth, gchar *msg, 
 				    	Fluttr *fluttr);
 static void		_swap_alpha_func (ClutterBehaviour *behave,
-		  			guint		    alpha_value,
-		  			Fluttr	   *fluttr);
+		  			  guint		    alpha_value,
+		  			  gpointer	   data);
 		              	  	  
 static gboolean
 _auth_timeout (Fluttr *fluttr)
@@ -220,8 +221,8 @@ main (int argc, char **argv)
 					      alpha_linear_inc_func,
 					      NULL, NULL);
 	fluttr->behave = fluttr_behave_new (fluttr->alpha,
-					  _swap_alpha_func,
-					  (gpointer)fluttr);	
+					    _swap_alpha_func,
+					    (gpointer)fluttr);	
 	
 	/* Receive all input events */
 	g_signal_connect (stage, 
@@ -238,8 +239,9 @@ main (int argc, char **argv)
 static void
 _swap_alpha_func (ClutterBehaviour *behave,
 		  guint		    alpha_value,
-		  Fluttr	   *fluttr)
+		  gpointer	    data)
 {
+        Fluttr	   *fluttr = (Fluttr*)data;
         gfloat factor;
 	factor = (gfloat) alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
 	ClutterActor *stage = clutter_stage_get_default ();
@@ -597,9 +599,6 @@ browse_input_cb (ClutterStage *stage,
 		 ClutterEvent *event,
 		 Fluttr	      *fluttr)
 {
-	FluttrPhoto *photo = NULL;
-	
-	
 	/* First check for app wide keybinding */
 	if (event->type == CLUTTER_KEY_RELEASE)	{
 		ClutterKeyEvent* kev = (ClutterKeyEvent *) event;
