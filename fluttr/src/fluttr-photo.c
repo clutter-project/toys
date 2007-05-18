@@ -645,8 +645,8 @@ fluttr_photo_paint (ClutterActor *actor)
 	photo = FLUTTR_PHOTO(actor);
 
 	priv = FLUTTR_PHOTO_GET_PRIVATE(photo);
-
-	glPushMatrix();
+	
+        glPushMatrix();
 	
 	gfloat x, y;
 	guint width = fluttr_photo_get_default_width ();

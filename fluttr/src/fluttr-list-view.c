@@ -46,14 +46,6 @@ fluttr_list_view_get_active (FluttrListView *list_view)
 	return FLUTTR_PHOTO (priv->active_actor);
 }
 
-static void
-_pixbuf_loaded (FluttrPhoto *photo, gchar *null, FluttrLibraryRow *row)
-{
-	GdkPixbuf *pixbuf = NULL;
-	g_object_get (G_OBJECT (photo), "pixbuf", &pixbuf, NULL);
-	g_object_set (G_OBJECT (row), "pixbuf", pixbuf, NULL);
-}
-
 void 
 fluttr_list_view_advance (FluttrListView *list_view, gint n)
 {
@@ -246,11 +238,13 @@ fluttr_list_view_empty (FluttrListView *view)
 {
 	FluttrListViewPrivate *priv;
 	gint i;
-	gint len = g_list_length (priv->photos);
 	ClutterActor* child;
+	gint len;
 	
 	g_return_if_fail (FLUTTR_IS_LIST_VIEW (view));
 	priv = FLUTTR_LIST_VIEW_GET_PRIVATE(view);
+	
+	len = g_list_length (priv->photos);
 	
 	for (i = 0; i < len; i++) {
 		child = (ClutterActor*)g_list_nth_data (priv->photos, i);
@@ -379,8 +373,11 @@ fluttr_list_view_get_property (GObject    *object,
 static void
 fluttr_list_view_paint (ClutterActor *actor)
 {
+#define MINUS -500
 	FluttrListView        *list;
 	FluttrListViewPrivate *priv;
+	gint height;
+	gint buf = -1 * fluttr_photo_get_default_width ();
 
 	list = FLUTTR_LIST_VIEW(actor);
 
@@ -388,17 +385,23 @@ fluttr_list_view_paint (ClutterActor *actor)
 
 	glPushMatrix();
 	
+	g_object_get (G_OBJECT (clutter_stage_get_default ()), "width", 
+	              &height, NULL);
 	gint i;
 	gint len = clutter_group_get_n_children (CLUTTER_GROUP (actor)); 
 	for (i = 0; i < len; i++) {
 		ClutterActor* child;
-
-		child = clutter_group_get_nth_child (CLUTTER_GROUP(actor), i);
-		if (child) {
-			clutter_actor_paint (child);
+                child = clutter_group_get_nth_child (CLUTTER_GROUP(actor), i);
+		
+		gint y;
+		g_object_get (G_OBJECT (child), "y", &y, NULL);
+                
+                if (y < buf && y > height)
+                        continue;
+                if (child) {
+                        clutter_actor_paint (child);
 		}
 	}
-
 	glPopMatrix();
 }
 

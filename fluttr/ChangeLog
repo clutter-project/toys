@@ -1,3 +1,9 @@
+2007-05-18  Neil J Patel  <njp@o-hand.com>
+
+	* src/fluttr-list-view.c: (fluttr_list_view_empty),
+	(fluttr_list_view_paint):
+	Stopped painting textures which cannot be seen.
+
 2007-05-10  Neil J. Patel  <njp@o-hand.com>
 
 	* src/main.c: (_swap_alpha_func), (browse_input_cb):
