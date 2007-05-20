@@ -88,6 +88,9 @@ fluttr_photo_show_options (FluttrPhoto *photo, gboolean show);
 void
 fluttr_photo_set_active (FluttrPhoto *photo, gboolean active);
 
+void
+fluttr_photo_set_visible (FluttrPhoto *photo, gboolean visible);
+
 G_END_DECLS
 
 #endif

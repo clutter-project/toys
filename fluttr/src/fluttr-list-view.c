@@ -373,8 +373,7 @@ fluttr_list_view_get_property (GObject    *object,
 static void
 fluttr_list_view_paint (ClutterActor *actor)
 {
-#define MINUS -500
-	FluttrListView        *list;
+        FluttrListView        *list;
 	FluttrListViewPrivate *priv;
 	gint height;
 	gint buf = -1 * fluttr_photo_get_default_width ();
@@ -385,7 +384,7 @@ fluttr_list_view_paint (ClutterActor *actor)
 
 	glPushMatrix();
 	
-	g_object_get (G_OBJECT (clutter_stage_get_default ()), "width", 
+	g_object_get (G_OBJECT (clutter_stage_get_default ()), "height", 
 	              &height, NULL);
 	gint i;
 	gint len = clutter_group_get_n_children (CLUTTER_GROUP (actor)); 
@@ -396,8 +395,12 @@ fluttr_list_view_paint (ClutterActor *actor)
 		gint y;
 		g_object_get (G_OBJECT (child), "y", &y, NULL);
                 
-                if (y < buf && y > height)
+                if (y < buf || y > height) {
+                        fluttr_photo_set_visible (FLUTTR_PHOTO (child), FALSE);
                         continue;
+                } else {
+                        fluttr_photo_set_visible (FLUTTR_PHOTO (child), TRUE);
+                }
                 if (child) {
                         clutter_actor_paint (child);
 		}

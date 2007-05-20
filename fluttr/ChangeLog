@@ -1,3 +1,17 @@
+2007-05-20  Neil J. Patel  <njp@o-hand.com>
+
+	* libnflick/nflick-photo-set.c: (nflick_photo_set_give_list):
+	* libnflick/nflick-pixbuf-fetch.c: (nflick_pixbuf_fetch):
+	Removed unnecassary warnings.
+
+	* src/fluttr-list-view.c: (fluttr_list_view_paint):
+	* src/fluttr-photo.c: (fluttr_photo_set_visible),
+	(fluttr_photo_swap_alpha_func), (on_thread_ok_idle),
+	(fluttr_photo_finalize), (fluttr_photo_init):
+	* src/fluttr-photo.h:
+	When a FLuttrPhoto is not painted, it will destroy its private texture
+	which holds the photo, recreating it before it is painted.
+
 2007-05-18  Neil J Patel  <njp@o-hand.com>
 
 	* src/fluttr-list-view.c: (fluttr_list_view_empty),

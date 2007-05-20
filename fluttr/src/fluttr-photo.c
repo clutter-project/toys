@@ -30,6 +30,7 @@ struct _FluttrPhotoPrivate
 	gchar			*photoid;
 	gchar			*name;
 	NFlickPhotoSet		*set;
+	gboolean                 visible;
 	
 	/* The all-important pixbuf fetching variables */
 	NFlickWorker		*worker;
@@ -90,6 +91,51 @@ static guint _photo_signals[LAST_SIGNAL] = { 0 };
 
 void
 _fluttr_photo_fetch_pixbuf (FluttrPhoto *photo, guint width, guint height);
+
+
+/*
+ * If visible is set to false, the texture actor will be destroyed, else, it
+ * will be created again
+ */
+void
+fluttr_photo_set_visible (FluttrPhoto *photo, gboolean visible)
+{
+	FluttrPhotoPrivate *priv;
+	gint width = fluttr_photo_get_default_width ();
+	gint height = fluttr_photo_get_default_height ();
+	guint w, h;
+		
+	g_return_if_fail (FLUTTR_IS_PHOTO (photo));
+	priv = FLUTTR_PHOTO_GET_PRIVATE(photo);
+	
+	if (priv->visible == visible)
+	        return;
+        if (visible) {
+	        priv->texture = clutter_texture_new_from_pixbuf (default_pic);
+	        clutter_group_add (CLUTTER_GROUP (priv->clip), priv->texture);
+	        clutter_actor_set_size (priv->texture, 
+				        width -(FRAME*2), 
+				        height -(FRAME*2));
+	        clutter_actor_set_position (priv->texture, FRAME, FRAME);     
+		if (priv->pixbuf) {
+		        clutter_texture_set_pixbuf (CLUTTER_TEXTURE (
+		                                        priv->texture),
+					            priv->pixbuf);
+        		clutter_actor_set_scale (priv->texture, 0.6, 0.6);
+	        	clutter_actor_get_abs_size (priv->texture, &w, &h);
+	        	
+	        	clutter_actor_set_position (priv->texture, 
+	        				    (width/2) - (w/2),
+	        				    (height/2) - (h/2));
+                }
+                clutter_actor_show_all (priv->texture);
+        } else {
+                clutter_actor_destroy (priv->texture);
+                priv->texture = NULL;
+        }
+        priv->visible = visible;
+        
+}
 
 /* Will return the default size of the FluttrPhoto square for the current stage */
 guint
@@ -261,13 +307,18 @@ fluttr_photo_swap_alpha_func (ClutterBehaviour *behave,
 	guint width = fluttr_photo_get_default_width ();
 	guint height = fluttr_photo_get_default_height ();
 	guint w, h;
-	
+
+        
         g_return_if_fail (FLUTTR_IS_PHOTO (data));
         priv = FLUTTR_PHOTO_GET_PRIVATE(data);
 	
-	factor = (gfloat) alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
+	/* If we are not visible, return */
+        if (!priv->visible || priv->texture == NULL)
+                return;
 	
-	if (priv->pixbuf != NULL && factor > 0.5) {
+        factor = (gfloat) alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
+	
+	if (priv->pixbuf != NULL && factor > 0.5 && priv->texture) {
 		clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture),
 					    priv->pixbuf);
 		clutter_actor_set_scale (priv->texture, 0.6, 0.6);
@@ -285,7 +336,9 @@ fluttr_photo_swap_alpha_func (ClutterBehaviour *behave,
 		factor /= 0.5;
 	}
 	
-	clutter_actor_set_opacity (CLUTTER_ACTOR (priv->texture), 255 * factor);
+	if (priv->texture)
+        	clutter_actor_set_opacity (CLUTTER_ACTOR (priv->texture),
+	                                   255 * factor);
 	//clutter_actor_set_opacity (CLUTTER_ACTOR (priv->frame), 255 * factor);
 	
 	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(data)))
@@ -304,7 +357,7 @@ fluttr_photo_act_alpha_func (ClutterBehaviour *behave,
 	
 	g_return_if_fail (FLUTTR_IS_PHOTO (data));
         priv = FLUTTR_PHOTO_GET_PRIVATE(data);
-	
+
 	factor = (gfloat) alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
 	
 	if (priv->active)
@@ -385,7 +438,12 @@ on_thread_ok_idle (FluttrPhoto *photo)
         
         /* Get pixbuf from worker */
         g_object_get (G_OBJECT (priv->worker), "pixbuf", &pixbuf, NULL);
-        priv->pixbuf = pixbuf;        
+        priv->pixbuf = pixbuf;  
+        g_object_ref (G_OBJECT (priv->pixbuf));  
+        
+        /* If we are not visible, we don't start the time line */
+        if (!priv->visible)
+                return FALSE;    
         
 	if (!clutter_timeline_is_playing (priv->swap_time))
         	clutter_timeline_start (priv->swap_time);
@@ -691,6 +749,10 @@ fluttr_photo_dispose (GObject *object)
 static void 
 fluttr_photo_finalize (GObject *object)
 {
+	FluttrPhotoPrivate *priv;
+
+	priv = FLUTTR_PHOTO_GET_PRIVATE(object);
+	
 	G_OBJECT_CLASS (fluttr_photo_parent_class)->finalize (object);
 }
 
@@ -791,6 +853,7 @@ fluttr_photo_init (FluttrPhoto *self)
 	
 	priv->pixbuf = NULL;
 	priv->scale = 1.0;
+	priv->visible = TRUE;
 	
 	/* The white frame */
 	priv->frame = clutter_rectangle_new_with_color (&rect_col);

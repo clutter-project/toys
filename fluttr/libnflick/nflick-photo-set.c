@@ -198,7 +198,8 @@ NFlickPhotoSet*                 nflick_photo_set_new (const gchar *name, const g
 void                            nflick_photo_set_give_list (NFlickPhotoSet *self, GList *list)
 {
         g_return_if_fail (NFLICK_IS_PHOTO_SET (self));
-        g_return_if_fail (self->Private->Fetched == FALSE);
+        if (self->Private->Fetched != FALSE)
+                return;
 
         self->Private->PhotoDataList = list;
         self->Private->Fetched = TRUE;

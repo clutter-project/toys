@@ -112,7 +112,8 @@ GdkPixbuf*                      nflick_pixbuf_fetch (const gchar *url, gint32 wi
         
         if (result == TRUE) {
                 pixbuf = gdk_pixbuf_loader_get_pixbuf (helper->Loader);
-                g_object_ref (pixbuf);
+                if (pixbuf)
+                        g_object_ref (pixbuf);
         } else {
                 // FIXME: Remove the cached file
         }
