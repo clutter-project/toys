@@ -1,5 +1,11 @@
 2007-05-21  Neil J. Patel  <njp@o-hand.com>
 
+	* src/fluttr-photo.c: (fluttr_photo_set_visible),
+	(fluttr_photo_swap_alpha_func):
+	Fixed Clutter-CRITICAL warnings in the texture-destroying code.
+
+2007-05-21  Neil J. Patel  <njp@o-hand.com>
+
 	* data/picture.svg:
 	Made it fit the ratio of the thumbnails so it doesn't appear
 	stretched.

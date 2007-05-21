@@ -130,7 +130,9 @@ fluttr_photo_set_visible (FluttrPhoto *photo, gboolean visible)
                 }
                 clutter_actor_show_all (priv->texture);
         } else {
-                clutter_actor_destroy (priv->texture);
+                clutter_group_remove (CLUTTER_GROUP (priv->clip),priv->texture);
+                if (CLUTTER_IS_ACTOR (priv->texture))
+                        clutter_actor_destroy (priv->texture);
                 priv->texture = NULL;
         }
         priv->visible = visible;
@@ -313,9 +315,10 @@ fluttr_photo_swap_alpha_func (ClutterBehaviour *behave,
         priv = FLUTTR_PHOTO_GET_PRIVATE(data);
 	
 	/* If we are not visible, return */
-        if (!priv->visible || priv->texture == NULL)
+        if (!priv->visible || priv->texture == NULL) {
+                clutter_timeline_stop (priv->swap_time);
                 return;
-	
+	}
         factor = (gfloat) alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
 	
 	if (priv->pixbuf != NULL && factor > 0.5 && priv->texture) {
