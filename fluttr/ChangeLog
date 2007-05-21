@@ -1,3 +1,13 @@
+2007-05-21  Neil J. Patel  <njp@o-hand.com>
+
+	* src/fluttr-list-view.c: (fluttr_list_view_advance),
+	(fluttr_list_view_activate), (fluttr_list_view_advance_row),
+	(fluttr_list_view_set_property), (fluttr_list_view_get_property),
+	(fluttr_list_view_class_init):
+	* src/main.c: (main):
+	You can now set the number of columns in the list view via the -c
+	switch (default=3).
+
 2007-05-20  Neil J. Patel  <njp@o-hand.com>
 
 	* libnflick/nflick-photo-set.c: (nflick_photo_set_give_list):

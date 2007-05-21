@@ -82,6 +82,24 @@ static void		list_get_error (FluttrAuth *auth, gchar *msg,
 static void		_swap_alpha_func (ClutterBehaviour *behave,
 		  			  guint		    alpha_value,
 		  			  gpointer	   data);
+
+
+/* Commmand line options */
+static gint 	 cols = 3;
+
+static GOptionEntry entries[] = 
+{
+	{ "columns", 
+	  'c', 0, 
+	  G_OPTION_ARG_INT, 
+	  &cols, 
+	  "Number of picture columns in the view", 
+	  "3" },
+	  
+	{ NULL }
+};
+
+
 		              	  	  
 static gboolean
 _auth_timeout (Fluttr *fluttr)
@@ -94,6 +112,7 @@ int
 main (int argc, char **argv)
 {
  	Fluttr *fluttr = g_new0 (Fluttr, 1);
+ 	GOptionContext *context;
  	ClutterActor *stage, *background, *list;
 	ClutterColor stage_color = { 0x00, 0x00, 0x00, 0xff };
 	FluttrSettings *settings = NULL;
@@ -101,7 +120,12 @@ main (int argc, char **argv)
 	
 	g_thread_init (NULL);
 	clutter_init (&argc, &argv);		
-	
+
+	/* Load options */
+	context = g_option_context_new (" - Fluttr Options");
+	g_option_context_add_main_entries (context, entries, NULL);
+	g_option_context_parse (context, &argc, &argv, NULL);	
+		
 	/* Check that there are enough arguments */
 	if (argc < 2 && !(check_credentials (fluttr))) {
 		g_print ("\n\nYou need to start Fluttr with your Flickr "\
@@ -196,6 +220,7 @@ main (int argc, char **argv)
 	
 	/* The list view */
 	fluttr->list = fluttr_list_view_new ();
+	g_object_set (G_OBJECT (fluttr->list), "cols", cols, NULL);
 	clutter_group_add (CLUTTER_GROUP (fluttr->stage), fluttr->list);
 	clutter_actor_set_size (fluttr->list, CLUTTER_STAGE_WIDTH (),
 				CLUTTER_STAGE_HEIGHT ());

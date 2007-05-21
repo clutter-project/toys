@@ -22,16 +22,17 @@ struct _FluttrListViewPrivate
 	gint 			 active_photo;
 	ClutterActor		*active_actor;
 	gint			 active_col;
+	
+	gint                     n_cols;
 };
 
 enum
 {
 	PROP_0,
 	PROP_LIBRARY,
-	PROP_SET
+	PROP_SET,
+	PROP_COLS
 };
-
-#define N_COLS 4
 
 static ClutterGroupClass	*parent_class = NULL;
 
@@ -84,22 +85,22 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 			break;
 		}
 		col++;
-		if (col > (N_COLS-1)) {
+		if (col > (priv->n_cols-1)) {
 			col = 0;
 			row++;
 		}
 	}
 	
 	/* Figure out the base x value */
-	x1 = ((width) * N_COLS ) + (padding*(N_COLS-1));
+	x1 = ((width) * priv->n_cols ) + (padding*(priv->n_cols-1));
 	x1 = (CLUTTER_STAGE_WIDTH ()/2)-(x1/2);
 	
 	/* Iterate through actors, calculating their new x positions, and make
 	   sure they are on the right place (left, right or center) */
 	col = 0;
 	row = 0;
-	gint less = priv->active_photo - (N_COLS * 2);
-	gint more = priv->active_photo + (N_COLS * 3);
+	gint less = priv->active_photo - (priv->n_cols * 2);
+	gint more = priv->active_photo + (priv->n_cols * 3);
 	
 	offset = -1 * ((height) + padding) * active_row;
 	offset += (CLUTTER_STAGE_HEIGHT () /2) - (height/2);
@@ -112,7 +113,7 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 		fluttr_photo_update_position (FLUTTR_PHOTO (photo), x, y);
 		
 		col++;
-		if (col > (N_COLS-1)) {
+		if (col > (priv->n_cols-1)) {
 			col = 0;
 			row++;
 			offset += height + padding;
@@ -177,7 +178,7 @@ fluttr_list_view_activate (FluttrListView *list_view)
 			break;
 		}
 		col++;
-		if (col > (N_COLS-1)) {
+		if (col > (priv->n_cols-1)) {
 			col = 0;
 			row++;
 		}
@@ -213,7 +214,7 @@ fluttr_list_view_activate (FluttrListView *list_view)
 			}
 		}
 		col++;
-		if (col > (N_COLS-1)) {
+		if (col > (priv->n_cols-1)) {
 			col = 0;
 			row++;
 		}		
@@ -221,9 +222,14 @@ fluttr_list_view_activate (FluttrListView *list_view)
 }
 
 void
-fluttr_list_view_advance_row (FluttrListView *list_view, gint n)
+fluttr_list_view_advance_row (FluttrListView *view, gint n)
 {
-	fluttr_list_view_advance (list_view, (N_COLS * n));
+	FluttrListViewPrivate *priv;
+	
+	g_return_if_fail (FLUTTR_IS_LIST_VIEW (view));
+	priv = FLUTTR_LIST_VIEW_GET_PRIVATE(view);
+	
+	fluttr_list_view_advance (view, (priv->n_cols * n));
 }
 
 void
@@ -337,6 +343,10 @@ fluttr_list_view_set_property (GObject      *object,
 						    FLUTTR_LIST_VIEW (object));
 			}
 			break;
+		
+		case PROP_COLS:
+		        priv->n_cols = g_value_get_int (value);
+		        break;
 		default:
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, 
 							   pspec);
@@ -363,6 +373,10 @@ fluttr_list_view_get_property (GObject    *object,
 		case PROP_SET:
 			g_value_set_object (value, priv->library);
 			break;		
+		
+		case PROP_COLS:
+		        g_value_set_int (value, priv->n_cols);
+		        break;
 		default:
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id,
 							   pspec);
@@ -459,6 +473,15 @@ fluttr_list_view_class_init (FluttrListViewClass *klass)
 		 "Set",
 		 "The underlying Fluttr Photo set",
 		 FLUTTR_TYPE_SET,
+		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));	
+		 
+	g_object_class_install_property 
+		(gobject_class,
+		 PROP_COLS,
+		 g_param_spec_int ("cols",
+		 "Columns",
+		 "The number of photo columns",
+		 1, 10, 3,
 		 G_PARAM_CONSTRUCT|G_PARAM_READWRITE));	
 
 }
