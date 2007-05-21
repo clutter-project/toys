@@ -1,5 +1,14 @@
 2007-05-21  Neil J. Patel  <njp@o-hand.com>
 
+	* data/picture.svg:
+	Made it fit the ratio of the thumbnails so it doesn't appear
+	stretched.
+
+	* src/fluttr-photo.c: (fluttr_photo_get_default_size):
+	Made the default size a little larger.
+
+2007-05-21  Neil J. Patel  <njp@o-hand.com>
+
 	* src/fluttr-photo.c: (on_thread_ok_idle), (_check_cache):
 	* src/main.c: (main):
 	Thumbnails will be created according to stage size, and will be saved

@@ -145,9 +145,9 @@ fluttr_photo_get_default_size (void)
 	guint height = CLUTTER_STAGE_HEIGHT ();
 	
 	if (width > height)
-		return height/4;
+		return height/3;
 	else
-		return width /4;
+		return width /3;
 }
 
 guint
