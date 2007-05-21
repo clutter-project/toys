@@ -452,7 +452,9 @@ on_thread_ok_idle (FluttrPhoto *photo)
 	
 	/* Save the pixbuf */
 	GError *err = NULL;
-	name = g_strdup_printf ("%s.png", priv->photoid);
+	name = g_strdup_printf ("%d/%s.png", 
+	                        fluttr_photo_get_default_width (),
+	                        priv->photoid);
 	filename = g_build_filename (g_get_home_dir (),
 				     ".fluttr-thumbs",
 				     name,
@@ -519,7 +521,9 @@ _check_cache (FluttrPhoto *photo)
 	g_return_val_if_fail (FLUTTR_IS_PHOTO (photo), NULL);
         priv = FLUTTR_PHOTO_GET_PRIVATE(photo);		gchar *name, *filename;
 	
-	name = g_strdup_printf ("%s.png", priv->photoid);
+	name = g_strdup_printf ("%d/%s.png", 
+	                        fluttr_photo_get_default_width (),
+	                        priv->photoid);
 	filename = g_build_filename (g_get_home_dir (),
 				     ".fluttr-thumbs",
 				     name,

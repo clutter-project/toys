@@ -1,5 +1,16 @@
 2007-05-21  Neil J. Patel  <njp@o-hand.com>
 
+	* src/fluttr-photo.c: (on_thread_ok_idle), (_check_cache):
+	* src/main.c: (main):
+	Thumbnails will be created according to stage size, and will be saved
+	in .fluttr-thumbs/<SIZE>/<PHOTO_ID>.png. Therefore photos will always
+	be at the proper size for the current stage size.
+
+	* src/main.c: (main):
+	Added fulscreen (-f), width (-w) and height (-h) options.
+
+2007-05-21  Neil J. Patel  <njp@o-hand.com>
+
 	* src/fluttr-list-view.c: (fluttr_list_view_advance),
 	(fluttr_list_view_activate), (fluttr_list_view_advance_row),
 	(fluttr_list_view_set_property), (fluttr_list_view_get_property),

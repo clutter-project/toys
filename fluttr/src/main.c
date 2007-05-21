@@ -86,6 +86,9 @@ static void		_swap_alpha_func (ClutterBehaviour *behave,
 
 /* Commmand line options */
 static gint 	 cols = 3;
+static gboolean  fullscreen = FALSE;
+static gint 	 stage_width = 800;
+static gint 	 stage_height = 440;
 
 static GOptionEntry entries[] = 
 {
@@ -95,7 +98,28 @@ static GOptionEntry entries[] =
 	  &cols, 
 	  "Number of picture columns in the view", 
 	  "3" },
+	 
+	{ "fullscreen", 
+	  'f', 0, 
+	  G_OPTION_ARG_NONE, 
+	  &fullscreen, 
+	  "Launch Juke in fullscreen mode", 
+	  NULL },
+
+	{ "width", 
+	  'w', 0, 
+	  G_OPTION_ARG_INT, 
+	  &stage_width, 
+	  "Width of the Fluttr window", 
+	  "800" },
 	  
+	{ "height", 
+	  'h', 0, 
+	  G_OPTION_ARG_INT, 
+	  &stage_height, 
+	  "Height of the Fluttr window", 
+	  "440" },	
+
 	{ NULL }
 };
 
@@ -116,7 +140,7 @@ main (int argc, char **argv)
  	ClutterActor *stage, *background, *list;
 	ClutterColor stage_color = { 0x00, 0x00, 0x00, 0xff };
 	FluttrSettings *settings = NULL;
-	gchar *filename;
+	gchar *filename, *folder;
 	
 	g_thread_init (NULL);
 	clutter_init (&argc, &argv);		
@@ -134,29 +158,33 @@ main (int argc, char **argv)
 		return 0;
 	}
 	
-	/* Make sure the thumbnail path is created */
-	filename = g_build_filename (g_get_home_dir (),
-				     ".fluttr-thumbs",
-				     NULL);	
-	g_mkdir (filename, 0775);
-	g_free (filename);
-	
 	/* Create a new library */
 	fluttr->library = NULL;
 	fluttr->view = FLUTTR_VIEW_SETS;
 	
 	stage = clutter_stage_get_default ();
 	fluttr->stage = stage;
-	clutter_actor_set_size (stage, 800, 440);
+	clutter_actor_set_size (stage, stage_width, stage_height);
 	clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
+        
+        if (fullscreen)
+        	g_object_set (stage, "fullscreen", TRUE, NULL);
 
-	/*g_object_set (stage, "fullscreen", TRUE, NULL);*/
-
+	/* Make sure the sized thumbnail path is created */
+	folder = g_strdup_printf ("%d", fluttr_photo_get_default_width ());
+	filename = g_build_filename (g_get_home_dir (),
+				     ".fluttr-thumbs",
+				     folder,
+				     NULL);	
+	g_mkdir (filename, 0775);
+	g_free (filename);
+	g_free (folder);
+	
 	
 	if (fluttr->username == NULL) {
 		/* Authorise the mini-token */
 		g_print ("Authenticating : %s\n", argv[1]);		
-		fluttr->auth = fluttr_auth_new (argv[1]);
+		 fluttr->auth = fluttr_auth_new (argv[1]);
 		g_signal_connect (G_OBJECT (fluttr->auth), "successful",
 				  G_CALLBACK (auth_successful), fluttr);
 		g_signal_connect (G_OBJECT (fluttr->auth), "error",
