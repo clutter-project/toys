@@ -56,6 +56,9 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 	ClutterActor *photo = NULL;
 	guint width = fluttr_photo_get_default_width ();
 	guint height = fluttr_photo_get_default_height ();
+	ClutterActor *stage = clutter_stage_get_default ();
+	gint stage_height;
+	gint min = -1 * fluttr_photo_get_default_height ();
 	gint x1;
 	gint active_row = 0;
 	gint offset = height/2;
@@ -65,6 +68,8 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 	priv = FLUTTR_LIST_VIEW_GET_PRIVATE(list_view);
 
 	len = g_list_length (priv->photos);
+	g_object_get (G_OBJECT (stage), "height", &stage_height, NULL);
+	stage_height += fluttr_photo_get_default_height ();
 	
 	/* Make sure we are within the bounds of the number of albums */
 	priv->active_photo+= n;
@@ -110,6 +115,11 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 		 
 		gint x = x1 + (col * (width + padding));
 		gint y = offset;
+		if (y > stage_height)
+		        y = stage_height;
+		else if (y < min)
+		        y = min;
+		
 		fluttr_photo_update_position (FLUTTR_PHOTO (photo), x, y);
 		
 		col++;

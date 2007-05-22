@@ -1,3 +1,9 @@
+2007-05-22  Neil J Patel  <njp@o-hand.com>
+
+	* src/fluttr-list-view.c: (fluttr_list_view_advance):
+	Added some more code to 'shrink' the stage, so there's less work for
+	clutter to do. Definitely a visible improvement on large lists.
+
 2007-05-21  Neil J. Patel  <njp@o-hand.com>
 
 	* src/fluttr-photo.c: (fluttr_photo_set_visible),
