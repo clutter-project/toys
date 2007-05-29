@@ -1,3 +1,8 @@
+2007-05-29  Tomas Frydrych <tf@o-hand.com>
+
+	* configure.ac:
+	Check that neon is at least 0.26.0
+	
 2007-05-22  Neil J Patel  <njp@o-hand.com>
 
 	* src/fluttr-list-view.c: (fluttr_list_view_advance):
