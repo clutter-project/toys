@@ -1,60 +1,59 @@
 #include "opt.h"
 #include <stdlib.h> 		/* for exit() */
 
-static void 
-input_cb (ClutterStage *stage,
-	  ClutterEvent *event,
-	  gpointer      user_data)
+static void
+key_release_cb (ClutterStage           *stage,
+                ClutterKeyEvent        *kev,
+                gpointer                user_data)
 {
   OptShow  *show = OPT_SHOW (user_data);
 
-  if (event->type == CLUTTER_KEY_RELEASE)
+  switch (clutter_key_event_symbol (kev))
     {
-      ClutterKeyEvent* kev = (ClutterKeyEvent *) event;
-
-      switch (clutter_key_event_symbol (kev))
-	{
-        case CLUTTER_m:
+      case CLUTTER_m:
           opt_show_pop_menu (show);
-	  break;
-        case CLUTTER_s:
+          break;
+      case CLUTTER_s:
           opt_show_toggle_position (show);
-	  break;
-        case CLUTTER_q:
+          break;
+      case CLUTTER_q:
           clutter_main_quit ();
-	  break;
-	case CLUTTER_r:
-	case CLUTTER_Left:
-	  opt_show_retreat (show);
-	  break;
-	case CLUTTER_Page_Down:
-	  opt_show_skip (show, 5);
-	  break;
-	case CLUTTER_Page_Up:
-	  opt_show_skip (show, -5);
-	  break;
+          break;
+      case CLUTTER_r:
+      case CLUTTER_Left:
+          opt_show_retreat (show);
+          break;
+      case CLUTTER_Page_Down:
+          opt_show_skip (show, 5);
+          break;
+      case CLUTTER_Page_Up:
+          opt_show_skip (show, -5);
+          break;
 
-        case CLUTTER_Up:
-        case CLUTTER_Down:
-        case CLUTTER_Return:
-	    /* menu keys -- ignore */
-	    break;
+      case CLUTTER_Up:
+      case CLUTTER_Down:
+      case CLUTTER_Return:
+          /* menu keys -- ignore */
+          break;
 
-	case CLUTTER_Right:
-	default:
-	  opt_show_advance (show);
-	  break;
-	}
+      case CLUTTER_Right:
+      default:
+          opt_show_advance (show);
+          break;
     }
-  else if (event->type == CLUTTER_BUTTON_RELEASE)
-    {
-      ClutterButtonEvent* bev = (ClutterButtonEvent*)event;
+}
 
-      if (bev->button == 1)
-	opt_show_advance (show);
-      else if (bev->button == 3)
-	opt_show_retreat (show);
-    }
+static void
+button_release_cb (ClutterStage        *stage,
+                   ClutterButtonEvent  *bev,
+                   gpointer             user_data)
+{
+  OptShow  *show = OPT_SHOW (user_data);
+
+  if (bev->button == 1)
+    opt_show_advance (show);
+  else if (bev->button == 3)
+    opt_show_retreat (show);
 }
 
 static void
@@ -124,7 +123,22 @@ main(int argc, char **argv)
 
   /* Need to set this early on */
   if (opt_export != NULL)
-    g_object_set (stage, "offscreen", TRUE, NULL);
+    {
+      gboolean offscreen_supported;
+
+      g_object_set (stage, "offscreen", TRUE, NULL);
+
+      /* Actually check offscreen works - recent Mesas appear not to
+       * like rendering to Pixmaps. 
+      */
+      g_object_get (stage, "offscreen", &offscreen_supported, NULL);
+      if (offscreen_supported == FALSE)
+	{
+	  g_print ("Could not export presentation:\n"
+		   "\tOffscreen rendering not supported by Clutter backend\n");
+	  exit(-1);
+	}
+    }
 
   if (opt_size != NULL)
     {
@@ -140,7 +154,7 @@ main(int argc, char **argv)
     {
       g_object_set (stage,
 		    "fullscreen",  TRUE, 
-		    "hide-cursor", TRUE,
+		    "cursor-visible", FALSE,
 		    NULL);
     }
 
@@ -169,8 +183,13 @@ main(int argc, char **argv)
     {
       /* Connect up for input event */
       g_signal_connect (stage, 
-			"input-event",
-			G_CALLBACK (input_cb),
+			"key-release-event",
+			G_CALLBACK (key_release_cb),
+			show);
+
+      g_signal_connect (stage, 
+			"button-release-event",
+			G_CALLBACK (button_release_cb),
 			show);
 
       opt_show_run (show);

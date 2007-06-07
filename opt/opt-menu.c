@@ -38,7 +38,8 @@ struct OptMenuPrivate
   gboolean          size_set;
   gboolean          hiding;
   guint             timeout_id;
-  gulong            input_signal_id;
+  gulong            button_release_signal_id;
+  gulong            key_release_signal_id;
 };
 
 /* Set sizes for background and selection -- called once the
@@ -65,53 +66,56 @@ opt_menu_init_size (OptMenu * menu)
   menu->priv->size_set = TRUE;
 }
 
-/* Input callback
+/* Input callbacks
  */
 static void 
-opt_menu_input_cb (ClutterStage *stage,
-	  ClutterEvent *event,
-	  gpointer      user_data)
+opt_menu_key_release_cb (ClutterStage          *stage,
+                         ClutterKeyEvent       *kev,
+                         gpointer               user_data)
 {
   OptMenu  *menu = OPT_MENU (user_data);
 
   if (!CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR (menu)))
     return;
-  
-  if (event->type == CLUTTER_KEY_RELEASE)
-    {
-      ClutterKeyEvent* kev = (ClutterKeyEvent *) event;
 
-      switch (clutter_key_event_symbol (kev))
-	{
-        case CLUTTER_Up:
+  switch (clutter_key_event_symbol (kev))
+    {
+      case CLUTTER_Up:
           opt_menu_up (menu);
-	  break;
-        case CLUTTER_Down:
+          break;
+      case CLUTTER_Down:
           opt_menu_down (menu);
-	  break;
-        case CLUTTER_Return:
+          break;
+      case CLUTTER_Return:
           opt_menu_activate (menu);
-	  break;
-          
-	default:
-	  opt_menu_popdown (menu);
-	  break;
-	}
-    }
-  else if (event->type == CLUTTER_BUTTON_RELEASE)
-    {
-      /* Allow a mouse wheel to control the menu (cannot handle
-       * buttons 1 and 3 here, because those are used to control the slides).
-       */
-      ClutterButtonEvent* bev = (ClutterButtonEvent*)event;
+          break;
 
-      if (bev->button == 4)
-        opt_menu_up (menu);
-      else if (bev->button == 5)
-        opt_menu_down (menu);
-      else if (bev->button == 2)
-        opt_menu_activate (menu);
+      default:
+          opt_menu_popdown (menu);
+          break;
     }
+}
+
+static void
+opt_menu_button_release_cb (ClutterStage       *stage,
+                            ClutterButtonEvent *bev,
+                            gpointer            user_data)
+{
+  OptMenu  *menu = OPT_MENU (user_data);
+
+  if (!CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR (menu)))
+    return;
+
+  /* Allow a mouse wheel to control the menu (cannot handle
+   * buttons 1 and 3 here, because those are used to control the slides).
+   */
+
+  if (bev->button == 4)
+    opt_menu_up (menu);
+  else if (bev->button == 5)
+    opt_menu_down (menu);
+  else if (bev->button == 2)
+    opt_menu_activate (menu);
 }
 
 static void 
@@ -441,9 +445,12 @@ opt_menu_pop (OptMenu * menu)
       clutter_actor_set_position (CLUTTER_ACTOR (menu), 0, 0);
 
       /* Connect up for input event */
-      menu->priv->input_signal_id =
-        g_signal_connect (stage, "input-event",
-                          G_CALLBACK (opt_menu_input_cb), menu);
+      menu->priv->button_release_signal_id =
+        g_signal_connect (stage, "button-release-event",
+                          G_CALLBACK (opt_menu_button_release_cb), menu);
+      menu->priv->key_release_signal_id =
+        g_signal_connect (stage, "key-release-event",
+                          G_CALLBACK (opt_menu_key_release_cb), menu);
 
       opt_menu_select_item (menu, menu->priv->current_slide);
       clutter_actor_show_all (CLUTTER_ACTOR (menu));
@@ -464,10 +471,18 @@ opt_menu_popdown (OptMenu * menu)
   {
     ClutterActor * stage = clutter_stage_get_default();
 
-    if (menu->priv->input_signal_id)
+    if (menu->priv->button_release_signal_id)
       {
-        g_signal_handler_disconnect (stage, menu->priv->input_signal_id);
-        menu->priv->input_signal_id = 0;
+        g_signal_handler_disconnect (stage,
+                                     menu->priv->button_release_signal_id);
+        menu->priv->button_release_signal_id = 0;
+      }
+
+    if (menu->priv->key_release_signal_id)
+      {
+        g_signal_handler_disconnect (stage,
+                                     menu->priv->key_release_signal_id);
+        menu->priv->key_release_signal_id = 0;
       }
   
     clutter_actor_set_scale (CLUTTER_ACTOR (menu), 1.0, 1.0);

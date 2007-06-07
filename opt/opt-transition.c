@@ -34,7 +34,7 @@ yz_flip_transition_frame_cb (OptTransition   *trans,
   if (frame_num > n_frames/2)
     {
       clutter_actor_hide (CLUTTER_ACTOR(from));
-      clutter_group_show_all (CLUTTER_GROUP(to));
+      clutter_actor_show_all (CLUTTER_ACTOR(to));
       clutter_actor_set_depth (CLUTTER_ACTOR(to), 
 			       -1 * ((n_frames * 2000) - (frame_num * 2000)));
 
@@ -76,7 +76,7 @@ zoom_transition_frame_cb (OptTransition   *trans,
   if (frame_num > n_frames/2)
     {
       clutter_actor_hide (CLUTTER_ACTOR(from));
-      clutter_group_show_all (CLUTTER_GROUP(to));
+      clutter_actor_show_all (CLUTTER_ACTOR(to));
       clutter_actor_set_depth (CLUTTER_ACTOR(to), 
 			       -1 * ((n_frames * 2000) - (frame_num * 2000)));
 
@@ -114,7 +114,7 @@ flip_transition_frame_cb (OptTransition   *trans,
   to   = opt_transition_get_to (trans);
   stage = clutter_stage_get_default();
 
-  clutter_group_show_all (CLUTTER_GROUP(to));
+  clutter_actor_show_all (CLUTTER_ACTOR(to));
 
   mult = priv->direction ? 1 : -1;
 
@@ -156,7 +156,7 @@ cube_transition_frame_cb (OptTransition   *trans,
   to    = opt_transition_get_to (trans);
   stage = clutter_stage_get_default();
 
-  clutter_group_show_all (CLUTTER_GROUP(to));
+  clutter_actor_show_all (CLUTTER_ACTOR(to));
 
   mult = priv->direction ? -1 : 1;
 
@@ -198,7 +198,7 @@ page_transition_frame_cb (OptTransition   *trans,
   to    = opt_transition_get_to (trans);
   stage = clutter_stage_get_default();
 
-  clutter_group_show_all (CLUTTER_GROUP(to));
+  clutter_actor_show_all (CLUTTER_ACTOR(to));
 
   mult = priv->direction ? -1 : 1;
 
@@ -239,7 +239,7 @@ fade_transition_frame_cb (OptTransition   *trans,
 
   if (frame_num == 0)
     {
-      clutter_group_show_all (CLUTTER_GROUP(to));
+      clutter_actor_show_all (CLUTTER_ACTOR(to));
       clutter_actor_raise_top (CLUTTER_ACTOR(to));
     }
 
@@ -397,7 +397,8 @@ opt_transition_set_from (OptTransition *trans, OptSlide *slide)
     g_object_unref(priv->from);
 
   priv->from = slide;
-  g_object_ref(slide);
+  if (slide != NULL)
+    g_object_ref(slide);
 }
 
 void
@@ -414,7 +415,8 @@ opt_transition_set_to (OptTransition *trans, OptSlide *slide)
     g_object_unref(priv->to);
 
   priv->to = slide;
-  g_object_ref(slide);
+  if (slide != NULL)
+    g_object_ref(slide);
 }
 
 OptSlide*

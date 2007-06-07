@@ -1,3 +1,13 @@
+2007-06-08  Matthew Allum  <mallum@openedhand.com>
+
+	* configure.ac:
+	* opt-menu.c:
+	* opt-show.c:
+	* opt-transition.c:
+	* opt.c: 
+	Update to 0.3 API, thanks to Johan Bilien  (#366).
+	Print error if offscreen stage unsupported.
+
 2007-04-16  Tomas Frydrych  <tf@openedhand.com>
 
 	* opt-menu.c:
