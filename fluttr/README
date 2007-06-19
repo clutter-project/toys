@@ -34,6 +34,15 @@ already at 'root level' ie. you can see all the different photo sets, then
 pressing Esc will quit Fluttr. Pressing q at any time will also cause Fluttr 
 to quit.
 
+Options
+=======
+-c, --columns=3      Number of picture columns in the view
+-f, --fullscreen     Launch Juke in fullscreen mode
+-w, --width=800      Width of the Fluttr window
+-h, --height=440     Height of the Fluttr window
+
+
+
 Know Issues
 ===========
 
