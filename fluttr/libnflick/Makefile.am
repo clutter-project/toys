@@ -1,4 +1,4 @@
-noinst_lib_LTLIBRARIES = libnflick.la
+noinst_LTLIBRARIES = libnflick.la
 
 INCLUDES = \
 	$(DEPS_CFLAGS)
@@ -8,8 +8,6 @@ INCLUDES = \
 	-DDATADIR=\""$(datadir)"\" 			\
 	-DSYSCONFDIR=\""$(sysconfdir)"\" 		\
 	$(NULL)	
-
-noinst_libdir = $(includedir)/libnflick
 
 libnflick_la_SOURCES =	\
 	nflick.h				\
@@ -62,4 +60,3 @@ libnflick_la_SOURCES =	\
 
 libnflick_la_LIBADD = $(DEPS_LIBS)
 libnflick_la_LDFLAGS = -version-info 0:1:0
-

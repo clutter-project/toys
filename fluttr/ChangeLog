@@ -1,3 +1,8 @@
+2007-06-19  Ross Burton  <ross@openedhand.com>
+
+	* libnflick/Makefile.am:
+	Don't install the library.
+
 2007-06-19  Rob Bradford  <rob@openedhand.com>
 
 	* libnflick/Makefile.am:
