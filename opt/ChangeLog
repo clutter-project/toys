@@ -1,3 +1,14 @@
+2007-06-19  Matthew Allum  <mallum@openedhand.com>
+
+	* demo.xml:
+	Include cube transition
+
+	* opt-show.c:
+	Add png compression parameter and set at maximum
+
+	* opt.c:
+	Call clutter_init() with args
+
 2007-06-08  Matthew Allum  <mallum@openedhand.com>
 
 	* configure.ac:

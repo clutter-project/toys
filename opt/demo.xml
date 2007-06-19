@@ -15,6 +15,7 @@
     <bullet>OPT is a simple presentation program built with Clutter by folks at OH.</bullet> 
     <bullet>Presentations are built with simple XML files.</bullet> 
     <bullet>Press any key to go on...</bullet> 
+    <transition style="cube" />	
   </slide>
 
   <slide>

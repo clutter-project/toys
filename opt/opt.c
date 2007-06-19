@@ -117,7 +117,7 @@ main(int argc, char **argv)
   g_option_context_free(ctx);
 
   /* FIXME: Need clutter_init_with_args() */
-  clutter_init(NULL, NULL);
+  clutter_init(&argc, &argv);
 
   stage = clutter_stage_get_default();
 
