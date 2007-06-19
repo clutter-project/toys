@@ -46,6 +46,7 @@ struct _FluttrPhotoPrivate
 
 	
 	/* The actual actors */
+	ClutterActor		*bg;
 	ClutterActor		*frame;
 	ClutterActor		*clip;
 	ClutterActor		*texture;
@@ -348,7 +349,7 @@ fluttr_photo_swap_alpha_func (ClutterBehaviour *behave,
 		clutter_actor_queue_redraw (CLUTTER_ACTOR(data));	
 }
 
-/* Moves the pixbuf texture on the y axis when it is active*/
+/* Moves the pixbuf texture on the z axis when it is active*/
 static void
 fluttr_photo_act_alpha_func (ClutterBehaviour *behave,
 		       	      guint		alpha_value,
@@ -395,6 +396,7 @@ fluttr_photo_opt_alpha_func (ClutterBehaviour *behave,
 		if (sw > priv->scale)
 			priv->scale = sw;
 		clutter_actor_set_opacity (priv->texture, 255-(255*factor));
+		clutter_actor_set_opacity (priv->frame, 255-(255*factor));
 		
 		clutter_actor_rotate_y (CLUTTER_ACTOR (data), 180 *factor,
 					width /2, 0);
@@ -403,6 +405,7 @@ fluttr_photo_opt_alpha_func (ClutterBehaviour *behave,
 		if (sw >ACT_SCALE + 1.0)
 			priv->scale = sw;
 		clutter_actor_set_opacity (priv->texture, (255*factor));
+		clutter_actor_set_opacity (priv->frame, (255*factor));
 		
 		clutter_actor_rotate_y (CLUTTER_ACTOR (data), 180+ (180*factor),
 					width /2, 0);			
@@ -465,7 +468,13 @@ on_thread_ok_idle (FluttrPhoto *photo)
 	gdk_pixbuf_save (pixbuf, filename, "png", &err, NULL);
 	
 	if (err)
-		g_print ("%s", err->message);
+	{
+		g_free (filename);
+		filename = g_build_filename (g_get_home_dir (),
+				     	     ".fluttr-thumbs",
+				     	     NULL);
+		g_mkdir_with_parents (filename, 0700);
+	}
 
 	g_free (filename);
 	g_free (name);
@@ -853,6 +862,8 @@ fluttr_photo_init (FluttrPhoto *self)
 {
 	FluttrPhotoPrivate *priv;
 	ClutterColor rect_col   = { 0xff, 0xff, 0xff, 0xff };
+	ClutterColor bg_col = {0x00, 0x00, 0x00, 0xff};
+	ClutterActor *bg;
 	gint width = fluttr_photo_get_default_width ();
 	gint height = fluttr_photo_get_default_height ();
 		
@@ -861,6 +872,14 @@ fluttr_photo_init (FluttrPhoto *self)
 	priv->pixbuf = NULL;
 	priv->scale = 1.0;
 	priv->visible = TRUE;
+	
+	/* The black frame */
+	bg = clutter_rectangle_new_with_color (&bg_col);
+	priv->bg = bg;
+	clutter_group_add (CLUTTER_GROUP (self), bg);	
+	clutter_actor_set_size (bg, width, height);
+	clutter_actor_set_position (bg, 0, 0);
+	clutter_actor_show (bg);
 	
 	/* The white frame */
 	priv->frame = clutter_rectangle_new_with_color (&rect_col);
@@ -941,6 +960,8 @@ fluttr_photo_init (FluttrPhoto *self)
 	priv->opt_behave = fluttr_behave_new (priv->opt_alpha,
 					       fluttr_photo_opt_alpha_func,
 					       (gpointer)self);
+
+	clutter_actor_lower_bottom (bg);
 }
 
 ClutterActor*
