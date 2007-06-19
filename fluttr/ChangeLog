@@ -1,5 +1,11 @@
 2007-06-19  Neil J. Patel  <njp@o-hand.com>
 
+	* src/fluttr-viewer.c: (fluttr_viewer_go),
+	(fluttr_viewer_swap_alpha_func), (fluttr_viewer_init):
+	Added a spinner while we are fecthing the main pixbuf.
+
+2007-06-19  Neil J. Patel  <njp@o-hand.com>
+
 	* README:
 	Added options info.
 

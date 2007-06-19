@@ -117,8 +117,8 @@ on_thread_ok_idle (FluttrViewer *viewer)
         priv = FLUTTR_VIEWER_GET_PRIVATE(viewer);
         
         close_message_window (viewer);
-               
-       /* Get pixbuf from worker */
+        
+        /* Get pixbuf from worker */
         g_object_get (G_OBJECT (priv->worker), "pixbuf", &pixbuf, NULL);
         priv->pixbuf = pixbuf;        
         
@@ -199,7 +199,8 @@ fluttr_viewer_go (FluttrViewer *viewer, FluttrPhoto *photo)
         if (priv->worker)
         	nflick_worker_request_abort (priv->worker);
         
-        //fluttr_spinner_spin (FLUTTR_SPINNER (priv->spinner), TRUE);
+        fluttr_spinner_spin (FLUTTR_SPINNER (priv->spinner), TRUE);
+        clutter_actor_set_opacity (priv->spinner, 255);
         
 		
 	g_object_get (G_OBJECT (settings), "token", &token, NULL);
@@ -310,6 +311,7 @@ fluttr_viewer_swap_alpha_func (ClutterBehaviour *behave,
 	
 	clutter_actor_set_opacity (CLUTTER_ACTOR (priv->texture), 
 					   255 * factor);
+	clutter_actor_set_opacity (priv->spinner, 255 * (1-factor));
 	
 	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(data)))
 		clutter_actor_queue_redraw (CLUTTER_ACTOR(data));	
@@ -479,7 +481,11 @@ fluttr_viewer_init (FluttrViewer *self)
 	clutter_actor_set_size (message, width, height);
 	clutter_actor_set_position (message, -(width/2),-(height/2));
 	
-				    
+	/* Spinner */
+	priv->spinner = fluttr_spinner_new ();
+	clutter_group_add (CLUTTER_GROUP (self),priv->spinner); 
+	clutter_actor_set_size (priv->spinner, (height/6)-11, (height/6)-11);
+	clutter_actor_set_position (priv->spinner, width-(height/6),height-(height/6));	
 				    
 	/* Setup the pixbuf swap */
 	priv->pixbuf = NULL;
