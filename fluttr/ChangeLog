@@ -1,7 +1,14 @@
+2007-06-19  Neil J. Patel  <njp@f7>
+
+	* README:
+	Added some more info.
+
 2007-06-19  Neil J. Patel  <njp@o-hand.com>
 
 	* src/fluttr-photo.c: (fluttr_photo_opt_alpha_func),
 	(on_thread_ok_idle), (fluttr_photo_init):
+	Added black background.
+	Stopped printing known warnings/errors.
 
 2007-05-29  Tomas Frydrych <tf@o-hand.com>
 

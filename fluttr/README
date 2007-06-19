@@ -22,8 +22,31 @@ Fluttr will then contact Flickr and save its settings. From now on, you can just
 
 NB: You may need to restart fluttr after the initial authorisation.
 
+Using Fluttr
+===========
+
+Fluttr is pretty simple in that it can view sets, view photos within a set, 
+and finally view a photo. Certain things, like moving between photos when maimised, still need to be added.
+
+The main keys for using Fluttr are the Up/Down/Left/Right keys to navigate, 
+and Enter to select. Esc will bring you back to the previous menu. If you are
+already at 'root level' ie. you can see all the different photo sets, then 
+pressing Esc will quit Fluttr. Pressing q at any time will also cause Fluttr 
+to quit.
+
+Know Issues
+===========
+
+On some machines, Fluttr does not quit properly (due to a thread problem in 
+either libneon or the nflick code), so you may have to kill it. You will 
+know that this has happened because your cpu usage will be raised. I am
+trying to find the reason for this, or how to prevent it. If you have any 
+ideas, you know what to do :).
+
 
 Credits
 =======
-All of the 'flickr' code (anything starting with nflick-*), has been taken from the excellent NFlick Flickr browser for the n800 by mdk (https://garage.maemo.org/projects/nflick).
+All of the 'flickr' code (anything starting with nflick-*), has been taken 
+from the excellent NFlick Flickr browser for the n800 by MDK
+(https://garage.maemo.org/projects/nflick).
 
