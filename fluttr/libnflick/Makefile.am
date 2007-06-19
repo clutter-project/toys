@@ -36,7 +36,7 @@ libnflick_la_SOURCES =	\
 	nflick-photo-data.h			\
 	nflick-photo-list-response.c		\
 	nflick-photo-list-response.h		\
-	nflick-photo-list-private.h		\
+	nflick-photo-list-response-private.h	\
 	nflick-photo-list-worker.c		\
 	nflick-photo-list-worker.h		\
 	nflick-photo-list-worker-private.h	\
@@ -58,7 +58,7 @@ libnflick_la_SOURCES =	\
 	nflick-types.h				\
 	nflick-worker.c				\
 	nflick-worker.h				\
-	nflick-worker.private.h	
+	nflick-worker-private.h
 
 libnflick_la_LIBADD = $(DEPS_LIBS)
 libnflick_la_LDFLAGS = -version-info 0:1:0

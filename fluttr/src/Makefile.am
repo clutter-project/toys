@@ -4,7 +4,8 @@ PKGDATADIR = $(datadir)/fluttr
 AM_CFLAGS = \
 	$(DEPS_CFLAGS) 				\
 	$(GCC_FLAGS) 				\
-	-I$(top_builddir)/libaffinity	 	\	
+	-I$(top_builddir)			\
+	-I$(top_srcdir)				\
 	-D_GNU_SOURCE 				\
 	-DPKGDATADIR=\"$(PKGDATADIR)\"
 
