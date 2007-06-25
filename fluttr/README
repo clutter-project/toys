@@ -1,4 +1,4 @@
-A clutter-based flickr viewer.
+A clutter-based flickr viewer.i
 
 Authorising yourself with Flickr
 ================================
@@ -7,7 +7,7 @@ Type this url into your web-browser of choice:
 
 http://www.flickr.com/auth-72157600141007022
 
-You will then be askd to log into flickr (or not if you are already logged in).
+You will then be asked to log into flickr (or not if you are already logged in).
 The next screen will ask you if you want to let Fluttr access your Flickr
 pictures, click "OK, I'll allow it", and Flickr will take you to a page which
 has a auth code in the middle like this:
@@ -18,7 +18,8 @@ Now, start fluttr with that code:
 
 $ fluttr 123-456-789
 
-Fluttr will then contact Flickr and save its settings. From now on, you can just run fluttr without any options.
+Fluttr will then contact Flickr and save its settings. From now on, you can 
+just run fluttr without any options.
 
 NB: You may need to restart fluttr after the initial authorisation.
 
@@ -26,7 +27,8 @@ Using Fluttr
 ===========
 
 Fluttr is pretty simple in that it can view sets, view photos within a set, 
-and finally view a photo. Certain things, like moving between photos when maimised, still need to be added.
+and finally view a photo. Certain things, like moving between photos when 
+maximised, still need to be added.
 
 The main keys for using Fluttr are the Up/Down/Left/Right keys to navigate, 
 and Enter to select. Esc will bring you back to the previous menu. If you are
@@ -37,7 +39,7 @@ to quit.
 Options
 =======
 -c, --columns=3      Number of picture columns in the view
--f, --fullscreen     Launch Juke in fullscreen mode
+-f, --fullscreen     Launch Fluttr in fullscreen mode
 -w, --width=800      Width of the Fluttr window
 -h, --height=440     Height of the Fluttr window
 
@@ -58,4 +60,3 @@ Credits
 All of the 'flickr' code (anything starting with nflick-*), has been taken 
 from the excellent NFlick Flickr browser for the n800 by MDK
 (https://garage.maemo.org/projects/nflick).
-
