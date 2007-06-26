@@ -55,7 +55,7 @@ alpha_linear_inc_func (ClutterAlpha *alpha,
 {
 	ClutterTimeline *timeline;
 	gint current_frame_num, n_frames;
-	gdouble x, sine;
+	gdouble x;
   
 	timeline = clutter_alpha_get_timeline (alpha);
 

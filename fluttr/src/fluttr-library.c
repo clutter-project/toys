@@ -187,7 +187,7 @@ fluttr_library_get_library_row (FluttrLibrary *library, gint index)
 
 	return NULL;
 }
-
+/*
 static void
 on_library_row_changed (GObject *obj, GParamSpec   *arg1,
 				   gpointer      data)
@@ -198,7 +198,6 @@ on_library_row_changed (GObject *obj, GParamSpec   *arg1,
 
 	priv = LIBRARY_PRIVATE(library);
 
-	/* thumbnail changing does not effect ordering */
 	if (!strcmp(g_param_spec_get_name(arg1), "thumbnail"))
 		return;
 
@@ -211,6 +210,7 @@ on_library_row_changed (GObject *obj, GParamSpec   *arg1,
 	g_signal_emit (library, _library_signals[LIBRARY_ROW_CHANGED], 0, 
 		 					FLUTTR_LIBRARY_ROW(obj));
 } 
+*/
 
 void
 fluttr_library_append_library_row (FluttrLibrary *library, FluttrLibraryRow *library_row)
