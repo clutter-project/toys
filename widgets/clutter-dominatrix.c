@@ -605,7 +605,7 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	    x2 -= priv->center_x;
 	    y2 -= priv->center_y;
 	    
-	    a = ((x1 * y2 - x2 * y1) * 0x394bb8) / (x1 * x1 + y1 * y1);
+	    a = (((x1 * y2 - x2 * y1) * 0x394bb) / (x1 * x1 + y1 * y1)) << 4;
 
 	    /*
 	     * For anything above 0.7 rad, we tweak the value a bit
@@ -653,12 +653,6 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	    
 	    sx += SCALE_STEP * diff;
 	    sy += SCALE_STEP * diff;
-
-	    g_debug ("p1 %d,%d; p2 %d,%d; d1 %d, d2 %d, distance %d",
-		     x1, y1,
-		     x, y,
-		     d1, d2,
-		     diff);
 	    
 	    clutter_actor_set_scalex (priv->slave, sx, sy);
 
