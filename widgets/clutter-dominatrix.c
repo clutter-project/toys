@@ -654,7 +654,8 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	    sx += SCALE_STEP * diff;
 	    sy += SCALE_STEP * diff;
 	    
-	    clutter_actor_set_scalex (priv->slave, sx, sy);
+	    clutter_actor_set_scale_with_gravityx (priv->slave, sx, sy,
+						   CLUTTER_GRAVITY_CENTER);
 
 	    cx =
 	      CLUTTER_INT_TO_FIXED (clutter_actor_get_width  (priv->slave)/2);
