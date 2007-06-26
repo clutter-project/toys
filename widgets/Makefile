@@ -1,14 +1,17 @@
-LIBS=`pkg-config --libs clutter-0.2 gnome-vfs-2.0 clutter-gst-0.1`
-INCS=`pkg-config --cflags clutter-0.2 gnome-vfs-2.0 clutter-gst-0.1`
+LIBS=`pkg-config --libs clutter-0.3 gnome-vfs-2.0 clutter-gst-0.1`
+INCS=`pkg-config --cflags clutter-0.3 gnome-vfs-2.0 clutter-gst-0.1`
 
 .c.o:
 	$(CC) -g -Wall $(CFLAGS) $(INCS) -c $*.c
 
-all: test
+all: test test-dominatrix
 
 
 test: test.o clutter-reflect-texture.o
 	$(CC) -g -Wall $(CFLAGS) -o $@ test.o clutter-reflect-texture.o $(LIBS)
 
+test-dominatrix: test-dominatrix.o clutter-dominatrix.o
+	$(CC) -g -Wall $(CFLAGS) -o $@ test-dominatrix.o clutter-dominatrix.o $(LIBS)
+
 clean:
-	rm -fr *.o test 
+	rm -fr *.o test test-dominatrix
