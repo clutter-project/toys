@@ -56,6 +56,7 @@ typedef enum {
   DRAG_RESIZE_TR,
   DRAG_RESIZE_BL,
   DRAG_RESIZE_BR,
+  DRAG_SCALE,
 } DragType;
 
 struct _ClutterDominatrixPrivate
@@ -75,6 +76,8 @@ struct _ClutterDominatrixPrivate
   gint      center_y;
   
   gulong    handler_id;
+
+  gboolean  scale;
 };
 
 enum
@@ -85,6 +88,7 @@ enum
   PROP_MOVE_HANDLE_WIDTH,
   PROP_MOVE_HANDLE_HEIGHT,
   PROP_SLAVE,
+  PROP_SCALE,
 };
 
 
@@ -122,6 +126,9 @@ clutter_dominatrix_set_property (GObject      *object,
       priv->slave = g_value_get_pointer (value);
       g_object_ref (priv->slave);
       break;
+    case PROP_SCALE:
+      priv->scale = g_value_get_boolean (value);
+      break;
       
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -157,6 +164,9 @@ clutter_dominatrix_get_property (GObject    *object,
       break;
     case PROP_SLAVE:
       g_value_set_pointer (value, priv->slave);
+      break;
+    case PROP_SCALE:
+      g_value_set_boolean (value, priv->scale);
       break;
 
     default:
@@ -259,6 +269,20 @@ clutter_dominatrix_class_init (ClutterDominatrixClass *klass)
                                                 "slave",
                                                 G_PARAM_CONSTRUCT_ONLY |
 				                CLUTTER_PARAM_READWRITE));
+
+  /**
+   * ClutterDominatrix:scale:
+   *
+   * Whether dragging in the no-mans land should be translated to scaling
+   * or resizing. Deafult TRUE
+   */
+  g_object_class_install_property (object_class,
+                                   PROP_MOVE_HANDLE_HEIGHT,
+                                   g_param_spec_boolean ("scale",
+                                                "whether to scale or resize",
+                                                "whether to scale or resize",
+						TRUE,
+                                                CLUTTER_PARAM_READWRITE));
 }
 
 static void
@@ -270,6 +294,7 @@ clutter_dominatrix_init (ClutterDominatrix *self)
   self->priv->rhandle_height = 20;
   self->priv->mhandle_width  = 20;
   self->priv->mhandle_height = 20;
+  self->priv->scale = TRUE;
 }
 
 static void 
@@ -383,56 +408,68 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	      return;
 	    }
 
-	/* Neither move or rotation, so we are resizing.
-         *
-         * We notionally divide the projected area into 2 x 2 grid,
-         * representing 4 types of resize.
-         *
-         * If the object is rotated, we need to unrotate the screen coords.
+	
+	/*
+	 *  Neither move or rotation, so we are resizing or scaling.
          */
-	zang = clutter_actor_get_rzangx (actor);
-
-	if (zang)
+	if (priv->scale)
 	  {
-	    gint x2 = x - xp;
-	    gint y2 = y - yp;
-	    ClutterFixed zang_rad = -CFX_MUL (zang, CFX_PI) / 180;
-	    
-	    x = CLUTTER_FIXED_INT (x2 * clutter_cosx (zang_rad) -
-				   y2 * clutter_sinx (zang_rad)) + xp;
+	    priv->dragging = DRAG_SCALE;
+	    return;
+	  }
+	else
+	  {
+	    /*
+	     * We notionally divide the projected area into 2 x 2 grid,
+	     * representing 4 types of resize.
+	     *
+	     * If the object is rotated, we need to unrotate the screen
+	     * coords first.
+	     */
+	    zang = clutter_actor_get_rzangx (actor);
 
-	    y = CLUTTER_FIXED_INT (y2 * clutter_cosx (zang_rad) +
-				   x2 * clutter_sinx (zang_rad)) + yp;
+	    if (zang)
+	      {
+		gint x2 = x - xp;
+		gint y2 = y - yp;
+		ClutterFixed zang_rad = -CFX_MUL (zang, CFX_PI) / 180;
+	    
+		x = CLUTTER_FIXED_INT (x2 * clutter_cosx (zang_rad) -
+				       y2 * clutter_sinx (zang_rad)) + xp;
+
+		y = CLUTTER_FIXED_INT (y2 * clutter_cosx (zang_rad) +
+				       x2 * clutter_sinx (zang_rad)) + yp;
+	      }
+	
+	    if (x < xp && y < yp)
+	      {
+		priv->dragging = DRAG_RESIZE_TL;
+		g_debug ("Resize TL");
+		return;
+	      }
+
+	    if (x < xp && y >= yp)
+	      {
+		priv->dragging = DRAG_RESIZE_BL;
+		g_debug ("Resize BL");
+		return;
+	      }
+
+	    if (x >= xp && y < yp)
+	      {
+		priv->dragging = DRAG_RESIZE_TR;
+		g_debug ("Resize TR");
+		return;
+	      }
+
+	    if (x >= xp && y >= yp)
+	      {
+		priv->dragging = DRAG_RESIZE_BR;
+		g_debug ("Resize BR");
+		return;
+	      }
 	  }
 	
-	if (x < xp && y < yp)
-	  {
-	    priv->dragging = DRAG_RESIZE_TL;
-	    g_debug ("Resize TL");
-	    return;
-	  }
-
-	if (x < xp && y >= yp)
-	  {
-	    priv->dragging = DRAG_RESIZE_BL;
-	    g_debug ("Resize BL");
-	    return;
-	  }
-
-	if (x >= xp && y < yp)
-	  {
-	    priv->dragging = DRAG_RESIZE_TR;
-	    g_debug ("Resize TR");
-	    return;
-	  }
-
-	if (x >= xp && y >= yp)
-	  {
-	    priv->dragging = DRAG_RESIZE_BR;
-	    g_debug ("Resize BR");
-	    return;
-	  }
-
 	g_warning ("Error calculating drag type");
 	priv->dragging = DRAG_NONE;
       }
@@ -580,7 +617,66 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 				     clutter_actor_get_width (priv->slave)>>1,
 				     clutter_actor_get_height(priv->slave)>>1);
 	  }
-	
+	else if (priv->dragging == DRAG_SCALE)
+	  {
+	    /*
+	     * for each pixle of movement from the center increase scale by 1%
+	     */
+#define SCALE_STEP 40
+	    ClutterFixed sx, sy;
+	    ClutterFixed cx, cy, cz;
+	    gint d1, d2, diff, x1, y1, x2, y2;
+
+	    x1 = abs (priv->prev_x - priv->center_x);
+	    y1 = abs (priv->prev_y - priv->center_y);
+	    x2 = abs (x - priv->center_x);
+	    y2 = abs (y - priv->center_y);
+	    
+	    clutter_actor_get_scalex (priv->slave, &sx, &sy);
+
+	    d1 = x1*x1 + y1*y1;
+	    d2 = x2*x2 + y2*y2;
+
+	    /* What we should do now is to sqrt d1 and d2 and substract them
+	     * But the numbers can be quite big and sqrti does not handle
+	     * very big numbers well, and ClutterFixed can not be able to
+	     * hold them for sqrtx. We do not want to use sqrt for performance
+	     * reasons, and all we need is reasonable speed of scaling and
+	     * semblance of linearity. So, we substract the numbers first,
+	     * then sqrti the difference, give it appropriate sign and choose
+	     * a suitable step to go with what that produces
+	     */
+	    diff = clutter_sqrti (abs (d2 - d1));
+
+	    if (d1 > d2)
+	      diff = -diff;
+	    
+	    sx += SCALE_STEP * diff;
+	    sy += SCALE_STEP * diff;
+
+	    g_debug ("p1 %d,%d; p2 %d,%d; d1 %d, d2 %d, distance %d",
+		     x1, y1,
+		     x, y,
+		     d1, d2,
+		     diff);
+	    
+	    clutter_actor_set_scalex (priv->slave, sx, sy);
+
+	    cx =
+	      CLUTTER_INT_TO_FIXED (clutter_actor_get_width  (priv->slave)/2);
+	    cy =
+	      CLUTTER_INT_TO_FIXED (clutter_actor_get_height (priv->slave)/2);
+	    
+	    cz = 0;
+  
+	    clutter_actor_project_point (priv->slave, &cx, &cy, &cz);
+
+	    priv->center_x = CLUTTER_FIXED_INT (cx);
+	    priv->center_y = CLUTTER_FIXED_INT (cy);
+	    
+#undef SCALE_STEP
+	  }
+
 	priv->prev_x = x;
 	priv->prev_y = y;
 
