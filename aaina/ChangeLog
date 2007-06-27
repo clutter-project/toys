@@ -1,5 +1,11 @@
 2007-06-27  Neil J. Patel  <njp@o-hand.com>
 
+	* src/Makefile.am:
+	* src/main.c: (main):
+	Create something that resembles a main.c
+
+2007-06-27  Neil J. Patel  <njp@o-hand.com>
+
 	* Makefile.am:
 	* configure.ac:
 	* libaaina/aaina-source.h:

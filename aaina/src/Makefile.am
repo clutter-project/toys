@@ -11,7 +11,8 @@ AM_CFLAGS = \
 
 aaina_LDADD  = \
 	$(DEPS_LIBS)				\
-	$(top_builddir)/libaaina/libaaina.la
+	$(top_builddir)/libaaina/libaaina.la	\
+	$(top_builddir)/sources/libsources.la
 
 aaina_SOURCES = \
 	aaina-slide-show.c			\
