@@ -524,6 +524,8 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	if (actor != priv->slave)
 	  return;
 
+	clutter_actor_raise_top (priv->slave);
+
 	g_signal_emit (dominatrix, dmx_signals[MANIPULATION_STARTED], 0);
 
 	priv->prev_x = x;
