@@ -11,6 +11,7 @@ main (int argc, char *argv[])
   ClutterActor      * stage;
   ClutterActor      * label;
   ClutterActor      * rect;
+  ClutterActor      * rect2;
   ClutterDominatrix * dmx;
   
   ClutterColor        stage_color = { 0x0, 0x0, 0x0, 0xff }, 
@@ -38,6 +39,14 @@ main (int argc, char *argv[])
 
   clutter_container_add (CLUTTER_CONTAINER (stage), rect, NULL);
   dmx = clutter_dominatrix_new (rect);
+
+  rect2 = clutter_rectangle_new ();
+  clutter_actor_set_position (rect2, 300, 240);
+  clutter_actor_set_size (rect2, 3, 3);
+  clutter_rectangle_set_color (CLUTTER_RECTANGLE (rect2), &red);
+  clutter_actor_show (rect2);
+
+  clutter_container_add (CLUTTER_CONTAINER (stage), rect2, NULL);
   
   label = clutter_label_new_with_text ("Mono 8pt",
 				       "Test dragging on the rectangle");
