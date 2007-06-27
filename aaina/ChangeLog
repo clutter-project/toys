@@ -1,0 +1,20 @@
+2007-06-27  Neil J. Patel  <njp@o-hand.com>
+
+	* AUTHORS:
+	* Makefile.am:
+	* autogen.sh:
+	* configure.ac:
+	* libaaina/Makefile.am:
+	* libaaina/aaina-behave.c:
+	* libaaina/aaina-behave.h:
+	* libaaina/aaina-library.c:
+	* libaaina/aaina-library.h:
+	* libaaina/aaina-photo.c:
+	* libaaina/aaina-photo.h:
+	* libaaina/eggsequence.c:
+	* libaaina/eggsequence.h:
+	* src/Makefile.am:
+	* src/aaina-slide-show.c:
+	* src/aaina-slide-show.h:
+	* src/main.c:
+	Initial import.
