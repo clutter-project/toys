@@ -455,7 +455,7 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	yp = CLUTTER_INT_TO_FIXED (clutter_actor_get_height (actor) / 2);
 	zp = 0;
   
-	clutter_actor_project_point (actor, &xp, &yp, &zp);
+	clutter_actor_project_point (actor, xp, yp, zp, &xp, &yp, &zp);
 
 	xp = CLUTTER_FIXED_INT (xp);
 	yp = CLUTTER_FIXED_INT (yp);
