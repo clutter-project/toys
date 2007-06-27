@@ -69,6 +69,9 @@ GType                 clutter_dominatrix_get_type         (void) G_GNUC_CONST;
 
 ClutterDominatrix *   clutter_dominatrix_new              (ClutterActor *actor);
 
+void                  clutter_dominatrix_set_slave        (ClutterDominatrix *dmx,
+							   ClutterActor      *slave);
+
 G_END_DECLS
 
 #endif /* _HAVE_CLUTTER_DOMINATRIX_H */

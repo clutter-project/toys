@@ -77,7 +77,11 @@ struct _ClutterDominatrixPrivate
   
   gulong    handler_id;
 
-  gboolean  scale;
+  gboolean  scale : 1;
+  gboolean  dont_rotate : 1;
+  gboolean  dont_resize : 1;
+  gboolean  dont_move : 1;
+  
 };
 
 enum
@@ -89,6 +93,9 @@ enum
   PROP_MOVE_HANDLE_HEIGHT,
   PROP_SLAVE,
   PROP_SCALE,
+  PROP_DISABLE_ROTATION,
+  PROP_DISABLE_RESIZING,
+  PROP_DISABLE_MOVEMENT,
 };
 
 
@@ -120,14 +127,20 @@ clutter_dominatrix_set_property (GObject      *object,
       priv->mhandle_height = g_value_get_int (value);
       break;
     case PROP_SLAVE:
-      if (priv->slave)
-	g_object_unref (priv->slave);
-
-      priv->slave = g_value_get_pointer (value);
-      g_object_ref (priv->slave);
+      clutter_dominatrix_set_slave (dominatrix,
+				CLUTTER_ACTOR (g_value_get_pointer (value)));
       break;
     case PROP_SCALE:
       priv->scale = g_value_get_boolean (value);
+      break;
+    case PROP_DISABLE_ROTATION:
+      priv->dont_rotate = g_value_get_boolean (value);
+      break;
+    case PROP_DISABLE_RESIZING:
+      priv->dont_resize = g_value_get_boolean (value);
+      break;
+    case PROP_DISABLE_MOVEMENT:
+      priv->dont_move = g_value_get_boolean (value);
       break;
       
     default:
@@ -168,10 +181,31 @@ clutter_dominatrix_get_property (GObject    *object,
     case PROP_SCALE:
       g_value_set_boolean (value, priv->scale);
       break;
+    case PROP_DISABLE_ROTATION:
+      g_value_set_boolean (value, priv->dont_rotate);
+      break;
+    case PROP_DISABLE_RESIZING:
+      g_value_set_boolean (value, priv->dont_resize);
+      break;
+    case PROP_DISABLE_MOVEMENT:
+      g_value_set_boolean (value, priv->dont_move);
+      break;
 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
+    }
+}
+
+static void
+clutter_dominatrix_release_slave (ClutterDominatrixPrivate * priv)
+{
+  priv->dragging = DRAG_NONE;
+  
+  if (priv->slave)
+    {
+      g_object_unref (priv->slave);
+      priv->slave = NULL;
     }
 }
 
@@ -180,7 +214,7 @@ clutter_dominatrix_finalize (GObject *object)
 {
   ClutterDominatrix *dmx = CLUTTER_DOMINATRIX (object);
 
-  g_object_unref (dmx->priv->slave);
+  clutter_dominatrix_release_slave (dmx->priv);
   
   if (dmx->priv->handler_id)
     g_signal_handler_disconnect (clutter_stage_get_default (),
@@ -267,7 +301,6 @@ clutter_dominatrix_class_init (ClutterDominatrixClass *klass)
                                    g_param_spec_pointer ("slave",
                                                 "slave",
                                                 "slave",
-                                                G_PARAM_CONSTRUCT_ONLY |
 				                CLUTTER_PARAM_READWRITE));
 
   /**
@@ -277,12 +310,53 @@ clutter_dominatrix_class_init (ClutterDominatrixClass *klass)
    * or resizing. Deafult TRUE
    */
   g_object_class_install_property (object_class,
-                                   PROP_MOVE_HANDLE_HEIGHT,
+                                   PROP_SCALE,
                                    g_param_spec_boolean ("scale",
                                                 "whether to scale or resize",
                                                 "whether to scale or resize",
 						TRUE,
                                                 CLUTTER_PARAM_READWRITE));
+
+  /**
+   * ClutterDominatrix:disable-rotation:
+   *
+   * Whether rotation should be disabled; default FALSE
+   */
+  g_object_class_install_property (object_class,
+                                   PROP_DISABLE_ROTATION,
+                                   g_param_spec_boolean ("disable-rotation",
+                                                "whether to rotate",
+                                                "whether to rotate",
+						FALSE,
+                                                CLUTTER_PARAM_READWRITE));
+  
+
+  /**
+   * ClutterDominatrix:disable-resizing:
+   *
+   * Whether resizing should be disabled; default FALSE
+   */
+  g_object_class_install_property (object_class,
+                                   PROP_DISABLE_RESIZING,
+                                   g_param_spec_boolean ("disable-resizing",
+                                                "whether to resize",
+                                                "whether to resize",
+						FALSE,
+                                                CLUTTER_PARAM_READWRITE));
+  
+  /**
+   * ClutterDominatrix:disable-movement:
+   *
+   * Whether moving should be disabled; default FALSE
+   */
+  g_object_class_install_property (object_class,
+                                   PROP_DISABLE_MOVEMENT,
+                                   g_param_spec_boolean ("disable-movement",
+                                                "whether to move",
+                                                "whether to move",
+						FALSE,
+                                                CLUTTER_PARAM_READWRITE));
+  
 }
 
 static void
@@ -486,29 +560,20 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	
         clutter_event_get_coords (event, &x, &y);
 	
-#if 0
 	/* We intentionally do not test here if the pointer is within
-	 * our slave; particularly when rotating, if the user drags fast
-	 * the error in our calculation of the angle can be enough for the
-	 * pointer to get outside of the actor. Not testing allows us to
-	 * continue the drag when that happens
+	 * our slave since we want to be able to manipulate the objects with
+	 * the point outwith the object (i.e., for greater precission when
+	 * rotating)
 	 */
-	actor = clutter_stage_get_actor_at_pos (stage, x, y);
-
-	while (actor &&
-	       actor != priv->slave &&
-	       (actor = clutter_actor_get_parent (actor)));
-	
-	if (actor != priv->slave)
-	  return;
-#endif
-	
 	clutter_actor_query_coords (priv->slave, &box);
 
 	zang = clutter_actor_get_rzangx (priv->slave);
 
 	if (priv->dragging == DRAG_MOVE)
 	  {
+	    if (priv->dont_move)
+	      return;
+	    
 	    clutter_actor_move_by (priv->slave,
 				   x - priv->prev_x,
 				   y - priv->prev_y);
@@ -517,6 +582,11 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 		 priv->dragging <= DRAG_RESIZE_BR)
 	  {
 	    ClutterFixed xp, yp;
+
+	    if (priv->dont_resize)
+	      return;
+	    
+	    
 	    xp = CLUTTER_INT_TO_FIXED (x - priv->prev_x);
 	    yp = CLUTTER_INT_TO_FIXED (y - priv->prev_y);
 
@@ -561,11 +631,15 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	else if (priv->dragging == DRAG_ROTATE)
 	  {
 	    ClutterFixed a;
+	    gint x1, x2, y1, y2;
 	    
-	    gint x1 = priv->prev_x;
-	    gint y1 = priv->prev_y;
-	    gint x2 = x;
-	    gint y2 = y;
+	    if (priv->dont_rotate)
+	      return;
+	    
+	    x1 = priv->prev_x;
+	    y1 = priv->prev_y;
+	    x2 = x;
+	    y2 = y;
 	    
 	    /*
 	     * For the incremental angle a,
@@ -605,13 +679,13 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	    x2 -= priv->center_x;
 	    y2 -= priv->center_y;
 	    
-	    a = (((x1 * y2 - x2 * y1) * 0x394bb) / (x1 * x1 + y1 * y1)) << 4;
+	    a = (((x1 * y2 - x2 * y1) * 0x32000) / (x1 * x1 + y1 * y1)) << 4;
 
 	    /*
 	     * For anything above 0.7 rad, we tweak the value a bit
 	     */
 	    if (a >= 0xb333)
-	      a = CFX_MUL (a, 0x14ccd);
+	      a = CFX_MUL (a, 0x14000);
 
 	    clutter_actor_rotate_zx (priv->slave, zang + a,
 				     clutter_actor_get_width (priv->slave)>>1,
@@ -620,13 +694,16 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	else if (priv->dragging == DRAG_SCALE)
 	  {
 	    /*
-	     * for each pixle of movement from the center increase scale by 1%
+	     * for each pixle of movement from the center increase scale by
+	     * some sensible step.
 	     */
 #define SCALE_STEP 40
 	    ClutterFixed sx, sy;
-	    ClutterFixed cx, cy, cz;
 	    gint d1, d2, diff, x1, y1, x2, y2;
 
+	    if (priv->dont_resize)
+	      return;
+	    
 	    x1 = abs (priv->prev_x - priv->center_x);
 	    y1 = abs (priv->prev_y - priv->center_y);
 	    x2 = abs (x - priv->center_x);
@@ -637,14 +714,14 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	    d1 = x1*x1 + y1*y1;
 	    d2 = x2*x2 + y2*y2;
 
-	    /* What we should do now is to sqrt d1 and d2 and substract them
-	     * But the numbers can be quite big and sqrti does not handle
-	     * very big numbers well, and ClutterFixed can not be able to
-	     * hold them for sqrtx. We do not want to use sqrt for performance
-	     * reasons, and all we need is reasonable speed of scaling and
-	     * semblance of linearity. So, we substract the numbers first,
-	     * then sqrti the difference, give it appropriate sign and choose
-	     * a suitable step to go with what that produces
+	    /* What we should do now is to sqrt d1 and d2 and substract the
+	     * results but d1 and d2 can be quite big and sqrti does not
+	     * handle very big numbers well, while ClutterFixed range is
+	     * limited, ruling out sqrtx. We do not want to use sqrt for
+	     * performance reasons, and all we need is reasonable speed of
+	     * scaling and semblance of constancy. So, we substract the
+	     * numbers first, then sqrti the difference, give it appropriate
+	     * sign and choose a suitable step to go with what that produces.
 	     */
 	    diff = clutter_sqrti (abs (d2 - d1));
 
@@ -656,19 +733,6 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	    
 	    clutter_actor_set_scale_with_gravityx (priv->slave, sx, sy,
 						   CLUTTER_GRAVITY_CENTER);
-
-	    cx =
-	      CLUTTER_INT_TO_FIXED (clutter_actor_get_width  (priv->slave)/2);
-	    cy =
-	      CLUTTER_INT_TO_FIXED (clutter_actor_get_height (priv->slave)/2);
-	    
-	    cz = 0;
-  
-	    clutter_actor_project_point (priv->slave, &cx, &cy, &cz);
-
-	    priv->center_x = CLUTTER_FIXED_INT (cx);
-	    priv->center_y = CLUTTER_FIXED_INT (cy);
-	    
 #undef SCALE_STEP
 	  }
 
@@ -704,5 +768,14 @@ clutter_dominatrix_new (ClutterActor *actor)
 		      G_CALLBACK (clutter_dominatrix_on_event), dmx);
 
   return dmx;
+}
+
+void
+clutter_dominatrix_set_slave (ClutterDominatrix *dmx, ClutterActor *slave)
+{
+  clutter_dominatrix_release_slave (dmx->priv);
+
+  g_object_ref (slave);
+  dmx->priv->slave = slave;
 }
 
