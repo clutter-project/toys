@@ -417,7 +417,7 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	 * Allow the movement handle to be at most half of the width/height
 	 * and the rotation handles to be at most a quarter of width/height.
 	 */
-	clutter_actor_project_vertices (actor, v);
+	clutter_actor_get_vertices (actor, v);
 
 	width  = CLUTTER_FIXED_INT (abs (v[0].x - v[3].x));
 	height = CLUTTER_FIXED_INT (abs (v[0].y - v[3].y));
@@ -455,7 +455,8 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	yp = CLUTTER_INT_TO_FIXED (clutter_actor_get_height (actor) / 2);
 	zp = 0;
   
-	clutter_actor_project_point (actor, xp, yp, zp, &xp, &yp, &zp);
+	clutter_actor_apply_transform_to_point (actor, xp, yp, zp,
+						&xp, &yp, &zp);
 
 	xp = CLUTTER_FIXED_INT (xp);
 	yp = CLUTTER_FIXED_INT (yp);
