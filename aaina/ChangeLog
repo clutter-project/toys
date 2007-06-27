@@ -1,5 +1,13 @@
 2007-06-27  Neil J. Patel  <njp@o-hand.com>
 
+	* libaaina/Makefile.am:
+	* libaaina/aaina-source.c: (aaina_source_class_init),
+	(aaina_source_init), (aaina_source_new):
+	* libaaina/aaina-source.h:
+	Added a source class, for different backends.
+
+2007-06-27  Neil J. Patel  <njp@o-hand.com>
+
 	* AUTHORS:
 	* Makefile.am:
 	* autogen.sh:

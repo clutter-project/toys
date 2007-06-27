@@ -4,10 +4,10 @@ INCLUDES = \
 	$(DEPS_CFLAGS)
 	-I$(top_srcdir) 				\
 	-I$(top_builddir) 				\
-	$(DEPS_CFLAGS)					\
+	$(GCC_CFLAGS)					\
 	-DDATADIR=\""$(datadir)"\" 			\
 	-DSYSCONFDIR=\""$(sysconfdir)"\" 		\
-	-Wall						\
+	-Werror						\
 	$(NULL)	
 
 libaaina_la_SOURCES =	\
@@ -17,6 +17,8 @@ libaaina_la_SOURCES =	\
 	aaina-library.h					\
 	aaina-photo.c					\
 	aaina-photo.h					\
+	aaina-source.c					\
+	aaina-source.h					\
 	eggsequence.c					\
 	eggsequence.h
 
