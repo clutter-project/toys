@@ -48,6 +48,10 @@ G_DEFINE_TYPE (ClutterDominatrix,
 #define CLUTTER_DOMINATRIX_GET_PRIVATE(obj) \
 (G_TYPE_INSTANCE_GET_PRIVATE ((obj), CLUTTER_TYPE_DOMINATRIX, ClutterDominatrixPrivate))
 
+static void clutter_dominatrix_on_event (ClutterStage *stage,
+					 ClutterEvent *event,
+					 gpointer      data);
+
 typedef enum {
   DRAG_NONE = 0,
   DRAG_ROTATE,
@@ -81,8 +85,24 @@ struct _ClutterDominatrixPrivate
   gboolean  dont_rotate : 1;
   gboolean  dont_resize : 1;
   gboolean  dont_move : 1;
-  
+
+  ClutterGravity gravity;
+
+  ClutterActorBox orig_box;
+  ClutterFixed    orig_scale_x;
+  ClutterFixed    orig_scale_y;
+  ClutterFixed    orig_zang;
 };
+
+enum
+{
+  MANIPULATION_STARTED,
+  MANIPULATION_ENDED,
+  
+  LAST_SIGNAL
+};
+
+static guint dmx_signals[LAST_SIGNAL] = { 0, };
 
 enum
 {
@@ -96,6 +116,7 @@ enum
   PROP_DISABLE_ROTATION,
   PROP_DISABLE_RESIZING,
   PROP_DISABLE_MOVEMENT,
+  PROP_GRAVITY,
 };
 
 
@@ -141,6 +162,9 @@ clutter_dominatrix_set_property (GObject      *object,
       break;
     case PROP_DISABLE_MOVEMENT:
       priv->dont_move = g_value_get_boolean (value);
+      break;
+    case PROP_GRAVITY:
+      priv->gravity = g_value_get_enum (value);
       break;
       
     default:
@@ -190,6 +214,9 @@ clutter_dominatrix_get_property (GObject    *object,
     case PROP_DISABLE_MOVEMENT:
       g_value_set_boolean (value, priv->dont_move);
       break;
+    case PROP_GRAVITY:
+      g_value_set_enum (value, priv->gravity);
+      break;
 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -224,10 +251,49 @@ clutter_dominatrix_finalize (GObject *object)
 }
 
 static void
+clutter_dominatrix_store_original_settings (ClutterDominatrixPrivate *priv)
+{
+  clutter_actor_query_coords (priv->slave, &priv->orig_box);
+  
+  clutter_actor_get_scalex (priv->slave,
+			    &priv->orig_scale_x,
+			    &priv->orig_scale_y);
+
+  priv->orig_zang = clutter_actor_get_rzangx (priv->slave);
+}
+
+static GObject *
+clutter_dominatrix_constructor (GType                  gtype,
+				guint                  n_params,
+				GObjectConstructParam *params)
+{
+  GObjectClass       * parent_class;
+  GObject            * retval;
+  ClutterDominatrix  * dmx;
+  ClutterActor       * stage;
+  
+  parent_class = G_OBJECT_CLASS (clutter_dominatrix_parent_class);
+  retval = parent_class->constructor (gtype, n_params, params);
+
+  dmx = CLUTTER_DOMINATRIX (retval);
+
+  stage = clutter_stage_get_default ();
+  
+  dmx->priv->handler_id =
+    g_signal_connect (stage, "event",
+		      G_CALLBACK (clutter_dominatrix_on_event), dmx);
+  
+  clutter_dominatrix_store_original_settings (dmx->priv);
+  
+  return retval;
+}
+
+static void
 clutter_dominatrix_class_init (ClutterDominatrixClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
+  object_class->constructor = clutter_dominatrix_constructor;
   object_class->set_property = clutter_dominatrix_set_property;
   object_class->get_property = clutter_dominatrix_get_property;
   object_class->finalize     = clutter_dominatrix_finalize;
@@ -301,7 +367,8 @@ clutter_dominatrix_class_init (ClutterDominatrixClass *klass)
                                    g_param_spec_pointer ("slave",
                                                 "slave",
                                                 "slave",
-				                CLUTTER_PARAM_READWRITE));
+				                G_PARAM_CONSTRUCT |
+						CLUTTER_PARAM_READWRITE));
 
   /**
    * ClutterDominatrix:scale:
@@ -357,6 +424,56 @@ clutter_dominatrix_class_init (ClutterDominatrixClass *klass)
 						FALSE,
                                                 CLUTTER_PARAM_READWRITE));
   
+  /**
+   * ClutterDominatrix:gravity:
+   *
+   * Gravity to use when scaling; default CLUTTER_GRAVITY_CENTER
+   */
+  g_object_class_install_property (object_class,
+                                   PROP_GRAVITY,
+                                   g_param_spec_enum ("gravity",
+                                            "which gravity to use for scaling",
+                                            "which gravity to use for scaling",
+					    CLUTTER_TYPE_GRAVITY,
+					    CLUTTER_GRAVITY_CENTER,
+			                    G_PARAM_CONSTRUCT |
+                                            CLUTTER_PARAM_READWRITE));
+
+  /**
+   * ClutterDominatrix::manipulation-started:
+   * @dmx: the object which received the signal
+   *
+   * This signal is emitted each time the users starts to manipulate the
+   * actor.
+   *
+   */
+  dmx_signals[MANIPULATION_STARTED] =
+    g_signal_new ("manipulation-started",
+                  G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  G_STRUCT_OFFSET (ClutterDominatrixClass,
+				   manipulation_started),
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
+                  G_TYPE_NONE, 0);
+  
+  /**
+   * ClutterDominatrix::manipulation-ended:
+   * @dmx: the object which received the signal
+   *
+   * This signal is emitted each time the users starts to manipulate the
+   * actor.
+   *
+   */
+  dmx_signals[MANIPULATION_ENDED] =
+    g_signal_new ("manipulation-ended",
+                  G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  G_STRUCT_OFFSET (ClutterDominatrixClass,
+				   manipulation_ended),
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
+                  G_TYPE_NONE, 0);
 }
 
 static void
@@ -369,6 +486,7 @@ clutter_dominatrix_init (ClutterDominatrix *self)
   self->priv->mhandle_width  = 20;
   self->priv->mhandle_height = 20;
   self->priv->scale = TRUE;
+  self->priv->gravity = CLUTTER_GRAVITY_CENTER;
 }
 
 static void 
@@ -405,6 +523,8 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	
 	if (actor != priv->slave)
 	  return;
+
+	g_signal_emit (dominatrix, dmx_signals[MANIPULATION_STARTED], 0);
 
 	priv->prev_x = x;
 	priv->prev_y = y;
@@ -733,7 +853,7 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	    sy += SCALE_STEP * diff;
 	    
 	    clutter_actor_set_scale_with_gravityx (priv->slave, sx, sy,
-						   CLUTTER_GRAVITY_CENTER);
+						   priv->gravity);
 #undef SCALE_STEP
 	  }
 
@@ -745,7 +865,11 @@ clutter_dominatrix_on_event (ClutterStage *stage,
       
     case CLUTTER_BUTTON_RELEASE:
       {
-	priv->dragging = DRAG_NONE;
+	if (priv->dragging != DRAG_NONE)
+	  {
+	    g_signal_emit (dominatrix, dmx_signals[MANIPULATION_ENDED], 0);
+	    priv->dragging = DRAG_NONE;
+	  }
       }
       break;
       
@@ -755,22 +879,48 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 }
 
 
+/**
+ * clutter_dominatrix_new:
+ * @slave: a #ClutterActor to manipulate
+ *
+ * Creates a ClutterDominatrix proxy for the given actor that allows
+ * the user to be manipulated via a pointer.
+ * 
+ * When you are done with the proxy, release the references to it.
+ */
 ClutterDominatrix *
-clutter_dominatrix_new (ClutterActor *actor)
+clutter_dominatrix_new (ClutterActor *slave)
 {
-  ClutterDominatrix * dmx = g_object_new (CLUTTER_TYPE_DOMINATRIX,
-					  "slave", actor,
-					  NULL);
-
-  ClutterActor * stage = clutter_stage_get_default ();
-  
-  dmx->priv->handler_id =
-    g_signal_connect (stage, "event",
-		      G_CALLBACK (clutter_dominatrix_on_event), dmx);
-
-  return dmx;
+  return g_object_new (CLUTTER_TYPE_DOMINATRIX, "slave", slave, NULL);
 }
 
+/**
+ * clutter_dominatrix_new_with_gravity:
+ * @slave: a #ClutterActor to manipulate
+ * @gravity: a #ClutterGravity to use when the actor is being scaled.
+ * 
+ * Creates a ClutterDominatrix proxy for the given actor that allows
+ * the user to be manipulated via a pointer, and sets the gravity for scaling
+ * to the provided value.
+ * 
+ * When you are done with the proxy, release the references to it.
+ */
+ClutterDominatrix *
+clutter_dominatrix_new_with_gravity (ClutterActor   * slave,
+				     ClutterGravity   gravity)
+{
+  return g_object_new (CLUTTER_TYPE_DOMINATRIX,
+		       "slave", slave,
+		       "gravity", gravity,
+		       NULL);
+}
+
+/**
+ * clutter_dominatrix_set_slave:
+ * @dmx: a #ClutterDominatrix
+ * @slave: a #ClutterActor that the proxy should operate on.
+ * 
+ */
 void
 clutter_dominatrix_set_slave (ClutterDominatrix *dmx, ClutterActor *slave)
 {
@@ -778,5 +928,46 @@ clutter_dominatrix_set_slave (ClutterDominatrix *dmx, ClutterActor *slave)
 
   g_object_ref (slave);
   dmx->priv->slave = slave;
+
+  clutter_dominatrix_store_original_settings (dmx->priv);
 }
 
+/**
+ * clutter_dominatrix_get_slave:
+ * @dmx: a #ClutterDominatrix
+ *
+ * Returns the #ClutterActor that the proxy currently operates on. When you
+ * are done with it, you have to unref the slave.
+ */
+ClutterActor *
+clutter_dominatrix_get_slave (ClutterDominatrix *dmx)
+{
+  g_return_val_if_fail (CLUTTER_IS_DOMINATRIX (dmx), NULL);
+  
+  if (dmx->priv->slave)
+    g_object_ref (dmx->priv->slave);
+
+  return dmx->priv->slave;
+}
+
+/**
+ * clutter_dominatrix_restore:
+ * @dmx: a #ClutterDominatrix
+ *
+ * Restores the slave the proxy manipulates to it's original state.
+ */
+void
+clutter_dominatrix_restore (ClutterDominatrix *dmx)
+{
+  ClutterDominatrixPrivate * priv;
+  g_return_if_fail (CLUTTER_IS_DOMINATRIX (dmx));
+
+  priv = dmx->priv;
+  
+  clutter_actor_rotate_zx (priv->slave, priv->orig_zang, 0, 0);
+  
+  clutter_actor_set_scalex (priv->slave,
+			    priv->orig_scale_x, priv->orig_scale_y);
+  
+  clutter_actor_request_coords (priv->slave, &priv->orig_box);
+}

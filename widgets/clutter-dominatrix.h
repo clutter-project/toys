@@ -63,14 +63,21 @@ struct _ClutterDominatrix
 struct _ClutterDominatrixClass
 {
   GObjectClass parent_class;
+
+  void (* manipulation_started)  (ClutterDominatrix *dmx);
+  void (* manipulation_ended)    (ClutterDominatrix *dmx);
 };
 
 GType                 clutter_dominatrix_get_type         (void) G_GNUC_CONST;
 
 ClutterDominatrix *   clutter_dominatrix_new              (ClutterActor *actor);
+ClutterDominatrix *   clutter_dominatrix_new_with_gravity (ClutterActor   *actor,
+							   ClutterGravity  gravity);
 
 void                  clutter_dominatrix_set_slave        (ClutterDominatrix *dmx,
 							   ClutterActor      *slave);
+ClutterActor *        clutter_dominatrix_get_slave        (ClutterDominatrix *dmx);
+void                  clutter_dominatrix_restore          (ClutterDominatrix *dmx);
 
 G_END_DECLS
 
