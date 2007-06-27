@@ -22,7 +22,6 @@
 
 #include <config.h>
 #include <glib.h>
-#include <clutter/clutter.h>
 
 #include "aaina-library.h"
 
@@ -58,13 +57,13 @@ typedef struct _AainaSourceClass AainaSourceClass;
 
 struct _AainaSource
 {
-	ClutterGroup         parent;
+	GObject         parent;
 };
 
 struct _AainaSourceClass 
 {
 	
-	ClutterGroupClass parent_class;
+	GObjectClass parent_class;
 
   void (*_aaina_source_1) (void);
   void (*_aaina_source_2) (void);

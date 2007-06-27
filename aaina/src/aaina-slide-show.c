@@ -123,9 +123,9 @@ static void
 aaina_slide_show_class_init (AainaSlideShowClass *klass)
 {
   GObjectClass    *gobject_class = G_OBJECT_CLASS (klass);
-  ClutterActorClass *actor_class = CLUTTER_ACTOR_CLASS (klass);
+  /*ClutterActorClass *actor_class = CLUTTER_ACTOR_CLASS (klass);
 
-  /*actor_class->paint          = aaina_slide_show_paint;*/
+  actor_class->paint          = aaina_slide_show_paint;*/
 
   gobject_class->finalize     = aaina_slide_show_finalize;
   gobject_class->dispose      = aaina_slide_show_dispose;

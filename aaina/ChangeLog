@@ -1,5 +1,23 @@
 2007-06-27  Neil J. Patel  <njp@o-hand.com>
 
+	* Makefile.am:
+	* configure.ac:
+	* libaaina/aaina-source.h:
+	Inheriting from the wrong object. 
+
+	* sources/Makefile.am:
+	* sources/aaina-source-directory.c: (_load_photos),
+	(aaina_source_directory_class_init), (aaina_source_directory_init),
+	(aaina_source_directory_new):
+	* sources/aaina-source-directory.h:
+	Added a sources directory.
+	Created a basic directory-based source.
+
+	* src/aaina-slide-show.c: (aaina_slide_show_class_init):
+	Removed over-riding clutter_actor_paint (), but needed at the moment,
+
+2007-06-27  Neil J. Patel  <njp@o-hand.com>
+
 	* libaaina/Makefile.am:
 	* libaaina/aaina-source.c: (aaina_source_class_init),
 	(aaina_source_init), (aaina_source_new):
