@@ -499,6 +499,10 @@ clutter_dominatrix_on_event (ClutterStage *stage,
   
   switch (event->type)
     {
+    case CLUTTER_2BUTTON_PRESS:
+      clutter_dominatrix_restore (dominatrix);
+      break;
+      
     case CLUTTER_BUTTON_PRESS:
       {
 	gint x, y;

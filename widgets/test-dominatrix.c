@@ -96,6 +96,10 @@ main (int argc, char *argv[])
 	    gravity = CLUTTER_GRAVITY_NORTH_WEST;
 	else if (i == DIMY - 1 && j == DIMX - 1)
 	    gravity = CLUTTER_GRAVITY_SOUTH_EAST;
+	else if (i == 0 && j == DIMX-1)
+	    gravity = CLUTTER_GRAVITY_NORTH_EAST;
+	else if (i == DIMY-1 && j == 0)
+	    gravity = CLUTTER_GRAVITY_SOUTH_WEST;
 	else if (i == 0)
 	    gravity = CLUTTER_GRAVITY_NORTH;
 	else if (i == DIMY - 1)
