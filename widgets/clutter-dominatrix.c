@@ -758,7 +758,7 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	else if (priv->dragging == DRAG_ROTATE)
 	  {
 	    ClutterFixed a;
-	    gint x1, x2, y1, y2;
+	    gint x1, x2, y1, y2, div;
 	    
 	    if (priv->dont_rotate)
 	      return;
@@ -805,8 +805,13 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	    y1 -= priv->center_y;
 	    x2 -= priv->center_x;
 	    y2 -= priv->center_y;
-	    
-	    a = (((x1 * y2 - x2 * y1) * 0x32000) / (x1 * x1 + y1 * y1)) << 4;
+
+	    div = x1 * x1 + y1 * y1;
+
+	    if (div)
+	      a = (((x1 * y2 - x2 * y1) * 0x32000) / div) << 4;
+	    else
+	      a = CFX_ONE;
 
 	    /*
 	     * For anything above 0.7 rad, we tweak the value a bit
