@@ -32,7 +32,7 @@ on_event (ClutterStage *stage,
 	if (actor != d->reset)
 	    return;
 
-	for (i = 0; i < 4; ++i)
+	for (i = 0; i < 9; ++i)
 	  {
 	    clutter_dominatrix_restore (*dmx);
 	    dmx++;
@@ -45,48 +45,57 @@ on_event (ClutterStage *stage,
 }
 
 
-#define RECT_SIZE 180
+#define RECT_SIZE 120
 
 int
 main (int argc, char *argv[])
 {
   ClutterActor      * stage;
   ClutterActor      * label;
-  ClutterActor      * rect[4];
-  ClutterDominatrix * dmx[4];
-  ClutterGravity      gvt[4];
+  ClutterActor      * rect[9];
+  ClutterDominatrix * dmx[9];
+  ClutterGravity      gvt[9];
   struct on_event_data d;
   gint i,j;
 
-  ClutterColor        clr[4] = { {0xff,0xff,0xff,0xff},
+  ClutterColor        clr[9] = { {0xff,0xff,0xff,0xff},
 				 {0xff,0,0,0xff},
+				 {0xff,0xff,0,0xff},
+				 {0xff,0,0xff,0xff},
+				 {0,0xff,0xff,0xff},
 				 {0,0xff,0,0xff},
+				 {0x7f,0x7f,0x7f,0xff},
+				 {0xff,0x5a,0,0xff},
 				 {0,0,0xff,0xff}};
 	  
   ClutterColor        stage_color = { 0x0, 0x0, 0x0, 0xff }, 
-                      red         = { 0xff, 0, 0, 0xff },
 	              white       = { 0xff, 0xff, 0xff, 0xff };
 
   gvt[0] = CLUTTER_GRAVITY_NORTH_WEST;
-  gvt[1] = CLUTTER_GRAVITY_SOUTH_WEST;
+  gvt[1] = CLUTTER_GRAVITY_NORTH;
   gvt[2] = CLUTTER_GRAVITY_NORTH_EAST;
-  gvt[3] = CLUTTER_GRAVITY_SOUTH_EAST;
+  gvt[3] = CLUTTER_GRAVITY_WEST;
+  gvt[4] = CLUTTER_GRAVITY_CENTER;
+  gvt[5] = CLUTTER_GRAVITY_EAST;
+  gvt[6] = CLUTTER_GRAVITY_SOUTH_WEST;
+  gvt[7] = CLUTTER_GRAVITY_SOUTH;
+  gvt[8] = CLUTTER_GRAVITY_SOUTH_EAST;
   
   clutter_init (&argc, &argv);
 
   stage = clutter_stage_get_default ();
 
   clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
-  clutter_actor_set_size (stage, 800, 600);
+  clutter_actor_set_size (stage, 360, 410);
 
-  for (i = 0; i < 2; ++i)
-    for (j = 0; j < 2; ++j)
+  for (i = 0; i < 3; ++i)
+    for (j = 0; j < 3; ++j)
       {
-	gint k = i*2 + j;
+	gint k = i*3 + j;
 	
 	rect[k] = clutter_rectangle_new ();
 	clutter_actor_set_position (rect[k],
-				    150 + i*RECT_SIZE, 100 + j*RECT_SIZE);
+				    j*RECT_SIZE, 50 + i*RECT_SIZE);
 	clutter_actor_set_size (rect[k], RECT_SIZE, RECT_SIZE);
 	clutter_rectangle_set_color (CLUTTER_RECTANGLE (rect[k]), &clr[k]);
   	clutter_actor_show (rect[k]);
