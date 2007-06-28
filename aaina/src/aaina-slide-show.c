@@ -26,11 +26,15 @@ G_DEFINE_TYPE (AainaSlideShow, aaina_slide_show, CLUTTER_TYPE_GROUP);
 #define AAINA_SLIDE_SHOW_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj),\
 	AAINA_TYPE_SLIDE_SHOW, \
 	AainaSlideShowPrivate))
-	
+
+#define N_LANES 4
+
 struct _AainaSlideShowPrivate
 {
   AainaLibrary      *library;
   ClutterTexture    *texture;
+
+  GList *lanes;
 };
 
 enum
@@ -51,33 +55,33 @@ aaina_slide_show_row_foreach (AainaLibrary     *library,
 		 	                        AainaPhoto	     *photo,
 		 	                        gpointer          data)
 {
+  AainaSlideShowPrivate *priv = AAINA_SLIDE_SHOW (data)->priv;
   static GRand *rand = NULL;
   static gint count = 0;
-
+  
+  ClutterActor *lane = g_list_nth_data (priv->lanes, count);
+  g_return_val_if_fail (CLUTTER_IS_ACTOR (lane), TRUE);
   if (!rand)
     rand = g_rand_new ();
   gint x = g_rand_int_range (rand, 
                              0, 
-                             CLUTTER_STAGE_WIDTH () *4);
+                             CLUTTER_STAGE_WIDTH () * 4);
   gint y;
-  if (count == 1)
-    y = 30;
-  else if (count == 2)
-    y = 200;
-  else
-    y  = 400;
+  
+  y = (CLUTTER_STAGE_HEIGHT () / N_LANES) * count + 30;
+
   gdouble scale = g_random_double_range (0.1, 0.3);
 
   g_return_val_if_fail (AAINA_IS_SLIDE_SHOW (data), TRUE);
         
-	clutter_group_add (CLUTTER_GROUP(data), CLUTTER_ACTOR(photo));
+	clutter_group_add (CLUTTER_GROUP(lane), CLUTTER_ACTOR(photo));
   aaina_photo_set_scale (AAINA_PHOTO (photo), scale);
 	clutter_actor_set_position (CLUTTER_ACTOR (photo), x, y);
  
   clutter_actor_show_all (CLUTTER_ACTOR (photo));
 
   count++;
-  if (count == 3)
+  if (count == N_LANES)
     count = 0;
 	return TRUE;
 }
@@ -101,19 +105,20 @@ aaina_slide_show_set_library (AainaSlideShow *slide_show,
     return;
   priv = slide_show->priv;
 
-  priv->library = library;
-  
   if (priv->library)
   {
     aaina_slide_show_remove_rows (slide_show);
     g_object_unref (priv->library);
-  
-    g_signal_connect (G_OBJECT (priv->library), "photo-added",
+  }
+  priv->library = library;
+  if (!library)
+    return;
+  g_signal_connect (G_OBJECT (priv->library), "photo-added",
                     G_CALLBACK (on_photo_added), slide_show);
-    aaina_library_foreach (priv->library, 
+  aaina_library_foreach (priv->library, 
                          aaina_slide_show_row_foreach,
                          (gpointer)slide_show);
-  }
+  
 }
 
 
@@ -219,6 +224,16 @@ aaina_slide_show_init (AainaSlideShow *slide_show)
   priv = AAINA_SLIDE_SHOW_GET_PRIVATE (slide_show);
 
   slide_show->priv = priv;
+  
+  priv->lanes = NULL;
+  gint i;
+  for (i=0; i < N_LANES;  i++)
+  {
+    ClutterActor *lane = clutter_group_new ();
+    clutter_group_add (CLUTTER_GROUP (slide_show), lane);
+    clutter_actor_show_all (lane);
+    priv->lanes = g_list_append (priv->lanes, lane);
+  }
 }
 
 ClutterActor*
