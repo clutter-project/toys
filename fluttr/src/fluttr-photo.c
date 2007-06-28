@@ -5,6 +5,8 @@
  * Author: Neil J. Patel  <njp@o-hand.com>
  */
 
+#include "GL/gl.h"
+
 #include "fluttr-photo.h"
 
 #include "fluttr-behave.h"
@@ -121,7 +123,7 @@ fluttr_photo_set_visible (FluttrPhoto *photo, gboolean visible)
 		if (priv->pixbuf) {
 		        clutter_texture_set_pixbuf (CLUTTER_TEXTURE (
 		                                        priv->texture),
-					            priv->pixbuf);
+					            priv->pixbuf, NULL);
         		clutter_actor_set_scale (priv->texture, 0.6, 0.6);
 	        	clutter_actor_get_abs_size (priv->texture, &w, &h);
 	        	
@@ -324,13 +326,14 @@ fluttr_photo_swap_alpha_func (ClutterBehaviour *behave,
 	
 	if (priv->pixbuf != NULL && factor > 0.5 && priv->texture) {
 		clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture),
-					    priv->pixbuf);
+					    priv->pixbuf, NULL);
 		clutter_actor_set_scale (priv->texture, 0.6, 0.6);
 		clutter_actor_get_abs_size (priv->texture, &w, &h);
 		
 		clutter_actor_set_position (priv->texture, 
 					    (width/2) - (w/2),
 					    (height/2) - (h/2));    
+                clutter_actor_show_all (priv->texture);
 	}
 	if (factor < 0.5) {
 		factor *= 2;
@@ -962,6 +965,9 @@ fluttr_photo_init (FluttrPhoto *self)
 					       (gpointer)self);
 
 	clutter_actor_lower_bottom (bg);
+        clutter_actor_show_all (priv->clip);
+        clutter_actor_show_all (priv->options);
+        clutter_actor_show_all (CLUTTER_ACTOR (self));
 }
 
 ClutterActor*

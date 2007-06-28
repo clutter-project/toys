@@ -5,6 +5,8 @@
  * Author: Neil J. Patel  <njp@o-hand.com>
  */
 
+#include <GL/gl.h>
+
 #include "fluttr-viewer.h"
 
 #include "fluttr-spinner.h"
@@ -294,7 +296,7 @@ fluttr_viewer_swap_alpha_func (ClutterBehaviour *behave,
 	
 	if (priv->pixbuf != NULL && factor > 0.5) {
 		clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture),
-					    priv->pixbuf);
+					    priv->pixbuf, NULL);
 		clutter_actor_get_size (priv->texture, &w, &h);
 		
 		clutter_actor_set_position (priv->texture, 

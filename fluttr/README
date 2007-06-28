@@ -1,5 +1,14 @@
 A clutter-based flickr viewer.
 
+NOTE
+====
+
+Fluttr is now tracking clutter svn (clutter-0.3 upwards), so you can either 
+install clutter svn on your system, or you can grab a copy of Fluttr which will
+compile against clutter-0.2 from:
+http://folks.o-hand.com/njp/fluttr/fluttr-0.1-svn846.tar.gz
+
+
 Authorising yourself with Flickr
 ================================
 
@@ -7,10 +16,10 @@ Type this url into your web-browser of choice:
 
 http://www.flickr.com/auth-72157600141007022
 
-You will then be asked to log into flickr (or not if you are already logged in).
-The next screen will ask you if you want to let Fluttr access your Flickr
-pictures, click "OK, I'll allow it", and Flickr will take you to a page which
-has a auth code in the middle like this:
+You will then be asked to log into flickr (or not if you are already 
+logged in). The next screen will ask you if you want to let Fluttr access 
+your Flickr pictures, click "OK, I'll allow it", and Flickr will take you to 
+a page which has a auth code in the middle like this:
 
 123-456-789
 
@@ -42,8 +51,6 @@ Options
 -f, --fullscreen     Launch Fluttr in fullscreen mode
 -w, --width=800      Width of the Fluttr window
 -h, --height=440     Height of the Fluttr window
-
-
 
 Know Issues
 ===========

@@ -1,3 +1,22 @@
+2007-06-28  Neil J. Patel  <njp@o-hand.com>
+
+	* README:
+	* configure.ac:
+	Added instructions on where to download Fluttr for clutter-0.2
+
+	* src/fluttr-auth.c:
+	* src/fluttr-list-view.c: (fluttr_list_view_set_property):
+	* src/fluttr-list.c: (fluttr_list_init):
+	* src/fluttr-photo.c: (fluttr_photo_set_visible),
+	(fluttr_photo_swap_alpha_func), (fluttr_photo_init):
+	* src/fluttr-set-view.c:
+	* src/fluttr-spinner.c: (fluttr_spinner_new):
+	* src/fluttr-viewer.c: (fluttr_viewer_swap_alpha_func):
+	* src/main.c: (main), (create_background):
+	Port to clutter-0.3.
+	Call clutter_actor_show_all () on groups where parent == ClutterGroup.
+	Update clutter_texture_set_pixbuf to new api.
+
 2007-06-19  Ross Burton  <ross@openedhand.com>
 
 	* libnflick/Makefile.am:

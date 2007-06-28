@@ -5,6 +5,8 @@
  * Author: Neil J. Patel  <njp@o-hand.com>
  */
 
+#include <GL/gl.h>
+
 #include "fluttr-list.h"
 
 #include "fluttr-spinner.h"
@@ -559,7 +561,7 @@ fluttr_list_init (FluttrList *self)
   						    height,
   						    FALSE,
   						    NULL);
-	clutter_texture_set_pixbuf (CLUTTER_TEXTURE (message), msg_buf);
+	clutter_texture_set_pixbuf (CLUTTER_TEXTURE (message), msg_buf, NULL);
 	clutter_group_add (CLUTTER_GROUP (priv->group),message); 
 	clutter_actor_set_size (message, width, height);
 	clutter_actor_set_position (message, -(width/2),-(height/2));
@@ -599,7 +601,10 @@ fluttr_list_init (FluttrList *self)
 	priv->text_behave = fluttr_behave_new (priv->text_alpha,
 					  fluttr_list_text_alpha_func,
 					  (gpointer)self);	
-	g_free (font);	
+	
+        clutter_actor_show_all (priv->group);
+        clutter_actor_show_all (CLUTTER_ACTOR (self));
+        g_free (font);	
 }
 
 ClutterActor*

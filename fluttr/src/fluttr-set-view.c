@@ -5,6 +5,8 @@
  * Author: Neil J. Patel  <njp@o-hand.com>
  */
 
+#include <GL/gl.h>
+
 #include "fluttr-set-view.h"
 
 G_DEFINE_TYPE (FluttrSetView, fluttr_set_view, CLUTTER_TYPE_GROUP);

@@ -279,7 +279,7 @@ main (int argc, char **argv)
 	
 	/* Receive all input events */
 	g_signal_connect (stage, 
-		          "input-event",
+		          "event",
 		          G_CALLBACK (browse_input_cb),
 		          (gpointer)fluttr);	
 	
@@ -687,7 +687,7 @@ create_background (ClutterActor *bg, guint width, guint height)
   						    FALSE,
   						    NULL);
 	if (pixbuf)
-		clutter_texture_set_pixbuf (CLUTTER_TEXTURE (bg), pixbuf);
+		clutter_texture_set_pixbuf (CLUTTER_TEXTURE (bg), pixbuf, NULL);
 	else
 		g_print ("Could not load pixbuf\n");		
 }

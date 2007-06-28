@@ -141,7 +141,7 @@ fluttr_spinner_new (void)
 	}
 	if (spinner_pixbuf)
 		clutter_texture_set_pixbuf (CLUTTER_TEXTURE (spinner),
-					    spinner_pixbuf);
+					    spinner_pixbuf, NULL);
 	else
 		g_print ("Could not load spinner\n");	
  	return CLUTTER_ACTOR (spinner);

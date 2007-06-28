@@ -5,6 +5,8 @@
  * Author: Neil J. Patel  <njp@o-hand.com>
  */
 
+#include <GL/gl.h>
+
 #include "fluttr-list-view.h"
 
 G_DEFINE_TYPE (FluttrListView, fluttr_list_view, CLUTTER_TYPE_GROUP);
@@ -334,7 +336,8 @@ fluttr_list_view_set_property (GObject      *object,
 			if (priv->library != NULL)
 				g_object_unref (priv->library);
 			priv->library =g_value_get_object (value);
-			g_object_ref (priv->library);
+			if (priv->library)
+                                g_object_ref (priv->library);
 			/* Connect to the library signals */
 			break;
 			
