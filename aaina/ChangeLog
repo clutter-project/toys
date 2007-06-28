@@ -1,3 +1,24 @@
+2007-06-28  Neil J. Patel  <njp@o-hand.com>
+
+	* libaaina/aaina-photo.c: (aaina_photo_set_pixbuf),
+	(aaina_photo_set_property), (aaina_photo_class_init),
+	(aaina_photo_init), (aaina_photo_new):
+	* libaaina/aaina-photo.h:
+	Fix setting of texture, plus add backgorund tetxure.
+	
+	* sources/aaina-source-directory.c: (_load_photos):
+	Load photos at half the stage dimensions.
+
+	* src/aaina-slide-show.c: (aaina_slide_show_remove_rows),
+	(aaina_slide_show_row_foreach), (on_photo_added),
+	(aaina_slide_show_set_library), (aaina_slide_show_set_property):
+	Fix to actually add photos from the library, and to randomly position them.
+
+	* src/main.c: (main):
+	Load the the directory source and show the stage at 1/4 size (to check the
+	randomness of the placement)
+
+
 2007-06-27  Neil J. Patel  <njp@o-hand.com>
 
 	* src/Makefile.am:

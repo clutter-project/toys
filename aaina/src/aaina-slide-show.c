@@ -29,7 +29,8 @@ G_DEFINE_TYPE (AainaSlideShow, aaina_slide_show, CLUTTER_TYPE_GROUP);
 	
 struct _AainaSlideShowPrivate
 {
-  AainaLibrary *library;
+  AainaLibrary      *library;
+  ClutterTexture    *texture;
 };
 
 enum
@@ -39,14 +40,80 @@ enum
   PROP_LIBRARY
 };
 
+static void
+aaina_slide_show_remove_rows (AainaSlideShow *slide_show)
+{
+	clutter_group_remove_all (CLUTTER_GROUP(slide_show));
+}
+
+static gboolean
+aaina_slide_show_row_foreach (AainaLibrary     *library,
+		 	                        AainaPhoto	     *photo,
+		 	                        gpointer          data)
+{
+  static GRand *rand = NULL;
+  static gint count = 0;
+
+  if (!rand)
+    rand = g_rand_new ();
+  gint x = g_rand_int_range (rand, 
+                             0, 
+                             CLUTTER_STAGE_WIDTH () *4);
+  gint y;
+  if (count == 1)
+    y = 30;
+  else if (count == 2)
+    y = 200;
+  else
+    y  = 400;
+  gdouble scale = g_random_double_range (0.1, 0.3);
+
+  g_return_val_if_fail (AAINA_IS_SLIDE_SHOW (data), TRUE);
+        
+	clutter_group_add (CLUTTER_GROUP(data), CLUTTER_ACTOR(photo));
+  clutter_actor_set_scale (CLUTTER_ACTOR (photo), scale, scale);
+	clutter_actor_set_position (CLUTTER_ACTOR (photo), x, y);
+ 
+  clutter_actor_show_all (CLUTTER_ACTOR (photo));
+
+  count++;
+  if (count == 3)
+    count = 0;
+	return TRUE;
+}
+
+static void
+on_photo_added (AainaLibrary    *library, 
+                AainaPhoto      *photo, 
+                AainaSlideShow  *slide_show)
+{
+  ;
+}
 
 void
 aaina_slide_show_set_library (AainaSlideShow *slide_show, 
                               AainaLibrary *library)
 {
-  g_return_if_fail (AAINA_IS_SLIDE_SHOW (slide_show));
+  AainaSlideShowPrivate *priv;
 
-  g_object_set (G_OBJECT (slide_show), "library", slide_show, NULL);
+  g_return_if_fail (AAINA_IS_SLIDE_SHOW (slide_show));
+  if (!AAINA_IS_LIBRARY (library))
+    return;
+  priv = slide_show->priv;
+
+  priv->library = library;
+  
+  if (priv->library)
+  {
+    aaina_slide_show_remove_rows (slide_show);
+    g_object_unref (priv->library);
+  
+    g_signal_connect (G_OBJECT (priv->library), "photo-added",
+                    G_CALLBACK (on_photo_added), slide_show);
+    aaina_library_foreach (priv->library, 
+                         aaina_slide_show_row_foreach,
+                         (gpointer)slide_show);
+  }
 }
 
 
@@ -74,11 +141,9 @@ aaina_slide_show_set_property (GObject      *object,
   switch (prop_id)
   {
     case PROP_LIBRARY:
-      if (priv->library)
-        g_object_unref (priv->library);
-      priv->library = g_value_get_object (value);
-      if (priv->library)
-        g_object_ref (priv->library);
+      aaina_slide_show_set_library (AAINA_SLIDE_SHOW (object), 
+                                    AAINA_LIBRARY (g_value_get_object (value)));
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;

@@ -45,7 +45,11 @@ _load_photos (AainaLibrary *library, const gchar *directory)
     else
     {
       GdkPixbuf *pixbuf = NULL;
-      pixbuf = gdk_pixbuf_new_from_file (path, NULL);
+      pixbuf = gdk_pixbuf_new_from_file_at_scale (path, 
+                                                  CLUTTER_STAGE_WIDTH ()/2,
+                                                  CLUTTER_STAGE_HEIGHT ()/2,
+                                                  TRUE,
+                                                  NULL);
       if (pixbuf)
       {
         ClutterActor *photo = aaina_photo_new ();

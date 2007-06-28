@@ -80,6 +80,9 @@ ClutterActor*
 aaina_photo_new (void);
 
 void
+aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf);
+
+void
 aaina_photo_set_active (AainaPhoto *photo, gboolean active);
 
 void

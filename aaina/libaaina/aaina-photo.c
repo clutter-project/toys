@@ -33,11 +33,14 @@ struct _AainaPhotoPrivate
 {
   gboolean   visible;
 	
-  GdkPixbuf		*pixbuf;
+  GdkPixbuf  *pixbuf;
 
-  gchar       *title;
-  gchar       *author;
-  gchar       *date;
+  gchar      *title;
+  gchar      *author;
+  gchar      *date;
+
+  ClutterActor *texture; 
+  ClutterActor *bg;
 };
 
 enum
@@ -57,13 +60,39 @@ enum
 
 static guint _photo_signals[LAST_SIGNAL] = { 0 };
 
+void
+aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
+{
+  AainaPhotoPrivate *priv;
+  gint width, height;
+  gint x, y;
+
+  g_return_if_fail (AAINA_IS_PHOTO (photo));
+  g_return_if_fail (GDK_IS_PIXBUF (pixbuf));
+  priv = photo->priv;
+
+  width = gdk_pixbuf_get_width (pixbuf);
+  height = gdk_pixbuf_get_height (pixbuf);
+
+  x = (CLUTTER_STAGE_WIDTH () - width)/2;
+  y = (CLUTTER_STAGE_HEIGHT () - height)/2;
+
+  clutter_actor_set_size (priv->bg, width + 20, height + 20);
+  clutter_actor_set_position (priv->bg, x-10, y-10);
+
+  clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture), pixbuf, NULL);
+  clutter_actor_set_size (priv->texture, width, height);
+  clutter_actor_set_position (priv->texture, x, y);
+}
+
 /* GObject stuff */
+/*
 static void
 aaina_photo_paint (ClutterActor *actor)
 {
   ;
 }
-
+*/
 static void
 aaina_photo_set_property (GObject      *object, 
                           guint         prop_id,
@@ -79,6 +108,10 @@ aaina_photo_set_property (GObject      *object,
   {
     case PROP_PIXBUF:
       priv->pixbuf = g_value_get_object (value);
+      if (priv->pixbuf)
+        clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture),
+                                    priv->pixbuf, 
+                                    NULL);
       break;
     case PROP_TITLE:
       if (priv->title)
@@ -148,9 +181,9 @@ static void
 aaina_photo_class_init (AainaPhotoClass *klass)
 {
   GObjectClass    *gobject_class = G_OBJECT_CLASS (klass);
-  ClutterActorClass *actor_class = CLUTTER_ACTOR_CLASS (klass);
+  /*ClutterActorClass *actor_class = CLUTTER_ACTOR_CLASS (klass);
 
-  actor_class->paint          = aaina_photo_paint;
+  actor_class->paint          = aaina_photo_paint;*/
 
   gobject_class->finalize     = aaina_photo_finalize;
   gobject_class->dispose      = aaina_photo_dispose;
@@ -200,6 +233,7 @@ static void
 aaina_photo_init (AainaPhoto *photo)
 {
   AainaPhotoPrivate *priv;
+  ClutterColor white = {1.0, 1.0, 1.0, 1.0};
 
   g_return_if_fail (AAINA_IS_PHOTO (photo));
   priv = AAINA_PHOTO_GET_PRIVATE (photo);
@@ -208,12 +242,28 @@ aaina_photo_init (AainaPhoto *photo)
 
   priv->pixbuf = NULL;
   priv->title = priv->author = priv->date = NULL;
+  
+  priv->bg = clutter_rectangle_new_with_color (&white);
+  clutter_group_add (CLUTTER_GROUP (photo), priv->bg);
+  clutter_actor_set_size (priv->bg, 
+                          CLUTTER_STAGE_WIDTH (), 
+                          CLUTTER_STAGE_HEIGHT ());
+  clutter_actor_set_position (priv->bg, 0, 0);
+
+  priv->texture = clutter_texture_new ();
+  clutter_actor_set_size (priv->texture, 
+                          CLUTTER_STAGE_WIDTH (),
+                          CLUTTER_STAGE_HEIGHT ());
+  clutter_actor_set_position (priv->texture, 0, 0);
+  clutter_group_add (CLUTTER_GROUP (photo), priv->texture);
+
+  clutter_actor_show_all (CLUTTER_ACTOR (photo));
 }
 
 ClutterActor*
 aaina_photo_new (void)
 {
-  ClutterGroup         *photo;
+  AainaPhoto         *photo;
 
   photo = g_object_new (AAINA_TYPE_PHOTO, NULL);
   
