@@ -19,6 +19,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#include <GL/gl.h>
+
 #include "aaina-photo.h"
 
 G_DEFINE_TYPE (AainaPhoto, aaina_photo, CLUTTER_TYPE_GROUP);
@@ -41,6 +43,8 @@ struct _AainaPhotoPrivate
 
   ClutterActor *texture; 
   ClutterActor *bg;
+
+  gdouble       scale;
 };
 
 enum
@@ -59,6 +63,15 @@ enum
 };
 
 static guint _photo_signals[LAST_SIGNAL] = { 0 };
+
+void
+aaina_photo_set_scale (AainaPhoto *photo, gdouble scale)
+{
+  g_return_if_fail (AAINA_IS_PHOTO (photo));
+  photo->priv->scale = scale;
+
+  clutter_actor_queue_redraw (CLUTTER_ACTOR (photo));
+}
 
 void
 aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
@@ -86,13 +99,44 @@ aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
 }
 
 /* GObject stuff */
-/*
+
 static void
 aaina_photo_paint (ClutterActor *actor)
 {
-  ;
+  AainaPhotoPrivate *priv;
+
+  priv = AAINA_PHOTO (actor)->priv;
+
+  glPushMatrix ();
+
+  gfloat x, y;
+  guint width = CLUTTER_STAGE_WIDTH ();
+  guint height = CLUTTER_STAGE_HEIGHT ();
+
+  x = (priv->scale *width) - (width);
+  x /= 2;
+  x *= -1;
+
+  y = (priv->scale *height) - (height);
+  y /= 2;
+  y *= -1;
+
+  glTranslatef (x, y, 0);
+  glScalef (priv->scale, priv->scale, 1);
+
+  gint i;
+  gint len = clutter_group_get_n_children (CLUTTER_GROUP (actor));
+  for (i = 0; i <len; i++)
+  {
+    ClutterActor *child;
+    child = clutter_group_get_nth_child (CLUTTER_GROUP (actor), i);
+
+    if (child)
+      clutter_actor_paint (child);
+  }
+  glPopMatrix ();
 }
-*/
+
 static void
 aaina_photo_set_property (GObject      *object, 
                           guint         prop_id,
@@ -181,9 +225,9 @@ static void
 aaina_photo_class_init (AainaPhotoClass *klass)
 {
   GObjectClass    *gobject_class = G_OBJECT_CLASS (klass);
-  /*ClutterActorClass *actor_class = CLUTTER_ACTOR_CLASS (klass);
+  ClutterActorClass *actor_class = CLUTTER_ACTOR_CLASS (klass);
 
-  actor_class->paint          = aaina_photo_paint;*/
+  actor_class->paint          = aaina_photo_paint;
 
   gobject_class->finalize     = aaina_photo_finalize;
   gobject_class->dispose      = aaina_photo_dispose;

@@ -71,7 +71,7 @@ aaina_slide_show_row_foreach (AainaLibrary     *library,
   g_return_val_if_fail (AAINA_IS_SLIDE_SHOW (data), TRUE);
         
 	clutter_group_add (CLUTTER_GROUP(data), CLUTTER_ACTOR(photo));
-  clutter_actor_set_scale (CLUTTER_ACTOR (photo), scale, scale);
+  aaina_photo_set_scale (AAINA_PHOTO (photo), scale);
 	clutter_actor_set_position (CLUTTER_ACTOR (photo), x, y);
  
   clutter_actor_show_all (CLUTTER_ACTOR (photo));
