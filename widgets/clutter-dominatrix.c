@@ -510,6 +510,7 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	ClutterVertex    v[4];
 	ClutterFixed     zang;
 	gint32           xp, yp, zp;
+	gint32           xmin, xmax, ymin, ymax;
 	gint i;
 	gint width, height;
 	gint mhandle_width  = priv->mhandle_width;
@@ -545,9 +546,26 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	 */
 	clutter_actor_get_vertices (actor, v);
 
-	width  = CLUTTER_FIXED_INT (abs (v[0].x - v[3].x));
-	height = CLUTTER_FIXED_INT (abs (v[0].y - v[3].y));
+	xmin = xmax = v[0].x;
+	ymin = ymax = v[0].y;
 
+	for (i = 1; i < 4; ++i)
+	  {
+	    if (xmin > v[i].x)
+	      xmin = v[i].x;
+	    if (xmax < v[i].x)
+	      xmax = v[i].x;
+	    
+	    if (ymin > v[i].y)
+	      ymin = v[i].y;
+	    if (ymax < v[i].y)
+	      ymax = v[i].y;
+	  }
+	
+	width  = CLUTTER_FIXED_INT (xmax - xmin);
+	height = CLUTTER_FIXED_INT (ymax - ymin);
+
+	/* FIXME -- make this work when the actor is rotated */
 	if (width < 2 * mhandle_width)
 	  {
 	    mhandle_width = width >> 1;
@@ -577,6 +595,10 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	 *
 	 * First, check for movement
 	 */
+	g_debug ("actor %d x %d",
+		 clutter_actor_get_width  (actor),
+		 clutter_actor_get_height (actor));
+	
 	xp = CLUTTER_INT_TO_FIXED (clutter_actor_get_width  (actor) / 2);
 	yp = CLUTTER_INT_TO_FIXED (clutter_actor_get_height (actor) / 2);
 	zp = 0;
@@ -590,6 +612,9 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	/* Store these for later */
 	priv->center_x = xp;
 	priv->center_y = yp;
+
+	g_debug ("xp %d, x %d, mhandle_width %d; yp %d, y %d, mhandle_height %d",
+		 xp, x, mhandle_width, yp, y, mhandle_height);
 	
 	if (abs (xp - x) < mhandle_width &&
 	    abs (yp - y) < mhandle_height)
