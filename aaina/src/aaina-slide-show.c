@@ -34,7 +34,8 @@ struct _AainaSlideShowPrivate
   AainaLibrary      *library;
   ClutterTexture    *texture;
 
-  GList *lanes;
+  ClutterActor      *lanes[N_LANES];
+  gint               lanesx[N_LANES];
 };
 
 enum
@@ -43,6 +44,61 @@ enum
 
   PROP_LIBRARY
 };
+
+/* 
+ * Take the lanes, and space out the photo approprietly, randomise the y
+ * variable to make it look nice.
+ */
+ static void
+_sort_lanes (AainaSlideShow *slide_show)
+{
+  AainaSlideShowPrivate *priv;
+  GRand *rand = g_rand_new ();
+  gint i = 0;
+
+  g_return_if_fail (AAINA_IS_SLIDE_SHOW (slide_show));
+  priv = slide_show->priv;
+
+  for (i = 0; i < N_LANES; i++)
+  {
+    gint j = 0;
+    gint len = clutter_group_get_n_children (CLUTTER_GROUP (priv->lanes[i]));
+    gint prev_x = 0;
+    
+    for (j = 0; j < len; j++)
+    {
+      ClutterActor *photo;
+      photo = clutter_group_get_nth_child (CLUTTER_GROUP (priv->lanes[i]), j);
+      gint x, y;
+      guint w, h;
+
+      if (!AAINA_IS_PHOTO (photo))
+      {
+        g_warning ("Not photo\n");
+        continue;
+      }
+      clutter_actor_get_abs_position (photo, &x, &y);
+      clutter_actor_get_abs_size (photo, &w, &h);
+      
+      w *= aaina_photo_get_scale (AAINA_PHOTO (photo));
+      h *= aaina_photo_get_scale (AAINA_PHOTO (photo));
+
+      /* If we are overlapping the photo before us, move forward a bit */
+      if (x < prev_x)
+        x = prev_x + g_rand_int_range (rand, 50, 200);
+      
+      /* Randomise the y value a bit */
+       y = y + g_rand_int_range (rand, -30, 30);
+       
+      /* Update the positions */
+      clutter_actor_set_position (photo, x, y);
+      
+      g_print ("%d, %d, %d, %d\n", x, y, w, h);
+      
+      prev_x = x + w;
+    }
+  }
+}
 
 static void
 aaina_slide_show_remove_rows (AainaSlideShow *slide_show)
@@ -59,13 +115,15 @@ aaina_slide_show_row_foreach (AainaLibrary     *library,
   static GRand *rand = NULL;
   static gint count = 0;
   
-  ClutterActor *lane = g_list_nth_data (priv->lanes, count);
+  ClutterActor *lane = priv->lanes[count];
   g_return_val_if_fail (CLUTTER_IS_ACTOR (lane), TRUE);
   if (!rand)
     rand = g_rand_new ();
   gint x = g_rand_int_range (rand, 
                              0, 
-                             CLUTTER_STAGE_WIDTH () * 4);
+                             CLUTTER_STAGE_WIDTH ()/3);
+  x += priv->lanesx[count];
+  priv->lanesx[count] = x;
   gint y;
   
   y = (CLUTTER_STAGE_HEIGHT () / N_LANES) * count + 30;
@@ -79,7 +137,6 @@ aaina_slide_show_row_foreach (AainaLibrary     *library,
 	clutter_actor_set_position (CLUTTER_ACTOR (photo), x, y);
  
   clutter_actor_show_all (CLUTTER_ACTOR (photo));
-
   count++;
   if (count == N_LANES)
     count = 0;
@@ -118,7 +175,11 @@ aaina_slide_show_set_library (AainaSlideShow *slide_show,
   aaina_library_foreach (priv->library, 
                          aaina_slide_show_row_foreach,
                          (gpointer)slide_show);
-  
+  /* All the photos have been added to their respective 'lanes', so lets sort
+   * those lanes out into something useful */
+  _sort_lanes (slide_show);
+
+ 
 }
 
 
@@ -225,14 +286,14 @@ aaina_slide_show_init (AainaSlideShow *slide_show)
 
   slide_show->priv = priv;
   
-  priv->lanes = NULL;
   gint i;
   for (i=0; i < N_LANES;  i++)
   {
     ClutterActor *lane = clutter_group_new ();
     clutter_group_add (CLUTTER_GROUP (slide_show), lane);
     clutter_actor_show_all (lane);
-    priv->lanes = g_list_append (priv->lanes, lane);
+    priv->lanes[i] = lane;
+    priv->lanesx[i] = g_random_int_range (0, CLUTTER_STAGE_WIDTH () /2);
   }
 }
 

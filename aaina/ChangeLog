@@ -1,5 +1,17 @@
 2007-06-29  Neil J. Patel  <njp@o-hand.com>
 
+	* libaaina/aaina-photo.c: (aaina_photo_get_scale),
+	(aaina_photo_init):
+	* libaaina/aaina-photo.h:
+	* src/aaina-slide-show.c: (_sort_lanes),
+	(aaina_slide_show_row_foreach), (aaina_slide_show_set_library),
+	(aaina_slide_show_init):
+	Randomise the photo arrangement, however keep them in 'lanes', which group
+	the photos horizontally, so we can now implement movement of those lanes at
+	different speeds, and different orders.
+
+2007-06-29  Neil J. Patel  <njp@o-hand.com>
+
 	* src/aaina-slide-show.c: (aaina_slide_show_row_foreach),
 	(aaina_slide_show_set_library), (aaina_slide_show_init):
 	Switch to adding photos into 'lanes' depending on their y position on the

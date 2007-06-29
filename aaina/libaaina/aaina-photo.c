@@ -64,6 +64,12 @@ enum
 
 static guint _photo_signals[LAST_SIGNAL] = { 0 };
 
+gdouble
+aaina_photo_get_scale (AainaPhoto *photo)
+{
+  g_return_val_if_fail (AAINA_IS_PHOTO (photo), 1.0);
+  return photo->priv->scale;
+}
 void
 aaina_photo_set_scale (AainaPhoto *photo, gdouble scale)
 {
@@ -290,8 +296,8 @@ aaina_photo_init (AainaPhoto *photo)
   priv->bg = clutter_rectangle_new_with_color (&white);
   clutter_group_add (CLUTTER_GROUP (photo), priv->bg);
   clutter_actor_set_size (priv->bg, 
-                          CLUTTER_STAGE_WIDTH (), 
-                          CLUTTER_STAGE_HEIGHT ());
+                          CLUTTER_STAGE_WIDTH ()/2, 
+                          CLUTTER_STAGE_HEIGHT ()/2);
   clutter_actor_set_position (priv->bg, 0, 0);
 
   priv->texture = clutter_texture_new ();

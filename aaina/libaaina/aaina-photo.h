@@ -82,6 +82,8 @@ aaina_photo_new (void);
 void
 aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf);
 
+gdouble
+aaina_photo_get_scale (AainaPhoto *photo);
 void
 aaina_photo_set_scale (AainaPhoto *photo, gdouble scale);
 
