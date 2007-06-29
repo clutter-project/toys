@@ -481,10 +481,10 @@ clutter_dominatrix_init (ClutterDominatrix *self)
 {
   self->priv = CLUTTER_DOMINATRIX_GET_PRIVATE (self);
 
-  self->priv->rhandle_width  = 20;
-  self->priv->rhandle_height = 20;
-  self->priv->mhandle_width  = 20;
-  self->priv->mhandle_height = 20;
+  self->priv->rhandle_width  = 30;
+  self->priv->rhandle_height = 30;
+  self->priv->mhandle_width  = 30;
+  self->priv->mhandle_height = 30;
   self->priv->scale = TRUE;
   self->priv->gravity = CLUTTER_GRAVITY_CENTER;
 }
@@ -500,7 +500,22 @@ clutter_dominatrix_on_event (ClutterStage *stage,
   switch (event->type)
     {
     case CLUTTER_2BUTTON_PRESS:
-      clutter_dominatrix_restore (dominatrix);
+      {
+	gint x, y;
+	ClutterActor   * actor;
+        clutter_event_get_coords (event, &x, &y);
+
+	actor = clutter_stage_get_actor_at_pos (stage, x, y);
+	
+	while (actor &&
+	       actor != priv->slave &&
+	       (actor = clutter_actor_get_parent (actor)));
+	
+	if (!actor || actor != priv->slave)
+	  return;
+	    
+	clutter_dominatrix_restore (dominatrix);
+      }
       break;
       
     case CLUTTER_BUTTON_PRESS:
@@ -526,7 +541,7 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	       actor != priv->slave &&
 	       (actor = clutter_actor_get_parent (actor)));
 	
-	if (actor != priv->slave)
+	if (!actor || actor != priv->slave)
 	  return;
 
 	clutter_actor_raise_top (priv->slave);
@@ -595,10 +610,6 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	 *
 	 * First, check for movement
 	 */
-	g_debug ("actor %d x %d",
-		 clutter_actor_get_width  (actor),
-		 clutter_actor_get_height (actor));
-	
 	xp = CLUTTER_INT_TO_FIXED (clutter_actor_get_width  (actor) / 2);
 	yp = CLUTTER_INT_TO_FIXED (clutter_actor_get_height (actor) / 2);
 	zp = 0;
@@ -613,9 +624,6 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	priv->center_x = xp;
 	priv->center_y = yp;
 
-	g_debug ("xp %d, x %d, mhandle_width %d; yp %d, y %d, mhandle_height %d",
-		 xp, x, mhandle_width, yp, y, mhandle_height);
-	
 	if (abs (xp - x) < mhandle_width &&
 	    abs (yp - y) < mhandle_height)
 	  {
@@ -670,28 +678,24 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	    if (x < xp && y < yp)
 	      {
 		priv->dragging = DRAG_RESIZE_TL;
-		g_debug ("Resize TL");
 		return;
 	      }
 
 	    if (x < xp && y >= yp)
 	      {
 		priv->dragging = DRAG_RESIZE_BL;
-		g_debug ("Resize BL");
 		return;
 	      }
 
 	    if (x >= xp && y < yp)
 	      {
 		priv->dragging = DRAG_RESIZE_TR;
-		g_debug ("Resize TR");
 		return;
 	      }
 
 	    if (x >= xp && y >= yp)
 	      {
 		priv->dragging = DRAG_RESIZE_BR;
-		g_debug ("Resize BR");
 		return;
 	      }
 	  }
