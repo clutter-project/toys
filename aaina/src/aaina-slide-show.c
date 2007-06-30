@@ -41,6 +41,8 @@ struct _AainaSlideShowPrivate
   GList             *lanes[N_LANES];
   ClutterTimeline   *timelines[N_LANES];
   gint               lanesx[N_LANES];
+
+  AainaPhoto        *zoomed;
 };
 
 enum
@@ -50,6 +52,83 @@ enum
   PROP_LIBRARY
 };
 
+static gboolean zoom_photo (AainaSlideShow *slide_show);
+
+static gboolean
+restore_photo (AainaSlideShow *slide_show)
+{
+  AainaSlideShowPrivate *priv;
+  static GRand *rand = NULL;
+  gint i;
+
+  g_return_val_if_fail (AAINA_IS_SLIDE_SHOW (slide_show), FALSE);
+  priv = slide_show->priv;
+  
+  if (rand == NULL)
+    rand = g_rand_new ();
+
+  aaina_photo_restore (priv->zoomed);
+
+  for (i = 0; i < N_LANES; i++)
+    clutter_timeline_start (priv->timelines[i]);
+
+  g_timeout_add (g_rand_int_range (rand, 4000, 10000), 
+                 (GSourceFunc)zoom_photo, 
+                 (gpointer)slide_show);
+  return FALSE;
+}
+
+static gboolean
+zoom_photo (AainaSlideShow *slide_show)
+{
+  AainaSlideShowPrivate *priv;
+  static GRand *rand = NULL;
+  GList *l, *photos = NULL;
+  gint lane, i;
+  gint stage_width = CLUTTER_STAGE_WIDTH ();
+  AainaPhoto *photo;
+  
+  g_return_val_if_fail (AAINA_IS_SLIDE_SHOW (slide_show), FALSE);
+  priv = slide_show->priv;
+
+  if (rand == NULL)
+    rand = g_rand_new ();
+
+  lane = g_rand_int_range (rand, 0, N_LANES);
+
+  for (l = priv->lanes[lane]; l != NULL; l = l->next)
+  {
+    ClutterActor *actor = CLUTTER_ACTOR (l->data);
+    gint x;
+
+    if (!AAINA_IS_PHOTO (actor))
+      continue;
+
+    x = clutter_actor_get_x (actor);
+
+    if (x > 0 && x < stage_width)
+      photos = g_list_append (photos, actor);
+  }
+
+  i = g_rand_int_range (rand, 0, g_list_length (photos));
+  photo = AAINA_PHOTO (g_list_nth_data (photos, i));
+
+  for (i = 0; i < N_LANES; i++)
+    clutter_timeline_pause (priv->timelines[i]);
+
+  aaina_photo_save (photo);
+  
+  clutter_actor_raise_top (CLUTTER_ACTOR (photo));
+  clutter_actor_set_scale (CLUTTER_ACTOR (photo), 1, 1);
+  clutter_actor_set_position (CLUTTER_ACTOR (photo),
+                              CLUTTER_STAGE_WIDTH () /4,
+                              CLUTTER_STAGE_HEIGHT ()/4);
+
+  priv->zoomed = photo;
+  g_timeout_add (4000, (GSourceFunc)restore_photo, (gpointer)slide_show);
+
+  return FALSE;
+}
 
 static void
 aaina_slide_show_move (ClutterBehaviour *behave, 
@@ -173,18 +252,13 @@ aaina_slide_show_set_library (AainaSlideShow *slide_show,
     if (!clutter_timeline_is_playing (priv->timelines[i]))
       clutter_timeline_start (priv->timelines[i]);
   }
+
+  /* Finally, set the timeout for zooming the pictures */
+  g_timeout_add (3000, (GSourceFunc)zoom_photo, (gpointer)slide_show);
 }
 
 
 /* GObject stuff */
-
-/*
-static void
-aaina_slide_show_paint (ClutterActor *actor)
-{
-  ;
-}
-*/
 
 static void
 aaina_slide_show_set_property (GObject      *object, 
@@ -247,10 +321,7 @@ static void
 aaina_slide_show_class_init (AainaSlideShowClass *klass)
 {
   GObjectClass    *gobject_class = G_OBJECT_CLASS (klass);
-  /*ClutterActorClass *actor_class = CLUTTER_ACTOR_CLASS (klass);
-
-  actor_class->paint          = aaina_slide_show_paint;*/
-
+  
   gobject_class->finalize     = aaina_slide_show_finalize;
   gobject_class->dispose      = aaina_slide_show_dispose;
   gobject_class->get_property = aaina_slide_show_get_property;

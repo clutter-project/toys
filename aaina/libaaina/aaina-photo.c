@@ -80,6 +80,28 @@ aaina_photo_save (AainaPhoto *photo)
 
   g_return_if_fail (AAINA_IS_PHOTO (photo));
   priv = photo->priv;
+
+  priv->save_x = clutter_actor_get_x (CLUTTER_ACTOR (photo));
+  priv->save_y = clutter_actor_get_y (CLUTTER_ACTOR (photo));
+  clutter_actor_get_scale (CLUTTER_ACTOR (photo), 
+                           &priv->save_scale, 
+                           &priv->save_scale);
+}
+
+void
+aaina_photo_restore (AainaPhoto *photo)
+{
+  AainaPhotoPrivate *priv;
+
+  g_return_if_fail (AAINA_IS_PHOTO (photo));
+  priv = photo->priv;
+
+  clutter_actor_set_scale (CLUTTER_ACTOR (photo), 
+                           priv->save_scale, 
+                           priv->save_scale);
+  clutter_actor_set_position (CLUTTER_ACTOR (photo), 
+                             priv->save_x, 
+                             priv->save_y);
 }
 
 gdouble

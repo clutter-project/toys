@@ -1,3 +1,16 @@
+2007-07-01  Neil J. Patel  <njp@o-hand.com>
+
+	* libaaina/aaina-photo.c: (aaina_photo_save),
+	(aaina_photo_restore):
+	Saves the x, y and scale, and then restores the x, y and scale.
+
+	* src/aaina-slide-show.c: (restore_photo), (zoom_photo),
+	(aaina_slide_show_set_library), (aaina_slide_show_class_init):
+	Implement the beginnings of the photo-zoom feature. Will pause the timelines
+	and zoom a randomly chosen picture for a few seconds. It will then restore the
+	slide show to the previous state, and start a new timeout at a random time
+	for the next zoom.
+
 2007-06-30  Neil J. Patel  <njp@o-hand.com>
 
 	* libaaina/aaina-photo.c: (aaina_photo_set_pixbuf),
@@ -16,7 +29,7 @@
 
 	Convert the lanes to GLists containing pointers to the photos they manage,
 	rather than ClutterGroups (which adds another level to correct positioning
-	for effects.
+	for effects).
 
 	* src/main.c: (main):
 	Update to reflect the AainaSlideShow becoming its own object.
