@@ -93,19 +93,17 @@ aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
   width = gdk_pixbuf_get_width (pixbuf);
   height = gdk_pixbuf_get_height (pixbuf);
 
-  x = (CLUTTER_STAGE_WIDTH () - width)/2;
-  y = (CLUTTER_STAGE_HEIGHT () - height)/2;
+  x = - (width/2);
+  y = - (height/2);
 
-  clutter_actor_set_size (priv->bg, width + 20, height + 20);
-  clutter_actor_set_position (priv->bg, x-10, y-10);
-
+  
   clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture), pixbuf, NULL);
   clutter_actor_set_size (priv->texture, width, height);
   clutter_actor_set_position (priv->texture, x, y);
 }
 
 /* GObject stuff */
-
+/*
 static void
 aaina_photo_paint (ClutterActor *actor)
 {
@@ -116,8 +114,8 @@ aaina_photo_paint (ClutterActor *actor)
   glPushMatrix ();
 
   gfloat x, y;
-  guint width = CLUTTER_STAGE_WIDTH ();
-  guint height = CLUTTER_STAGE_HEIGHT ();
+  guint width = CLUTTER_STAGE_WIDTH ()/2;
+  guint height = CLUTTER_STAGE_HEIGHT ()/2;
 
   x = (priv->scale *width) - (width);
   x /= 2;
@@ -142,7 +140,7 @@ aaina_photo_paint (ClutterActor *actor)
   }
   glPopMatrix ();
 }
-
+*/
 static void
 aaina_photo_set_property (GObject      *object, 
                           guint         prop_id,
@@ -233,7 +231,7 @@ aaina_photo_class_init (AainaPhotoClass *klass)
   GObjectClass    *gobject_class = G_OBJECT_CLASS (klass);
   ClutterActorClass *actor_class = CLUTTER_ACTOR_CLASS (klass);
 
-  actor_class->paint          = aaina_photo_paint;
+  //actor_class->paint          = aaina_photo_paint;
 
   gobject_class->finalize     = aaina_photo_finalize;
   gobject_class->dispose      = aaina_photo_dispose;
@@ -283,7 +281,7 @@ static void
 aaina_photo_init (AainaPhoto *photo)
 {
   AainaPhotoPrivate *priv;
-  ClutterColor white = {1.0, 1.0, 1.0, 1.0};
+  ClutterColor white = {0xff, 0xff, 0xff, 0xff};
 
   g_return_if_fail (AAINA_IS_PHOTO (photo));
   priv = AAINA_PHOTO_GET_PRIVATE (photo);
@@ -292,21 +290,15 @@ aaina_photo_init (AainaPhoto *photo)
 
   priv->pixbuf = NULL;
   priv->title = priv->author = priv->date = NULL;
-  
-  priv->bg = clutter_rectangle_new_with_color (&white);
-  clutter_group_add (CLUTTER_GROUP (photo), priv->bg);
-  clutter_actor_set_size (priv->bg, 
-                          CLUTTER_STAGE_WIDTH ()/2, 
-                          CLUTTER_STAGE_HEIGHT ()/2);
-  clutter_actor_set_position (priv->bg, 0, 0);
 
   priv->texture = clutter_texture_new ();
   clutter_actor_set_size (priv->texture, 
-                          CLUTTER_STAGE_WIDTH (),
-                          CLUTTER_STAGE_HEIGHT ());
+                          CLUTTER_STAGE_WIDTH ()/2,
+                          CLUTTER_STAGE_HEIGHT ()/2);
   clutter_actor_set_position (priv->texture, 0, 0);
   clutter_group_add (CLUTTER_GROUP (photo), priv->texture);
 
+  
   clutter_actor_show_all (CLUTTER_ACTOR (photo));
 }
 

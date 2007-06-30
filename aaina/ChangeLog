@@ -1,5 +1,20 @@
 2007-06-30  Neil J. Patel  <njp@o-hand.com>
 
+	* libaaina/aaina-photo.c: (aaina_photo_set_pixbuf),
+	(aaina_photo_class_init), (aaina_photo_init):
+	Removed self-scaling, using clutter_actor_set_scale instead.
+
+	* src/aaina-slide-show.c: (aaina_slide_show_move),
+	(aaina_slide_show_row_foreach), (on_photo_added),
+	(aaina_slide_show_set_library), (aaina_slide_show_init):
+	More tweaks regarding the spacing of pictures, plus added randomised
+	movement to each lane (so each lane has a different speed).
+	
+	* src/main.c: (main):
+	Fixed some spacing.
+
+2007-06-30  Neil J. Patel  <njp@o-hand.com>
+
 	* src/aaina-slide-show.c: (aaina_slide_show_row_foreach),
 	(aaina_slide_show_set_library):
 	Bring all the positioning into one function, clean up the randomising.

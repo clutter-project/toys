@@ -90,13 +90,14 @@ main (int argc, char **argv)
   show = aaina_slide_show_new ();
   clutter_group_add (CLUTTER_GROUP (stage), show);
   clutter_actor_set_size (show,CLUTTER_STAGE_WIDTH (),CLUTTER_STAGE_HEIGHT ());
-  clutter_actor_set_position (show, 0, 0);
-  g_object_set (G_OBJECT (show), "library", library, NULL);
+  g_object_set (G_OBJECT (show), "library", library, NULL); 
+  clutter_actor_set_position (show, 0, -400);
+
   clutter_actor_show_all (show);
   
   clutter_actor_show_all (stage);
 
-  clutter_actor_set_scale (stage, 0.25, 0.25);
+ // clutter_actor_set_scale (stage, 0.25, 0.25);
 
   clutter_main ();
 
