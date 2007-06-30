@@ -44,62 +44,6 @@ enum
 
   PROP_LIBRARY
 };
-
-/* 
- * Take the lanes, and space out the photo approprietly, randomise the y
- * variable to make it look nice.
- */
- static void
-_sort_lanes (AainaSlideShow *slide_show)
-{
-  AainaSlideShowPrivate *priv;
-  GRand *rand = g_rand_new ();
-  gint i = 0;
-
-  g_return_if_fail (AAINA_IS_SLIDE_SHOW (slide_show));
-  priv = slide_show->priv;
-
-  for (i = 0; i < N_LANES; i++)
-  {
-    gint j = 0;
-    gint len = clutter_group_get_n_children (CLUTTER_GROUP (priv->lanes[i]));
-    gint prev_x = 0;
-    
-    for (j = 0; j < len; j++)
-    {
-      ClutterActor *photo;
-      photo = clutter_group_get_nth_child (CLUTTER_GROUP (priv->lanes[i]), j);
-      gint x, y;
-      guint w, h;
-
-      if (!AAINA_IS_PHOTO (photo))
-      {
-        g_warning ("Not photo\n");
-        continue;
-      }
-      clutter_actor_get_abs_position (photo, &x, &y);
-      clutter_actor_get_abs_size (photo, &w, &h);
-      
-      w *= aaina_photo_get_scale (AAINA_PHOTO (photo));
-      h *= aaina_photo_get_scale (AAINA_PHOTO (photo));
-
-      /* If we are overlapping the photo before us, move forward a bit */
-      if (x < prev_x)
-        x = prev_x + g_rand_int_range (rand, 50, 200);
-      
-      /* Randomise the y value a bit */
-       y = y + g_rand_int_range (rand, -30, 30);
-       
-      /* Update the positions */
-      clutter_actor_set_position (photo, x, y);
-      
-      g_print ("%d, %d, %d, %d\n", x, y, w, h);
-      
-      prev_x = x + w;
-    }
-  }
-}
-
 static void
 aaina_slide_show_remove_rows (AainaSlideShow *slide_show)
 {
@@ -111,32 +55,48 @@ aaina_slide_show_row_foreach (AainaLibrary     *library,
 		 	                        AainaPhoto	     *photo,
 		 	                        gpointer          data)
 {
-  AainaSlideShowPrivate *priv = AAINA_SLIDE_SHOW (data)->priv;
+  AainaSlideShowPrivate *priv;
+  ClutterActor *lane;
   static GRand *rand = NULL;
   static gint count = 0;
-  
-  ClutterActor *lane = priv->lanes[count];
-  g_return_val_if_fail (CLUTTER_IS_ACTOR (lane), TRUE);
+  gint x, y;
+  gdouble scale;
+ 
+  g_return_val_if_fail (AAINA_IS_SLIDE_SHOW (data), TRUE);
+  priv = AAINA_SLIDE_SHOW (data)->priv;
+
   if (!rand)
     rand = g_rand_new ();
-  gint x = g_rand_int_range (rand, 
-                             0, 
-                             CLUTTER_STAGE_WIDTH ()/3);
-  x += priv->lanesx[count];
-  priv->lanesx[count] = x;
-  gint y;
   
+  lane = priv->lanes[count];
+
+  /* We want the scale of the photos to be random */
+  scale = g_rand_double_range (rand, 0.1, 0.3);
+  
+  /* We want 'random' spacing of the photos, but we don't want to overlap two
+   * photos from the same lane, hence we only randomise the gap between two
+   * photos. That also prevents photos from being too far apart
+   */
+  x = g_rand_int_range (rand, 0, CLUTTER_STAGE_WIDTH ()/3);
+  x += priv->lanesx[count];
+
+  /* Set the new x value for the lane */
+  priv->lanesx[count] = x + (CLUTTER_STAGE_WIDTH() * scale);
+
+  /* Each lane has a set 'base y value, as calculated below, in addition to 
+   * this, we add a random value between -30 and 30, which makes sure the photos
+   * look randomised.
+   */
   y = (CLUTTER_STAGE_HEIGHT () / N_LANES) * count + 30;
-
-  gdouble scale = g_random_double_range (0.1, 0.3);
-
-  g_return_val_if_fail (AAINA_IS_SLIDE_SHOW (data), TRUE);
-        
-	clutter_group_add (CLUTTER_GROUP(lane), CLUTTER_ACTOR(photo));
+  y += g_rand_int_range (rand, -30, 30);
+         
+	/* Use AainaPhoto's scale feature as it makes sure gravity is center */
   aaina_photo_set_scale (AAINA_PHOTO (photo), scale);
 	clutter_actor_set_position (CLUTTER_ACTOR (photo), x, y);
  
+  clutter_group_add (CLUTTER_GROUP (lane), CLUTTER_ACTOR (photo));
   clutter_actor_show_all (CLUTTER_ACTOR (photo));
+
   count++;
   if (count == N_LANES)
     count = 0;
@@ -172,14 +132,11 @@ aaina_slide_show_set_library (AainaSlideShow *slide_show,
     return;
   g_signal_connect (G_OBJECT (priv->library), "photo-added",
                     G_CALLBACK (on_photo_added), slide_show);
+  
+  /* Sort each photo into a 'lane', and give it a 'randomised' x and y value */
   aaina_library_foreach (priv->library, 
                          aaina_slide_show_row_foreach,
                          (gpointer)slide_show);
-  /* All the photos have been added to their respective 'lanes', so lets sort
-   * those lanes out into something useful */
-  _sort_lanes (slide_show);
-
- 
 }
 
 
