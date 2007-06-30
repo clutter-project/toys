@@ -1,5 +1,15 @@
 2007-06-30  Neil J. Patel  <njp@o-hand.com>
 
+  * libaaina/aaina-photo.c: (aaina_photo_set_pixbuf):
+	Keep all actors positions at 0, 0
+
+	* src/aaina-slide-show.c: (aaina_slide_show_row_foreach),
+	(aaina_slide_show_set_library):
+	Remove the randomising of the timelines, it doesn't work well enough for
+	proper use.
+
+2007-06-30  Neil J. Patel  <njp@o-hand.com>
+
 	* libaaina/aaina-photo.c: (aaina_photo_set_pixbuf),
 	(aaina_photo_class_init), (aaina_photo_init):
 	Removed self-scaling, using clutter_actor_set_scale instead.

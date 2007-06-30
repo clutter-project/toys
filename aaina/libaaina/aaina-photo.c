@@ -93,13 +93,10 @@ aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
   width = gdk_pixbuf_get_width (pixbuf);
   height = gdk_pixbuf_get_height (pixbuf);
 
-  x = - (width/2);
-  y = - (height/2);
-
   
   clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture), pixbuf, NULL);
   clutter_actor_set_size (priv->texture, width, height);
-  clutter_actor_set_position (priv->texture, x, y);
+  clutter_actor_set_position (priv->texture, 0, 0);
 }
 
 /* GObject stuff */

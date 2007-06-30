@@ -30,6 +30,8 @@ G_DEFINE_TYPE (AainaSlideShow, aaina_slide_show, CLUTTER_TYPE_GROUP);
 	AainaSlideShowPrivate))
 
 #define N_LANES 4
+static gint lane_frames[N_LANES] = {60, 40, 60, 40};
+static gint lane_speed[N_LANES]  = {120, 40, 320, 60};
 
 struct _AainaSlideShowPrivate
 {
@@ -101,7 +103,7 @@ aaina_slide_show_row_foreach (AainaLibrary     *library,
    * look randomised.
    */
   y = ((CLUTTER_STAGE_HEIGHT () / N_LANES +1) * count) 
-    + (CLUTTER_STAGE_HEIGHT () /3);
+    + (CLUTTER_STAGE_HEIGHT () /2);
   y += g_rand_int_range (rand, -30, 30);
          
 	/* Use AainaPhoto's scale feature as it makes sure gravity is center */
@@ -130,7 +132,6 @@ aaina_slide_show_set_library (AainaSlideShow *slide_show,
                               AainaLibrary *library)
 {
   AainaSlideShowPrivate *priv;
-  GRand *rand = g_rand_new ();
   gint i;
 
   g_return_if_fail (AAINA_IS_SLIDE_SHOW (slide_show));
@@ -159,17 +160,13 @@ aaina_slide_show_set_library (AainaSlideShow *slide_show,
    */
   for (i = 0; i < N_LANES; i++)
   {
-    gint speed = g_rand_int_range (rand, 40, 120);
-    gint frames = g_rand_int_range (rand, 20, speed);
-
-    clutter_timeline_set_speed (priv->timelines[i], speed);
-    clutter_timeline_set_n_frames (priv->timelines[i], frames);
+    
+    clutter_timeline_set_speed (priv->timelines[i], lane_speed[i]);
+    clutter_timeline_set_n_frames (priv->timelines[i], lane_frames[i]);
     clutter_timeline_set_loop (priv->timelines[i], TRUE);
     
     if (!clutter_timeline_is_playing (priv->timelines[i]))
       clutter_timeline_start (priv->timelines[i]);
-   
-    g_print ("%d:%d\n", frames, speed);
   }
 }
 

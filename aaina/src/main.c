@@ -97,7 +97,7 @@ main (int argc, char **argv)
   
   clutter_actor_show_all (stage);
 
- // clutter_actor_set_scale (stage, 0.25, 0.25);
+  //clutter_actor_set_scale (stage, 0.25, 0.25);
 
   clutter_main ();
 
