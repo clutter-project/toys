@@ -65,7 +65,8 @@ main (int argc, char **argv)
   GOptionContext *context;
   AainaLibrary *library;
   AainaSource *source;
-  ClutterActor *stage, *show;
+  ClutterActor *stage;
+  AainaSlideShow *show;
   ClutterColor black = {0x00, 0x00, 0x00, 0xff};
 
   g_thread_init (NULL);
@@ -88,13 +89,8 @@ main (int argc, char **argv)
   g_print ("%d\n", aaina_library_photo_count (library));
 
   show = aaina_slide_show_new ();
-  clutter_group_add (CLUTTER_GROUP (stage), show);
-  clutter_actor_set_size (show,CLUTTER_STAGE_WIDTH (),CLUTTER_STAGE_HEIGHT ());
-  g_object_set (G_OBJECT (show), "library", library, NULL); 
-  clutter_actor_set_position (show, 0, -400);
+  g_object_set (G_OBJECT (show), "library", library, NULL);
 
-  clutter_actor_show_all (show);
-  
   clutter_actor_show_all (stage);
 
   //clutter_actor_set_scale (stage, 0.25, 0.25);

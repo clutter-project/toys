@@ -60,7 +60,7 @@ typedef struct _AainaSlideShowPrivate AainaSlideShowPrivate;
 
 struct _AainaSlideShow
 {
-	ClutterGroup         parent;
+	GObject         parent;
 	
 	/* private */
 	AainaSlideShowPrivate   *priv;
@@ -69,7 +69,7 @@ struct _AainaSlideShow
 struct _AainaSlideShowClass 
 {
 	/*< private >*/
-	ClutterGroupClass parent_class;
+	GObjectClass parent_class;
 
   void (*_aaina_slide_show_1) (void);
   void (*_aaina_slide_show_2) (void);
@@ -79,7 +79,7 @@ struct _AainaSlideShowClass
 
 GType aaina_slide_show_get_type (void) G_GNUC_CONST;
 
-ClutterActor* 
+AainaSlideShow*
 aaina_slide_show_new (void);
 
 void

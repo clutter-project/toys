@@ -1,5 +1,28 @@
 2007-06-30  Neil J. Patel  <njp@o-hand.com>
 
+	* libaaina/aaina-photo.c: (aaina_photo_set_pixbuf),
+	(aaina_photo_init):
+	Remove the wite frame for now, because it isn't working properly.
+
+	* src/aaina-slide-show.c: (aaina_slide_show_move),
+	(aaina_slide_show_row_foreach), (aaina_slide_show_init),
+	(aaina_slide_show_new):
+	* src/aaina-slide-show.h:
+	Add all photos to the stage, instead of AainaSlideShow, as it is easier for 
+	effects to work if they know positions are relative to the stage.
+	
+	Change the AainaSlideShow object to a standard GObject, instead of a
+	ClutterGroup, and this is no longer necessary.
+
+	Convert the lanes to GLists containing pointers to the photos they manage,
+	rather than ClutterGroups (which adds another level to correct positioning
+	for effects.
+
+	* src/main.c: (main):
+	Update to reflect the AainaSlideShow becoming its own object.
+
+2007-06-30  Neil J. Patel  <njp@o-hand.com>
+
 	* libaaina/aaina-photo.c: (aaina_photo_save),
 	(aaina_photo_get_viewed), (aaina_photo_set_viewed),
 	(aaina_photo_set_pixbuf), (aaina_photo_set_property),

@@ -128,8 +128,8 @@ aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
   height = gdk_pixbuf_get_height (pixbuf);
   
   clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture), pixbuf, NULL);
-  clutter_actor_set_size (priv->texture, width-20, height-20);
-  clutter_actor_set_position (priv->texture, 10, 10);
+  clutter_actor_set_size (priv->texture, width, height);
+  clutter_actor_set_position (priv->texture, 0, 0);
 }
 
 /* GObject stuff */
@@ -339,11 +339,11 @@ aaina_photo_init (AainaPhoto *photo)
   width = CLUTTER_STAGE_WIDTH ()/2;
   height = CLUTTER_STAGE_HEIGHT ()/2;
 
-/*  priv->bg = clutter_rectangle_new_with_color (&white);
+  priv->bg = clutter_rectangle_new_with_color (&white);
   clutter_actor_set_size (priv->bg, width, height);
-  clutter_actor_set_position (priv->bg, 0, 0);
-  clutter_group_add (CLUTTER_GROUP (photo), priv->bg);
-*/
+  clutter_actor_set_position (priv->bg, -10, -10);
+  //clutter_group_add (CLUTTER_GROUP (photo), priv->bg);
+
   priv->texture = clutter_texture_new ();
   clutter_actor_set_size (priv->texture, width, height);
   clutter_actor_set_position (priv->texture, 0, 0);

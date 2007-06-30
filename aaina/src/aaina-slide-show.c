@@ -23,7 +23,7 @@
 
 #include "aaina-slide-show.h"
 
-G_DEFINE_TYPE (AainaSlideShow, aaina_slide_show, CLUTTER_TYPE_GROUP);
+G_DEFINE_TYPE (AainaSlideShow, aaina_slide_show, G_TYPE_OBJECT);
 
 #define AAINA_SLIDE_SHOW_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj),\
 	AAINA_TYPE_SLIDE_SHOW, \
@@ -38,7 +38,7 @@ struct _AainaSlideShowPrivate
   AainaLibrary      *library;
   ClutterTexture    *texture;
 
-  ClutterActor      *lanes[N_LANES];
+  GList             *lanes[N_LANES];
   ClutterTimeline   *timelines[N_LANES];
   gint               lanesx[N_LANES];
 };
@@ -54,10 +54,15 @@ enum
 static void
 aaina_slide_show_move (ClutterBehaviour *behave, 
                        guint32 alpha_value, 
-                       ClutterActor *lane)
+                       GList **lane)
 {
-  
-  g_object_set (G_OBJECT (lane), "x", clutter_actor_get_x (lane) - 1, NULL); 
+  GList *l;
+
+  for (l = *lane; l != NULL; l = l->next)
+  {
+    g_object_set (G_OBJECT (l->data), "x", 
+                  clutter_actor_get_x (l->data) - 1, NULL); 
+  }
 }
 
 static void
@@ -72,7 +77,6 @@ aaina_slide_show_row_foreach (AainaLibrary     *library,
 		 	                        gpointer          data)
 {
   AainaSlideShowPrivate *priv;
-  ClutterActor *lane;
   static GRand *rand = NULL;
   static gint count = 0;
   gint x, y;
@@ -83,8 +87,6 @@ aaina_slide_show_row_foreach (AainaLibrary     *library,
 
   if (!rand)
     rand = g_rand_new ();
-  
-  lane = priv->lanes[count];
 
   /* We want the scale of the photos to be random */
   scale = g_rand_double_range (rand, 0.15, 0.35); 
@@ -103,8 +105,7 @@ aaina_slide_show_row_foreach (AainaLibrary     *library,
    * this, we add a random value between -30 and 30, which makes sure the photos
    * look randomised.
    */
-  y = ((CLUTTER_STAGE_HEIGHT () / N_LANES +1) * count) 
-    + (CLUTTER_STAGE_HEIGHT () /2);
+  y = ((CLUTTER_STAGE_HEIGHT () / N_LANES +1) * count) + 30;
   y += g_rand_int_range (rand, -30, 30);
          
 	/* Use AainaPhoto's scale feature as it makes sure gravity is center */
@@ -112,8 +113,11 @@ aaina_slide_show_row_foreach (AainaLibrary     *library,
   clutter_actor_set_scale (CLUTTER_ACTOR (photo), scale, scale);
 	clutter_actor_set_position (CLUTTER_ACTOR (photo), x, y);
  
-  clutter_group_add (CLUTTER_GROUP (lane), CLUTTER_ACTOR (photo));
+  clutter_group_add (CLUTTER_GROUP (clutter_stage_get_default ()), 
+                                    CLUTTER_ACTOR (photo));
   clutter_actor_show_all (CLUTTER_ACTOR (photo));
+
+  priv->lanes[count] = g_list_append (priv->lanes[count], (gpointer)photo);
 
   count++;
   if (count == N_LANES)
@@ -278,14 +282,10 @@ aaina_slide_show_init (AainaSlideShow *slide_show)
   gint i;
   for (i=0; i < N_LANES;  i++)
   {
-    ClutterActor *lane = clutter_group_new ();
     ClutterAlpha *alpha;
     ClutterBehaviour *behave;
 
-    clutter_group_add (CLUTTER_GROUP (slide_show), lane);
-    clutter_actor_set_position (lane, 0, 0);
-    clutter_actor_show_all (lane);
-    priv->lanes[i] = lane;
+    priv->lanes[i] = NULL;
 
     priv->timelines[i] = clutter_timeline_new (40, 120);
     alpha = clutter_alpha_new_full (priv->timelines[i], 
@@ -293,17 +293,17 @@ aaina_slide_show_init (AainaSlideShow *slide_show)
                                     NULL, NULL);
     behave = aaina_behave_new (alpha, 
                                (AainaBehaveAlphaFunc)aaina_slide_show_move, 
-                               (gpointer)lane);
+                               (gpointer)&priv->lanes[i]);
     priv->lanesx[i] = g_random_int_range (0, CLUTTER_STAGE_WIDTH () /2);
   }
 }
 
-ClutterActor*
+AainaSlideShow*
 aaina_slide_show_new (void)
 {
-  ClutterGroup         *slide_show;
+  AainaSlideShow         *slide_show;
 
   slide_show = g_object_new (AAINA_TYPE_SLIDE_SHOW, NULL);
   
-  return CLUTTER_ACTOR (slide_show);
+  return slide_show;
 }
