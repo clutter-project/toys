@@ -82,10 +82,20 @@ aaina_photo_new (void);
 void
 aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf);
 
+void
+aaina_photo_save (AainaPhoto *photo);
+void
+aaina_photo_restore (AainaPhoto *photo);
+
 gdouble
 aaina_photo_get_scale (AainaPhoto *photo);
 void
 aaina_photo_set_scale (AainaPhoto *photo, gdouble scale);
+
+gboolean
+aaina_photo_get_viewed (AainaPhoto *photo);
+void
+aaina_photo_set_viewed (AainaPhoto *photo, gboolean viewed);
 
 void
 aaina_photo_set_active (AainaPhoto *photo, gboolean active);

@@ -33,18 +33,26 @@ static GdkPixbuf	*default_pic = NULL;
 
 struct _AainaPhotoPrivate
 {
-  gboolean   visible;
+  gboolean      visible;
 	
-  GdkPixbuf  *pixbuf;
+  GdkPixbuf    *pixbuf;
 
-  gchar      *title;
-  gchar      *author;
-  gchar      *date;
+  gchar        *title;
+  gchar        *author;
+  gchar        *date;
+
+  gboolean      viewed;
 
   ClutterActor *texture; 
   ClutterActor *bg;
 
   gdouble       scale;
+
+  /* Variables for aaina_photo_save/restore */
+  gdouble       save_scale;
+  gint          save_x;
+  gint          save_y;
+
 };
 
 enum
@@ -53,7 +61,8 @@ enum
   PROP_PIXBUF,
   PROP_TITLE,
   PROP_DATE,
-  PROP_AUTHOR
+  PROP_AUTHOR,
+  PROP_VIEWED
 };
 
 enum
@@ -63,6 +72,15 @@ enum
 };
 
 static guint _photo_signals[LAST_SIGNAL] = { 0 };
+
+void
+aaina_photo_save (AainaPhoto *photo)
+{
+  AainaPhotoPrivate *priv;
+
+  g_return_if_fail (AAINA_IS_PHOTO (photo));
+  priv = photo->priv;
+}
 
 gdouble
 aaina_photo_get_scale (AainaPhoto *photo)
@@ -79,6 +97,22 @@ aaina_photo_set_scale (AainaPhoto *photo, gdouble scale)
   clutter_actor_queue_redraw (CLUTTER_ACTOR (photo));
 }
 
+gboolean
+aaina_photo_get_viewed (AainaPhoto *photo)
+{
+  g_return_val_if_fail (AAINA_IS_PHOTO (photo), TRUE);
+
+  return photo->priv->viewed;
+}
+
+void
+aaina_photo_set_viewed (AainaPhoto *photo, gboolean viewed)
+{
+  g_return_if_fail (AAINA_IS_PHOTO (photo));
+
+  photo->priv->viewed = viewed;
+}
+
 void
 aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
 {
@@ -92,11 +126,10 @@ aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
 
   width = gdk_pixbuf_get_width (pixbuf);
   height = gdk_pixbuf_get_height (pixbuf);
-
   
   clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture), pixbuf, NULL);
-  clutter_actor_set_size (priv->texture, width, height);
-  clutter_actor_set_position (priv->texture, 0, 0);
+  clutter_actor_set_size (priv->texture, width-20, height-20);
+  clutter_actor_set_position (priv->texture, 10, 10);
 }
 
 /* GObject stuff */
@@ -173,6 +206,9 @@ aaina_photo_set_property (GObject      *object,
         g_free (priv->date);
       priv->date = g_strdup (g_value_get_string (value));
       break;
+    case PROP_VIEWED:
+        priv->viewed = g_value_get_boolean (value);
+        break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -203,6 +239,9 @@ aaina_photo_get_property (GObject    *object,
       break;
     case PROP_DATE:
       g_value_set_string (value, priv->date);
+      break;
+    case PROP_VIEWED:
+      g_value_set_boolean (value, priv->viewed);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -271,7 +310,15 @@ aaina_photo_class_init (AainaPhotoClass *klass)
                          "The athor of the photo",
                          NULL,
                          G_PARAM_CONSTRUCT|G_PARAM_READWRITE));
-
+  
+  g_object_class_install_property (
+    gobject_class,
+    PROP_VIEWED,
+    g_param_spec_boolean ("viewed",
+                         "If viewed",
+                         "The photo has been view",
+                         FALSE,
+                         G_PARAM_CONSTRUCT|G_PARAM_READWRITE));
 }
 
 static void
@@ -279,6 +326,7 @@ aaina_photo_init (AainaPhoto *photo)
 {
   AainaPhotoPrivate *priv;
   ClutterColor white = {0xff, 0xff, 0xff, 0xff};
+  gint width, height;
 
   g_return_if_fail (AAINA_IS_PHOTO (photo));
   priv = AAINA_PHOTO_GET_PRIVATE (photo);
@@ -288,10 +336,16 @@ aaina_photo_init (AainaPhoto *photo)
   priv->pixbuf = NULL;
   priv->title = priv->author = priv->date = NULL;
 
+  width = CLUTTER_STAGE_WIDTH ()/2;
+  height = CLUTTER_STAGE_HEIGHT ()/2;
+
+/*  priv->bg = clutter_rectangle_new_with_color (&white);
+  clutter_actor_set_size (priv->bg, width, height);
+  clutter_actor_set_position (priv->bg, 0, 0);
+  clutter_group_add (CLUTTER_GROUP (photo), priv->bg);
+*/
   priv->texture = clutter_texture_new ();
-  clutter_actor_set_size (priv->texture, 
-                          CLUTTER_STAGE_WIDTH ()/2,
-                          CLUTTER_STAGE_HEIGHT ()/2);
+  clutter_actor_set_size (priv->texture, width, height);
   clutter_actor_set_position (priv->texture, 0, 0);
   clutter_group_add (CLUTTER_GROUP (photo), priv->texture);
 

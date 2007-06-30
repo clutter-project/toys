@@ -1,5 +1,18 @@
 2007-06-30  Neil J. Patel  <njp@o-hand.com>
 
+	* libaaina/aaina-photo.c: (aaina_photo_save),
+	(aaina_photo_get_viewed), (aaina_photo_set_viewed),
+	(aaina_photo_set_pixbuf), (aaina_photo_set_property),
+	(aaina_photo_get_property), (aaina_photo_class_init),
+	(aaina_photo_init):
+	* libaaina/aaina-photo.h:
+	Add a few more needed functions and properties.
+	
+	* src/aaina-slide-show.c: (aaina_slide_show_row_foreach):
+	Clean up code.
+
+2007-06-30  Neil J. Patel  <njp@o-hand.com>
+
   * libaaina/aaina-photo.c: (aaina_photo_set_pixbuf):
 	Keep all actors positions at 0, 0
 

@@ -87,7 +87,8 @@ aaina_slide_show_row_foreach (AainaLibrary     *library,
   lane = priv->lanes[count];
 
   /* We want the scale of the photos to be random */
-  scale = g_rand_double_range (rand, 0.1, 0.3); 
+  scale = g_rand_double_range (rand, 0.15, 0.35); 
+
   /* We want 'random' spacing of the photos, but we don't want to overlap two
    * photos from the same lane, hence we only randomise the gap between two
    * photos. That also prevents photos from being too far apart
