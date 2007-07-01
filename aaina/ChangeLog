@@ -1,5 +1,17 @@
 2007-07-01  Neil J. Patel  <njp@o-hand.com>
 
+	* libaaina/aaina-photo.c: (aaina_photo_save),
+	(aaina_photo_alpha_restore), (aaina_photo_alpha_zoom),
+	(aaina_photo_class_init), (aaina_photo_init):
+	* libaaina/aaina-photo.h:
+	Tweak the behaviours to be much smoother, especially in scaling.
+
+	* src/aaina-slide-show.c: (zoom_photo):
+	Don't stop the timelines, as the whole display looks much better when the
+	timelines aren't frozen.
+	
+2007-07-01  Neil J. Patel  <njp@o-hand.com>
+
 	* libaaina/aaina-photo.c: (aaina_photo_restore),
 	(aaina_photo_alpha_restore), (aaina_photo_init):
 	Added a behvaviour to restore the photo to its orignal state.

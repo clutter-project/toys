@@ -68,6 +68,9 @@ struct _AainaPhotoClass
 	/*< private >*/
 	ClutterGroupClass parent_class;
 
+  void (*photo_zoomed)   (AainaPhoto *photo);
+  void (*photo_restored) (AainaPhoto *photo);
+
   void (*_aaina_photo_1) (void);
   void (*_aaina_photo_2) (void);
   void (*_aaina_photo_3) (void);

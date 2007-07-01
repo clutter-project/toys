@@ -72,7 +72,9 @@ enum
 
 enum
 {
-  NAME,
+  PHOTO_ZOOMED,
+  PHOTO_RESTORED,
+
   LAST_SIGNAL
 };
 
@@ -85,8 +87,9 @@ aaina_photo_save (AainaPhoto *photo)
 
   g_return_if_fail (AAINA_IS_PHOTO (photo));
   priv = photo->priv;
-
-  priv->save_x = clutter_actor_get_x (CLUTTER_ACTOR (photo));
+  
+  /* Make the x value slightly more the the left as it is constantly moving */
+  priv->save_x = clutter_actor_get_x (CLUTTER_ACTOR (photo)) - 150;
   priv->save_y = clutter_actor_get_y (CLUTTER_ACTOR (photo));
   clutter_actor_get_scale (CLUTTER_ACTOR (photo), 
                            &priv->save_scale, 
@@ -105,6 +108,7 @@ aaina_photo_restore (AainaPhoto *photo)
 }
 
 static void
+
 aaina_photo_alpha_restore (ClutterBehaviour *behave, 
                            guint32 alpha_value, 
                            AainaPhoto *photo)
@@ -139,7 +143,8 @@ aaina_photo_alpha_restore (ClutterBehaviour *behave,
   else
     new_y = y + ((new_y - y) * factor);
 
-  new_scale = scale - ((scale - priv->save_scale) * factor);
+  //new_scale = scale - ((scale - priv->save_scale) * factor);
+  new_scale = 1.0 - ((1-priv->save_scale) * factor);
 
   clutter_actor_set_position (CLUTTER_ACTOR (photo), new_x, new_y);
   clutter_actor_set_scale (CLUTTER_ACTOR (photo), new_scale, new_scale);
@@ -242,11 +247,16 @@ aaina_photo_alpha_zoom (ClutterBehaviour *behave,
   else
     new_y = y + ((new_y - y) * factor);
 
-  new_scale = scale + ((1.0 - scale) * factor);
+  new_scale = scale + ((1 - scale) * factor);
+  if (new_scale < scale)
+    new_scale = scale;
 
   clutter_actor_set_position (CLUTTER_ACTOR (photo), new_x, new_y);
   clutter_actor_set_scale (CLUTTER_ACTOR (photo), new_scale, new_scale);
 
+  if (factor == 1)
+    g_signal_emit (G_OBJECT (photo), _photo_signals[PHOTO_ZOOMED], 0);
+  
   clutter_actor_queue_redraw (CLUTTER_ACTOR (photo));
 }
 
@@ -264,6 +274,8 @@ aaina_photo_paint (ClutterActor *actor)
   gfloat x, y;
   guint width = CLUTTER_STAGE_WIDTH ()/2;
   guint height = CLUTTER_STAGE_HEIGHT ()/2;
+
+  clutter_actor_get_scale (actor, &priv->scale, &priv->scale);
 
   x = (priv->scale *width) - (width);
   x /= 2;
@@ -437,6 +449,24 @@ aaina_photo_class_init (AainaPhotoClass *klass)
                          "The photo has been view",
                          FALSE,
                          G_PARAM_CONSTRUCT|G_PARAM_READWRITE));
+
+  _photo_signals[PHOTO_ZOOMED] = 
+    g_signal_new ("photo_zoomed",
+                  G_OBJECT_CLASS_TYPE (gobject_class),
+                  G_SIGNAL_RUN_LAST,
+                  G_STRUCT_OFFSET (AainaPhotoClass, photo_zoomed),
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
+                  G_TYPE_NONE, 0);
+  
+  _photo_signals[PHOTO_RESTORED] = 
+    g_signal_new ("photo_restored",
+                  G_OBJECT_CLASS_TYPE (gobject_class),
+                  G_SIGNAL_RUN_LAST,
+                  G_STRUCT_OFFSET (AainaPhotoClass, photo_restored),
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
+                  G_TYPE_NONE, 0);
 }
 
 static void
@@ -471,7 +501,7 @@ aaina_photo_init (AainaPhoto *photo)
 
   clutter_actor_show_all (CLUTTER_ACTOR (photo));
 
-  priv->zoom_time = clutter_timeline_new (60, 40);
+  priv->zoom_time = clutter_timeline_new (120, 40);
   alpha = clutter_alpha_new_full (priv->zoom_time,
                                   alpha_sine_inc_func,
                                   NULL, NULL);
@@ -479,7 +509,7 @@ aaina_photo_init (AainaPhoto *photo)
                              (AainaBehaveAlphaFunc)aaina_photo_alpha_zoom,
                              (gpointer)photo);
 
-  priv->restore_time = clutter_timeline_new (60, 40);
+  priv->restore_time = clutter_timeline_new (120, 40);
   alpha = clutter_alpha_new_full (priv->restore_time,
                                   alpha_sine_inc_func,
                                   NULL, NULL);

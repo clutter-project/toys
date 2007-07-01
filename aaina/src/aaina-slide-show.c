@@ -81,7 +81,21 @@ restore_photo (AainaSlideShow *slide_show)
                  (gpointer)slide_show);
   return FALSE;
 }
+/*
+static void
+on_photo_zoomed (AainaPhoto *photo, AainaSlideShow *slide_show)
+{
+  AainaSlideShowPrivate *priv;
+  gint i;
 
+  g_return_if_fail (AAINA_IS_SLIDE_SHOW (slide_show));
+  priv = slide_show->priv;
+
+   Pause all the timelines
+  for (i = 0; i < N_LANES; i++)
+    clutter_timeline_pause (priv->timelines[i]);
+}
+*/
 static gboolean
 zoom_photo (AainaSlideShow *slide_show)
 {
@@ -133,10 +147,12 @@ zoom_photo (AainaSlideShow *slide_show)
   i = g_rand_int_range (rand, 0, g_list_length (photos));
   photo = AAINA_PHOTO (g_list_nth_data (photos, i));
 
-  /* Pause all the timelines*/
-  for (i = 0; i < N_LANES; i++)
-    clutter_timeline_pause (priv->timelines[i]);
-
+  /* Connect to 'zoomed' signal, swhen the photo has finished, we stop the
+   * timelines
+   
+  g_signal_connect (G_OBJECT (photo), "photo_zoomed", 
+                     G_CALLBACK (on_photo_zoomed), (gpointer)slide_show);
+  */
   /* Save the photos current 'state' (x, y, and scale) */
   aaina_photo_save (photo);
   
@@ -153,6 +169,7 @@ zoom_photo (AainaSlideShow *slide_show)
                  (gpointer)slide_show);
 
   return FALSE;
+
 }
 
 static void
