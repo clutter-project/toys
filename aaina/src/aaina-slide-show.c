@@ -29,6 +29,7 @@ G_DEFINE_TYPE (AainaSlideShow, aaina_slide_show, G_TYPE_OBJECT);
 	AAINA_TYPE_SLIDE_SHOW, \
 	AainaSlideShowPrivate))
 
+#define VIEW_PHOTO_TIMEOUT 4000
 #define N_LANES 4
 static gint lane_frames[N_LANES] = {60, 40, 60, 40};
 static gint lane_speed[N_LANES]  = {120, 40, 320, 60};
@@ -67,6 +68,7 @@ restore_photo (AainaSlideShow *slide_show)
   if (rand == NULL)
     rand = g_rand_new ();
 
+  aaina_photo_set_viewed (priv->zoomed, TRUE);
   aaina_photo_restore (priv->zoomed);
 
   for (i = 0; i < N_LANES; i++)
@@ -93,9 +95,13 @@ zoom_photo (AainaSlideShow *slide_show)
 
   if (rand == NULL)
     rand = g_rand_new ();
-
+  
+  /* Get a random lane to choose the picture from */
   lane = g_rand_int_range (rand, 0, N_LANES);
-
+  
+  /* Create a list of possible photos to zoom (those which are 'visible' to the
+   * user)
+   */
   for (l = priv->lanes[lane]; l != NULL; l = l->next)
   {
     ClutterActor *actor = CLUTTER_ACTOR (l->data);
@@ -109,23 +115,32 @@ zoom_photo (AainaSlideShow *slide_show)
     if (x > 0 && x < stage_width)
       photos = g_list_append (photos, actor);
   }
-
+  
+  /* Choose a random photo in the list */
   i = g_rand_int_range (rand, 0, g_list_length (photos));
   photo = AAINA_PHOTO (g_list_nth_data (photos, i));
 
+  /* Pause all the timelines*/
   for (i = 0; i < N_LANES; i++)
     clutter_timeline_pause (priv->timelines[i]);
 
+  /* Save the photos current 'state' (x, y, and scale) */
   aaina_photo_save (photo);
   
+  /* FIXME: This needs to be a behaviour */
   clutter_actor_raise_top (CLUTTER_ACTOR (photo));
   clutter_actor_set_scale (CLUTTER_ACTOR (photo), 1, 1);
   clutter_actor_set_position (CLUTTER_ACTOR (photo),
                               CLUTTER_STAGE_WIDTH () /4,
                               CLUTTER_STAGE_HEIGHT ()/4);
-
+  
+  /* Keep a pointer to the photo, and finally add a timeout for when the 
+   * slideshow should be restored.
+   */
   priv->zoomed = photo;
-  g_timeout_add (4000, (GSourceFunc)restore_photo, (gpointer)slide_show);
+  g_timeout_add (VIEW_PHOTO_TIMEOUT, 
+                 (GSourceFunc)restore_photo, 
+                 (gpointer)slide_show);
 
   return FALSE;
 }

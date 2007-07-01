@@ -1,5 +1,14 @@
 2007-07-01  Neil J. Patel  <njp@o-hand.com>
 
+	* src/aaina-slide-show.c: (restore_photo), (zoom_photo):
+	Comment your code so someone other than yourself has a chance of understanding
+	what you've written.
+	Flag the photo as 'viewed', so we don't zoom it again (when we implement
+	that feature).
+	Move some hardcoded ints into #defines.
+
+2007-07-01  Neil J. Patel  <njp@o-hand.com>
+
 	* libaaina/aaina-photo.c: (aaina_photo_save),
 	(aaina_photo_restore):
 	Saves the x, y and scale, and then restores the x, y and scale.
