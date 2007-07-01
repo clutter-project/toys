@@ -80,7 +80,7 @@ struct _AainaSlideShowClass
 GType aaina_slide_show_get_type (void) G_GNUC_CONST;
 
 AainaSlideShow*
-aaina_slide_show_new (void);
+aaina_slide_show_get_default (void);
 
 void
 aaina_slide_show_set_library (AainaSlideShow *slide_show, 

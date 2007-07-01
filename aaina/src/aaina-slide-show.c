@@ -37,8 +37,8 @@ static gint lane_speed[N_LANES]  = {120, 40, 320, 60};
 struct _AainaSlideShowPrivate
 {
   AainaLibrary      *library;
-  ClutterTexture    *texture;
-
+  gint               count;
+  
   GList             *lanes[N_LANES];
   ClutterTimeline   *timelines[N_LANES];
   gint               lanesx[N_LANES];
@@ -55,6 +55,9 @@ enum
   PROP_LIBRARY
 };
 
+static void     on_photo_added (AainaLibrary    *library, 
+                                AainaPhoto      *photo, 
+                                AainaSlideShow  *data);
 static gboolean zoom_photo (AainaSlideShow *slide_show);
 
 static gboolean
@@ -177,12 +180,39 @@ aaina_slide_show_move (ClutterBehaviour *behave,
                        guint32 alpha_value, 
                        GList **lane)
 {
+  AainaSlideShow *slide_show = aaina_slide_show_get_default ();
   GList *l;
+  gint leftmost = 0 - (CLUTTER_STAGE_WIDTH () /4);
 
   for (l = *lane; l != NULL; l = l->next)
   {
-    g_object_set (G_OBJECT (l->data), "x", 
-                  clutter_actor_get_x (l->data) - 1, NULL); 
+    gint x;
+    guint width;
+    gboolean viewed;
+
+    if (!l->data)
+      continue;
+
+    g_object_get (G_OBJECT (l->data), 
+                  "x", &x,
+                  "width", &width,
+                  "viewed", &viewed,
+                  NULL);
+
+    if (viewed)
+    {
+      g_object_set (G_OBJECT (l->data), "x", x - 1, NULL); 
+    }
+    else
+    {
+      if (x > leftmost)
+        g_object_set (G_OBJECT (l->data), "x", x - 1, NULL);
+      else
+      {
+        on_photo_added (NULL, l->data, slide_show);
+        l->data = NULL;
+      }
+    }
   }
 }
 
@@ -192,22 +222,24 @@ aaina_slide_show_remove_rows (AainaSlideShow *slide_show)
 	clutter_group_remove_all (CLUTTER_GROUP(slide_show));
 }
 
-static gboolean
-aaina_slide_show_row_foreach (AainaLibrary     *library,
-		 	                        AainaPhoto	     *photo,
-		 	                        gpointer          data)
+static void
+on_photo_added (AainaLibrary    *library, 
+                AainaPhoto      *photo, 
+                AainaSlideShow  *data)
 {
   AainaSlideShowPrivate *priv;
   static GRand *rand = NULL;
-  static gint count = 0;
+  gint count;
   gint x, y;
   gdouble scale;
  
-  g_return_val_if_fail (AAINA_IS_SLIDE_SHOW (data), TRUE);
+  g_return_if_fail (AAINA_IS_SLIDE_SHOW (data));
   priv = AAINA_SLIDE_SHOW (data)->priv;
 
   if (!rand)
     rand = g_rand_new ();
+
+  count = priv->count;
 
   /* We want the scale of the photos to be random */
   scale = g_rand_double_range (rand, 0.15, 0.35); 
@@ -234,25 +266,28 @@ aaina_slide_show_row_foreach (AainaLibrary     *library,
   clutter_actor_set_scale (CLUTTER_ACTOR (photo), scale, scale);
 	clutter_actor_set_position (CLUTTER_ACTOR (photo), x, y);
  
-  clutter_group_add (CLUTTER_GROUP (clutter_stage_get_default ()), 
-                                    CLUTTER_ACTOR (photo));
+  if (!clutter_actor_get_parent (CLUTTER_ACTOR (photo)))
+    clutter_group_add (CLUTTER_GROUP (clutter_stage_get_default ()), 
+                       CLUTTER_ACTOR (photo));
   clutter_actor_show_all (CLUTTER_ACTOR (photo));
 
   priv->lanes[count] = g_list_append (priv->lanes[count], (gpointer)photo);
 
-  count++;
-  if (count == N_LANES)
-    count = 0;
-	return TRUE;
+  priv->count++;
+  if (priv->count == N_LANES)
+    priv->count = 0;
+}
+  
+static gboolean
+aaina_slide_show_row_foreach (AainaLibrary     *library,
+		 	                        AainaPhoto	     *photo,
+		 	                        gpointer          data)
+{
+  on_photo_added (library, photo, AAINA_SLIDE_SHOW (data));
+  return TRUE;
 }
 
-static void
-on_photo_added (AainaLibrary    *library, 
-                AainaPhoto      *photo, 
-                AainaSlideShow  *slide_show)
-{
-  ;
-}
+
 void
 aaina_slide_show_set_library (AainaSlideShow *slide_show, 
                               AainaLibrary *library)
@@ -391,6 +426,7 @@ aaina_slide_show_init (AainaSlideShow *slide_show)
   priv = AAINA_SLIDE_SHOW_GET_PRIVATE (slide_show);
 
   slide_show->priv = priv;
+  priv->count = 0;
   
   gint i;
   for (i=0; i < N_LANES;  i++)
@@ -412,11 +448,12 @@ aaina_slide_show_init (AainaSlideShow *slide_show)
 }
 
 AainaSlideShow*
-aaina_slide_show_new (void)
+aaina_slide_show_get_default (void)
 {
-  AainaSlideShow         *slide_show;
+  static AainaSlideShow *slide_show = NULL;
 
-  slide_show = g_object_new (AAINA_TYPE_SLIDE_SHOW, NULL);
+  if (!slide_show)
+    slide_show = g_object_new (AAINA_TYPE_SLIDE_SHOW, NULL);
   
   return slide_show;
 }

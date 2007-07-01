@@ -35,9 +35,8 @@ static GdkPixbuf	*default_pic = NULL;
 
 struct _AainaPhotoPrivate
 {
-  gboolean      visible;
-	
   GdkPixbuf    *pixbuf;
+  gboolean      visible;
 
   gchar        *title;
   gchar        *author;
@@ -485,6 +484,7 @@ aaina_photo_init (AainaPhoto *photo)
 
   priv->pixbuf = NULL;
   priv->title = priv->author = priv->date = NULL;
+  priv->visible = TRUE;
 
   width = CLUTTER_STAGE_WIDTH ()/2;
   height = CLUTTER_STAGE_HEIGHT ()/2;

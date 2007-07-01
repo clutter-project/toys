@@ -1,5 +1,24 @@
 2007-07-01  Neil J. Patel  <njp@o-hand.com>
 
+	* libaaina/aaina-photo.c: (aaina_photo_init):
+	Init'd some private variables that I had skipped.
+
+	* src/aaina-slide-show.c: (aaina_slide_show_move),
+	(on_photo_added), (aaina_slide_show_row_foreach),
+	(aaina_slide_show_init), (aaina_slide_show_get_default):
+	* src/aaina-slide-show.h:
+	Converted into a singleton to avoid passing around lots of pointers.
+	Implemented a 'never ending' stream i.e. photos which are not zoomed into,
+	and disappear off the end of the screen, are then moved to the end of the
+	stream so they get a second chance, the poor souls.
+	Moved all the photo adding code into a single function which is called
+	by the initial library-setting call, plus subsequent calls.
+
+	* src/main.c: (main):
+	Updated to reflect the new aaina_slide_show_get_default () call.
+
+2007-07-01  Neil J. Patel  <njp@o-hand.com>
+
 	* libaaina/aaina-photo.c: (aaina_photo_save),
 	(aaina_photo_alpha_restore), (aaina_photo_alpha_zoom),
 	(aaina_photo_class_init), (aaina_photo_init):
