@@ -1,5 +1,11 @@
 2007-07-01  Neil J. Patel  <njp@o-hand.com>
 
+	* libaaina/aaina-photo.c: (aaina_photo_restore),
+	(aaina_photo_alpha_restore), (aaina_photo_init):
+	Added a behvaviour to restore the photo to its orignal state.
+
+2007-07-01  Neil J. Patel  <njp@o-hand.com>
+
 	* libaaina/Makefile.am:
 	Remove versioning as this is a static library.
 	
