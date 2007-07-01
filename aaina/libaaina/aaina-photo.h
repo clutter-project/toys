@@ -98,7 +98,7 @@ void
 aaina_photo_set_viewed (AainaPhoto *photo, gboolean viewed);
 
 void
-aaina_photo_set_active (AainaPhoto *photo, gboolean active);
+aaina_photo_zoom (AainaPhoto *photo);
 
 void
 aaina_photo_set_visible (AainaPhoto *photo, gboolean visible);

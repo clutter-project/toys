@@ -43,7 +43,9 @@ struct _AainaSlideShowPrivate
   ClutterTimeline   *timelines[N_LANES];
   gint               lanesx[N_LANES];
 
+  /* Viewing single photo */
   AainaPhoto        *zoomed;
+
 };
 
 enum
@@ -106,16 +108,27 @@ zoom_photo (AainaSlideShow *slide_show)
   {
     ClutterActor *actor = CLUTTER_ACTOR (l->data);
     gint x;
-
+    guint w, h;
+    
     if (!AAINA_IS_PHOTO (actor))
       continue;
 
     x = clutter_actor_get_x (actor);
+    clutter_actor_get_abs_size (actor, &w, &h);
+    x += w;
 
-    if (x > 0 && x < stage_width)
+    if (x > 0 && x < stage_width 
+            && !aaina_photo_get_viewed (AAINA_PHOTO (actor)))
       photos = g_list_append (photos, actor);
   }
   
+  /* This should work, right? */
+  if (photos == NULL)
+  {
+    zoom_photo (slide_show);
+    return FALSE;
+  }
+
   /* Choose a random photo in the list */
   i = g_rand_int_range (rand, 0, g_list_length (photos));
   photo = AAINA_PHOTO (g_list_nth_data (photos, i));
@@ -127,18 +140,15 @@ zoom_photo (AainaSlideShow *slide_show)
   /* Save the photos current 'state' (x, y, and scale) */
   aaina_photo_save (photo);
   
-  /* FIXME: This needs to be a behaviour */
-  clutter_actor_raise_top (CLUTTER_ACTOR (photo));
-  clutter_actor_set_scale (CLUTTER_ACTOR (photo), 1, 1);
-  clutter_actor_set_position (CLUTTER_ACTOR (photo),
-                              CLUTTER_STAGE_WIDTH () /4,
-                              CLUTTER_STAGE_HEIGHT ()/4);
-  
+  clutter_actor_raise_top (CLUTTER_ACTOR (photo));                              
+  aaina_photo_zoom (photo);
+
   /* Keep a pointer to the photo, and finally add a timeout for when the 
    * slideshow should be restored.
    */
   priv->zoomed = photo;
   g_timeout_add (VIEW_PHOTO_TIMEOUT, 
+
                  (GSourceFunc)restore_photo, 
                  (gpointer)slide_show);
 

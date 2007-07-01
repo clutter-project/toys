@@ -1,5 +1,18 @@
 2007-07-01  Neil J. Patel  <njp@o-hand.com>
 
+	* libaaina/Makefile.am:
+	Remove versioning as this is a static library.
+	
+	* libaaina/aaina-photo.c: (aaina_photo_zoom),
+	(aaina_photo_alpha_zoom), (aaina_photo_init):
+	* libaaina/aaina-photo.h:
+	Add a zoom behaviour.
+
+	* src/aaina-slide-show.c: (zoom_photo):
+	Adjust to use the new AainaPhoto zooming behaviour.
+
+2007-07-01  Neil J. Patel  <njp@o-hand.com>
+
 	* src/aaina-slide-show.c: (restore_photo), (zoom_photo):
 	Comment your code so someone other than yourself has a chance of understanding
 	what you've written.

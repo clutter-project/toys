@@ -21,6 +21,8 @@
 
 #include <GL/gl.h>
 
+#include "aaina-behave.h"
+
 #include "aaina-photo.h"
 
 G_DEFINE_TYPE (AainaPhoto, aaina_photo, CLUTTER_TYPE_GROUP);
@@ -53,6 +55,8 @@ struct _AainaPhotoPrivate
   gint          save_x;
   gint          save_y;
 
+  /* Zooming timeline */
+  ClutterTimeline *zoom_time;
 };
 
 enum
@@ -152,6 +156,60 @@ aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
   clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture), pixbuf, NULL);
   clutter_actor_set_size (priv->texture, width, height);
   clutter_actor_set_position (priv->texture, 0, 0);
+}
+
+void
+aaina_photo_zoom (AainaPhoto *photo)
+{
+  AainaPhotoPrivate *priv;
+
+  g_return_if_fail (AAINA_IS_PHOTO (photo));
+  priv = photo->priv;
+
+  clutter_timeline_start (priv->zoom_time);
+}
+
+static void
+aaina_photo_alpha_zoom (ClutterBehaviour *behave, 
+                        guint32 alpha_value, 
+                        AainaPhoto *photo)
+{
+  AainaPhotoPrivate *priv;
+  gfloat factor;
+  gdouble scale, new_scale;
+  gint x, y;
+  guint width, height;
+  gint new_x, new_y;
+  
+  g_return_if_fail (AAINA_IS_PHOTO (photo));
+  priv = photo->priv;
+
+  factor = (gfloat)alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
+
+  x = clutter_actor_get_x (CLUTTER_ACTOR (photo));
+  y = clutter_actor_get_y (CLUTTER_ACTOR (photo));
+  clutter_actor_get_size (CLUTTER_ACTOR (photo), &width, &height);
+  clutter_actor_get_scale (CLUTTER_ACTOR (photo), &scale, &scale);
+
+  new_x = CLUTTER_STAGE_WIDTH () / 4;
+  new_y = CLUTTER_STAGE_HEIGHT () /4;
+
+  if (x > new_x)
+    new_x = x - ((x - new_x) * factor);
+  else
+    new_x = x + ((new_x - x) * factor);
+
+  if (y > new_y)
+    new_y = y - ((y - new_y) * factor);
+  else
+    new_y = y + ((new_y - y) * factor);
+
+  new_scale = scale + ((1.0 - scale) * factor);
+
+  clutter_actor_set_position (CLUTTER_ACTOR (photo), new_x, new_y);
+  clutter_actor_set_scale (CLUTTER_ACTOR (photo), new_scale, new_scale);
+
+  clutter_actor_queue_redraw (CLUTTER_ACTOR (photo));
 }
 
 /* GObject stuff */
@@ -349,6 +407,8 @@ aaina_photo_init (AainaPhoto *photo)
   AainaPhotoPrivate *priv;
   ClutterColor white = {0xff, 0xff, 0xff, 0xff};
   gint width, height;
+  ClutterAlpha *alpha;
+  ClutterBehaviour *behave;
 
   g_return_if_fail (AAINA_IS_PHOTO (photo));
   priv = AAINA_PHOTO_GET_PRIVATE (photo);
@@ -371,8 +431,15 @@ aaina_photo_init (AainaPhoto *photo)
   clutter_actor_set_position (priv->texture, 0, 0);
   clutter_group_add (CLUTTER_GROUP (photo), priv->texture);
 
-  
   clutter_actor_show_all (CLUTTER_ACTOR (photo));
+
+  priv->zoom_time = clutter_timeline_new (60, 40);
+  alpha = clutter_alpha_new_full (priv->zoom_time,
+                                  alpha_sine_inc_func,
+                                  NULL, NULL);
+  behave = aaina_behave_new (alpha, 
+                             (AainaBehaveAlphaFunc)aaina_photo_alpha_zoom,
+                             (gpointer)photo);
 }
 
 ClutterActor*
