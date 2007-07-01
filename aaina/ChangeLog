@@ -1,5 +1,15 @@
 2007-07-01  Neil J. Patel  <njp@o-hand.com>
 
+	* libaaina/aaina-photo.c: (aaina_photo_set_pixbuf),
+	(aaina_photo_set_property), (aaina_photo_init):
+	Added white border around photos.
+	Fixed some positioning errors.
+
+	* sources/aaina-source-directory.c: (_load_photos):
+	Use the provided get/set mechanisms for pixbufs rather than g_object_set
+
+2007-07-01  Neil J. Patel  <njp@o-hand.com>
+
 	* libaaina/aaina-photo.c: (aaina_photo_init):
 	Init'd some private variables that I had skipped.
 

@@ -186,18 +186,19 @@ aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
 {
   AainaPhotoPrivate *priv;
   gint width, height;
-  gint x, y;
-
+    
   g_return_if_fail (AAINA_IS_PHOTO (photo));
   g_return_if_fail (GDK_IS_PIXBUF (pixbuf));
   priv = photo->priv;
 
   width = gdk_pixbuf_get_width (pixbuf);
   height = gdk_pixbuf_get_height (pixbuf);
+
+  clutter_actor_set_size (priv->bg, width+20, height+20);
+  clutter_actor_set_position (priv->bg, 0, 0);
   
   clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture), pixbuf, NULL);
-  clutter_actor_set_size (priv->texture, width, height);
-  clutter_actor_set_position (priv->texture, 0, 0);
+  clutter_actor_set_position (priv->texture, 10, 10);
 }
 
 void
@@ -316,10 +317,9 @@ aaina_photo_set_property (GObject      *object,
     case PROP_PIXBUF:
       priv->pixbuf = g_value_get_object (value);
       if (priv->pixbuf)
-        clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture),
-                                    priv->pixbuf, 
-                                    NULL);
+        aaina_photo_set_pixbuf (AAINA_PHOTO (object), priv->pixbuf);
       break;
+
     case PROP_TITLE:
       if (priv->title)
         g_free (priv->title);
@@ -476,6 +476,7 @@ aaina_photo_init (AainaPhoto *photo)
   gint width, height;
   ClutterAlpha *alpha;
   ClutterBehaviour *behave;
+  GdkPixbuf *pixbuf;
 
   g_return_if_fail (AAINA_IS_PHOTO (photo));
   priv = AAINA_PHOTO_GET_PRIVATE (photo);
@@ -490,10 +491,8 @@ aaina_photo_init (AainaPhoto *photo)
   height = CLUTTER_STAGE_HEIGHT ()/2;
 
   priv->bg = clutter_rectangle_new_with_color (&white);
-  clutter_actor_set_size (priv->bg, width, height);
-  clutter_actor_set_position (priv->bg, -10, -10);
-  //clutter_group_add (CLUTTER_GROUP (photo), priv->bg);
-
+  clutter_group_add (CLUTTER_GROUP (photo), priv->bg);
+    
   priv->texture = clutter_texture_new ();
   clutter_actor_set_size (priv->texture, width, height);
   clutter_actor_set_position (priv->texture, 0, 0);

@@ -53,7 +53,8 @@ _load_photos (AainaLibrary *library, const gchar *directory)
       if (pixbuf)
       {
         ClutterActor *photo = aaina_photo_new ();
-        g_object_set (G_OBJECT (photo), "pixbuf", pixbuf, NULL);
+        //g_object_set (G_OBJECT (photo), "pixbuf", pixbuf, NULL);
+        aaina_photo_set_pixbuf (AAINA_PHOTO (photo), pixbuf);
         aaina_library_append_photo (library, AAINA_PHOTO (photo));
 
       }
