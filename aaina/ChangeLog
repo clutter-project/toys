@@ -1,5 +1,57 @@
 2007-07-01  Neil J. Patel  <njp@o-hand.com>
 
+	* Makefile.am:
+	* configure.ac:
+	* libnflick/Makefile.am:
+	* libnflick/nflick-api-request-private.h:
+	* libnflick/nflick-api-request.c:
+	* libnflick/nflick-api-request.h:
+	* libnflick/nflick-api-response-private.h:
+	* libnflick/nflick-api-response.c:
+	* libnflick/nflick-api-response.h:
+	* libnflick/nflick-auth-worker-private.h:
+	* libnflick/nflick-auth-worker.c:
+	* libnflick/nflick-auth-worker.h:
+	* libnflick/nflick-flickr.h:
+	* libnflick/nflick-get-sizes-response-private.h:
+	* libnflick/nflick-get-sizes-response.c:
+	* libnflick/nflick-gft-response.c:
+	* libnflick/nflick-gft-response.h:
+	* libnflick/nflick-no-set-response-private.h:
+	* libnflick/nflick-no-set-response.c:
+	* libnflick/nflick-no-set-response.h:
+	* libnflick/nflick-photo-data.c:
+	* libnflick/nflick-photo-data.h:
+	* libnflick/nflick-photo-list-response-private.h:
+	* libnflick/nflick-photo-list-response.c:
+	* libnflick/nflick-photo-list-response.h:
+	* libnflick/nflick-photo-list-worker-private.h:
+	* libnflick/nflick-photo-list-worker.c:
+	* libnflick/nflick-photo-list-worker.h:
+	* libnflick/nflick-photo-set-private.h:
+	* libnflick/nflick-photo-set.c:
+	* libnflick/nflick-photo-set.h:
+	* libnflick/nflick-pixbuf-fetch-private.h:
+	* libnflick/nflick-pixbuf-fetch.c:
+	* libnflick/nflick-pixbuf-fetch.h:
+	* libnflick/nflick-set-list-response-private.h:
+	* libnflick/nflick-set-list-response.c:
+	* libnflick/nflick-set-list-response.h:
+	* libnflick/nflick-set-list-worker-private.h:
+	* libnflick/nflick-set-list-worker.c:
+	* libnflick/nflick-set-list-worker.h:
+	* libnflick/nflick-show-worker-private.h:
+	* libnflick/nflick-show-worker.c:
+	* libnflick/nflick-show-worker.h:
+	* libnflick/nflick-types.h:
+	* libnflick/nflick-worker-private.h:
+	* libnflick/nflick-worker.c:
+	* libnflick/nflick-worker.h:
+	* libnflick/nflick.h:
+	Import crazy flickr code.
+
+2007-07-01  Neil J. Patel  <njp@o-hand.com>
+
 	* libaaina/aaina-photo.c: (aaina_photo_set_pixbuf),
 	(aaina_photo_set_property), (aaina_photo_init):
 	Added white border around photos.

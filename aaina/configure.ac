@@ -22,6 +22,7 @@ AC_SUBST(GCC_FLAGS)
 
 AC_OUTPUT([
 Makefile
+libnflick/Makefile
 libaaina/Makefile
 sources/Makefile
 src/Makefile
