@@ -1,5 +1,6 @@
 #include <clutter/clutter.h>
-#include <clutter/clutter-container.h>
+#include <clutter/clutter-event.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <glib/gstdio.h>
@@ -9,27 +10,7 @@
 #define SIZE_X 80
 #define MARG 4
 
-static void
-keypress_cb (ClutterStage    *stage,
-	     ClutterEvent    *event,
-	     gpointer         data)
-{
-  gchar keybuf[9];
-  int   len = 0;
-
-  switch (event->type)
-    {
-    case CLUTTER_KEY_PRESS:
-      len = g_unichar_to_utf8 (clutter_keysym_to_unicode (event->key.keyval),
-			       keybuf);
-      if (keybuf[0] == 'Q' ||
-	  keybuf[0] == 'q')
-	exit (0);
-      
-      break;
-    default:;
-    }
-}
+ClutterDominatrix  *ActiveDMX = NULL;
 
 static ClutterDominatrix *
 make_img_item (ClutterActor * stage, const gchar * name)
@@ -191,7 +172,70 @@ timeout_cb (gpointer data)
   clutter_group_remove (CLUTTER_GROUP (d->stage), d->notice);
 
   clutter_actor_show_all (d->stage);
+  clutter_actor_queue_redraw (d->stage);
+  
   return FALSE;
+}
+
+static void 
+on_event (ClutterStage *stage,
+	  ClutterEvent *event,
+	  gpointer      data)
+{
+  gint            x,y;
+  ClutterActor   *actor;
+  ClutterDominatrix *dmx;
+
+  switch (event->type)
+    {
+    case CLUTTER_KEY_PRESS:
+      {
+	gchar keybuf[9];
+	int   len = 0;
+	
+	len = g_unichar_to_utf8 (clutter_keysym_to_unicode (event->key.keyval),
+				 keybuf);
+	if (keybuf[0] == 'Q' ||
+	    keybuf[0] == 'q')
+	  exit (0);
+      }
+      break;
+    case CLUTTER_2BUTTON_PRESS:
+    case CLUTTER_BUTTON_PRESS:
+      clutter_event_get_coords (event, &x, &y);
+
+      actor = clutter_stage_get_actor_at_pos (stage, x, y);
+	
+      while (actor &&
+	     clutter_actor_get_parent (actor) != CLUTTER_ACTOR(stage) &&
+	     (actor = clutter_actor_get_parent (actor)));
+	
+      if (!actor)
+	return;
+      
+      dmx = g_object_get_data (actor, "dominatrix");
+      
+      if (!dmx)
+	return;
+
+      ActiveDMX = g_object_ref (dmx);
+      break;
+    case CLUTTER_BUTTON_RELEASE:
+      if (ActiveDMX)
+	{
+	  clutter_dominatrix_handle_event (ActiveDMX, event);
+	  g_object_unref (ActiveDMX);
+	  ActiveDMX = NULL;
+	}
+      break;
+    default:
+      break;
+    }
+
+  if (ActiveDMX)
+    clutter_dominatrix_handle_event (ActiveDMX, event);
+
+  return;
 }
 
 int
@@ -227,13 +271,13 @@ main (int argc, char *argv[])
   clutter_group_add (CLUTTER_GROUP(stage), notice);
   clutter_actor_show_all (stage);
 
-  g_signal_connect (stage, "event", G_CALLBACK (keypress_cb), NULL);
-  
   tcbd.stage  = stage;
   tcbd.notice = notice;
   tcbd.name   = argv[1];
 
   g_timeout_add (100, timeout_cb, &tcbd);
+
+  g_signal_connect (stage, "event", G_CALLBACK (on_event), NULL);
   
   clutter_main();
 

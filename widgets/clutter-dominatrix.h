@@ -31,6 +31,7 @@
 #include <glib-object.h>
 #include <clutter/clutter-fixed.h>
 #include <clutter/clutter-actor.h>
+#include <clutter/clutter-event.h>
 
 G_BEGIN_DECLS
 
@@ -78,6 +79,10 @@ void                  clutter_dominatrix_set_slave        (ClutterDominatrix *dm
 							   ClutterActor      *slave);
 ClutterActor *        clutter_dominatrix_get_slave        (ClutterDominatrix *dmx);
 void                  clutter_dominatrix_restore          (ClutterDominatrix *dmx);
+
+void 
+clutter_dominatrix_handle_event (ClutterDominatrix        *dominatrix,
+				 ClutterEvent             *event);
 
 G_END_DECLS
 

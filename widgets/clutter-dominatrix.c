@@ -48,10 +48,6 @@ G_DEFINE_TYPE (ClutterDominatrix,
 #define CLUTTER_DOMINATRIX_GET_PRIVATE(obj) \
 (G_TYPE_INSTANCE_GET_PRIVATE ((obj), CLUTTER_TYPE_DOMINATRIX, ClutterDominatrixPrivate))
 
-static void clutter_dominatrix_on_event (ClutterStage *stage,
-					 ClutterEvent *event,
-					 gpointer      data);
-
 typedef enum {
   DRAG_NONE = 0,
   DRAG_ROTATE,
@@ -79,8 +75,6 @@ struct _ClutterDominatrixPrivate
   gint      center_x;
   gint      center_y;
   
-  gulong    handler_id;
-
   gboolean  scale : 1;
   gboolean  dont_rotate : 1;
   gboolean  dont_resize : 1;
@@ -232,6 +226,7 @@ clutter_dominatrix_release_slave (ClutterDominatrixPrivate * priv)
   if (priv->slave)
     {
       g_object_unref (priv->slave);
+      g_object_set_data (G_OBJECT (priv->slave), "dominatrix", NULL);
       priv->slave = NULL;
     }
 }
@@ -242,10 +237,6 @@ clutter_dominatrix_finalize (GObject *object)
   ClutterDominatrix *dmx = CLUTTER_DOMINATRIX (object);
 
   clutter_dominatrix_release_slave (dmx->priv);
-  
-  if (dmx->priv->handler_id)
-    g_signal_handler_disconnect (clutter_stage_get_default (),
-				 dmx->priv->handler_id);
   
   G_OBJECT_CLASS (clutter_dominatrix_parent_class)->finalize (object);
 }
@@ -279,11 +270,9 @@ clutter_dominatrix_constructor (GType                  gtype,
 
   stage = clutter_stage_get_default ();
   
-  dmx->priv->handler_id =
-    g_signal_connect (stage, "event",
-		      G_CALLBACK (clutter_dominatrix_on_event), dmx);
-  
   clutter_dominatrix_store_original_settings (dmx->priv);
+  
+  g_object_set_data (G_OBJECT (dmx->priv->slave), "dominatrix", retval);
   
   return retval;
 }
@@ -489,31 +478,16 @@ clutter_dominatrix_init (ClutterDominatrix *self)
   self->priv->gravity = CLUTTER_GRAVITY_CENTER;
 }
 
-static void 
-clutter_dominatrix_on_event (ClutterStage *stage,
-			     ClutterEvent *event,
-			     gpointer      data)
+void 
+clutter_dominatrix_handle_event (ClutterDominatrix        *dominatrix,
+				 ClutterEvent             *event)
 {
-  ClutterDominatrix        * dominatrix = data;
   ClutterDominatrixPrivate * priv = dominatrix->priv;
   
   switch (event->type)
     {
     case CLUTTER_2BUTTON_PRESS:
       {
-	gint x, y;
-	ClutterActor   * actor;
-        clutter_event_get_coords (event, &x, &y);
-
-	actor = clutter_stage_get_actor_at_pos (stage, x, y);
-	
-	while (actor &&
-	       actor != priv->slave &&
-	       (actor = clutter_actor_get_parent (actor)));
-	
-	if (!actor || actor != priv->slave)
-	  return;
-	    
 	clutter_dominatrix_restore (dominatrix);
       }
       break;
@@ -521,10 +495,11 @@ clutter_dominatrix_on_event (ClutterStage *stage,
     case CLUTTER_BUTTON_PRESS:
       {
 	gint x, y;
-	ClutterActor   * actor;
+	ClutterActor   * actor = priv->slave;
 	ClutterVertex    v[4];
+	ClutterVertex    v1, v2;
+	ClutterFixed     xp, yp;
 	ClutterFixed     zang;
-	gint32           xp, yp, zp;
 	gint32           xmin, xmax, ymin, ymax;
 	gint i;
 	gint width, height;
@@ -534,15 +509,6 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	gint rhandle_height = priv->rhandle_height;
 	
         clutter_event_get_coords (event, &x, &y);
-
-	actor = clutter_stage_get_actor_at_pos (stage, x, y);
-	
-	while (actor &&
-	       actor != priv->slave &&
-	       (actor = clutter_actor_get_parent (actor)));
-	
-	if (!actor || actor != priv->slave)
-	  return;
 
 	clutter_actor_raise_top (priv->slave);
 
@@ -610,15 +576,14 @@ clutter_dominatrix_on_event (ClutterStage *stage,
 	 *
 	 * First, check for movement
 	 */
-	xp = CLUTTER_INT_TO_FIXED (clutter_actor_get_width  (actor) / 2);
-	yp = CLUTTER_INT_TO_FIXED (clutter_actor_get_height (actor) / 2);
-	zp = 0;
+	v1.x = CLUTTER_INT_TO_FIXED (clutter_actor_get_width  (actor) / 2);
+	v1.y = CLUTTER_INT_TO_FIXED (clutter_actor_get_height (actor) / 2);
+	v1.z = 0;
   
-	clutter_actor_apply_transform_to_point (actor, xp, yp, zp,
-						&xp, &yp, &zp);
+	clutter_actor_apply_transform_to_point (actor, &v1, &v2);
 
-	xp = CLUTTER_FIXED_INT (xp);
-	yp = CLUTTER_FIXED_INT (yp);
+	xp = CLUTTER_FIXED_INT (v2.x);
+	yp = CLUTTER_FIXED_INT (v2.y);
 
 	/* Store these for later */
 	priv->center_x = xp;

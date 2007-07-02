@@ -4,20 +4,14 @@ INCS=`pkg-config --cflags clutter-0.3 gnome-vfs-2.0 clutter-gst-0.1`
 .c.o:
 	$(CC) -g -Wall $(CFLAGS) $(INCS) -c $*.c
 
-all: test test-dominatrix thumbs table
+all: test table
 
 
 test: test.o clutter-reflect-texture.o
 	$(CC) -g -Wall $(CFLAGS) -o $@ test.o clutter-reflect-texture.o $(LIBS)
 
-test-dominatrix: test-dominatrix.o clutter-dominatrix.o
-	$(CC) -g -Wall $(CFLAGS) -o $@ test-dominatrix.o clutter-dominatrix.o $(LIBS)
-
-thumbs: thumbs.o clutter-dominatrix.o
-	$(CC) -g -Wall $(CFLAGS) -o $@ thumbs.o clutter-dominatrix.o $(LIBS)
-
 table: table.o clutter-dominatrix.o
 	$(CC) -g -Wall $(CFLAGS) -o $@ table.o clutter-dominatrix.o $(LIBS)
 
 clean:
-	rm -fr *.o test test-dominatrix
+	rm -fr *.o test table

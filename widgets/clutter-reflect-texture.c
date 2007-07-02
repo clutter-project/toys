@@ -36,6 +36,8 @@
  * a refelction like effect.
  */
 
+#include <GL/gl.h>
+
 #include "clutter-reflect-texture.h"
 
 enum
