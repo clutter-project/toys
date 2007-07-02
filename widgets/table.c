@@ -12,6 +12,70 @@
 
 ClutterDominatrix  *ActiveDMX = NULL;
 
+/* rand() is not that random, and tends to generated clustered values;
+ * this function attempts to ensure that the images we load are spread more
+ * evenly around the stage
+ *
+ * We divide the stage into n x m squares with size corresponsing to the
+ * thumb width, and maintain a bit matrix indicating if an image has been
+ * placed at a position in each square; then, for first n*m/2 number of thumbs,
+ * we do not allow two thumbs in the same square.
+ */
+static void
+get_xy_coords (ClutterActor * stage, gint * x, gint * y)
+{
+  static unsigned char * map = NULL;
+  static gint            count = 0;
+  static gint            size = 0;
+  static gint            sw, sh;
+  static gint            xdim, ydim;
+  
+  if (!map)
+    {
+      gint w, h;
+
+      sw = clutter_actor_get_width  (stage) - SIZE_X;
+      sh = clutter_actor_get_height (stage) - SIZE_X;
+      
+      w = sw + 2 * SIZE_X - 1;
+      h = sh + 2 * SIZE_X - 1;
+
+      xdim = w / (SIZE_X);
+      ydim = h / (SIZE_X);
+
+      size = xdim * ydim;
+      
+      map = g_malloc0 (size / 8);
+    }
+
+  *x = rand () % sw;
+  *y = rand () % sh;
+  
+  if (count >= size / 2)
+    return;
+  
+  do {
+    gint          off;
+    gint          indx;
+    unsigned char mask;
+    
+    off  = *y/(SIZE_X) * xdim + *x/(SIZE_X);
+    indx = off / 8;
+    mask = 1 << (off % 8);
+
+    if (!(map[indx] & mask))
+      {
+	map[indx] |= mask;
+	count++;
+	return;
+      }
+
+    *x = rand () % sw;
+    *y = rand () % sh;
+    }
+  while (count < size / 2);
+}
+
 static ClutterDominatrix *
 make_img_item (ClutterActor * stage, const gchar * name)
 {
@@ -36,8 +100,7 @@ make_img_item (ClutterActor * stage, const gchar * name)
   sw = clutter_actor_get_width  (stage) - w;
   sh = clutter_actor_get_height (stage) - h;
 
-  x = rand () % sw;
-  y = rand () % sh;
+  get_xy_coords (stage, &x, &y);
   
   group = clutter_group_new ();
   clutter_actor_set_position (group, x, y);
@@ -213,7 +276,7 @@ on_event (ClutterStage *stage,
       if (!actor)
 	return;
       
-      dmx = g_object_get_data (actor, "dominatrix");
+      dmx = g_object_get_data (G_OBJECT (actor), "dominatrix");
       
       if (!dmx)
 	return;

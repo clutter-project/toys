@@ -820,8 +820,8 @@ clutter_dominatrix_handle_event (ClutterDominatrix        *dominatrix,
 	else if (priv->dragging == DRAG_SCALE)
 	  {
 	    /*
-	     * for each pixle of movement from the center increase scale by
-	     * some sensible step.
+	     * for each pixel of movement from the center increase scale by
+	     * some sensible step, proportionate to the actor width.
 	     */
 #define SCALE_STEP 40
 	    ClutterFixed sx, sy;
@@ -849,7 +849,8 @@ clutter_dominatrix_handle_event (ClutterDominatrix        *dominatrix,
 	     * numbers first, then sqrti the difference, give it appropriate
 	     * sign and choose a suitable step to go with what that produces.
 	     */
-	    diff = clutter_sqrti (abs (d2 - d1));
+	    diff = (clutter_sqrti (abs (d2 - d1)) *
+		    clutter_actor_get_width (priv->slave)) / 25;
 
 	    if (d1 > d2)
 	      diff = -diff;
