@@ -106,6 +106,8 @@ aaina_photo_zoom (AainaPhoto *photo);
 void
 aaina_photo_set_visible (AainaPhoto *photo, gboolean visible);
 
+void
+aaina_photo_dim (AainaPhoto *photo, gint dim_level);
 
 G_END_DECLS
 

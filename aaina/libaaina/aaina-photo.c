@@ -44,6 +44,7 @@ struct _AainaPhotoPrivate
 
   gboolean      viewed;
 
+  ClutterActor *dim;
   ClutterActor *texture; 
   ClutterActor *bg;
 
@@ -80,6 +81,16 @@ enum
 static guint _photo_signals[LAST_SIGNAL] = { 0 };
 
 void
+aaina_photo_dim (AainaPhoto *photo, gint dim_level)
+{
+  AainaPhotoPrivate *priv;
+
+  g_return_if_fail (AAINA_IS_PHOTO (photo));
+  priv = photo->priv;
+
+  clutter_actor_set_opacity (priv->dim, dim_level);
+}
+
 aaina_photo_save (AainaPhoto *photo)
 {
   AainaPhotoPrivate *priv;
@@ -194,6 +205,9 @@ aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
   width = gdk_pixbuf_get_width (pixbuf);
   height = gdk_pixbuf_get_height (pixbuf);
 
+  clutter_actor_set_size (priv->dim, width+20, height+20);
+  clutter_actor_set_position (priv->dim, 0, 0);
+  
   clutter_actor_set_size (priv->bg, width+20, height+20);
   clutter_actor_set_position (priv->bg, 0, 0);
   
@@ -473,6 +487,7 @@ aaina_photo_init (AainaPhoto *photo)
 {
   AainaPhotoPrivate *priv;
   ClutterColor white = {0xff, 0xff, 0xff, 0xff};
+  ClutterColor black = {0x00, 0x00, 0x00, 0x00};
   gint width, height;
   ClutterAlpha *alpha;
   ClutterBehaviour *behave;
@@ -497,6 +512,9 @@ aaina_photo_init (AainaPhoto *photo)
   clutter_actor_set_size (priv->texture, width, height);
   clutter_actor_set_position (priv->texture, 0, 0);
   clutter_group_add (CLUTTER_GROUP (photo), priv->texture);
+
+  priv->dim = clutter_rectangle_new_with_color (&black);
+  clutter_group_add (CLUTTER_GROUP (photo), priv->dim);
 
   clutter_actor_show_all (CLUTTER_ACTOR (photo));
 

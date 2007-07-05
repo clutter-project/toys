@@ -1,5 +1,19 @@
 2007-07-05  Neil J. Patel  <njp@o-hand.com>
 
+	* libaaina/aaina-photo.c: (aaina_photo_dim),
+	(aaina_photo_set_pixbuf), (aaina_photo_init):
+	* libaaina/aaina-photo.h:
+	Added a 'dim' setting which, wait for it, dims the photo. No really, it
+	does.
+
+	* src/aaina-slide-show.c: (on_photo_added):
+	Uses this 'dim' setting and sets small photos to be 'dimmer', so they appear
+	further away.
+	Each lane is sorted by size, and size deducts the photos z-order, so it
+	really does look like big photos are closer, small photos are further.
+
+2007-07-05  Neil J. Patel  <njp@o-hand.com>
+
 	* src/aaina-slide-show.c: (on_photo_added):
 	Sort by depth using an algorithm a child could develop, yep its that bad, 
 	but it is a start.

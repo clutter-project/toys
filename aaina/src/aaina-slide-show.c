@@ -231,7 +231,7 @@ on_photo_added (AainaLibrary    *library,
   AainaSlideShowPrivate *priv;
   static GRand *rand = NULL;
   gint count;
-  gint x, y;
+  gint x, y, dim;
   gdouble scale;
  
   g_return_if_fail (AAINA_IS_SLIDE_SHOW (data));
@@ -263,15 +263,24 @@ on_photo_added (AainaLibrary    *library,
    * look randomised.
    */
   y = ((CLUTTER_STAGE_HEIGHT () / (N_LANES +2)) * count) + 30;
-  y += g_rand_int_range (rand, -30, 30);
+  y = g_rand_int_range (rand, 
+                        0, 
+                        CLUTTER_STAGE_HEIGHT ()-(CLUTTER_STAGE_HEIGHT()/5));
          
 	/* Use AainaPhoto's scale feature as it makes sure gravity is center */
   //aaina_photo_set_scale (AAINA_PHOTO (photo), scale);
   clutter_actor_set_scale (CLUTTER_ACTOR (photo), scale, scale);
 	clutter_actor_set_position (CLUTTER_ACTOR (photo), x, y);
-  clutter_actor_set_depth (CLUTTER_ACTOR (photo),
-                           g_rand_int_range (rand, 0, (100/N_LANES)*count+1));
- 
+  clutter_actor_set_depth (CLUTTER_ACTOR (photo), count);
+                          // g_rand_int_range (rand, 
+                            //                 (100/N_LANES)*count, 
+                              //               (100/N_LANES)*count+1));
+  
+  dim = 255/N_LANES;
+  dim = dim * (N_LANES - (count+1));
+  aaina_photo_dim (photo, dim);
+  g_print ("%d\n", dim);
+
   if (!clutter_actor_get_parent (CLUTTER_ACTOR (photo)))
     clutter_group_add (CLUTTER_GROUP (clutter_stage_get_default ()), 
                        CLUTTER_ACTOR (photo));
