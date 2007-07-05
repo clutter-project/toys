@@ -4,15 +4,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <glib/gstdio.h>
+#include <gst/gst.h>
 #include <unistd.h>
 #include "clutter-dominatrix.h"
+#include "clutter-video-player.h"
 
 #define SIZE_X 80
 #define MARG 4
 
 ClutterDominatrix  *ActiveDMX = NULL;
 
-/* rand() is not that random, and tends to generated clustered values;
+/* rand() is not that random, and tends to generate clustered values;
  * this function attempts to ensure that the images we load are spread more
  * evenly around the stage
  *
@@ -77,25 +79,19 @@ get_xy_coords (ClutterActor * stage, gint * x, gint * y)
 }
 
 static ClutterDominatrix *
-make_img_item (ClutterActor * stage, const gchar * name)
+make_item (ClutterActor * stage, ClutterActor *actor)
 {
-  ClutterActor      * img, * rect, * group, * shaddow;
+  ClutterActor      * rect, * group, * shaddow;
   ClutterDominatrix * dmx;
   ClutterColor        bckg_clr = { 0xff, 0xff, 0xff, 0xff };
   ClutterColor        shdw_clr = { 0x44, 0x44, 0x44, 0x44 };
-  GdkPixbuf         * pixbuf;
   gdouble             scale;
   gint                w, h, sw, sh, x, y;
   ClutterFixed        zang;
   
-  pixbuf = gdk_pixbuf_new_from_file_at_size (name, 400, 400, NULL);
-
-  if (!pixbuf)
-    return NULL;
-
-  scale = (double) SIZE_X / (double) gdk_pixbuf_get_width (pixbuf);
+  scale = (double) SIZE_X / (double) clutter_actor_get_width (actor);
   w = SIZE_X;
-  h = (gint)(scale * (double) gdk_pixbuf_get_height (pixbuf));
+  h = (gint)(scale * (double) clutter_actor_get_height (actor));
 
   sw = clutter_actor_get_width  (stage) - w;
   sh = clutter_actor_get_height (stage) - h;
@@ -122,13 +118,12 @@ make_img_item (ClutterActor * stage, const gchar * name)
   clutter_rectangle_set_color (CLUTTER_RECTANGLE (shaddow), &shdw_clr);
   clutter_actor_show (shaddow);
   
-  img = clutter_texture_new_from_pixbuf (pixbuf);
-  clutter_actor_set_position (img, 2, 2);
-  clutter_actor_set_size (img, w, h);
-  clutter_actor_show (img);
+  clutter_actor_set_position (actor, 2, 2);
+  clutter_actor_set_size (actor, w, h);
+  clutter_actor_show (actor);
   
   clutter_container_add (CLUTTER_CONTAINER (group),
-			 shaddow, rect, img, NULL);
+			 shaddow, rect, actor, NULL);
 
   zang = CLUTTER_INT_TO_FIXED (rand()%360);
   clutter_actor_rotate_zx (group, zang, (w + MARG)/2, (h + MARG)/2);
@@ -136,6 +131,30 @@ make_img_item (ClutterActor * stage, const gchar * name)
   dmx = clutter_dominatrix_new (group);
 
   return dmx;
+}
+
+static ClutterDominatrix *
+make_img_item (ClutterActor * stage, const gchar * name)
+{
+  ClutterActor      * img;
+  GdkPixbuf         * pixbuf;
+  
+  pixbuf = gdk_pixbuf_new_from_file_at_size (name, 400, 400, NULL);
+
+  if (!pixbuf)
+    return NULL;
+
+  img = clutter_texture_new_from_pixbuf (pixbuf);
+  return make_item (stage, img);
+}
+
+static ClutterDominatrix *
+make_vid_item (ClutterActor * stage, const gchar * name)
+{
+  ClutterActor      * vid;
+
+  vid = clutter_video_player_new (name);
+  return make_item (stage, vid);
 }
 
 static gboolean
@@ -171,10 +190,15 @@ process_directory (const gchar * name,
 
       if (is_supported_img (fname))
 	{
-	  make_img_item (stage, fname);
+ 	  make_img_item (stage, fname);
+ 	  clutter_actor_raise_top (notice);
+	}
+      else if (g_str_has_suffix (fname, ".ogg"))
+	{
+	  make_vid_item (stage, fname);
 	  clutter_actor_raise_top (notice);
 	}
-      
+	       
       if (g_stat (fname, &sbuf) > -1 && S_ISDIR (sbuf.st_mode))
 	process_directory (fname, stage, notice);
     }
@@ -225,15 +249,32 @@ struct timeout_cb_data
   const gchar  * name;
 };
 
+static void
+tmln_completed_cb (ClutterActor *actor, gpointer data)
+{
+  ClutterGroup * stage = data;
+
+  clutter_group_remove (stage, actor);
+}
+
 static gboolean
 timeout_cb (gpointer data)
 {
+  ClutterTimeline * tmln;
+  ClutterEffectTemplate * tmpl;
+  
   struct timeout_cb_data * d = data;
   
   process_directory (d->name, d->stage, d->notice);
 
-  clutter_group_remove (CLUTTER_GROUP (d->stage), d->notice);
+  tmpl = clutter_effect_template_new (clutter_timeline_new (60, 60),
+				      CLUTTER_ALPHA_SINE_DEC);
+  
+  tmln = clutter_effect_fade (tmpl, d->notice, 0, 0xff, tmln_completed_cb,
+			      d->stage);
 
+  g_object_unref (tmpl);
+  
   clutter_actor_show_all (d->stage);
   clutter_actor_queue_redraw (d->stage);
   
@@ -253,14 +294,19 @@ on_event (ClutterStage *stage,
     {
     case CLUTTER_KEY_PRESS:
       {
-	gchar keybuf[9];
-	int   len = 0;
-	
-	len = g_unichar_to_utf8 (clutter_keysym_to_unicode (event->key.keyval),
-				 keybuf);
-	if (keybuf[0] == 'Q' ||
-	    keybuf[0] == 'q')
-	  exit (0);
+	guint sym = clutter_key_event_symbol ((ClutterKeyEvent*)event);
+
+	switch (sym)
+	  {
+	  case CLUTTER_Escape:
+	  case CLUTTER_q:
+	  case CLUTTER_Q:
+	     clutter_main_quit ();
+	     break;
+	     
+	  default:
+	    break;
+	  }
       }
       break;
     case CLUTTER_2BUTTON_PRESS:
@@ -317,6 +363,7 @@ main (int argc, char *argv[])
   srand (time(NULL) + getpid());
   
   clutter_init (&argc, &argv);
+  gst_init (&argc, &argv);
 
   stage = clutter_stage_get_default ();
 

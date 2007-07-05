@@ -4,11 +4,11 @@ INCS=`pkg-config --cflags clutter-0.3 gnome-vfs-2.0 clutter-gst-0.3`
 .c.o:
 	$(CC) -g -Wall $(CFLAGS) $(INCS) -c $*.c
 
-all: test
+all: table
 
 
-test: test.o clutter-reflect-texture.o
-	$(CC) -g -Wall $(CFLAGS) -o $@ test.o clutter-reflect-texture.o $(LIBS)
+table: table.o clutter-dominatrix.o clutter-video-player.o
+	$(CC) -g -Wall $(CFLAGS) -o $@ table.o clutter-dominatrix.o clutter-video-player.o $(LIBS)
 
 clean:
-	rm -fr *.o test
+	rm -fr *.o table
