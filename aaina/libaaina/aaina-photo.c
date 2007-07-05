@@ -54,6 +54,8 @@ struct _AainaPhotoPrivate
   gdouble       save_scale;
   gint          save_x;
   gint          save_y;
+  guint8        save_dim;
+  gint          save_depth;
 
   
   ClutterTimeline *zoom_time;
@@ -80,8 +82,19 @@ enum
 
 static guint _photo_signals[LAST_SIGNAL] = { 0 };
 
+guint8
+aaina_photo_get_dim (AainaPhoto *photo)
+{
+  AainaPhotoPrivate *priv;
+
+  g_return_if_fail (AAINA_IS_PHOTO (photo));
+  priv = photo->priv;
+
+  return clutter_actor_get_opacity (priv->dim);
+}
+
 void
-aaina_photo_dim (AainaPhoto *photo, gint dim_level)
+aaina_photo_set_dim (AainaPhoto *photo, guint8 dim_level)
 {
   AainaPhotoPrivate *priv;
 
@@ -91,6 +104,7 @@ aaina_photo_dim (AainaPhoto *photo, gint dim_level)
   clutter_actor_set_opacity (priv->dim, dim_level);
 }
 
+void
 aaina_photo_save (AainaPhoto *photo)
 {
   AainaPhotoPrivate *priv;
@@ -104,6 +118,8 @@ aaina_photo_save (AainaPhoto *photo)
   clutter_actor_get_scale (CLUTTER_ACTOR (photo), 
                            &priv->save_scale, 
                            &priv->save_scale);
+  priv->save_dim = clutter_actor_get_opacity (priv->dim);
+  priv->save_depth = clutter_actor_get_depth (CLUTTER_ACTOR (photo));
 }
 
 void
@@ -158,7 +174,12 @@ aaina_photo_alpha_restore (ClutterBehaviour *behave,
 
   clutter_actor_set_position (CLUTTER_ACTOR (photo), new_x, new_y);
   clutter_actor_set_scale (CLUTTER_ACTOR (photo), new_scale, new_scale);
-
+  
+  if (factor > 0.9)
+  {
+    clutter_actor_set_opacity (priv->dim, priv->save_dim);
+    clutter_actor_set_depth (CLUTTER_ACTOR (photo), priv->save_depth);
+  }
   clutter_actor_queue_redraw (CLUTTER_ACTOR (photo));
 }
 gdouble
@@ -251,6 +272,7 @@ aaina_photo_alpha_zoom (ClutterBehaviour *behave,
   new_x = CLUTTER_STAGE_WIDTH () / 4;
   new_y = CLUTTER_STAGE_HEIGHT () /4;
 
+
   if (x > new_x)
     new_x = x - ((x - new_x) * factor);
   else
@@ -267,6 +289,9 @@ aaina_photo_alpha_zoom (ClutterBehaviour *behave,
 
   clutter_actor_set_position (CLUTTER_ACTOR (photo), new_x, new_y);
   clutter_actor_set_scale (CLUTTER_ACTOR (photo), new_scale, new_scale);
+  clutter_actor_set_opacity (priv->dim,
+                            clutter_actor_get_opacity (priv->dim)
+      -(clutter_actor_get_opacity (priv->dim))*factor);
 
   if (factor == 1)
     g_signal_emit (G_OBJECT (photo), _photo_signals[PHOTO_ZOOMED], 0);

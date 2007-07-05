@@ -274,7 +274,7 @@ on_photo_added (AainaLibrary    *library,
 
   dim = 255/N_LANES;
   dim = dim * (N_LANES - (count+1));
-  aaina_photo_dim (photo, dim);
+  aaina_photo_set_dim (photo, dim);
 
   if (!clutter_actor_get_parent (CLUTTER_ACTOR (photo)))
     clutter_group_add (CLUTTER_GROUP (clutter_stage_get_default ()), 
