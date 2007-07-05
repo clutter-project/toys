@@ -86,6 +86,8 @@ struct _ClutterDominatrixPrivate
   ClutterFixed    orig_scale_x;
   ClutterFixed    orig_scale_y;
   ClutterFixed    orig_zang;
+
+  guint8          old_opacity;
 };
 
 enum
@@ -476,6 +478,7 @@ clutter_dominatrix_init (ClutterDominatrix *self)
   self->priv->mhandle_height = 30;
   self->priv->scale = TRUE;
   self->priv->gravity = CLUTTER_GRAVITY_CENTER;
+  self->priv->old_opacity = 0xff;
 }
 
 void 
@@ -511,6 +514,9 @@ clutter_dominatrix_handle_event (ClutterDominatrix        *dominatrix,
         clutter_event_get_coords (event, &x, &y);
 
 	clutter_actor_raise_top (priv->slave);
+
+	priv->old_opacity = clutter_actor_get_opacity (priv->slave);
+	    
 
 	g_signal_emit (dominatrix, dmx_signals[MANIPULATION_STARTED], 0);
 
@@ -593,6 +599,7 @@ clutter_dominatrix_handle_event (ClutterDominatrix        *dominatrix,
 	    abs (yp - y) < mhandle_height)
 	  {
 	    priv->dragging = DRAG_MOVE;
+	    clutter_actor_set_opacity (priv->slave, priv->old_opacity / 2);
 	    return;
 	  }
 
@@ -694,7 +701,7 @@ clutter_dominatrix_handle_event (ClutterDominatrix        *dominatrix,
 	  {
 	    if (priv->dont_move)
 	      return;
-	    
+
 	    clutter_actor_move_by (priv->slave,
 				   x - priv->prev_x,
 				   y - priv->prev_y);
@@ -873,6 +880,7 @@ clutter_dominatrix_handle_event (ClutterDominatrix        *dominatrix,
       {
 	if (priv->dragging != DRAG_NONE)
 	  {
+	    clutter_actor_set_opacity (priv->slave, priv->old_opacity);
 	    g_signal_emit (dominatrix, dmx_signals[MANIPULATION_ENDED], 0);
 	    priv->dragging = DRAG_NONE;
 	  }
