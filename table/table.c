@@ -78,6 +78,36 @@ get_xy_coords (ClutterActor * stage, gint * x, gint * y)
   while (count < size / 2);
 }
 
+struct notify_data
+{
+  ClutterActor * bckg;
+  ClutterActor * shdw;
+};
+
+static void
+notify_cb (GObject           *object,
+           GParamSpec        *param_spec,
+           gpointer           data)
+{
+  ClutterVideoPlayer * player;
+  struct notify_data * d = data;
+
+  if (!CLUTTER_IS_VIDEO_PLAYER (object))
+    return;
+
+  player = CLUTTER_VIDEO_PLAYER (object);
+  
+  gint w = clutter_video_player_get_width  (player) + MARG;
+  gint h = clutter_video_player_get_height (player) + MARG;
+
+  if (w == clutter_actor_get_width (d->bckg) &&
+      h == clutter_actor_get_width (d->bckg))
+    return;
+  
+  clutter_actor_set_size (d->bckg, w, h);
+  clutter_actor_set_size (d->shdw, w, h);
+}
+
 static ClutterDominatrix *
 make_item (ClutterActor * stage, ClutterActor *actor)
 {
@@ -88,6 +118,7 @@ make_item (ClutterActor * stage, ClutterActor *actor)
   gdouble             scale;
   gint                w, h, sw, sh, x, y;
   ClutterFixed        zang;
+  struct notify_data * ndata = g_malloc0(sizeof (struct notify_data));
   
   scale = (double) SIZE_X / (double) clutter_actor_get_width (actor);
   w = SIZE_X;
@@ -111,16 +142,24 @@ make_item (ClutterActor * stage, ClutterActor *actor)
   clutter_rectangle_set_color (CLUTTER_RECTANGLE (rect),
                                &bckg_clr);
   clutter_actor_show (rect);
-
+  ndata->bckg = rect;
+  
   shaddow = clutter_rectangle_new ();
   clutter_actor_set_position (shaddow, 2, 2);
   clutter_actor_set_size (shaddow, w + MARG, h + MARG);
   clutter_rectangle_set_color (CLUTTER_RECTANGLE (shaddow), &shdw_clr);
   clutter_actor_show (shaddow);
+  ndata->shdw = shaddow;
   
   clutter_actor_set_position (actor, 2, 2);
   clutter_actor_set_size (actor, w, h);
   clutter_actor_show (actor);
+
+  if (CLUTTER_IS_VIDEO_PLAYER (actor))
+    {
+      g_signal_connect (actor, "notify::width", G_CALLBACK(notify_cb), ndata);
+      g_signal_connect (actor, "notify::height", G_CALLBACK(notify_cb), ndata);
+    }
   
   clutter_container_add (CLUTTER_CONTAINER (group),
 			 shaddow, rect, actor, NULL);
@@ -145,6 +184,8 @@ make_img_item (ClutterActor * stage, const gchar * name)
     return NULL;
 
   img = clutter_texture_new_from_pixbuf (pixbuf);
+  clutter_actor_show (img);
+  
   return make_item (stage, img);
 }
 

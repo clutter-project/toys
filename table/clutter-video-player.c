@@ -25,6 +25,9 @@ struct _ClutterVideoPlayerPrivate
   ClutterActor    * control_pause;
   
   gboolean          paused;
+
+  gint              width;
+  gint              height;
   
   gchar           * uri;
 };
@@ -40,6 +43,8 @@ autostop_playback (gpointer data)
 {
   ClutterVideoPlayer        * player = data;
   ClutterVideoPlayerPrivate * priv = player->priv;
+
+  clutter_actor_show (priv->vtexture);
 
   toggle_pause_state (player);
   clutter_media_set_position (CLUTTER_MEDIA (priv->vtexture), 0);
@@ -80,6 +85,18 @@ pixbuf_from_data (const guchar * data, gint length)
   return pixbuf;
 }
 
+void
+size_change (ClutterTexture *texture, 
+	     gint            width,
+	     gint            height,
+	     gpointer        data)
+{
+  ClutterVideoPlayer *player = data;
+  gint h = player->priv->width * height / width;
+  
+  clutter_actor_set_size (CLUTTER_ACTOR (player), player->priv->width, h);
+}
+
 static void
 construct_controls (ClutterVideoPlayer *player)
 {
@@ -94,13 +111,15 @@ construct_controls (ClutterVideoPlayer *player)
   /* Dont let the underlying pixbuf dictate size */
   g_object_set (G_OBJECT(priv->vtexture), "sync-size", FALSE, NULL);
 
+  g_signal_connect (CLUTTER_TEXTURE(priv->vtexture), 
+		    "size-change",
+		    G_CALLBACK (size_change), player);
+  
   clutter_media_set_filename(CLUTTER_MEDIA(priv->vtexture), priv->uri);
   clutter_media_set_playing (CLUTTER_MEDIA(priv->vtexture), TRUE);
   priv->paused = FALSE;
   g_signal_connect (priv->vtexture, "eos", eos_cb, player);
   g_timeout_add (100, autostop_playback, player);
-  
-  clutter_actor_show (priv->vtexture);
   
   priv->control = clutter_group_new ();
   
@@ -231,10 +250,22 @@ clutter_video_player_request_coords (ClutterActor        *self,
   cbox.x2 = box->x2 - box->x1;
   cbox.y2 = box->y2 - box->y1;
 
+  priv->width  = CLUTTER_FIXED_INT (cbox.x2);
+  priv->height = CLUTTER_FIXED_INT (cbox.y2);
+
+  g_debug ("coords request %d x %d",
+	   CLUTTER_FIXED_INT (cbox.x2),
+	   CLUTTER_FIXED_INT (cbox.y2));
+  
   clutter_actor_request_coords (priv->vtexture, &cbox);
+
+  clutter_actor_set_position (priv->control, 0, 0);
   
   CLUTTER_ACTOR_CLASS (clutter_video_player_parent_class)->request_coords (self, box);
 
+  g_object_notify (G_OBJECT (self), "height");
+  g_object_notify (G_OBJECT (self), "width");
+  
   clutter_actor_set_position (priv->control,
 			      (clutter_actor_get_width (priv->vtexture) -
 			       CTRL_SIZE) / 2,
@@ -342,3 +373,14 @@ input_cb (ClutterStage *stage,
     }
 }
 
+gint
+clutter_video_player_get_width (ClutterVideoPlayer * player)
+{
+  return player->priv->width;
+}
+
+gint
+clutter_video_player_get_height (ClutterVideoPlayer * player)
+{
+  return player->priv->height;
+}
