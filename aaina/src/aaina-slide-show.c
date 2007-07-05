@@ -33,7 +33,7 @@ G_DEFINE_TYPE (AainaSlideShow, aaina_slide_show, G_TYPE_OBJECT);
 #define N_LANES 7
 
 static gint lane_frames[N_LANES] = {120, 120, 120, 120, 120, 120, 120};
-static gint lane_speed[N_LANES]  = {240,  30,  120,  30, 240,  60,  180};
+static gint lane_speed[N_LANES]  = {240, 210, 180, 150, 120, 90, 30};
 
 struct _AainaSlideShowPrivate
 {
@@ -268,18 +268,13 @@ on_photo_added (AainaLibrary    *library,
                         CLUTTER_STAGE_HEIGHT ()-(CLUTTER_STAGE_HEIGHT()/5));
          
 	/* Use AainaPhoto's scale feature as it makes sure gravity is center */
-  //aaina_photo_set_scale (AAINA_PHOTO (photo), scale);
   clutter_actor_set_scale (CLUTTER_ACTOR (photo), scale, scale);
 	clutter_actor_set_position (CLUTTER_ACTOR (photo), x, y);
   clutter_actor_set_depth (CLUTTER_ACTOR (photo), count);
-                          // g_rand_int_range (rand, 
-                            //                 (100/N_LANES)*count, 
-                              //               (100/N_LANES)*count+1));
-  
+
   dim = 255/N_LANES;
   dim = dim * (N_LANES - (count+1));
   aaina_photo_dim (photo, dim);
-  g_print ("%d\n", dim);
 
   if (!clutter_actor_get_parent (CLUTTER_ACTOR (photo)))
     clutter_group_add (CLUTTER_GROUP (clutter_stage_get_default ()), 
