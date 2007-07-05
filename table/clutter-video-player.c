@@ -118,7 +118,7 @@ construct_controls (ClutterVideoPlayer *player)
   clutter_media_set_filename(CLUTTER_MEDIA(priv->vtexture), priv->uri);
   clutter_media_set_playing (CLUTTER_MEDIA(priv->vtexture), TRUE);
   priv->paused = FALSE;
-  g_signal_connect (priv->vtexture, "eos", eos_cb, player);
+  g_signal_connect (priv->vtexture, "eos", G_CALLBACK (eos_cb), player);
   g_timeout_add (100, autostop_playback, player);
   
   priv->control = clutter_group_new ();
