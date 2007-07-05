@@ -20,6 +20,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <glib.h>
@@ -62,7 +63,6 @@ static GOptionEntry entries[] =
 int 
 main (int argc, char **argv)
 {
-  GOptionContext *context;
   AainaLibrary *library;
   AainaSource *source;
   ClutterActor *stage;
@@ -70,16 +70,23 @@ main (int argc, char **argv)
   ClutterColor black = {0x00, 0x00, 0x00, 0xff};
 
   g_thread_init (NULL);
-  clutter_init (&argc, &argv);
+  clutter_init_with_args (&argc, &argv,
+                          "Aaina Image Slideshot",
+                          entries,
+                          NULL, NULL);
 
-  /* Options */
-  context = g_option_context_new (" - Aaina Options");
-  g_option_context_add_main_entries (context, entries, NULL);
-  g_option_context_parse (context, &argc, &argv, NULL);
+  if (!directory)
+    {
+      g_print ("Usage: %s --directory <path>\n", argv[0]);
+      return EXIT_FAILURE;
+    }
 
   stage = clutter_stage_get_default ();
   clutter_actor_set_size (stage, 800, 600);
-  clutter_stage_fullscreen (CLUTTER_STAGE (stage));
+  
+  if (fullscreen)
+    clutter_stage_fullscreen (CLUTTER_STAGE (stage));
+
   clutter_stage_set_color (CLUTTER_STAGE (stage), &black);
 
   /* Load the test source */
@@ -97,5 +104,5 @@ main (int argc, char **argv)
 
   clutter_main ();
 
-  return 0;
+  return EXIT_SUCCESS;
 }

@@ -1,3 +1,9 @@
+2007-07-05  Emmanuele Bassi  <ebassi@openedhand.com>
+
+	* src/main.c: Use clutter_init_with_args() to parse
+	the command line arguments and show the help. Show the
+	correct usage if no directory was specified.
+
 2007-07-01  Neil J. Patel  <njp@o-hand.com>
 
 	* Makefile.am:
