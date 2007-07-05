@@ -76,9 +76,6 @@ GType         clutter_video_player_get_type         (void) G_GNUC_CONST;
 
 ClutterActor *clutter_video_player_new              (const gchar * uri);
 
-gint          clutter_video_player_get_width        (ClutterVideoPlayer * player);
-gint          clutter_video_player_get_height       (ClutterVideoPlayer * player);
-
 G_END_DECLS
 
 #endif /* __CLUTTER_VIDEO_PLAYER_H__ */

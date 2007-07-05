@@ -372,15 +372,3 @@ input_cb (ClutterStage *stage,
       break;
     }
 }
-
-gint
-clutter_video_player_get_width (ClutterVideoPlayer * player)
-{
-  return player->priv->width;
-}
-
-gint
-clutter_video_player_get_height (ClutterVideoPlayer * player)
-{
-  return player->priv->height;
-}

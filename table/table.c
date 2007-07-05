@@ -97,8 +97,8 @@ notify_cb (GObject           *object,
 
   player = CLUTTER_VIDEO_PLAYER (object);
   
-  gint w = clutter_video_player_get_width  (player) + MARG;
-  gint h = clutter_video_player_get_height (player) + MARG;
+  gint w = clutter_actor_get_width  (player) + MARG;
+  gint h = clutter_actor_get_height (player) + MARG;
 
   if (w == clutter_actor_get_width (d->bckg) &&
       h == clutter_actor_get_width (d->bckg))
