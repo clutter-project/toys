@@ -242,8 +242,11 @@ on_photo_added (AainaLibrary    *library,
 
   count = priv->count;
 
-  /* We want the scale of the photos to be random */
-  scale = g_rand_double_range (rand, 0.15, 0.35); 
+  /* We want the scale of the photos to be random 0.15, 0.35*/
+  scale = (0.35 - 0.15)/N_LANES;
+  scale = g_rand_double_range (rand,
+                               0.15 + (scale * count), 
+                               0.15 + (scale * (count+1))); 
 
   /* We want 'random' spacing of the photos, but we don't want to overlap two
    * photos from the same lane, hence we only randomise the gap between two
@@ -267,7 +270,7 @@ on_photo_added (AainaLibrary    *library,
   clutter_actor_set_scale (CLUTTER_ACTOR (photo), scale, scale);
 	clutter_actor_set_position (CLUTTER_ACTOR (photo), x, y);
   clutter_actor_set_depth (CLUTTER_ACTOR (photo),
-                           g_rand_int_range (rand, 0, 100));
+                           g_rand_int_range (rand, 0, (100/N_LANES)*count+1));
  
   if (!clutter_actor_get_parent (CLUTTER_ACTOR (photo)))
     clutter_group_add (CLUTTER_GROUP (clutter_stage_get_default ()), 

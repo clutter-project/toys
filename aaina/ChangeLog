@@ -1,6 +1,12 @@
 2007-07-05  Neil J. Patel  <njp@o-hand.com>
 
 	* src/aaina-slide-show.c: (on_photo_added):
+	Sort by depth using an algorithm a child could develop, yep its that bad, 
+	but it is a start.
+
+2007-07-05  Neil J. Patel  <njp@o-hand.com>
+
+	* src/aaina-slide-show.c: (on_photo_added):
 	Added z-order (not finished).
 	Increased number of lanes.
 
