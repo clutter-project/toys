@@ -1,3 +1,9 @@
+2007-07-05  Neil J. Patel  <njp@o-hand.com>
+
+	* src/aaina-slide-show.c: (on_photo_added):
+	Added z-order (not finished).
+	Increased number of lanes.
+
 2007-07-05  Emmanuele Bassi  <ebassi@openedhand.com>
 
 	* src/main.c: Use clutter_init_with_args() to parse

@@ -30,9 +30,10 @@ G_DEFINE_TYPE (AainaSlideShow, aaina_slide_show, G_TYPE_OBJECT);
 	AainaSlideShowPrivate))
 
 #define VIEW_PHOTO_TIMEOUT 4000
-#define N_LANES 4
-static gint lane_frames[N_LANES] = {60, 40, 60, 40};
-static gint lane_speed[N_LANES]  = {120, 40, 320, 60};
+#define N_LANES 7
+
+static gint lane_frames[N_LANES] = {120, 120, 120, 120, 120, 120, 120};
+static gint lane_speed[N_LANES]  = {240,  30,  120,  30, 240,  60,  180};
 
 struct _AainaSlideShowPrivate
 {
@@ -258,13 +259,15 @@ on_photo_added (AainaLibrary    *library,
    * this, we add a random value between -30 and 30, which makes sure the photos
    * look randomised.
    */
-  y = ((CLUTTER_STAGE_HEIGHT () / N_LANES +1) * count) + 30;
+  y = ((CLUTTER_STAGE_HEIGHT () / (N_LANES +2)) * count) + 30;
   y += g_rand_int_range (rand, -30, 30);
          
 	/* Use AainaPhoto's scale feature as it makes sure gravity is center */
   //aaina_photo_set_scale (AAINA_PHOTO (photo), scale);
   clutter_actor_set_scale (CLUTTER_ACTOR (photo), scale, scale);
 	clutter_actor_set_position (CLUTTER_ACTOR (photo), x, y);
+  clutter_actor_set_depth (CLUTTER_ACTOR (photo),
+                           g_rand_int_range (rand, 0, 100));
  
   if (!clutter_actor_get_parent (CLUTTER_ACTOR (photo)))
     clutter_group_add (CLUTTER_GROUP (clutter_stage_get_default ()), 
