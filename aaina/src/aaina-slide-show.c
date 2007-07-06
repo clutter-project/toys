@@ -83,6 +83,7 @@ restore_photo (AainaSlideShow *slide_show)
   g_timeout_add (g_rand_int_range (rand, 4000, 10000), 
                  (GSourceFunc)zoom_photo, 
                  (gpointer)slide_show);
+  priv->zoomed = NULL;
   return FALSE;
 }
 /*
@@ -182,6 +183,7 @@ aaina_slide_show_move (ClutterBehaviour *behave,
                        GList **lane)
 {
   AainaSlideShow *slide_show = aaina_slide_show_get_default ();
+  AainaSlideShowPrivate *priv = slide_show->priv;
   GList *l;
   gint leftmost = 0 - (CLUTTER_STAGE_WIDTH () /4);
 
@@ -199,8 +201,9 @@ aaina_slide_show_move (ClutterBehaviour *behave,
                   "width", &width,
                   "viewed", &viewed,
                   NULL);
-
-    if (viewed)
+    if (l->data == priv->zoomed)
+      return;
+    else if (viewed)
     {
       g_object_set (G_OBJECT (l->data), "x", x - 1, NULL); 
     }
