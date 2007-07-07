@@ -55,10 +55,13 @@ G_BEGIN_DECLS
 
 typedef struct _AainaSourceFlickr AainaSourceFlickr;
 typedef struct _AainaSourceFlickrClass AainaSourceFlickrClass;
+typedef struct _AainaSourceFlickrPrivate AainaSourceFlickrPrivate;
 
 struct _AainaSourceFlickr
 {
 	AainaSource         parent;
+
+  AainaSourceFlickrPrivate *priv;
 };
 
 struct _AainaSourceFlickrClass 
@@ -75,7 +78,7 @@ struct _AainaSourceFlickrClass
 GType aaina_source_flickr_get_type (void) G_GNUC_CONST;
 
 AainaSource* 
-aaina_source_flickr_new (AainaLibrary *library, const gchar *flickr);
+aaina_source_flickr_new (AainaLibrary *library, const gchar *tags);
 
 G_END_DECLS
 

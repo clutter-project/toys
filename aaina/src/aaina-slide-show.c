@@ -144,8 +144,8 @@ zoom_photo (AainaSlideShow *slide_show)
   /* This should work, right? */
   if (photos == NULL)
   {
-    zoom_photo (slide_show);
-    return FALSE;
+    //zoom_photo (slide_show);
+    return TRUE;
   }
 
   /* Choose a random photo in the list */

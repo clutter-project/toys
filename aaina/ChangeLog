@@ -1,5 +1,22 @@
 2007-07-07  Neil J. Patel  <njp@o-hand.com>
 
+	* libnflick/nflick-photo-search-worker.c: (thread_func):
+	Use the passed-in value for the 'tags' attribute.
+	
+	* sources/aaina-source-flickr.c: (on_thread_abort),
+	(on_thread_error), (on_thread_ok), (get_photos),
+	(aaina_source_flickr_class_init), (aaina_source_flickr_init),
+	(aaina_source_flickr_new):
+	* sources/aaina-source-flickr.h:
+	Add a private instance.
+	Store the tags and library in the private instance for later use.
+
+	* src/aaina-slide-show.c: (zoom_photo):
+	Don't go OTT when trying to find a photo, just return TRUE to the timeout,
+	and prevent a segfault.
+
+2007-07-07  Neil J. Patel  <njp@o-hand.com>
+
 	* libnflick/Makefile.am:
 	* libnflick/nflick-flickr.h:
 	* libnflick/nflick-photo-search-response-private.h:

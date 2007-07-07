@@ -24,46 +24,49 @@
 #include "aaina-source-flickr.h"
 
 G_DEFINE_TYPE (AainaSourceFlickr, aaina_source_flickr, AAINA_TYPE_SOURCE);
+
+#define AAINA_SOURCE_FLICKR_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj),\
+	AAINA_TYPE_SOURCE_FLICKR, \
+	AainaSourceFlickrPrivate))
+
+struct _AainaSourceFlickrPrivate
+{
+  AainaLibrary *library;
+  gchar        *tags;
+
+  NFlickWorker *worker;
+
+};
 	
-/* GObject stuff */
-static void
-aaina_source_flickr_class_init (AainaSourceFlickrClass *klass)
-{
-  ;
-}
-
-
-static void
-aaina_source_flickr_init (AainaSourceFlickr *source_flickr)
-{
-  ;
-}
-
 static void
 on_thread_abort (void *null)
 {
   g_print ("abort\n");
+  return FALSE;
 }
 
 static void
 on_thread_error (void *null)
 {
   g_print ("error\n");
+  return FALSE;
 }
 
 static void
 on_thread_ok (void *null)
 {
   g_print ("ok\n");
+  return FALSE;
 }
 
 static void
-get_photos (void)
+get_photos (AainaSourceFlickr *source)
 {
   NFlickWorker *worker;
   NFlickWorkerStatus *status;
 
-  worker = (NFlickWorker*)nflick_photo_search_worker_new (" ", " ");
+  worker = (NFlickWorker*)nflick_photo_search_worker_new (source->priv->tags,
+                                                          " ");
 
   nflick_worker_set_aborted_idle (worker, 
                                   (NFlickWorkerIdleFunc)on_thread_abort);
@@ -75,16 +78,34 @@ get_photos (void)
   nflick_worker_start (worker);
 }
 
+/* GObject stuff */
+static void
+aaina_source_flickr_class_init (AainaSourceFlickrClass *klass)
+{
+  GObjectClass    *gobject_class = G_OBJECT_CLASS (klass);
+  
+  g_type_class_add_private (gobject_class, sizeof (AainaSourceFlickrPrivate));
+
+}
+
+
+static void
+aaina_source_flickr_init (AainaSourceFlickr *source_flickr)
+{
+  source_flickr->priv = AAINA_SOURCE_FLICKR_GET_PRIVATE (source_flickr);
+}
+
 AainaSource*
-aaina_source_flickr_new (AainaLibrary *library, const gchar *dir)
+aaina_source_flickr_new (AainaLibrary *library, const gchar *tags)
 {
   AainaSourceFlickr         *source_flickr;
 
   source_flickr = g_object_new (AAINA_TYPE_SOURCE_FLICKR, 
                                    NULL);
 
-
-  get_photos ();
+  source_flickr->priv->tags = g_strdup (tags);
+  source_flickr->priv->library = library;
+  get_photos (source_flickr);
 
   return AAINA_SOURCE (source_flickr);
 }

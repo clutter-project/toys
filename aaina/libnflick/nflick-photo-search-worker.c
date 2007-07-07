@@ -208,7 +208,7 @@ thread_func (NFlickPhotoSearchWorker *self)
                 g_error ("request did not equal NULL, run for the hills\n");
         
         nflick_api_request_add_parameter (get_photosets_request, 
-                                          "tags", "guadec2007");
+                                          "tags", self->Private->UserNsid);
         nflick_api_request_add_parameter (get_photosets_request,
                                           "sort", "date-posted-desc");
 
@@ -240,103 +240,6 @@ thread_func (NFlickPhotoSearchWorker *self)
           g_print ("%s %s %s\n", photo->id, photo->title, photo->user);
         }
 
-        /*
-        nflick_worker_set_message ((NFlickWorker *) self, gettext ("Parsing photos without set..."));
-
-        unsetted_request = nflick_api_request_new (NFLICK_FLICKR_API_METHOD_PHOTOS_NOT_IN_SET);
-        if (unsetted_request == NULL)
-                goto Error;
-        
-        nflick_api_request_add_parameter (unsetted_request, 
-                                          NFLICK_FLICKR_API_PARAM_TOKEN, 
-                                          self->Private->Token);
-
-        // We try to get 500 photos per page. 500 is a maximum value. 
-        // FIXME: We should check if 500 is enough. Someone might have more 
-        // than 500 photos
-
-        nflick_api_request_add_parameter (unsetted_request, 
-                                          NFLICK_FLICKR_API_PARAM_PER_PAGE,
-        ***                                  "500");
-
-        nflick_api_request_sign (unsetted_request);
-        if (nflick_api_request_exec (unsetted_request) != TRUE) {
-                nflick_worker_set_network_error ((NFlickWorker *) self);
-                goto Error;
-        }
-*
-        if (nflick_worker_is_aborted ((NFlickWorker *) self) == TRUE)
-                goto Abort;
-
-        unsetted_response = nflick_api_response_new_from_request (NFLICK_TYPE_NO_SET_RESPONSE, unsetted_request);
-        if (unsetted_response == NULL)
-                goto Error;
-
-        if (nflick_worker_parse_api_response ((NFlickWorker*) self, unsetted_response) == FALSE)
-                goto Error;
-
-        unsetted_list = nflick_no_set_response_take_list ((NFlickNoSetResponse *) unsetted_response);
-        // FIXME: Here we could expose the "count" property on the 
-        // PhotoSetResponse and NoSetResponse
-        unsetted_set = nflick_photo_set_new_no_set (g_list_length (unsetted_list)); 
-        nflick_photo_set_give_list (unsetted_set, unsetted_list);
-
-       //  Append the set to our set list...
-        self->Private->PhotoSets = g_list_append (self->Private->PhotoSets, 
-                                                   unsetted_set);
-
-        // If the user has not sets, finish now
-        if (self->Private->PhotoSets->data == (gpointer) unsetted_set) {
-                goto Done;
-        }
-        // Now let's try fetching the photos for first photo set
-        nflick_worker_set_message ((NFlickWorker *) self, gettext ("Loading photoset data..."));
-        
-        GList *sets = self->Private->PhotoSets;
-        GList *set;
-        gint i = g_list_length (sets);
-        
-        for (set = sets; set != NULL; set = set->next) {
-        	first_set = (NFlickPhotoSet*)set->data;
-        
-        	g_object_get (G_OBJECT (first_set), "id", &first_id, NULL);
-
-        	first_photolist_request = nflick_api_request_new
-        			 (NFLICK_FLICKR_API_METHOD_PHOTOSETS_GET_PHOTOS);
-        	if (first_photolist_request == NULL)
-                	goto Error;
-        
-        	nflick_api_request_add_parameter (first_photolist_request, 
-                                          NFLICK_FLICKR_API_PARAM_TOKEN, 
-                                          self->Private->Token);
-
-        	nflick_api_request_add_parameter (first_photolist_request, 
-                                          NFLICK_FLICKR_API_PARAM_PHOTOSET_ID, 
-                                          first_id);
-
-        	nflick_api_request_sign (first_photolist_request);
-        	if (nflick_api_request_exec (first_photolist_request) != TRUE) {
-                	nflick_worker_set_network_error ((NFlickWorker *) self);
-                	g_warning ("Error : %s", first_id);
-        	}
-
-        	if (nflick_worker_is_aborted ((NFlickWorker *) self) == TRUE)
-                	g_warning ("Abort : %s", first_id);
-
-        	first_photo_list_response = nflick_api_response_new_from_request 
-        	     (NFLICK_TYPE_PHOTO_LIST_RESPONSE, first_photolist_request);
-        	if (first_photo_list_response == NULL)
-                	g_warning ("No photos : %s", first_id);
-
-        	if (nflick_worker_parse_api_response ((NFlickWorker*) self, 
-        				first_photo_list_response) == FALSE)
-                	;
-
-        	first_list = nflick_photo_list_response_take_list
-        	        ((NFlickPhotoListResponse *) first_photo_list_response);
-        	nflick_photo_set_give_list (first_set, first_list);
-        }
-        */
         goto Done;
 
 Abort:
