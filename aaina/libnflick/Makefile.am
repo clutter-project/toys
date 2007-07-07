@@ -39,6 +39,12 @@ libnflick_la_SOURCES =	\
 	nflick-photo-list-worker.c		\
 	nflick-photo-list-worker.h		\
 	nflick-photo-list-worker-private.h	\
+	nflick-photo-search-worker.h	\
+	nflick-photo-search-worker.c	\
+	nflick-photo-search-worker-private.h	\
+	nflick-photo-search-response.c	\
+	nflick-photo-search-response.h	\
+	nflick-photo-search-response-private.h	\
 	nflick-photo-set.c			\
 	nflick-photo-set.h			\
 	nflick-photo-set-private.h		\

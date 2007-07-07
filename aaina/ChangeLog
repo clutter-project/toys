@@ -1,3 +1,39 @@
+2007-07-07  Neil J. Patel  <njp@o-hand.com>
+
+	* libnflick/Makefile.am:
+	* libnflick/nflick-flickr.h:
+	* libnflick/nflick-photo-search-response-private.h:
+	* libnflick/nflick-photo-search-response.c:
+	(nflick_photo_search_response_get_type),
+	(nflick_photo_search_response_class_init),
+	(nflick_photo_search_response_init), (private_init),
+	(private_dispose), (nflick_photo_search_response_take_list),
+	(nflick_photo_search_response_dispose),
+	(nflick_photo_search_response_finalize), (parse_func),
+	(nflick_photo_search_response_get_property):
+	* libnflick/nflick-photo-search-response.h:
+	* libnflick/nflick-photo-search-worker-private.h:
+	* libnflick/nflick-photo-search-worker.c:
+	(nflick_photo_search_worker_get_type),
+	(nflick_photo_search_worker_class_init),
+	(nflick_photo_search_worker_init), (private_init),
+	(private_dispose), (nflick_photo_search_worker_dispose),
+	(nflick_photo_search_worker_finalize), (thread_func),
+	(nflick_photo_search_worker_new),
+	(nflick_photo_search_worker_take_list),
+	(nflick_photo_search_worker_get_property):
+	* libnflick/nflick-photo-search-worker.h:
+	* libnflick/nflick-types.h:
+	* libnflick/nflick.h:
+	* sources/Makefile.am:
+	* sources/aaina-source-flickr.c: (aaina_source_flickr_class_init),
+	(aaina_source_flickr_init), (on_thread_abort), (on_thread_error),
+	(on_thread_ok), (get_photos), (aaina_source_flickr_new):
+	* sources/aaina-source-flickr.h:
+	* src/aaina-slide-show.c:
+	* src/main.c: (main):
+	Print a list of photos from flickr for a particular tag, then segfault :-)
+
 2007-07-06  Neil J. Patel  <njp@o-hand.com>
 
 	* src/aaina-slide-show.c: (restore_photo), (aaina_slide_show_move):

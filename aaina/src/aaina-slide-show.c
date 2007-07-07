@@ -32,8 +32,8 @@ G_DEFINE_TYPE (AainaSlideShow, aaina_slide_show, G_TYPE_OBJECT);
 #define VIEW_PHOTO_TIMEOUT 4000
 #define N_LANES 7
 
-static gint lane_frames[N_LANES] = {120, 120, 120, 120, 120, 120, 120};
-static gint lane_speed[N_LANES]  = {240, 210, 180, 150, 120, 90, 30};
+static gint lane_frames[N_LANES] = {60, 60, 60, 60, 60, 60, 60};
+static gint lane_speed[N_LANES]  = {180, 150, 120, 90, 60, 30, 15};
 
 struct _AainaSlideShowPrivate
 {

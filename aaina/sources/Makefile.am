@@ -12,7 +12,13 @@ INCLUDES = \
 
 libsources_la_SOURCES =	\
 	aaina-source-directory.c			\
-	aaina-source-directory.h
+	aaina-source-directory.h			\
+	aaina-source-flickr.c				\
+	aaina-source-flickr.h				
 
-libsources_la_LIBADD = $(DEPS_LIBS) $(top_builddir)/libaaina/libaaina.la
+libsources_la_LIBADD =	\
+	$(DEPS_LIBS)	 				\
+	$(top_builddir)/libaaina/libaaina.la		\
+	$(top_builddir)/libnflick/libnflick.la	
+
 libsources_la_LDFLAGS = -version-info 0:1:0

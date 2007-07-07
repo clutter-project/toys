@@ -29,13 +29,16 @@
 
 #include <libaaina/aaina-library.h>
 #include <libaaina/aaina-source.h>
+
 #include <sources/aaina-source-directory.h>
+#include <sources/aaina-source-flickr.h>
 
 #include "aaina-slide-show.h"
 
 /* Command line options */
 static gboolean fullscreen = FALSE;
 static gchar   *directory = NULL;
+static gchar   *flickr_tag = NULL;
 
 static GOptionEntry entries[] =
 {
@@ -56,6 +59,14 @@ static GOptionEntry entries[] =
     NULL
   },
   {
+    "tag",
+    't', 0,
+    G_OPTION_ARG_STRING,
+    &flickr_tag,
+    "A tag to search flickr with",
+    NULL
+  },
+  {
     NULL
   }
 };
@@ -71,18 +82,18 @@ main (int argc, char **argv)
 
   g_thread_init (NULL);
   clutter_init_with_args (&argc, &argv,
-                          "Aaina Image Slideshot",
+                          "Aaina Image Slideshow",
                           entries,
                           NULL, NULL);
 
-  if (!directory)
+  if (!directory && !flickr_tag)
     {
       g_print ("Usage: %s --directory <path>\n", argv[0]);
       return EXIT_FAILURE;
     }
 
   stage = clutter_stage_get_default ();
-  clutter_actor_set_size (stage, 800, 600);
+  clutter_actor_set_size (stage, 720, 480);
   
   if (fullscreen)
     clutter_stage_fullscreen (CLUTTER_STAGE (stage));
@@ -91,8 +102,12 @@ main (int argc, char **argv)
 
   /* Load the test source */
   library = aaina_library_new ();
-  source = aaina_source_directory_new (library, directory);
-
+  if (directory)
+    source = aaina_source_directory_new (library, directory);
+  else if (flickr_tag)
+    source = aaina_source_flickr_new (library, flickr_tag);  
+  else
+    ;
   g_print ("%d\n", aaina_library_photo_count (library));
 
   show = aaina_slide_show_get_default ();
@@ -100,7 +115,7 @@ main (int argc, char **argv)
 
   clutter_actor_show_all (stage);
 
-  //clutter_actor_set_scale (stage, 0.25, 0.25);
+  /*clutter_actor_set_scale (stage, 0.25, 0.25);*/
 
   clutter_main ();
 

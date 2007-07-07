@@ -315,6 +315,26 @@ typedef struct                  _NFlickSetListResponsePrivate NFlickSetListRespo
 
 #define                         NFLICK_SET_LIST_RESPONSE_GET_CLASS(obj) \
                                 (G_TYPE_INSTANCE_GET_CLASS ((obj), NFLICK_TYPE_SET_LIST_RESPONSE, NFlickSetListResponseClass))
+                                
+                                
+/* Photo search response */
+
+typedef struct                  _NFlickPhotoSearchResponseClass NFlickPhotoSearchResponseClass;
+
+typedef struct                  _NFlickPhotoSearchResponse NFlickPhotoSearchResponse;
+
+typedef struct                  _NFlickPhotoSearchResponsePrivate NFlickPhotoSearchResponsePrivate;
+
+#define NFLICK_TYPE_PHOTO_SEARCH_RESPONSE (nflick_photo_search_response_get_type ())
+
+#define                         NFLICK_IS_PHOTO_SEARCH_RESPONSE(obj) \
+                                (G_TYPE_CHECK_INSTANCE_TYPE ((obj), NFLICK_TYPE_PHOTO_SEARCH_RESPONSE))
+
+#define                         NFLICK_PHOTO_SEARCH_RESPONSE(obj) \
+                                (G_TYPE_CHECK_INSTANCE_CAST ((obj), NFLICK_TYPE_PHOTO_SEARCH_RESPONSE, NFlickPhotoSearchResponse)
+
+#define                         NFLICK_PHOTO_SEARCH_RESPONSE_GET_CLASS(obj) \
+                                (G_TYPE_INSTANCE_GET_CLASS ((obj), NFLICK_TYPE_PHOTO_SEARCH_RESPONSE, NFlickPhotoSearchResponseClass))
 
 /* Photo list response */
 
@@ -429,6 +449,18 @@ typedef struct                  _NFlickSetListWorkerPrivate NFlickSetListWorkerP
 
 #define                         NFLICK_SET_LIST_WORKER_GET_CLASS(obj) \
                                 (G_TYPE_INSTANCE_GET_CLASS ((obj), NFLICK_TYPE_SET_LIST_WORKER, NFlickSetListWorkerClass))
+                                
+/* Photo search worked */
+#define                         NFLICK_TYPE_PHOTO_SEARCH_WORKER (nflick_photo_search_worker_get_type ())
+
+#define                         NFLICK_IS_PHOTO_SEARCH_WORKER(obj) \
+                                (G_TYPE_CHECK_INSTANCE_TYPE ((obj), NFLICK_TYPE_PHOTO_SEARCH_WORKER))
+
+#define                         NFLICK_PHOTO_SEARCH_WORKER(obj) \
+                                (G_TYPE_CHECK_INSTANCE_CAST ((obj), NFLICK_TYPE_PHOTO_SEARCH_WORKER, NFlickPhotoSearchWorker)
+
+#define                         NFLICK_PHOTO_SEARCH_WORKER_GET_CLASS(obj) \
+                                (G_TYPE_INSTANCE_GET_CLASS ((obj), NFLICK_TYPE_PHOTO_SEARCH_WORKER, NFlickPhotoSearchWorkerClass))
 
 /* Photo list worker */
 
@@ -508,6 +540,12 @@ typedef struct                  _NFlickModel NFlickModel;
 typedef struct                  _NFlickPhotoData NFlickPhotoData;
 
 #define                         NFLICK_TYPE_PHOTO_DATA (nflick_photo_data_get_type ())
+
+typedef struct {
+	gchar *id;
+	gchar *title;
+	gchar *user;
+} FlickrPhoto;
 
 /* End */
 

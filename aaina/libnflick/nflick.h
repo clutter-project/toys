@@ -20,6 +20,8 @@
 #include "nflick-photo-data.h"
 #include "nflick-photo-list-response.h"
 #include "nflick-photo-list-worker.h"
+#include "nflick-photo-search-worker.h"
+#include "nflick-photo-search-response.h"
 #include "nflick-photo-set.h"
 #include "nflick-pixbuf-fetch.h"
 #include "nflick-set-list-response.h"

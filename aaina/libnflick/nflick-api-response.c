@@ -218,7 +218,7 @@ gboolean                        nflick_api_response_parse (NFlickApiResponse *se
         gboolean result = TRUE;       /* If we were sucesfull */
         gboolean parse_error = FALSE; /* If the error was a parsing error */
         gchar *stat = NULL;           /* Response stat */
-
+        
         /* Start here */
         doc = xmlReadMemory (xml, strlen (xml), NULL, NULL, 0); 
         if (doc == NULL) {
