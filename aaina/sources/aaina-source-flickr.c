@@ -29,14 +29,18 @@ G_DEFINE_TYPE (AainaSourceFlickr, aaina_source_flickr, AAINA_TYPE_SOURCE);
 	AAINA_TYPE_SOURCE_FLICKR, \
 	AainaSourceFlickrPrivate))
 
-#define CHECK_TIMEOUT 60000
+#define CHECK_TIMEOUT 20000
 
 struct _AainaSourceFlickrPrivate
 {
   AainaLibrary *library;
   gchar        *tags;
 
+  /* table of already downloaded photos */
   GHashTable   *table;
+
+  /* Queue of photos to download */
+  GQueue       *queue;
 
   NFlickWorker *worker;
 
@@ -70,24 +74,36 @@ on_thread_ok (AainaSourceFlickr *source)
   /* Grab the list of photos from the worker */
   list = nflick_photo_search_worker_take_list (NFLICK_PHOTO_SEARCH_WORKER 
                                                                 (priv->worker));
+  g_print ("\n\n");
   for (l = list; l != NULL; l = l->next)
   {
     FlickrPhoto *photo = (FlickrPhoto*)l->data;
+    ClutterActor *aphoto = NULL;
+    gpointer res;
 
     if (!photo)
       continue;
 
     /* If the photo is already present, return */
-    if (g_hash_table_lookup_extended (priv->table, 
-                                       photo->id,
-                                       NULL, NULL))
+    if (g_hash_table_lookup (priv->table, photo->id) != NULL)
       continue;
     
     /* Insert into the hash table */
-    g_hash_table_insert (priv->table, photo->id, NULL);
+    g_hash_table_insert (priv->table, 
+                         g_strdup (photo->id), 
+                         GINT_TO_POINTER (1));
 
     /* Add photo to the download queue */
     /* FIXME: Imlement a download queue :-) */
+    aphoto = aaina_photo_new ();
+    g_object_set (G_OBJECT (aphoto),
+                  "id", photo->id,
+                  "title", photo->title, 
+                  "author", photo->user,
+                  NULL);
+    
+    g_queue_push_tail (priv->queue, (gpointer)aphoto);
+    
     g_print ("%s : %s\n", photo->id, photo->title);
 
     /* Free the the photo struct and its data */
@@ -97,7 +113,8 @@ on_thread_ok (AainaSourceFlickr *source)
     g_free (photo);
     l->data = NULL;
   }
-  
+  g_print ("Table size = %d\n", g_hash_table_size (priv->table));
+
   g_list_free (list);
 
   g_timeout_add (CHECK_TIMEOUT, (GSourceFunc)get_photos, (gpointer)source);
@@ -151,6 +168,8 @@ aaina_source_flickr_init (AainaSourceFlickr *source_flickr)
 
   priv->table = g_hash_table_new ((GHashFunc)g_str_hash, 
                                   (GEqualFunc)g_str_equal);
+
+  priv->queue = g_queue_new ();
 }
 
 AainaSource*

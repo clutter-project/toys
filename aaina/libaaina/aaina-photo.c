@@ -38,6 +38,7 @@ struct _AainaPhotoPrivate
   GdkPixbuf    *pixbuf;
   gboolean      visible;
 
+  gchar        *id;
   gchar        *title;
   gchar        *author;
   gchar        *date;
@@ -66,6 +67,7 @@ enum
 {
   PROP_0,
   PROP_PIXBUF,
+  PROP_ID,
   PROP_TITLE,
   PROP_DATE,
   PROP_AUTHOR,
@@ -359,6 +361,11 @@ aaina_photo_set_property (GObject      *object,
         aaina_photo_set_pixbuf (AAINA_PHOTO (object), priv->pixbuf);
       break;
 
+    case PROP_ID:
+      if (priv->id)
+        g_free (priv->id);
+      priv->id = g_strdup (g_value_get_string (value));
+      break;
     case PROP_TITLE:
       if (priv->title)
         g_free (priv->title);
@@ -398,6 +405,9 @@ aaina_photo_get_property (GObject    *object,
   {
     case PROP_PIXBUF:
       g_value_set_object (value, G_OBJECT (priv->pixbuf));
+      break;
+    case PROP_ID:
+      g_value_set_string (value, priv->id);
       break;
     case PROP_TITLE:
       g_value_set_string (value, priv->title);
@@ -454,6 +464,15 @@ aaina_photo_class_init (AainaPhotoClass *klass)
                          G_PARAM_CONSTRUCT|G_PARAM_READWRITE));
 
   g_object_class_install_property (
+    gobject_class,
+    PROP_ID,
+    g_param_spec_string ("id",
+                         "The id",
+                         "The id of the photo",
+                         NULL,
+                         G_PARAM_CONSTRUCT|G_PARAM_READWRITE));
+
+ g_object_class_install_property (
     gobject_class,
     PROP_TITLE,
     g_param_spec_string ("title",

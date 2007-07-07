@@ -54,7 +54,7 @@
 
 #define                         NFLICK_FLICKR_API_PARAM_PER_PAGE "per_page"
 
-#define 			AAINA_FLICKR_API_PARAM_TAGSS "tags"
+#define 			NFLICK_FLICKR_API_PARAM_TAGSS "tags"
 
 /* Possible methods */
 
@@ -68,6 +68,6 @@
 
 #define                         NFLICK_FLICKR_API_METHOD_PHOTOS_NOT_IN_SET "flickr.photos.getNotInSet"
 
-#define AAINA_FLICKR_API_METHOD_SEARCH_PHOTOS "flickr.photos.search"
+#define NFLICK_FLICKR_API_METHOD_SEARCH_PHOTOS "flickr.photos.search"
 
 #endif

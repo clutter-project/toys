@@ -1,5 +1,21 @@
 2007-07-07  Neil J. Patel  <njp@o-hand.com>
 
+	* libaaina/aaina-photo.c: (aaina_photo_set_property),
+	(aaina_photo_get_property), (aaina_photo_class_init):
+	Add an 'id' property.
+
+	* libnflick/nflick-flickr.h:
+	Not sure why this is here, can't remember editing this :-/. Maybe its just
+	been a long day.
+
+	* sources/aaina-source-flickr.c: (on_thread_ok),
+	(aaina_source_flickr_init):
+	Here's an idea, when inserting a string into a hash table, don't free 
+	said string in the next few g_free calls, and then wonder why each call to
+	flickr is doubling the hash table size.
+
+2007-07-07  Neil J. Patel  <njp@o-hand.com>
+
 	* libnflick/nflick-photo-search-worker.c: (thread_func):
 	Don't print a list of the photos it recieved, just store the list.
 	
