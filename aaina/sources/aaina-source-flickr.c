@@ -29,15 +29,21 @@ G_DEFINE_TYPE (AainaSourceFlickr, aaina_source_flickr, AAINA_TYPE_SOURCE);
 	AAINA_TYPE_SOURCE_FLICKR, \
 	AainaSourceFlickrPrivate))
 
+#define CHECK_TIMEOUT 60000
+
 struct _AainaSourceFlickrPrivate
 {
   AainaLibrary *library;
   gchar        *tags;
 
+  GHashTable   *table;
+
   NFlickWorker *worker;
 
 };
-	
+
+static gboolean get_photos (AainaSourceFlickr *source);
+
 static gboolean
 on_thread_abort (AainaSourceFlickr *source)
 {
@@ -55,15 +61,51 @@ on_thread_error (AainaSourceFlickr *source)
 static gboolean
 on_thread_ok (AainaSourceFlickr *source)
 {
-  static gint count = 0;
-  g_print ("Ok %d\n", count);
+  AainaSourceFlickrPrivate *priv;
+  GList *list = NULL, *l;
 
-  count++;
+  g_return_val_if_fail (AAINA_IS_SOURCE_FLICKR (source), FALSE);
+  priv = source->priv;
+
+  /* Grab the list of photos from the worker */
+  list = nflick_photo_search_worker_take_list (NFLICK_PHOTO_SEARCH_WORKER 
+                                                                (priv->worker));
+  for (l = list; l != NULL; l = l->next)
+  {
+    FlickrPhoto *photo = (FlickrPhoto*)l->data;
+
+    if (!photo)
+      continue;
+
+    /* If the photo is already present, return */
+    if (g_hash_table_lookup_extended (priv->table, 
+                                       photo->id,
+                                       NULL, NULL))
+      continue;
+    
+    /* Insert into the hash table */
+    g_hash_table_insert (priv->table, photo->id, NULL);
+
+    /* Add photo to the download queue */
+    /* FIXME: Imlement a download queue :-) */
+    g_print ("%s : %s\n", photo->id, photo->title);
+
+    /* Free the the photo struct and its data */
+    g_free (photo->id);
+    g_free (photo->title);
+    g_free (photo->user);
+    g_free (photo);
+    l->data = NULL;
+  }
   
+  g_list_free (list);
+
+  g_timeout_add (CHECK_TIMEOUT, (GSourceFunc)get_photos, (gpointer)source);
+
   return FALSE;
 }
 
-static void
+static gboolean
 get_photos (AainaSourceFlickr *source)
 {
   NFlickWorker *worker;
@@ -85,6 +127,8 @@ get_photos (AainaSourceFlickr *source)
                              (NFlickWorkerIdleFunc)on_thread_ok);
 
   nflick_worker_start (worker);
+
+  return FALSE;
 }
 
 /* GObject stuff */
@@ -101,7 +145,12 @@ aaina_source_flickr_class_init (AainaSourceFlickrClass *klass)
 static void
 aaina_source_flickr_init (AainaSourceFlickr *source_flickr)
 {
-  source_flickr->priv = AAINA_SOURCE_FLICKR_GET_PRIVATE (source_flickr);
+  AainaSourceFlickrPrivate *priv;
+
+  priv = source_flickr->priv = AAINA_SOURCE_FLICKR_GET_PRIVATE (source_flickr);
+
+  priv->table = g_hash_table_new ((GHashFunc)g_str_hash, 
+                                  (GEqualFunc)g_str_equal);
 }
 
 AainaSource*

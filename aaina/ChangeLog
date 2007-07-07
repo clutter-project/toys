@@ -1,5 +1,19 @@
 2007-07-07  Neil J. Patel  <njp@o-hand.com>
 
+	* libnflick/nflick-photo-search-worker.c: (thread_func):
+	Don't print a list of the photos it recieved, just store the list.
+	
+	* libnflick/nflick-types.h:
+	Fix typo in type decleration.
+
+	* sources/aaina-source-flickr.c: (on_thread_ok), (get_photos),
+	(aaina_source_flickr_init):
+	Hashtable to store the photos.
+	'take list' from the worker and chek if the photo is already in the list, 
+	otherwise add it,
+
+2007-07-07  Neil J. Patel  <njp@o-hand.com>
+
 	* sources/aaina-source-flickr.c: (on_thread_abort),
 	(on_thread_error), (on_thread_ok), (get_photos):
 	Fix stupid race condition because of wrong function signature.

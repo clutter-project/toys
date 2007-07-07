@@ -232,24 +232,24 @@ thread_func (NFlickPhotoSearchWorker *self)
                 goto Error;
         
         self->Private->PhotoSets = nflick_photo_search_response_take_list ((NFlickPhotoSearchResponse *) photo_search_response);
-
+        /*
         GList *l;
         for (l = self->Private->PhotoSets; l != NULL; l = l->next)
         {
           FlickrPhoto *photo = (FlickrPhoto*)l->data;
           g_print ("%s %s %s\n", photo->id, photo->title, photo->user);
         }
-
+        */
         goto Done;
 
 Abort:
-        //status = NFLICK_WORKER_STATUS_ABORTED;
-        //g_print ("Abort\n");
+        status = NFLICK_WORKER_STATUS_ABORTED;
+        g_print ("Abort\n");
         goto Done;
 
 Error:
-        //status = NFLICK_WORKER_STATUS_ERROR;
-        //g_print ("Error\n");
+        status = NFLICK_WORKER_STATUS_ERROR;
+        g_print ("Error\n");
 Done:
         if (get_photosets_request != NULL) 
                 g_object_unref (get_photosets_request);

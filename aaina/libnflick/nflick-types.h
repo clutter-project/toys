@@ -456,8 +456,8 @@ typedef struct                  _NFlickSetListWorkerPrivate NFlickSetListWorkerP
 #define                         NFLICK_IS_PHOTO_SEARCH_WORKER(obj) \
                                 (G_TYPE_CHECK_INSTANCE_TYPE ((obj), NFLICK_TYPE_PHOTO_SEARCH_WORKER))
 
-#define                         NFLICK_PHOTO_SEARCH_WORKER(obj) \
-                                (G_TYPE_CHECK_INSTANCE_CAST ((obj), NFLICK_TYPE_PHOTO_SEARCH_WORKER, NFlickPhotoSearchWorker)
+#define  NFLICK_PHOTO_SEARCH_WORKER(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), \
+	 NFLICK_TYPE_PHOTO_SEARCH_WORKER, NFlickPhotoSearchWorker))
 
 #define                         NFLICK_PHOTO_SEARCH_WORKER_GET_CLASS(obj) \
                                 (G_TYPE_INSTANCE_GET_CLASS ((obj), NFLICK_TYPE_PHOTO_SEARCH_WORKER, NFlickPhotoSearchWorkerClass))
