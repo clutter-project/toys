@@ -1,3 +1,16 @@
+2007-07-08  Neil J. Patel  <njp@o-hand.com>
+
+	* libnflick/nflick-show-worker.c: (thread_func):
+	Don't add the token as a parameter, as it isn't used for public photos.
+
+	* sources/aaina-source-flickr.c: (on_pixbuf_thread_abort),
+	(on_pixbuf_thread_error), (on_pixbuf_thread_ok), (get_pixbuf),
+	(on_thread_ok), (aaina_source_flickr_init):
+	Added downloading support.
+	Upon download succeeding, it will add the photo to the library, and it'll
+	magically appear in the river.
+	Start aaina with -t tag to test it out.
+
 2007-07-07  Neil J. Patel  <njp@o-hand.com>
 
 	* libaaina/aaina-photo.c: (aaina_photo_set_property),

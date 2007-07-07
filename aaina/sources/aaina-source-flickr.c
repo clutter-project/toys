@@ -21,6 +21,7 @@
 
 #include <libaaina/aaina-photo.h>
 #include <libnflick/nflick-photo-search-worker.h>
+#include <libnflick/nflick.h>
 #include "aaina-source-flickr.h"
 
 G_DEFINE_TYPE (AainaSourceFlickr, aaina_source_flickr, AAINA_TYPE_SOURCE);
@@ -41,12 +42,123 @@ struct _AainaSourceFlickrPrivate
 
   /* Queue of photos to download */
   GQueue       *queue;
+  gboolean      running;
+  NFlickWorker *pix_worker;
+  AainaPhoto   *current;
 
   NFlickWorker *worker;
 
 };
 
 static gboolean get_photos (AainaSourceFlickr *source);
+static gboolean get_pixbuf (AainaSourceFlickr *source);
+
+
+static gboolean
+on_pixbuf_thread_abort (AainaSourceFlickr *source)
+{
+  g_print ("abort\n");
+  return FALSE;
+}
+
+static gboolean
+on_pixbuf_thread_error (AainaSourceFlickr *source)
+{
+  AainaSourceFlickrPrivate *priv;
+  gchar *error = NULL;
+
+  g_return_val_if_fail (AAINA_IS_SOURCE_FLICKR (source), FALSE);
+  priv = source->priv;
+
+  g_object_get (G_OBJECT (priv->pix_worker), "error", &error, NULL);
+  if (error)
+  {
+    g_warning ("%s\n", error);
+  }
+  else
+    g_print ("error\n");
+  return FALSE;
+}
+
+static gboolean
+on_pixbuf_thread_ok (AainaSourceFlickr *source)
+{
+  AainaSourceFlickrPrivate *priv;
+  GdkPixbuf *pixbuf;
+  
+  g_return_val_if_fail (AAINA_IS_SOURCE_FLICKR (source), FALSE);
+  priv = source->priv;
+
+  g_object_get (G_OBJECT (priv->pix_worker), "pixbuf", &pixbuf, NULL);
+
+  /* Set the current photo's pixbuf and add it to the library */
+  if (pixbuf)
+  {
+    aaina_photo_set_pixbuf (priv->current, pixbuf);
+    aaina_library_append_photo (priv->library, priv->current);
+    priv->current = NULL;
+
+    g_print ("Got pixbuf\n");
+  }
+  else
+  {
+    g_print ("No pixbuf\n");
+  }
+  
+  /* Now we do the work for the next one */
+  if (g_queue_get_length (priv->queue))
+  {
+    priv->current = AAINA_PHOTO (g_queue_pop_head (priv->queue));
+    g_timeout_add (100, (GSourceFunc)get_pixbuf, (gpointer)source);
+
+    priv->running = TRUE;
+  }
+  else
+    priv->running = FALSE;
+
+  return FALSE;
+
+}
+
+static gboolean
+get_pixbuf (AainaSourceFlickr *source)
+{
+  AainaSourceFlickrPrivate *priv;
+  NFlickWorker *worker;
+  AainaPhoto *photo;
+  gchar *id;
+
+  g_return_val_if_fail (AAINA_IS_SOURCE_FLICKR (source), FALSE);
+  priv = source->priv;
+
+  if (priv->current == NULL)
+    return FALSE;
+
+  photo = priv->current;
+  g_object_get (G_OBJECT (photo), "id", &id, NULL);
+
+  g_print ("Getting %s\n", id);
+
+  worker = (NFlickWorker*)nflick_show_worker_new (id,
+                                                  CLUTTER_STAGE_WIDTH ()/2,
+                                                  CLUTTER_STAGE_HEIGHT ()/2,
+                                                  " ");
+  priv->pix_worker = worker;
+
+  nflick_worker_set_custom_data (worker, source);
+  nflick_worker_set_aborted_idle (worker, 
+                                  (NFlickWorkerIdleFunc)on_pixbuf_thread_abort);
+  nflick_worker_set_error_idle (worker, 
+                                (NFlickWorkerIdleFunc)on_pixbuf_thread_error);
+  nflick_worker_set_ok_idle (worker,
+                             (NFlickWorkerIdleFunc)on_pixbuf_thread_ok);
+
+  nflick_worker_start (worker);  
+
+  priv->running = TRUE;
+  return FALSE;
+}
+
 
 static gboolean
 on_thread_abort (AainaSourceFlickr *source)
@@ -93,8 +205,7 @@ on_thread_ok (AainaSourceFlickr *source)
                          g_strdup (photo->id), 
                          GINT_TO_POINTER (1));
 
-    /* Add photo to the download queue */
-    /* FIXME: Imlement a download queue :-) */
+    /* Create a aaina photo objec, but don't add it to the library yet */
     aphoto = aaina_photo_new ();
     g_object_set (G_OBJECT (aphoto),
                   "id", photo->id,
@@ -102,6 +213,7 @@ on_thread_ok (AainaSourceFlickr *source)
                   "author", photo->user,
                   NULL);
     
+    /* Add the photo to the download queue */
     g_queue_push_tail (priv->queue, (gpointer)aphoto);
     
     g_print ("%s : %s\n", photo->id, photo->title);
@@ -118,7 +230,11 @@ on_thread_ok (AainaSourceFlickr *source)
   g_list_free (list);
 
   g_timeout_add (CHECK_TIMEOUT, (GSourceFunc)get_photos, (gpointer)source);
-
+  if (!priv->running)
+  {
+    priv->current = AAINA_PHOTO (g_queue_pop_head (priv->queue));
+    g_timeout_add (200, (GSourceFunc)get_pixbuf, (gpointer)source);
+  }
   return FALSE;
 }
 
@@ -170,6 +286,7 @@ aaina_source_flickr_init (AainaSourceFlickr *source_flickr)
                                   (GEqualFunc)g_str_equal);
 
   priv->queue = g_queue_new ();
+  priv->running = FALSE;
 }
 
 AainaSource*

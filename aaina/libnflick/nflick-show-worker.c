@@ -155,10 +155,10 @@ static NFlickWorkerStatus       thread_func (NFlickShowWorker *self)
         if (get_sizes_request == NULL)
                 goto Error;
 
-        nflick_api_request_add_parameter (get_sizes_request, 
+        /*nflick_api_request_add_parameter (get_sizes_request, 
                                           NFLICK_FLICKR_API_PARAM_TOKEN, 
                                           self->Private->Token);
-
+        */
         nflick_api_request_add_parameter (get_sizes_request, 
                                           NFLICK_FLICKR_API_PARAM_PHOTO_ID, 
                                           self->Private->PhotoId);
