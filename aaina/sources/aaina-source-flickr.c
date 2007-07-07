@@ -38,24 +38,28 @@ struct _AainaSourceFlickrPrivate
 
 };
 	
-static void
-on_thread_abort (void *null)
+static gboolean
+on_thread_abort (AainaSourceFlickr *source)
 {
   g_print ("abort\n");
   return FALSE;
 }
 
-static void
-on_thread_error (void *null)
+static gboolean
+on_thread_error (AainaSourceFlickr *source)
 {
   g_print ("error\n");
   return FALSE;
 }
 
-static void
-on_thread_ok (void *null)
+static gboolean
+on_thread_ok (AainaSourceFlickr *source)
 {
-  g_print ("ok\n");
+  static gint count = 0;
+  g_print ("Ok %d\n", count);
+
+  count++;
+  
   return FALSE;
 }
 
@@ -67,7 +71,12 @@ get_photos (AainaSourceFlickr *source)
 
   worker = (NFlickWorker*)nflick_photo_search_worker_new (source->priv->tags,
                                                           " ");
+  if (G_IS_OBJECT (source->priv->worker))
+    g_object_unref (G_OBJECT (source->priv->worker));
 
+  source->priv->worker = worker;
+
+  nflick_worker_set_custom_data (worker, source);
   nflick_worker_set_aborted_idle (worker, 
                                   (NFlickWorkerIdleFunc)on_thread_abort);
   nflick_worker_set_error_idle (worker, 

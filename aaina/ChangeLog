@@ -1,5 +1,12 @@
 2007-07-07  Neil J. Patel  <njp@o-hand.com>
 
+	* sources/aaina-source-flickr.c: (on_thread_abort),
+	(on_thread_error), (on_thread_ok), (get_photos):
+	Fix stupid race condition because of wrong function signature.
+	Add data to the nflick worker callbacks.
+
+2007-07-07  Neil J. Patel  <njp@o-hand.com>
+
 	* libnflick/nflick-photo-search-worker.c: (thread_func):
 	Use the passed-in value for the 'tags' attribute.
 	
