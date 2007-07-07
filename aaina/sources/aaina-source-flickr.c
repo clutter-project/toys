@@ -30,7 +30,7 @@ G_DEFINE_TYPE (AainaSourceFlickr, aaina_source_flickr, AAINA_TYPE_SOURCE);
 	AAINA_TYPE_SOURCE_FLICKR, \
 	AainaSourceFlickrPrivate))
 
-#define CHECK_TIMEOUT 20000
+#define CHECK_TIMEOUT 60000
 
 struct _AainaSourceFlickrPrivate
 {
@@ -54,10 +54,33 @@ static gboolean get_photos (AainaSourceFlickr *source);
 static gboolean get_pixbuf (AainaSourceFlickr *source);
 
 
+static void
+manage_queue (AainaSourceFlickr *source)
+{
+  AainaSourceFlickrPrivate *priv;
+  
+  g_return_val_if_fail (AAINA_IS_SOURCE_FLICKR (source), FALSE);
+  priv = source->priv;
+
+  /* Now we do the work for the next one */
+  if (g_queue_get_length (priv->queue))
+  {
+    priv->current = AAINA_PHOTO (g_queue_pop_head (priv->queue));
+    g_timeout_add (100, (GSourceFunc)get_pixbuf, (gpointer)source);
+
+    priv->running = TRUE;
+  }
+  else
+    priv->running = FALSE;
+
+}
+
 static gboolean
 on_pixbuf_thread_abort (AainaSourceFlickr *source)
 {
   g_print ("abort\n");
+  manage_queue (source);
+
   return FALSE;
 }
 
@@ -77,6 +100,8 @@ on_pixbuf_thread_error (AainaSourceFlickr *source)
   }
   else
     g_print ("error\n");
+
+  manage_queue (source);
   return FALSE;
 }
 
@@ -104,17 +129,8 @@ on_pixbuf_thread_ok (AainaSourceFlickr *source)
   {
     g_print ("No pixbuf\n");
   }
-  
-  /* Now we do the work for the next one */
-  if (g_queue_get_length (priv->queue))
-  {
-    priv->current = AAINA_PHOTO (g_queue_pop_head (priv->queue));
-    g_timeout_add (100, (GSourceFunc)get_pixbuf, (gpointer)source);
 
-    priv->running = TRUE;
-  }
-  else
-    priv->running = FALSE;
+  manage_queue (source);
 
   return FALSE;
 

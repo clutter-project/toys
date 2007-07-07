@@ -1,5 +1,13 @@
 2007-07-08  Neil J. Patel  <njp@o-hand.com>
 
+	* sources/aaina-source-flickr.c: (manage_queue),
+	(on_pixbuf_thread_abort), (on_pixbuf_thread_error),
+	(on_pixbuf_thread_ok):
+	Keep fecthing pixbufs even when there is an error or abort.
+	Check for new pics eevry 60 seconds.
+
+2007-07-08  Neil J. Patel  <njp@o-hand.com>
+
 	* libnflick/nflick-show-worker.c: (thread_func):
 	Don't add the token as a parameter, as it isn't used for public photos.
 
