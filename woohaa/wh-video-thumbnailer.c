@@ -23,7 +23,7 @@ main (int argc, char *argv[])
   sact.sa_handler = alarm_catcher;
   sigaction( SIGALRM, &sact, NULL );
 
-  alarm(120); /* If we are left running for more than 2 minutes something
+  alarm(100); /* If we are left running for more than 1 minute something
 	       * is really wrong and thus attempt to abort. 
 	      */
 
@@ -65,6 +65,8 @@ main (int argc, char *argv[])
 
   shot = clutter_texture_get_pixbuf (CLUTTER_TEXTURE(video));
       
+
+
   if (shot)
     {
       GdkPixbuf *thumb, *pic;
@@ -72,11 +74,13 @@ main (int argc, char *argv[])
       
       size = 128;
 
+      /* FIXME swap RGB pixels */
+
       w = clutter_actor_get_width (video);
       h = clutter_actor_get_height (video);
       
       nh = ( h * size) / w;
-      
+
       if (nh <= size)
 	{
 	  nw = size;
@@ -91,7 +95,7 @@ main (int argc, char *argv[])
 	  y = 0;
 	}
 
-      thumb = gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, size, size);
+      thumb = gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, size, size);
       gdk_pixbuf_fill (thumb, 0x000000FF);
 
       pic = gdk_pixbuf_scale_simple (shot, nw, nh, GDK_INTERP_BILINEAR);

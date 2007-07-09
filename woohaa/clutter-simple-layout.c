@@ -32,8 +32,8 @@ clutter_simple_layout_request_coords (ClutterActor    *self,
 {
   ClutterSimpleLayoutPrivate *priv = CLUTTER_SIMPLE_LAYOUT_PRIVATE(self);
 
-  priv->allocated_width  = box->x2 - box->x1;
-  priv->allocated_height = box->y2 - box->y1;
+  priv->allocated_width  = CLUTTER_UNITS_TO_INT(box->x2 - box->x1);
+  priv->allocated_height = CLUTTER_UNITS_TO_INT(box->y2 - box->y1);
 
   /*
   printf("setting clip to %ix%i\n", 
@@ -44,13 +44,13 @@ clutter_simple_layout_request_coords (ClutterActor    *self,
 }
 
 static void
-clutter_simple_layout_allocate_coords (ClutterActor    *self,
+clutter_simple_layout_query_coords (ClutterActor    *self,
 				       ClutterActorBox *box)
 {
   ClutterSimpleLayoutPrivate *priv = CLUTTER_SIMPLE_LAYOUT_PRIVATE(self);
 
-  box->x2 = box->x1 + priv->allocated_width;
-  box->y2 = box->y1 + priv->allocated_height;
+  box->x2 = box->x1 + CLUTTER_UNITS_FROM_INT(priv->allocated_width);
+  box->y2 = box->y1 + CLUTTER_UNITS_FROM_INT(priv->allocated_height);
 }
 
 static void
@@ -60,7 +60,7 @@ clutter_simple_layout_class_init (ClutterSimpleLayoutClass *klass)
   ClutterActorClass *actor_class = CLUTTER_ACTOR_CLASS (klass);
 
   actor_class->request_coords  = clutter_simple_layout_request_coords;
-  actor_class->allocate_coords = clutter_simple_layout_allocate_coords;
+  actor_class->query_coords = clutter_simple_layout_query_coords;
 
   object_class->dispose = clutter_simple_layout_dispose;
   object_class->finalize = clutter_simple_layout_finalize;

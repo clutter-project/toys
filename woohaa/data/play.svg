@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generator: Adobe Illustrator 12.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 51448)  -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   id="Layer_1"
+   width="283.465"
+   height="283.465"
+   viewBox="0 0 283.465 283.465"
+   overflow="visible"
+   enable-background="new 0 0 283.465 283.465"
+   xml:space="preserve"
+   sodipodi:version="0.32"
+   inkscape:version="0.45"
+   sodipodi:docname="play.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   sodipodi:docbase="/home/mallum/Projects/sato/icons-original"
+   sodipodi:modified="true"><metadata
+   id="metadata8"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /></cc:Work></rdf:RDF></metadata><defs
+   id="defs6" /><sodipodi:namedview
+   inkscape:window-height="581"
+   inkscape:window-width="772"
+   inkscape:pageshadow="2"
+   inkscape:pageopacity="0.0"
+   guidetolerance="10.0"
+   gridtolerance="10.0"
+   objecttolerance="10.0"
+   borderopacity="1.0"
+   bordercolor="#666666"
+   pagecolor="#ffffff"
+   id="base"
+   inkscape:zoom="1.3370258"
+   inkscape:cx="141.7325"
+   inkscape:cy="141.7325"
+   inkscape:window-x="102"
+   inkscape:window-y="43"
+   inkscape:current-layer="Layer_1" />
+<path
+   d="M271.465,0H12C5.373,0,0,5.373,0,12v259.465c0,6.627,5.373,12,12,12h259.465c6.627,0,12-5.373,12-12V12  C283.465,5.373,278.092,0,271.465,0z M193.301,154.301l-77.495,74.718c-7.412,7.146-13.476,4.57-13.476-5.725V59.318  c0-10.294,6.064-12.87,13.476-5.723l77.495,74.72C200.715,135.46,200.715,147.152,193.301,154.301z"
+   id="path3"
+   style="fill:#cccccc;fill-opacity:0.80000001" />
+</svg>

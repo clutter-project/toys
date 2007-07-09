@@ -31,6 +31,8 @@ typedef struct WooHaa
   ClutterActor      *busy;
   WHDB              *db;
 
+  ClutterEffectTemplate *video_effect_tmpl;
+
   /* For thumbnailer */
   gint             tn_pending_child_pid;
   WHVideoModelRow *tn_pending_row;
@@ -203,16 +205,42 @@ void
 on_video_playback_start (WHScreenVideo *video,
 			 WooHaa      *wh)
 {
-  clutter_actor_raise_top (wh->screen_browse);
+  clutter_actor_raise_top (wh->screen_video);
 
-  util_actor_fade (wh->screen_browse, NULL, 0x99, 0, NULL);
-  util_actor_zoom (wh->screen_browse, NULL, 1.0, 0.5, NULL);
-  util_actor_fade (wh->screen_video, NULL, 0, 0xff, NULL);
+  clutter_effect_scale (wh->video_effect_tmpl,
+			wh->screen_browse,
+			0.7,
+			0.1,
+			CLUTTER_GRAVITY_CENTER,
+			NULL,
+			NULL);
+
+  clutter_effect_fade (wh->video_effect_tmpl,
+		       wh->screen_browse,
+		       0xff,
+		       0,
+		       NULL,
+		       NULL);
+
+  /*
+  clutter_effect_fade (wh->video_effect_tmpl,
+		       wh->screen_video,
+		       0,
+		       0xff,
+		       NULL,
+		       NULL);
+  */
 
   wh_video_view_enable_animation (WH_VIDEO_VIEW(wh->view), FALSE);
 
   /* Stop the busy 'cursor' */
-  util_actor_fade_out (wh->busy, NULL, NULL);
+  clutter_effect_fade (wh->video_effect_tmpl,
+		       wh->busy,
+		       0xff,
+		       0,
+		       (ClutterEffectCompleteFunc)clutter_actor_hide,
+		       NULL);
+
 }
 
 void
@@ -222,7 +250,7 @@ on_video_playback_finish (WHScreenVideo *video,
   WHVideoModelRow *row;
 
   g_signal_connect (clutter_stage_get_default(),
-		    "input-event",
+		    "event",
 		    G_CALLBACK (browse_input_cb),
 		    wh);
 
@@ -235,11 +263,27 @@ on_video_playback_finish (WHScreenVideo *video,
   
   clutter_actor_show (wh->screen_browse);
 
-  util_actor_fade (wh->screen_browse, NULL, 0, 0xff, NULL);
-  util_actor_zoom (wh->screen_browse, NULL, 0.5, 1.0, NULL);
-  util_actor_fade (wh->screen_video, 
-		   (UtilAnimCompleteFunc)playback_finish_complete, 
-		   0xff, 0, wh);
+  clutter_effect_fade (wh->video_effect_tmpl,
+		       wh->screen_browse,
+		       0,
+		       0xff,
+		       NULL,
+		       NULL);
+
+  clutter_effect_scale (wh->video_effect_tmpl,
+			wh->screen_browse,
+			0.5,
+			1.0,
+			CLUTTER_GRAVITY_CENTER,
+			NULL,
+			NULL);
+
+  clutter_effect_fade (wh->video_effect_tmpl,
+		       wh->screen_video,
+		       0xff,
+		       0,
+		       (ClutterEffectCompleteFunc)playback_finish_complete,
+		       wh);
 }
 
 void 
@@ -277,8 +321,24 @@ browse_input_cb (ClutterStage *stage,
 	  wh_screen_video_activate (WH_SCREEN_VIDEO(wh->screen_video), 
 				    WH_VIDEO_VIEW(wh->view));
 
-	  util_actor_fade (wh->screen_browse, NULL, 0xff, 0x99, NULL);
-	  util_actor_fade_in (wh->busy, NULL, NULL);
+	  clutter_effect_scale (wh->video_effect_tmpl,
+				wh->screen_browse,
+				1.0,
+				0.7,
+				CLUTTER_GRAVITY_CENTER,
+				NULL,
+				NULL);
+
+	  clutter_effect_fade (wh->video_effect_tmpl,
+			       wh->busy,
+			       0x00,
+			       0xff,
+			       NULL,
+			       NULL);
+
+	  clutter_actor_set_opacity (wh->busy, 0);
+	  clutter_actor_show (wh->busy);
+
 	  break;
 	case CLUTTER_q:
 	  clutter_main_quit();
@@ -295,6 +355,7 @@ screen_fadeout_complete (ClutterActor *actor, WooHaa *wh)
   g_object_ref (wh->busy);
   clutter_group_remove (CLUTTER_GROUP(actor), wh->busy);
   clutter_group_add (CLUTTER_GROUP(clutter_stage_get_default()), wh->busy);
+  clutter_actor_hide (wh->busy);
   g_object_unref (wh->busy);
 }
 
@@ -531,13 +592,13 @@ main (int argc, char *argv[])
   ClutterActor  *stage, *bg, *screen_start, *desktop, *label;
   gchar         *gconf_paths;
   gchar         **pathv, *font_str;
-  gint           i = 0, menu_h, browse_h, padding = 20;
+  gint           i = 0, menu_h, browse_h;
   GError        *error = NULL;
-  ClutterColor   stage_color = { 0x4a, 0x52, 0x5a, 0xff },
-                 white_col   = { 0xff, 0xff, 0xff, 0xff};
+  ClutterEffectTemplate *effect_template;
+  ClutterColor   stage_color = { 0xff, 0xff, 0xf7, 0xff },
+		  grey_col   = { 0x72, 0x9f, 0xcf, 0xff};
 		 
   gst_init (&argc, &argv);
-
   clutter_init (&argc, &argv);
 
   gconf_paths = gconf_client_get_string (gconf_client_get_default (),
@@ -566,32 +627,27 @@ main (int argc, char *argv[])
 
   stage = clutter_stage_get_default ();
   // clutter_actor_set_size (stage, 640, 480); 
-  g_object_set (stage, "fullscreen", TRUE, "hide-cursor", TRUE, NULL);
+  g_object_set (stage, "fullscreen", TRUE, "cursor-visible", FALSE, NULL);
   clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
 
-  /* General setup */
-
-  bg = util_actor_from_file (PKGDATADIR "/bg.png", -1, -1);
-
-  if (bg == NULL)
-        g_error ("unable to load resource '%s'", PKGDATADIR "/bg.png");
+  bg = util_actor_from_file ("bg.png", CSW(), CSH());
 
   clutter_actor_set_size (bg, CSW(), CSH());
   clutter_group_add (CLUTTER_GROUP(stage), bg);
   clutter_actor_show (bg);
 
-  /* Layout not really needed .. */
-  wh->screen_browse = clutter_simple_layout_new();
+  /* General setup */
+
+  wh->screen_browse = clutter_group_new();
   clutter_actor_set_size (wh->screen_browse, CSW(), CSH());
 
-  padding    = 0;  
-  menu_h     = CSH()/12;
-  browse_h   = CSH() - menu_h - (2 *padding);
-  font_str   = g_strdup_printf("Sans %ipx", menu_h);
+  menu_h     = CSH()/6;
+  browse_h   = CSH() - 2 * menu_h;
+  font_str   = g_strdup_printf("Sans %ipx", menu_h/2);
   
-  /* Slider menu */
   wh->menu = wh_slider_menu_new (font_str);
   clutter_actor_set_size (wh->menu, CSW(), menu_h);
+  clutter_actor_set_position (wh->menu, 0, menu_h/2);
 
   wh_slider_menu_add_option (WH_SLIDER_MENU (wh->menu), 
 			     "Not Viewed",
@@ -665,8 +721,9 @@ main (int argc, char *argv[])
   wh->busy = wh_busy_new();
   clutter_group_add (CLUTTER_GROUP(screen_start), wh->busy);
   
-  label = clutter_label_new_full (font_str, "Syncing Media..", 
-				  &white_col);
+  label = clutter_label_new_full (font_str, "One moment please..", 
+				  &grey_col);
+  
   clutter_group_add (CLUTTER_GROUP(screen_start), label);
   clutter_actor_set_position (label,
 			      (CSW() - clutter_actor_get_width (label))/2,
@@ -674,10 +731,45 @@ main (int argc, char *argv[])
 
   clutter_group_add (CLUTTER_GROUP(stage), screen_start);
 
-  util_actor_fade_in (screen_start, NULL, NULL);
-  util_actor_zoom (screen_start, NULL, 0.5, 1.0, NULL);
-  util_actor_fade (desktop, NULL, 0xff, 0x0, NULL);
-  util_actor_zoom (desktop, NULL, 1.0, 0.5, NULL);
+  effect_template 
+    = clutter_effect_template_new (clutter_timeline_new (60, 60),
+				   CLUTTER_ALPHA_SINE_INC);
+
+  wh->video_effect_tmpl
+    = clutter_effect_template_new (clutter_timeline_new (15, 60),
+				   CLUTTER_ALPHA_SINE_INC);
+
+  clutter_actor_show_all (screen_start);
+
+  clutter_effect_fade (effect_template,
+		       screen_start,
+		       0,
+		       0xff,
+		       NULL,
+		       NULL);
+
+  clutter_effect_scale (effect_template,
+			screen_start,
+			0.2,
+			1.0,
+			CLUTTER_GRAVITY_CENTER,
+			NULL,
+			NULL);
+
+  clutter_effect_fade (effect_template,
+		       desktop,
+		       0xff,
+		       0,
+		       NULL,
+		       NULL);
+
+  clutter_effect_scale (effect_template,
+			desktop,
+			1.0,
+			0.1,
+			CLUTTER_GRAVITY_CENTER,
+			NULL,
+			NULL);
 
   /* show stage for desktop zoom  */
   clutter_actor_show (stage);
@@ -703,28 +795,44 @@ main (int argc, char *argv[])
    * with add signal.      
   */
   wh->view = wh_video_view_new (wh->model, 5);
-  clutter_actor_set_size (wh->view, CSW(), browse_h - 24);
+  /* menu_h is CSH()/12 */
+  clutter_actor_set_size (wh->view, CSW() - menu_h, browse_h);
+  clutter_actor_set_position (wh->view, 
+			      (CSW() - clutter_actor_get_width(wh->view)) / 2, 
+			      menu_h + (menu_h/2) + (menu_h/6));
   clutter_group_add (CLUTTER_GROUP(wh->screen_browse), wh->view);
-
-  g_object_set(wh->view, "y", 
-	       clutter_actor_get_y(wh->menu) 
-	         + clutter_actor_get_height(wh->menu) + 10, NULL); 
 
   clutter_group_add (CLUTTER_GROUP (stage), wh->screen_browse);
 
+  clutter_actor_raise_top (wh->menu);
+
   /* Zoom to browse screen */
+
+  effect_template 
+    = clutter_effect_template_new (clutter_timeline_new (20, 60),
+				   CLUTTER_ALPHA_SINE_INC);
 
   clutter_actor_raise_top (screen_start);
 
-  util_actor_zoom (screen_start, NULL, 1.0, 0.5, NULL);
-  util_actor_zoom (wh->screen_browse, NULL, 0.5, 1.0, NULL);
-  util_actor_fade_in (wh->screen_browse, NULL, NULL);
-  util_actor_fade_out (screen_start, 
-		       (UtilAnimCompleteFunc)screen_fadeout_complete, 
-		       wh);
+  clutter_effect_fade (effect_template,
+		       screen_start,
+		       0xff,
+		       0,
+		       NULL,
+		       NULL);
+
+  clutter_effect_scale (effect_template,
+			screen_start,
+			1.0,
+			0.2,
+			CLUTTER_GRAVITY_CENTER,
+			(ClutterEffectCompleteFunc)screen_fadeout_complete,
+			wh);
+
+  clutter_actor_show_all (wh->screen_browse);
 
   g_signal_connect (stage, 
-		    "input-event",
+		    "event",
 		    G_CALLBACK (browse_input_cb),
 		    wh);
 

@@ -30,6 +30,7 @@ struct _WHScreenVideoPrivate
 
   /* Effects */
   ClutterTimeline   *cheese_timeline;
+  ClutterEffectTemplate *controls_effect_tmpl, *fadein_effect_tmpl;
 };
 
 enum
@@ -89,7 +90,18 @@ video_pixbuf_change (ClutterTexture *texture, WHScreenVideo  *screen)
   WHScreenVideoPrivate *priv  = SCREEN_VIDEO_PRIVATE(screen);
 
   g_signal_emit (screen, _screen_signals[PLAYBACK_STARTED], 0);
-  util_actor_fade_in (CLUTTER_ACTOR(screen), NULL, NULL);
+
+  // util_actor_fade_in (CLUTTER_ACTOR(screen), NULL, NULL);
+
+  clutter_effect_fade (priv->fadein_effect_tmpl,
+		       CLUTTER_ACTOR(screen),
+		       0,
+		       0xff,
+		       NULL,
+		       NULL);
+
+  clutter_actor_show (CLUTTER_ACTOR(screen));
+  clutter_actor_set_opacity (CLUTTER_ACTOR(screen), 0);
 
   g_signal_handlers_disconnect_by_func (priv->video, 
 					G_CALLBACK (video_pixbuf_change),
@@ -179,7 +191,13 @@ video_hide_controls (WHScreenVideo *screen)
 
   if (priv->video_controls_visible)
     {
-      util_actor_fade_out (priv->video_controls, NULL, NULL);
+      clutter_effect_fade (priv->controls_effect_tmpl,
+			   priv->video_controls,
+			   0xff,
+			   0,
+			   (ClutterEffectCompleteFunc)clutter_actor_hide,
+			   NULL);
+
       priv->video_controls_visible = FALSE;
     }
 }
@@ -201,7 +219,17 @@ video_show_controls (WHScreenVideo *screen)
 
   if (!priv->video_controls_visible)
     {
-      util_actor_fade_in (priv->video_controls, NULL, NULL);
+      clutter_actor_show_all (CLUTTER_ACTOR(priv->video_controls));
+      clutter_actor_set_opacity (CLUTTER_ACTOR(priv->video_controls), 0);
+
+      printf("showing video controls\n");
+
+      clutter_effect_fade (priv->controls_effect_tmpl,
+			   priv->video_controls,
+			   0,
+			   0xff,
+			   NULL,
+			   NULL);
       priv->video_controls_visible = TRUE;
 
       priv->controls_timeout  
@@ -296,8 +324,8 @@ wh_screen_video_paint (ClutterActor *actor)
 }
 
 static void
-wh_screen_video_allocate_coords (ClutterActor    *self,
-				 ClutterActorBox *box)
+wh_screen_video_query_coords (ClutterActor    *self,
+			      ClutterActorBox *box)
 {
   box->x1 = 0;
   box->y1 = 0;
@@ -352,7 +380,7 @@ wh_screen_video_class_init (WHScreenVideoClass *klass)
   object_class->finalize = wh_screen_video_finalize;
 
   actor_class->paint           = wh_screen_video_paint;
-  actor_class->allocate_coords = wh_screen_video_allocate_coords;
+  actor_class->query_coords    = wh_screen_video_query_coords;
 
   _screen_signals[PLAYBACK_STARTED] =
     g_signal_new ("playback-started",
@@ -380,10 +408,10 @@ video_make_controls (WHScreenVideo *screen)
   gchar                 font_desc[32];
   gint                  h, w, so;
   ClutterActor         *actor;
-  ClutterColor          bgcol = { 0x4f, 0x4f, 0x68, 0x99 },
-                        seekcol = { 0x99, 0x99, 0xa8, 0xff },
-                        txtcol = { 0xb4, 0xe2, 0xff, 0xff },
-                        fgcol = { 0xff, 0xff, 0xff, 0xff };
+  ClutterColor          bgcol = { 0xff, 0xff, 0xff, 0xcc },
+                        seekcol = { 0xbb, 0xbb, 0xbb, 0xff },
+                        txtcol = { 0x72, 0x9f, 0xcf, 0xff },
+                        fgcol = { 0x72, 0x9f, 0xcf, 0xff };
 
   priv->video_controls = clutter_group_new();
 
@@ -410,7 +438,7 @@ video_make_controls (WHScreenVideo *screen)
   clutter_label_set_line_wrap (CLUTTER_LABEL(priv->title), FALSE);
   clutter_label_set_ellipsize  (CLUTTER_LABEL(priv->title), 
 				PANGO_ELLIPSIZE_MIDDLE);
-  clutter_actor_set_width (priv->title, so * 2);
+  clutter_actor_set_width (priv->title, w - (2*so));
   clutter_actor_set_position (priv->title, so, 10);
   clutter_group_add (CLUTTER_GROUP(priv->video_controls), priv->title);
 
@@ -440,6 +468,15 @@ video_make_controls (WHScreenVideo *screen)
 
   clutter_actor_set_parent (CLUTTER_ACTOR(priv->video_controls), 
 			    CLUTTER_ACTOR(screen)); 
+
+  priv->controls_effect_tmpl 
+    = clutter_effect_template_new (clutter_timeline_new (30, 60),
+				   CLUTTER_ALPHA_SINE_INC);
+
+  priv->fadein_effect_tmpl 
+    = clutter_effect_template_new (clutter_timeline_new (30, 60),
+				   CLUTTER_ALPHA_SINE_INC);
+
 }
 
 static void
@@ -475,6 +512,7 @@ wh_screen_video_init (WHScreenVideo *self)
   priv->cheese_timeline = clutter_timeline_new (30, 90);
   g_signal_connect (priv->cheese_timeline, "new-frame", 
 		    G_CALLBACK (cheese_cb), self);
+
 }
 
 ClutterActor*
@@ -517,61 +555,9 @@ wh_screen_video_deactivate (WHScreenVideo *screen)
 
   clutter_media_set_playing (CLUTTER_MEDIA(priv->video), FALSE);
 
-#if 0
-  /* FIXME: Can cause crashes with current thumbnailer code so  
-   * disabled. Need to investigate further.       
-   *
-  */
-  if (priv->video 
-      && (wh_video_model_row_get_thumbnail (priv->video_row) == NULL
-	  || wh_video_model_row_get_thumbnail (priv->video_row) != 
-	                      wh_theme_get_pixbuf("default-thumbnail")))
-    {
-      GdkPixbuf *shot;
-      shot = clutter_texture_get_pixbuf (CLUTTER_TEXTURE(priv->video));
-      
-      if (shot)
-	{
-	  GdkPixbuf *thumb, *pic;
-	  gint       x, y, nw, nh, w, h, size;
-
-	  size = 100;
-	  w = clutter_actor_get_width (priv->video);
-	  h = clutter_actor_get_height (priv->video);
-	  
-	  nh = ( h * size) / w;
-      
-	  if (nh <= size)
-	    {
-	      nw = size;
-	      x = 0;
-	      y = (size - nh) / 2;
-	    }
-	  else
-	    {
-	      nw  = ( w * size ) / h;
-	      nh = size;
-	      x = (size - nw) / 2;
-	      y = 0;
-	    }
-
-	  thumb = gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, size, size);
-	  gdk_pixbuf_fill (thumb, 0x000000FF);
-	  pic = gdk_pixbuf_scale_simple (shot, nw, nh, GDK_INTERP_BILINEAR);
-	  gdk_pixbuf_copy_area  (pic, 0, 0, nw, nh, thumb, x, y);
-	  
-	  wh_video_model_row_set_thumbnail (priv->video_row, thumb);
-
-	  g_object_unref (shot);
-	  g_object_unref (thumb);
-	  g_object_unref (pic);
-	}
-    }
-#endif
-
   priv->video_playing = FALSE;
 
-  util_actor_fade_out (CLUTTER_ACTOR(screen), NULL, NULL);
+  //util_actor_fade_out (CLUTTER_ACTOR(screen), NULL, NULL);
 
   video_hide_controls (screen);
 
@@ -603,7 +589,7 @@ wh_screen_video_activate (WHScreenVideo *screen, WHVideoView *view)
     return;
 
   g_signal_connect (clutter_stage_get_default(), 
-		    "input-event",
+		    "event",
 		    G_CALLBACK (video_input_cb),
 		    screen);
 

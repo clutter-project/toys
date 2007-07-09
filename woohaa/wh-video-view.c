@@ -2,6 +2,8 @@
 #include "wh-video-model.h"
 #include "util.h"
 
+#include <clutter/cogl.h>
+
 G_DEFINE_TYPE (WHVideoView, wh_video_view, CLUTTER_TYPE_ACTOR);
 
 #define WH_VIDEO_VIEW_GET_PRIVATE(obj)                \
@@ -13,10 +15,12 @@ struct _WHVideoViewPrivate
 {
   WHVideoModel      *model;
   ClutterActor      *rows; 
-  ClutterActor      *selector; 
+  ClutterActor      *selector, *up, *down, *play; 
   gint               row_height;
   gint               n_rows_visible;
   gboolean           enable_model_change_anim;
+
+  ClutterEffectTemplate  *effect_template, *button_effect_temp;
   
   /* For vertical scroll */
   ClutterTimeline   *timeline;
@@ -35,14 +39,10 @@ struct _WHVideoViewPrivate
   /* Selection tracking */
   gint               active_item_num;
   gint               pending_item_num;
+  gint               prev_active_item_num;
   gint               current_offset;
   gint               n_items; 	
 
-  /* up/down 'buttons */
-#if 0
-  ClutterActor *up;
-  ClutterActor *down;
-#endif
 };
 
 enum
@@ -75,6 +75,72 @@ static void
 on_model_row_added (WHVideoModel    *model, 
 		    WHVideoModelRow *row,
 		    gpointer         *userdata);
+
+void 
+on_show_complete (ClutterActor *actor,
+		  gpointer user_data)
+{
+  WHVideoView        *view = WH_VIDEO_VIEW(user_data);
+  WHVideoViewPrivate *priv;
+
+  priv = WH_VIDEO_VIEW_GET_PRIVATE(view);
+
+  clutter_actor_set_clip (CLUTTER_ACTOR(view), 
+			  0, -priv->row_height, 
+			  clutter_actor_get_width (CLUTTER_ACTOR(view)),
+			  clutter_actor_get_height (CLUTTER_ACTOR(view)) 
+			    + priv->row_height);
+}
+
+static void
+wh_video_view_show (ClutterActor *actor)
+{
+  WHVideoView        *view;
+  WHVideoViewPrivate *priv;
+  ClutterKnot          knots[2];
+
+  view = WH_VIDEO_VIEW(actor);
+  priv = WH_VIDEO_VIEW_GET_PRIVATE(view);
+
+  clutter_actor_set_clip (CLUTTER_ACTOR(view), 
+			  0, 0, CSW(), 
+			  clutter_actor_get_height (CLUTTER_ACTOR(view)));
+
+  knots[0].x = -clutter_actor_get_width (priv->selector); 
+  knots[0].y = clutter_actor_get_y (priv->selector);
+  knots[1].x = clutter_actor_get_x (priv->selector);
+  knots[1].y = clutter_actor_get_y (priv->selector);
+
+  clutter_actor_set_position (priv->selector,
+			      -clutter_actor_get_width (priv->selector),
+			      clutter_actor_get_y (priv->rows));
+
+  clutter_effect_move (priv->effect_template,
+		       priv->selector,
+		       knots,
+		       2,
+		       NULL,
+		       NULL);
+
+  knots[0].x = CSW();
+  knots[0].y = clutter_actor_get_y (priv->rows);
+  knots[1].x = clutter_actor_get_x (priv->rows);
+  knots[1].y = clutter_actor_get_y (priv->rows);
+
+  clutter_actor_set_position (priv->rows,
+			      CSW(),
+			      clutter_actor_get_y (priv->rows));
+
+  clutter_effect_move (priv->effect_template,
+		       priv->rows,
+		       knots,
+		       2,
+		       on_show_complete,
+		       view);
+
+  CLUTTER_ACTOR_CLASS (wh_video_view_parent_class)->show (actor);
+}
+
 
 static void
 wh_video_view_set_property (GObject      *object, 
@@ -205,21 +271,42 @@ ensure_layout (WHVideoView *view,
   if (size_change)
     {
       /* Selector and buttons - */
+      if (!priv->selector)
+	{
+	  priv->selector = util_actor_from_file (PKGDATADIR "/selected.svg", 
+						 width, priv->row_height);
+	  clutter_actor_set_parent (priv->selector, CLUTTER_ACTOR(view));
+
+	  priv->up = util_actor_from_file (PKGDATADIR "/arrow-up.svg", -1, -1);
+	  clutter_actor_set_parent (priv->up, CLUTTER_ACTOR (view));
+
+	  priv->down = util_actor_from_file (PKGDATADIR "/arrow-down.svg", -1, -1);
+	  clutter_actor_set_parent (priv->down, CLUTTER_ACTOR (view));
+
+	  priv->play = util_actor_from_file (PKGDATADIR "/play.svg", -1, -1);
+	  clutter_actor_set_parent (priv->play, CLUTTER_ACTOR (view));
+
+	}
+
       clutter_actor_set_size (priv->selector, width, priv->row_height);
       clutter_actor_set_position (priv->selector, 0, 0);  
 
-      /* Set up new scroll path */
-#if 0
-      priv->path_up[0].x = 0;   priv->path_up[0].y = 0; 
-      priv->path_up[1].x = 0;   
-      priv->path_up[1].y = -1 * (priv->row_height + (priv->row_height/4)); 
-      priv->path_up[2].x = 0;   priv->path_up[2].y = -1 * priv->row_height; 
-      
-      priv->path_down[0].x = 0;   priv->path_down[0].y = 0; 
-      priv->path_down[1].x = 0;   
-      priv->path_down[1].y = (priv->row_height + (priv->row_height/4)); 
-      priv->path_down[2].x = 0;   priv->path_down[2].y = priv->row_height; 
-#endif
+      clutter_actor_set_size (priv->up, 
+			      priv->row_height/4, priv->row_height/8);
+      clutter_actor_set_position (priv->up, 
+				  width - priv->row_height/2, 
+				  priv->row_height/8);  
+      clutter_actor_set_size (priv->down, 
+			      priv->row_height/4, priv->row_height/8);
+      clutter_actor_set_position (priv->down, 
+				  width - priv->row_height/2, 
+				  priv->row_height - priv->row_height/4);  
+
+      clutter_actor_set_size (priv->play, 
+			      (priv->row_height*2)/3, 
+			      (priv->row_height*2)/3);
+      clutter_actor_set_position (priv->play, 0, 0);  
+
       priv->path_up[0].x = 0;   priv->path_up[0].y = 0; 
       priv->path_up[1].x = 0;   priv->path_up[1].y = -1 * priv->row_height; 
       
@@ -243,21 +330,19 @@ wh_video_view_request_coords (ClutterActor    *actor,
 {
   WHVideoView        *view;
   WHVideoViewPrivate *priv;
+  gint                w,h;
+
+  w = CLUTTER_UNITS_TO_INT(box->x2 - box->x1);
+  h = CLUTTER_UNITS_TO_INT(box->y2 - box->y1);
 
   view = WH_VIDEO_VIEW(actor);
   priv = WH_VIDEO_VIEW_GET_PRIVATE(view);
 
-  if (((box->x2 - box->x1) != clutter_actor_get_width(actor))
-      || (box->y2 - box->y1) != clutter_actor_get_height(actor))
+  if (w != clutter_actor_get_width(actor)
+      || h != clutter_actor_get_height(actor))
     {
-      gint w,h;
-
-      w = (box->x2 - box->x1);
-      h = (box->y2 - box->y1);
-
       ensure_layout (view, w, h, priv->n_rows_visible);
-
-      clutter_actor_set_clip (actor, 0, 0, w, h);
+      // clutter_actor_set_clip (actor, 0, -priv->row_height, w, h+priv->row_height);
     }
 }
 
@@ -271,22 +356,19 @@ wh_video_view_paint (ClutterActor *actor)
   view = WH_VIDEO_VIEW(actor);
   priv = WH_VIDEO_VIEW_GET_PRIVATE(view);
 
-  glPushMatrix();
+  cogl_push_matrix();
 
   if (priv->selector && priv->n_items)
     {
       clutter_actor_paint (priv->selector);
-
-#if 0
       if (priv->active_item_num > 0)
-        clutter_actor_paint (priv->up);
-      if (priv->active_item_num < priv->n_items-1)
+	clutter_actor_paint (priv->up);
+      if (priv->active_item_num < wh_video_model_row_count(priv->model)-1)
 	clutter_actor_paint (priv->down);
-#endif
     }
   else 
     {
-      glPopMatrix();
+      cogl_pop_matrix();
       return;
     }
 
@@ -294,17 +376,14 @@ wh_video_view_paint (ClutterActor *actor)
    * offscreen entrys.
   */
 
-  glTranslatef(0.0, 
-	       (float)-1.0 * (view->priv->active_item_num) 
-	                         * priv->row_height, 
-	       0.0);
-
+  cogl_translate (0,  -1 * (view->priv->active_item_num) * priv->row_height, 0);
   start_item = priv->active_item_num - 1;
   if (start_item < 0) start_item = 0;
 
   end_item = priv->active_item_num + 6;
 
-  glTranslatef(0.0, clutter_actor_get_y (priv->rows), 0.0);
+  cogl_translate (clutter_actor_get_x (priv->rows), 
+		  clutter_actor_get_y (priv->rows), 0);
 
   for (i = start_item; i < end_item; i++)
     {
@@ -315,7 +394,9 @@ wh_video_view_paint (ClutterActor *actor)
 	clutter_actor_paint (child);
     }
 
-  glPopMatrix();
+  cogl_pop_matrix();
+
+  // clutter_actor_paint (priv->play);
 }
 
 static void
@@ -357,6 +438,7 @@ wh_video_view_class_init (WHVideoViewClass *klass)
   parent_class = CLUTTER_ACTOR_CLASS (wh_video_view_parent_class);
 
   actor_class->paint           = wh_video_view_paint;
+  actor_class->show            = wh_video_view_show;
   actor_class->realize         = wh_video_view_realize;
   actor_class->request_coords  = wh_video_view_request_coords;
 
@@ -403,16 +485,35 @@ wh_video_view_activate (WHVideoView  *view,
   if (entry_num < 0  || entry_num >= wh_video_model_row_count (priv->model))
       return;
 
+  priv->pending_item_num = entry_num;
+
+  if (priv->active_item_num > priv->pending_item_num)
+    {
+      clutter_behaviour_apply (priv->behave_down, priv->rows);
+      clutter_effect_fade (priv->button_effect_temp,
+			   priv->up,
+			   0xff,
+			   0x66,
+			   NULL,
+			   NULL);
+    }
+  else
+    {
+      clutter_behaviour_apply (priv->behave_up, priv->rows);
+      clutter_effect_fade (priv->button_effect_temp,
+			   priv->down,
+			   0xff,
+			   0x66,
+			   NULL,
+			   NULL);
+    }
+
   row = wh_video_model_get_row (priv->model, priv->active_item_num);
   wh_video_row_renderer_set_active (wh_video_model_row_get_renderer(row), 
 				    FALSE); 
 
-  priv->pending_item_num = entry_num;
-
-  if (priv->active_item_num > priv->pending_item_num)
-      clutter_behaviour_apply (priv->behave_down, priv->rows);
-  else
-    clutter_behaviour_apply (priv->behave_up, priv->rows);
+  priv->prev_active_item_num = priv->active_item_num;
+  // priv->active_item_num = -1;
 
   clutter_timeline_start (priv->timeline);
 }
@@ -435,14 +536,10 @@ scroll_timeline_completed (ClutterTimeline *timeline,
 
   priv = WH_VIDEO_VIEW_GET_PRIVATE(view);
 
-  if (priv->active_item_num > priv->pending_item_num)
+  if (priv->prev_active_item_num > priv->pending_item_num)
     clutter_behaviour_remove (priv->behave_down, priv->rows);
   else
     clutter_behaviour_remove (priv->behave_up, priv->rows);
-
-  row = wh_video_model_get_row (priv->model, priv->active_item_num);
-  wh_video_row_renderer_set_active (wh_video_model_row_get_renderer(row), 
-				    FALSE); 
 
   priv->active_item_num = priv->pending_item_num;
 
@@ -451,6 +548,8 @@ scroll_timeline_completed (ClutterTimeline *timeline,
 				    TRUE); 
 
   clutter_actor_set_position (priv->rows, 0, 0);
+
+
 }
 
 static void
@@ -629,7 +728,6 @@ static void
 wh_video_view_init (WHVideoView *self)
 {
   WHVideoViewPrivate *priv;
-  ClutterColor   rect_col = { 0x88, 0x88, 0x97, 0xff };
 
   self->priv = priv = WH_VIDEO_VIEW_GET_PRIVATE (self);
 
@@ -638,11 +736,20 @@ wh_video_view_init (WHVideoView *self)
 
   /* Scrolling */
 
-  priv->timeline = clutter_timeline_new (10, 60);
+  priv->timeline = clutter_timeline_new (8, 60);
 
   priv->alpha = clutter_alpha_new_full (priv->timeline,
 					alpha_sine_inc_func,
 					NULL, NULL);
+
+  priv->button_effect_temp
+    = clutter_effect_template_new (clutter_timeline_new (10, 60),
+				   CLUTTER_ALPHA_SINE_HALF);
+
+  /* Fade in */
+  priv->effect_template 
+    = clutter_effect_template_new (clutter_timeline_new (20, 60),
+				   CLUTTER_ALPHA_SINE_INC);
 
   g_signal_connect (priv->timeline, 
 		    "completed",
@@ -653,7 +760,7 @@ wh_video_view_init (WHVideoView *self)
 
   priv->enable_model_change_anim = TRUE;
 
-  priv->timeline_switch = clutter_timeline_new (10, 120);
+  priv->timeline_switch = clutter_timeline_new (5, 120);
 
   priv->alpha_switch = clutter_alpha_new_full (priv->timeline_switch,
 					       alpha_sine_inc_func,
@@ -670,16 +777,6 @@ wh_video_view_init (WHVideoView *self)
 			G_CALLBACK (switch_timeline_completed_1),
 			self);
 
-#if 0
-  priv->up = clutter_label_new_full ("Sans 10pt", "<", &col);
-  priv->down = clutter_label_new_full ("Sans 10pt", ">", &col);
-
-  clutter_actor_set_parent (priv->up, CLUTTER_ACTOR(self));
-  clutter_actor_set_parent (priv->down, CLUTTER_ACTOR(self));
-#endif
-
-  priv->selector = clutter_rectangle_new_with_color (&rect_col);
-  clutter_actor_set_parent (priv->selector, CLUTTER_ACTOR(self));
 }
 
 ClutterActor*

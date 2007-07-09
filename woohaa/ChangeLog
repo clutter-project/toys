@@ -1,3 +1,24 @@
+2007-07-09  Matthew Allum  <mallum@openedhand.com>
+
+	* clutter-simple-layout.c:
+	* configure.ac:
+	* data/Makefile.am:
+	* data/arrow-down.svg:
+	* data/arrow-next.svg:
+	* data/arrow-prev.svg:
+	* data/arrow-up.svg:
+	* data/header.svg:
+	* data/play.svg:
+	* data/selected.svg:
+	* data/spinner.svg:
+	* util.c:
+	* wh-busy.c:
+	* wh-slider-menu.c:
+	* wh-video-row-renderer.c:
+	* wh-video-thumbnailer.c:
+	* woohaa.c:
+	Update for 0.3 API, along with a new look. 
+
 2007-04-06  Matthew Allum  <mallum@openedhand.com>
 
 	* wh-screen-video.c:

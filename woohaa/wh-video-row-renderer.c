@@ -17,7 +17,7 @@ struct _WHVideoRowRendererPrivate
   WHVideoModelRow *row;
   ClutterActor    *container;
   ClutterActor    *thumbnail, *thumbnail_image;
-  ClutterActor    *title_label, *info_label, *date_label;
+  ClutterActor    *title_label, *info_label, *date_label, *hr;
   gint             width, height;
   gboolean         active;
 };
@@ -40,6 +40,8 @@ sync_thumbnail (WHVideoRowRenderer *renderer)
 
   if (pixbuf)
     {
+      ClutterEffectTemplate *effect;
+
       if (priv->thumbnail_image)
 	g_object_unref (priv->thumbnail_image);
 
@@ -54,7 +56,20 @@ sync_thumbnail (WHVideoRowRenderer *renderer)
 			      priv->height - (PAD*2) - 4);
       clutter_group_add(CLUTTER_GROUP(priv->container),
 			priv->thumbnail_image);
-      util_actor_fade_in (priv->thumbnail_image, NULL, NULL); 
+
+      effect
+	= clutter_effect_template_new (clutter_timeline_new (20, 60),
+				       CLUTTER_ALPHA_SINE_INC);
+
+      clutter_actor_set_opacity (priv->thumbnail_image, 0);
+      clutter_actor_show (priv->thumbnail_image);
+      clutter_effect_fade (effect,
+			   priv->thumbnail_image,
+			   0,
+			   0xff,
+			   NULL,
+			   NULL);
+      g_object_unref (effect);
     }
 }
 
@@ -133,11 +148,11 @@ wh_video_row_renderer_request_coords (ClutterActor    *self,
   
   priv = VIDEO_ROW_RENDERER_PRIVATE(row);
 
-  if ( ((box->x2 - box->x1) != priv->width) 
-       || ((box->y2 - box->y1) != priv->height))
+  if ( (CLUTTER_UNITS_TO_INT(box->x2 - box->x1) != priv->width) 
+       || (CLUTTER_UNITS_TO_INT(box->y2 - box->y1) != priv->height))
     {
-      ClutterColor color      = { 0xff, 0xff, 0xff, 0xff };
-      ClutterColor info_color = { 0xdd, 0xdd, 0xee, 0xff };
+      ClutterColor color      = { 0xcc, 0xcc, 0xcc, 0xff };
+      ClutterColor info_color = { 0xde, 0xde, 0xde, 0xff };
       gint  w,h;
       gchar font_desc[32];
       gchar *episode = NULL, *series = NULL, *info = NULL;
@@ -145,13 +160,13 @@ wh_video_row_renderer_request_coords (ClutterActor    *self,
       gchar  date_buf[32];
 
       /* Keep a simple cache to avoid setting fonts up too much */
-      w = priv->width  = (box->x2 - box->x1);
-      h = priv->height = (box->y2 - box->y1);
+      w = priv->width  = CLUTTER_UNITS_TO_INT(box->x2 - box->x1);
+      h = priv->height = CLUTTER_UNITS_TO_INT(box->y2 - box->y1);
 
       clutter_actor_set_position (priv->thumbnail, PAD, PAD);
       clutter_actor_set_size (priv->thumbnail, h-(PAD*2), h-(PAD*2));
 
-      g_snprintf(font_desc, 32, "Sans %ipx", (h*4)/10); 
+      g_snprintf(font_desc, 32, "Sans %ipx", (h*4)/8); 
 
       clutter_label_set_text (CLUTTER_LABEL(priv->title_label),
 			      wh_video_model_row_get_title (priv->row));
@@ -162,10 +177,10 @@ wh_video_row_renderer_request_coords (ClutterActor    *self,
       clutter_label_set_ellipsize  (CLUTTER_LABEL(priv->title_label), 
 				    PANGO_ELLIPSIZE_MIDDLE);
 
-      clutter_actor_set_width (priv->title_label, w - (h + (2*PAD)));
+      clutter_actor_set_width (priv->title_label, w - ((2*(h+PAD))));
       clutter_actor_set_position (priv->title_label, h + PAD, PAD); 
 
-      g_snprintf(font_desc, 32, "Sans %ipx", (h*3)/10); 
+      g_snprintf(font_desc, 32, "Sans %ipx", (h*3)/12); 
       wh_video_model_row_get_extended_info (priv->row, &series, &episode);
 
       date = g_date_new();
@@ -191,13 +206,18 @@ wh_video_row_renderer_request_coords (ClutterActor    *self,
       clutter_label_set_line_wrap (CLUTTER_LABEL(priv->info_label), FALSE);
       clutter_label_set_use_markup (CLUTTER_LABEL(priv->info_label), TRUE);
       
-      clutter_actor_set_position (priv->info_label, h + PAD, h/2); 
-      clutter_actor_set_width (priv->title_label, w - (h + (2*PAD)));
+      clutter_actor_set_position (priv->info_label, 
+				  h + PAD, 
+				  PAD + clutter_actor_get_height(priv->title_label)); 
+      clutter_actor_set_width (priv->title_label, w - (2*h) + (2*PAD));
       
       g_free (info);
       g_free (series);
       g_free (episode);
       g_date_free(date);
+
+      clutter_actor_set_size (priv->hr, w, 1);
+      clutter_actor_set_position (priv->hr, 0, h-1);
 
       sync_thumbnail (row);
 
@@ -218,11 +238,7 @@ wh_video_row_renderer_paint (ClutterActor *actor)
   if (priv->width == 0 || priv->height ==0)
     return;
 
-  glPushMatrix();
-
   clutter_actor_paint (CLUTTER_ACTOR(priv->container));
-
-  glPopMatrix();
 }
 
 static void
@@ -258,10 +274,13 @@ wh_video_row_renderer_class_init (WHVideoRowRendererClass *klass)
 static void
 wh_video_row_renderer_init (WHVideoRowRenderer *self)
 {
-  ClutterColor color = { 0xff, 0xff, 0xff, 0xff };
+  ClutterColor color = { 0xcc, 0xcc, 0xcc, 0xff };
+  ClutterColor grey_col = { 0xde, 0xde, 0xde, 0xff };
   WHVideoRowRendererPrivate *priv;  
   
   priv = VIDEO_ROW_RENDERER_PRIVATE(self);
+
+  priv->hr = clutter_rectangle_new_with_color (&grey_col);
 
   priv->thumbnail = clutter_rectangle_new_with_color(&color);
 
@@ -272,24 +291,13 @@ wh_video_row_renderer_init (WHVideoRowRenderer *self)
   clutter_actor_set_parent (priv->container, CLUTTER_ACTOR(self));
 
   clutter_group_add_many (CLUTTER_GROUP(priv->container), 
+			  priv->hr,
 			  priv->thumbnail,
 			  priv->title_label,
 			  priv->info_label,
 			  NULL);
 
   clutter_actor_show_all (priv->container);
-}
-
-static void 
-thumb_anim_complete (ClutterActor *clone, WHVideoRowRenderer *renderer)
-{
-  WHVideoRowRendererPrivate *priv = VIDEO_ROW_RENDERER_PRIVATE(renderer);
-
-  util_actor_fade (priv->thumbnail_image,
-		   NULL,
-		   0xcc,
-		   0xff,
-		   NULL);  
 }
 
 void
@@ -299,10 +307,10 @@ wh_video_row_renderer_set_active (WHVideoRowRenderer *renderer,
   /* FIXME: should be prop */
   WHVideoRowRendererPrivate *priv = VIDEO_ROW_RENDERER_PRIVATE(renderer);
 
-  ClutterColor inactive_col = { 0xff, 0xff, 0xff, 0xff };
-  ClutterColor   active_col = { 0xb4, 0xe2, 0xff, 0xff };
-  ClutterColor info_inactive_col = { 0xdd, 0xdd, 0xee, 0xff };
-  ClutterColor info_active_col   = { 0xff, 0xff, 0xff, 0xff };
+  ClutterColor inactive_col = { 0xaa, 0xaa, 0xaa, 0xff };
+  ClutterColor   active_col = { 0xff, 0xff, 0xff, 0xff };
+  ClutterColor info_inactive_col = { 0xbb, 0xbb, 0xbb, 0xff };
+  ClutterColor info_active_col   = { 0xf3, 0xf3, 0xf3, 0xff };
 
   if (priv->active == setting)
     return;
@@ -317,14 +325,6 @@ wh_video_row_renderer_set_active (WHVideoRowRenderer *renderer,
 			       &info_active_col);
       clutter_actor_set_opacity (CLUTTER_ACTOR(renderer), 0xff);
 
-      if (priv->thumbnail_image)
-	{
-	  util_actor_fade (priv->thumbnail_image,
-			   (UtilAnimCompleteFunc)thumb_anim_complete,
-			   0xff,
-			   0xcc,
-			   renderer);  
-	}
     }
   else
     {
@@ -332,7 +332,7 @@ wh_video_row_renderer_set_active (WHVideoRowRenderer *renderer,
 			       &inactive_col);
       clutter_label_set_color (CLUTTER_LABEL(priv->info_label), 
 			       &info_inactive_col);
-      clutter_actor_set_opacity (CLUTTER_ACTOR(renderer), 0xcc);
+      clutter_actor_set_opacity (CLUTTER_ACTOR(renderer), 0xff);
     }
 
 

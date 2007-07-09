@@ -1,8 +1,10 @@
 #include "wh-slider-menu.h"
 #include "util.h"
 
+#include <clutter/cogl.h>
+
 #define FONT "Sans 75px"
-#define SELECTED_OFFSET (8)
+#define SELECTED_OFFSET (CLUTTER_STAGE_WIDTH()/5)
 
 typedef struct WHSliderMenuEntry
 {
@@ -41,8 +43,8 @@ typedef struct _WHBehaviourSliderClass   WHBehaviourSliderClass;
 struct _WHBehaviourSlider
 {
   ClutterBehaviour        parent;
-  WHSliderMenuEntry      *start;
-  WHSliderMenuEntry      *end;
+  WHSliderMenuEntry      *old;
+  WHSliderMenuEntry      *new;
   WHSliderMenu           *menu;
 };
 
@@ -79,11 +81,14 @@ struct _WHSliderMenuPrivate
   gint             menu_width;
   gint             n_entrys;
   gint             active_entry_num;
-  gint             offset;
+  gint             offset; 	    /* current offset */
+  gint             unclipped_width;
+  ClutterActor    *bg;
 
-  ClutterTimeline  *timeline;
-  ClutterAlpha     *alpha;
-  ClutterBehaviour *behave;
+  ClutterTimeline        *timeline;
+  ClutterAlpha           *alpha;
+  ClutterBehaviour       *behave;
+  ClutterEffectTemplate  *effect_template;
 
   gchar            *font;
   ClutterColor     *font_color;
@@ -91,10 +96,37 @@ struct _WHSliderMenuPrivate
 };
 
 static void
+show_handler (ClutterActor *actor)
+{
+  WHSliderMenu        *disk;
+  WHSliderMenuPrivate *priv;
+  ClutterKnot          knots[2];
+
+  disk = WH_SLIDER_MENU(actor);
+  priv = disk->priv;
+
+  knots[0].x = clutter_actor_get_x (actor);
+  knots[0].y = -clutter_actor_get_height (actor); 
+  knots[1].x = clutter_actor_get_x (actor);
+  knots[1].y = clutter_actor_get_y (actor);
+
+  clutter_actor_set_position (actor,
+			      clutter_actor_get_x (actor),
+			      -clutter_actor_get_height (actor));
+
+  clutter_effect_move (priv->effect_template,
+		       actor,
+		       knots,
+		       2,
+		       NULL,
+		       NULL);
+}
+
+static void
 wh_slider_menu_set_property (GObject      *object, 
-				  guint         prop_id,
-				  const GValue *value, 
-				  GParamSpec   *pspec)
+			     guint         prop_id,
+			     const GValue *value, 
+			     GParamSpec   *pspec)
 {
   WHSliderMenu        *disk;
   WHSliderMenuPrivate *priv;
@@ -132,32 +164,57 @@ wh_slider_menu_get_property (GObject    *object,
 
 static void
 wh_slider_menu_request_coords (ClutterActor    *self,
-				    ClutterActorBox *box)
+			       ClutterActorBox *box)
 {
   WHSliderMenuPrivate *priv;
-  ClutterActorBox cbox;
+  ClutterActorBox     cbox;
 
   priv = WH_SLIDER_MENU(self)->priv;
 
   /* Only positioning + width works.*/
-  priv->menu_width = box->x2 - box->x1;
+  priv->menu_width = CLUTTER_UNITS_TO_INT(box->x2 - box->x1);
 
-  clutter_actor_allocate_coords (self, &cbox);
+  if (!priv->bg)
+    {  
+      gint w, h;
+
+      w = priv->menu_width - (priv->menu_width/10);
+      h = CLUTTER_UNITS_TO_INT(box->y2 - box->y1);
+
+      priv->bg = util_actor_from_file (PKGDATADIR "/header.svg", w, h);
+
+      clutter_actor_set_size (priv->bg, w, h);
+      clutter_actor_set_position (priv->bg, w/20, 0);
+      clutter_actor_set_parent (priv->bg, self);
+      clutter_actor_show (priv->bg);
+
+      priv->next = util_actor_from_file (PKGDATADIR "/arrow-next.svg", -1, -1);
+      clutter_actor_set_size (priv->next, h/8, h/4);
+      clutter_actor_set_parent (priv->next, CLUTTER_ACTOR (self));
+      clutter_actor_show (priv->next);
+
+      priv->prev = util_actor_from_file (PKGDATADIR "/arrow-prev.svg", -1, -1);
+      clutter_actor_set_size (priv->prev, h/8, h/4);
+      clutter_actor_set_parent (priv->prev, CLUTTER_ACTOR (self));
+      clutter_actor_show (priv->prev);
+    }
+
+  clutter_actor_query_coords (self, &cbox);
 
   box->x2 = box->x1 + (cbox.x2 - cbox.x1);
   box->y2 = box->y1 + (cbox.y2 - cbox.y1);
 }
 
 static void
-wh_slider_menu_allocate_coords (ClutterActor    *self,
-				ClutterActorBox *box)
+wh_slider_menu_query_coords (ClutterActor    *self,
+			     ClutterActorBox *box)
 {
   WHSliderMenuPrivate *priv;
 
   priv = WH_SLIDER_MENU(self)->priv;
 
-  box->x2 = box->x1 + priv->menu_width;
-  box->y2 = box->y1 + priv->entry_height;
+  box->x2 = box->x1 + CLUTTER_UNITS_FROM_INT(priv->menu_width);
+  box->y2 = box->y1 + CLUTTER_UNITS_FROM_INT(priv->entry_height);
 }
 
 static void
@@ -165,10 +222,20 @@ wh_slider_menu_paint (ClutterActor *actor)
 {
   WHSliderMenu      *menu = WH_SLIDER_MENU(actor);
   GList             *entry;
+  ClutterGeometry    clip;
 
-  glPushMatrix();
+  cogl_push_matrix();
 
-  glTranslatef(SELECTED_OFFSET, 0.0, 0.0);
+  clutter_actor_paint (menu->priv->bg);
+
+  clip.x = menu->priv->menu_width / 16;
+  clip.y = 0;
+  clip.width =  menu->priv->menu_width - ( menu->priv->menu_width / 8 );
+  clip.height = clutter_actor_get_height (actor);
+
+  cogl_clip_set (&clip);
+
+  cogl_translate (SELECTED_OFFSET, 0, 0);
 
   if (menu->priv->active_entry_num > 0)
       clutter_actor_paint (menu->priv->prev);
@@ -176,10 +243,8 @@ wh_slider_menu_paint (ClutterActor *actor)
   if (menu->priv->active_entry_num < menu->priv->n_entrys-1)
       clutter_actor_paint (menu->priv->next);
 
-  glTranslatef((float)-1.0 * menu->priv->offset 
-	                      + clutter_actor_get_width(menu->priv->prev), 
-	       0.0,
-	       0.0);
+  cogl_translate (-1  * menu->priv->offset 
+		  + clutter_actor_get_width(menu->priv->prev), 0, 0);
 
   for (entry = menu->priv->entrys;
        entry != NULL;
@@ -194,7 +259,9 @@ wh_slider_menu_paint (ClutterActor *actor)
 	  clutter_actor_paint (child);
     }
 
-  glPopMatrix();
+  cogl_clip_unset();
+
+  cogl_pop_matrix();
 }
 
 static void
@@ -234,7 +301,7 @@ wh_slider_menu_class_init (WHSliderMenuClass *klass)
   actor_class->paint      = wh_slider_menu_paint;
   actor_class->realize    = wh_slider_menu_realize;
   actor_class->request_coords  = wh_slider_menu_request_coords;
-  actor_class->allocate_coords = wh_slider_menu_allocate_coords;
+  actor_class->query_coords = wh_slider_menu_query_coords;
 
   actor_class->unrealize  = parent_class->unrealize;
   actor_class->show       = parent_class->show;
@@ -251,13 +318,11 @@ wh_slider_menu_class_init (WHSliderMenuClass *klass)
 static void
 wh_slider_menu_init (WHSliderMenu *self)
 {
-  ClutterColor text_color   = { 0xb4, 0xe2, 0xff, 0xff };
-
   WHSliderMenuPrivate *priv;
 
   self->priv = priv = WH_SLIDER_MENU_GET_PRIVATE (self);
 
-  priv->timeline = clutter_timeline_new (20, 120);
+  priv->timeline = clutter_timeline_new (10, 60);
 
   priv->alpha = clutter_alpha_new_full (priv->timeline,
 					alpha_sine_inc_func,
@@ -265,22 +330,19 @@ wh_slider_menu_init (WHSliderMenu *self)
 
   priv->behave = clutter_behaviour_slider_new (self, 0, 0);
 
+  priv->effect_template 
+    = clutter_effect_template_new (clutter_timeline_new (20, 60),
+				   CLUTTER_ALPHA_SINE_INC);
+
+  g_signal_connect (self,
+		    "show",
+		    G_CALLBACK (show_handler),
+		    NULL);
+
   /* FIXME: should be props */
-  priv->font       = FONT;
+
   priv->font_color = g_new0(ClutterColor, 1);
-  clutter_color_from_pixel (priv->font_color, 0xb4e2ffff);
-  
-  priv->next = clutter_label_new_with_text (FONT, " >");
-  clutter_label_set_color (CLUTTER_LABEL(priv->next), &text_color);
-
-  priv->prev = clutter_label_new_with_text (FONT, "< ");
-  clutter_label_set_color (CLUTTER_LABEL(priv->prev), &text_color);
-
-  clutter_actor_set_parent (priv->next, CLUTTER_ACTOR (self));
-  clutter_actor_show (priv->next);
-
-  clutter_actor_set_parent (priv->prev, CLUTTER_ACTOR (self));
-  clutter_actor_show (priv->prev);
+  clutter_color_parse ("#ccccccff", priv->font_color);
 }
 
 ClutterActor*
@@ -291,11 +353,7 @@ wh_slider_menu_new (const gchar *font)
 
   menu = g_object_new (WH_TYPE_SLIDER_MENU, NULL);
   priv = WH_SLIDER_MENU_GET_PRIVATE (menu);
-
-  /* FIXME: Should be prop */
   priv->font = g_strdup(font);
-  clutter_label_set_font_name (CLUTTER_LABEL(priv->prev), priv->font);
-  clutter_label_set_font_name (CLUTTER_LABEL(priv->next), priv->font);
 
   return menu;
 }
@@ -309,8 +367,7 @@ wh_slider_menu_add_option (WHSliderMenu            *menu,
   WHSliderMenuPrivate  *priv = WH_SLIDER_MENU_GET_PRIVATE (menu);
   WHSliderMenuEntry    *entry;
   ClutterActor         *actor;
-  gint                  i = 0, offset =0, pad;;
-  GList                *iter;
+  gint                  pad;
 
   actor = clutter_label_new_with_text (priv->font, text);
   clutter_label_set_color (CLUTTER_LABEL(actor), priv->font_color);
@@ -324,48 +381,38 @@ wh_slider_menu_add_option (WHSliderMenu            *menu,
   if (clutter_actor_get_height(actor) > menu->priv->entry_height)
       menu->priv->entry_height = clutter_actor_get_height(actor);
 
-  pad = (clutter_actor_get_width (priv->next) * 3) / 2;
+  pad = clutter_actor_get_width (priv->next) * 2;
 
-  for (iter = menu->priv->entrys;
-       iter != NULL;
-       iter = iter->next)
-    {
-      WHSliderMenuEntry *data = (WHSliderMenuEntry*)iter->data;
-      ClutterActor *child = data->actor;
-      gint xoff = 0, yoff = 0;
+  entry->offset = priv->unclipped_width + pad;
 
-      data->offset = xoff = offset;
+  if (menu->priv->entrys == NULL)
+    priv->unclipped_width += pad;
 
-      yoff = (menu->priv->entry_height - clutter_actor_get_height(child))/2;
-      
-      clutter_actor_set_position (child, xoff, yoff);
+  priv->unclipped_width += clutter_actor_get_width(actor) + pad;
 
-      offset += (clutter_actor_get_width(child) + pad);
-
-      i++;
-    }
-
-  entry->offset = offset;
-
-  if (i == 0)
+  if (menu->priv->entrys == 0)
     {
       clutter_actor_set_opacity (actor, 0xff);
       g_object_set (menu->priv->next, 
-		    "x", clutter_actor_get_width(actor) +
-		            clutter_actor_get_width(menu->priv->prev),
+		    "x", clutter_actor_get_width(actor) + pad +
+		            clutter_actor_get_width(menu->priv->prev)
+		         + clutter_actor_get_width(menu->priv->prev)/2,
+		    "y", clutter_actor_get_height(menu->priv->next),
 		    NULL);
     }
   else
-    clutter_actor_set_opacity (actor, 0x99);
+    {
+      clutter_actor_set_opacity (actor, 0x33);
+      clutter_actor_set_scale (actor, 0.7, 0.7); 
+    }
 
   clutter_actor_set_parent (actor, CLUTTER_ACTOR (menu));
 
   menu->priv->entrys = g_list_append (menu->priv->entrys, entry);
 
   clutter_actor_set_position (actor, 
-			      offset, 
-			      (menu->priv->entry_height 
-			          - clutter_actor_get_height(actor))/2);
+			      entry->offset, 
+			      menu->priv->entry_height/12);
 
   menu->priv->n_entrys++;
 
@@ -374,15 +421,16 @@ wh_slider_menu_add_option (WHSliderMenu            *menu,
 
 void
 wh_slider_menu_activate (WHSliderMenu *menu,
-			      gint               entry_num)
+			 gint               entry_num)
 {
   WHSliderMenuEntry *selected, *current;
   
   if (entry_num < 0 || entry_num >= menu->priv->n_entrys)
     return;
 
-  if (!clutter_timeline_is_playing(menu->priv->timeline))
-    clutter_timeline_start (menu->priv->timeline);    
+  if (clutter_timeline_is_playing(menu->priv->timeline))
+    return;
+
   current 
     = (WHSliderMenuEntry *)g_list_nth_data(menu->priv->entrys, 
 					   menu->priv->active_entry_num);
@@ -392,17 +440,27 @@ wh_slider_menu_activate (WHSliderMenu *menu,
 
   menu->priv->active_entry_num = entry_num;
 
-  WH_BEHAVIOUR_SLIDER(menu->priv->behave)->start = current;
-  WH_BEHAVIOUR_SLIDER(menu->priv->behave)->end   = selected;
+  WH_BEHAVIOUR_SLIDER(menu->priv->behave)->old = current;
+  WH_BEHAVIOUR_SLIDER(menu->priv->behave)->new = selected;
 
   g_object_set (menu->priv->next, 
 		"x", clutter_actor_get_width(selected->actor) +
-		         clutter_actor_get_width(menu->priv->prev),
+		         clutter_actor_get_width(menu->priv->prev) +
+		         clutter_actor_get_width(menu->priv->prev) / 2,
+		"y", clutter_actor_get_height(menu->priv->next),
 		NULL);
+
+  g_object_set (menu->priv->prev, 
+		"x", - clutter_actor_get_width(menu->priv->prev)/2,
+		"y", clutter_actor_get_height(menu->priv->next),
+		NULL);
+
 
   /* FIXME: Should be a signal */
   if (selected->selected_func)
     selected->selected_func(menu, selected->actor, selected->userdata);
+
+  clutter_timeline_start (menu->priv->timeline);    
 }
 
 void
@@ -419,23 +477,34 @@ clutter_behaviour_alpha_notify (ClutterBehaviour *behave,
 {
   WHBehaviourSlider *slide = WH_BEHAVIOUR_SLIDER(behave);
   WHSliderMenu      *menu;
+  gdouble            scale;
 
   menu = slide->menu;
 
-  menu->priv->offset = slide->start->offset + 
+  menu->priv->offset = slide->old->offset + 
                       (((gint)alpha_value * 
-                          (slide->end->offset - slide->start->offset))
+                          (slide->new->offset - slide->old->offset))
 			       / CLUTTER_ALPHA_MAX_ALPHA);
 
-  clutter_actor_set_opacity (slide->start->actor, 
+  clutter_actor_set_opacity (slide->old->actor, 
 			     0xff + (alpha_value 
-				     * (0x99 - 0xff)
+				     * (0x33 - 0xff)
 				     / CLUTTER_ALPHA_MAX_ALPHA));
 
-  clutter_actor_set_opacity (slide->end->actor, 
-			     0x99 + (alpha_value 
-				     * (0xff - 0x99)
+  clutter_actor_set_opacity (slide->new->actor, 
+			     0x33 + (alpha_value 
+				     * (0xff - 0x33)
 				     / CLUTTER_ALPHA_MAX_ALPHA));
+
+  scale = (0.3 * alpha_value) / (gdouble)CLUTTER_ALPHA_MAX_ALPHA;
+
+  clutter_actor_set_scale (slide->new->actor,
+			   0.7 + scale,
+			   0.7 + scale);
+
+  clutter_actor_set_scale (slide->old->actor,
+			   1.0 - scale,
+			   1.0 - scale);
 
 
   if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(menu)))
@@ -458,8 +527,8 @@ clutter_behaviour_slider_init (WHBehaviourSlider *self)
 
 static ClutterBehaviour*
 clutter_behaviour_slider_new (WHSliderMenu      *menu,
-			      WHSliderMenuEntry *start,
-			      WHSliderMenuEntry *end)
+			      WHSliderMenuEntry *old,
+			      WHSliderMenuEntry *new)
 {
   WHBehaviourSlider *slide_behave;
 
@@ -467,8 +536,8 @@ clutter_behaviour_slider_new (WHSliderMenu      *menu,
 			       "alpha", menu->priv->alpha,
 			       NULL);
 
-  slide_behave->start = start;
-  slide_behave->end   = end;
+  slide_behave->old   = old;
+  slide_behave->new   = new;
   slide_behave->menu  = menu;
 
   return CLUTTER_BEHAVIOUR(slide_behave);

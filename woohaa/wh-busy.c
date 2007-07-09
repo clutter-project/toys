@@ -21,7 +21,7 @@ timeline_cb (ClutterTimeline *timeline,
 {
   WHBusyPrivate *priv  = BUSY_PRIVATE(busy);
 
-  clutter_actor_rotate_z(priv->texture, (float)frame_num * 2.0, 
+  clutter_actor_rotate_z(priv->texture, (float)frame_num * 4.0, 
 			 clutter_actor_get_width (priv->texture)/2, 
 			 clutter_actor_get_height (priv->texture)/2);
 }
@@ -116,12 +116,13 @@ wh_busy_init (WHBusy *self)
 
   priv = BUSY_PRIVATE(self);
 
-  pixbuf = gdk_pixbuf_new_from_file (PKGDATADIR "/busy.png", NULL); 
+  pixbuf = gdk_pixbuf_new_from_file (PKGDATADIR "/spinner.svg", NULL); 
 
   if (pixbuf == NULL)
-    g_error ("unable to load resource '%s'", PKGDATADIR "/busy.png");
+    g_error ("unable to load resource '%s'", PKGDATADIR "/spinner.svg");
 
   priv->texture = clutter_texture_new_from_pixbuf (pixbuf);
+  clutter_actor_set_size (priv->texture, CSW()/6, CSW()/6);
 
   g_object_unref(pixbuf);
 
@@ -132,7 +133,7 @@ wh_busy_init (WHBusy *self)
      (CSW() - clutter_actor_get_width (priv->texture))/2,
      (CSH() - clutter_actor_get_height (priv->texture))/2);
 
-  priv->timeline = clutter_timeline_new (180, 120);
+  priv->timeline = clutter_timeline_new (90, 120);
   clutter_timeline_set_loop (priv->timeline, TRUE);
 
   g_signal_connect (priv->timeline, 
