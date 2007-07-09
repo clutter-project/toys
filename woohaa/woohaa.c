@@ -630,7 +630,7 @@ main (int argc, char *argv[])
   g_object_set (stage, "fullscreen", TRUE, "cursor-visible", FALSE, NULL);
   clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
 
-  bg = util_actor_from_file ("bg.png", CSW(), CSH());
+  bg = util_actor_from_file (PKGDATADIR"/bg.png", CSW(), CSH());
 
   clutter_actor_set_size (bg, CSW(), CSH());
   clutter_group_add (CLUTTER_GROUP(stage), bg);

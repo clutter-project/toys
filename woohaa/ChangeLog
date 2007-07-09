@@ -1,3 +1,8 @@
+2007-07-09  Neil J. Patel  <njp@o-hand.com>
+
+	* woohaa.c: (main):
+	Look for bg.png in PKGDATADIR
+
 2007-07-09  Matthew Allum  <mallum@openedhand.com>
 
 	* clutter-simple-layout.c:
