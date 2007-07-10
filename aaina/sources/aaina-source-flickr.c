@@ -21,6 +21,7 @@
 
 #include <libaaina/aaina-photo.h>
 #include <libnflick/nflick-photo-search-worker.h>
+#include <libnflick/nflick-info-worker.h>
 #include <libnflick/nflick.h>
 #include "aaina-source-flickr.h"
 
@@ -31,6 +32,7 @@ G_DEFINE_TYPE (AainaSourceFlickr, aaina_source_flickr, AAINA_TYPE_SOURCE);
 	AainaSourceFlickrPrivate))
 
 #define CHECK_TIMEOUT 60000
+#define MAX_PHOTOS 100
 
 struct _AainaSourceFlickrPrivate
 {
@@ -44,22 +46,65 @@ struct _AainaSourceFlickrPrivate
   GQueue       *queue;
   gboolean      running;
   NFlickWorker *pix_worker;
+
   AainaPhoto   *current;
 
   NFlickWorker *worker;
 
+  /* Queue of photos to add to library */
+  GQueue       *add_queue;
+  gboolean      add_running;
 };
+
+static GQuark   worker_quark = 0;
 
 static gboolean get_photos (AainaSourceFlickr *source);
 static gboolean get_pixbuf (AainaSourceFlickr *source);
 
+
+static gboolean
+on_info_thread_abort (AainaPhoto *photo)
+{
+  g_print ("abort\n");
+  return FALSE;
+}
+
+static gboolean
+on_info_thread_error (AainaPhoto *photo)
+{
+  NFlickWorker *worker;
+  worker = (NFlickWorker*)g_object_get_qdata (G_OBJECT (photo), worker_quark);
+  gchar *error = NULL;
+
+  g_object_get (G_OBJECT (worker), "error", &error, NULL);
+  if (error)
+  {
+    g_warning ("%s\n", error);
+  }
+  else
+    g_print ("error\n");
+  g_object_unref (G_OBJECT (worker)); 
+  
+  return FALSE;
+}
+
+static gboolean
+on_info_thread_ok (AainaPhoto *photo)
+{
+  NFlickWorker *worker;
+  worker = (NFlickWorker*)g_object_get_qdata (G_OBJECT (photo), worker_quark);
+  
+  
+  g_object_unref (G_OBJECT (worker));  
+  return FALSE;
+}
 
 static void
 manage_queue (AainaSourceFlickr *source)
 {
   AainaSourceFlickrPrivate *priv;
   
-  g_return_val_if_fail (AAINA_IS_SOURCE_FLICKR (source), FALSE);
+  g_return_if_fail (AAINA_IS_SOURCE_FLICKR (source));
   priv = source->priv;
 
   /* Now we do the work for the next one */
@@ -106,6 +151,32 @@ on_pixbuf_thread_error (AainaSourceFlickr *source)
 }
 
 static gboolean
+add_to_library (AainaSourceFlickr *source)
+{
+  AainaSourceFlickrPrivate *priv;
+  AainaPhoto *photo = NULL;
+
+  g_return_val_if_fail (AAINA_IS_SOURCE (source), FALSE);
+  priv = source->priv;
+
+  if (aaina_library_photo_count (priv->library) >= MAX_PHOTOS)
+    return TRUE;
+
+  photo = AAINA_PHOTO (g_queue_pop_head (priv->add_queue));
+
+  if (photo)
+  {
+    aaina_library_append_photo (priv->library, (gpointer)photo);
+    return TRUE;
+  }
+  else
+  {
+    priv->add_running = FALSE;
+    return FALSE;
+  }
+}
+
+static gboolean
 on_pixbuf_thread_ok (AainaSourceFlickr *source)
 {
   AainaSourceFlickrPrivate *priv;
@@ -120,20 +191,31 @@ on_pixbuf_thread_ok (AainaSourceFlickr *source)
   if (pixbuf)
   {
     aaina_photo_set_pixbuf (priv->current, pixbuf);
-    aaina_library_append_photo (priv->library, priv->current);
-    priv->current = NULL;
 
-    g_print ("Got pixbuf\n");
-  }
-  else
-  {
-    g_print ("No pixbuf\n");
+    if (priv->add_running 
+          || aaina_library_photo_count (priv->library) >= MAX_PHOTOS)
+    {
+      g_queue_push_tail (priv->add_queue, (gpointer)priv->current);
+
+      if (!priv->add_running)
+      {
+        g_timeout_add (5000, (GSourceFunc)add_to_library, (gpointer)source);
+        priv->add_running = TRUE;
+      }
+    }
+    else
+      aaina_library_append_photo (priv->library, priv->current);
+
+    priv->current = NULL;
   }
 
   manage_queue (source);
 
-  return FALSE;
+  static gint i = 0;
+  i++;
+  g_print ("%d\n", i);
 
+  return FALSE;
 }
 
 static gboolean
@@ -153,12 +235,12 @@ get_pixbuf (AainaSourceFlickr *source)
   photo = priv->current;
   g_object_get (G_OBJECT (photo), "id", &id, NULL);
 
-  g_print ("Getting %s\n", id);
-
   worker = (NFlickWorker*)nflick_show_worker_new (id,
                                                   CLUTTER_STAGE_WIDTH ()/2,
                                                   CLUTTER_STAGE_HEIGHT ()/2,
                                                   " ");
+  if (G_IS_OBJECT (priv->pix_worker))
+    g_object_unref (G_OBJECT (priv->pix_worker));
   priv->pix_worker = worker;
 
   nflick_worker_set_custom_data (worker, source);
@@ -171,7 +253,20 @@ get_pixbuf (AainaSourceFlickr *source)
 
   nflick_worker_start (worker);  
 
+  worker = (NFlickWorker*)nflick_info_worker_new (id, 22, 22, " ");
+  nflick_worker_start (worker);
+
   priv->running = TRUE;
+  
+  nflick_worker_set_custom_data (worker, photo);
+  nflick_worker_set_aborted_idle (worker, 
+                                  (NFlickWorkerIdleFunc)on_info_thread_abort);
+  nflick_worker_set_error_idle (worker, 
+                                (NFlickWorkerIdleFunc)on_info_thread_error);
+  nflick_worker_set_ok_idle (worker,
+                             (NFlickWorkerIdleFunc)on_info_thread_ok);
+
+  g_object_set_qdata (G_OBJECT (photo), worker_quark, (gpointer)worker);
   return FALSE;
 }
 
@@ -241,7 +336,6 @@ on_thread_ok (AainaSourceFlickr *source)
     g_free (photo);
     l->data = NULL;
   }
-  g_print ("Table size = %d\n", g_hash_table_size (priv->table));
 
   g_list_free (list);
 
@@ -265,8 +359,10 @@ get_photos (AainaSourceFlickr *source)
   if (G_IS_OBJECT (source->priv->worker))
     g_object_unref (G_OBJECT (source->priv->worker));
 
+  if (source->priv->worker)
+    g_object_unref (G_OBJECT (source->priv->worker));
   source->priv->worker = worker;
-
+  
   nflick_worker_set_custom_data (worker, source);
   nflick_worker_set_aborted_idle (worker, 
                                   (NFlickWorkerIdleFunc)on_thread_abort);
@@ -303,6 +399,11 @@ aaina_source_flickr_init (AainaSourceFlickr *source_flickr)
 
   priv->queue = g_queue_new ();
   priv->running = FALSE;
+
+  priv->add_queue = g_queue_new ();
+  priv->add_running = FALSE;
+
+  worker_quark = g_quark_from_string ("aaina.flickr.worker");
 }
 
 AainaSource*

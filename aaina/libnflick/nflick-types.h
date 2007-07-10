@@ -239,6 +239,25 @@ typedef struct                  _NFlickGftResponsePrivate NFlickGftResponsePriva
 
 #define                         NFLICK_GFT_RESPONSE_GET_CLASS(obj) \
                                 (G_TYPE_INSTANCE_GET_CLASS ((obj), NFLICK_TYPE_GFT_RESPONSE, NFlickGftResponseClass))
+                                
+                                /* Info response */
+
+typedef struct                  _NFlickInfoResponseClass NFlickInfoResponseClass;
+
+typedef struct                  _NFlickInfoResponse NFlickInfoResponse;
+
+typedef struct                  _NFlickInfoResponsePrivate NFlickInfoResponsePrivate;
+
+#define                         NFLICK_TYPE_INFO_RESPONSE (nflick_info_response_get_type ())
+
+#define                         NFLICK_IS_INFO_RESPONSE(obj) \
+                                (G_TYPE_CHECK_INSTANCE_TYPE ((obj), NFLICK_TYPE_INFO_RESPONSE))
+
+#define                         NFLICK_INFO_RESPONSE(obj) \
+                                (G_TYPE_CHECK_INSTANCE_CAST ((obj), NFLICK_TYPE_INFO_RESPONSE, NFlickInfoResponse)
+
+#define                         NFLICK_INFO_RESPONSE_GET_CLASS(obj) \
+                                (G_TYPE_INSTANCE_GET_CLASS ((obj), NFLICK_TYPE_INFO_RESPONSE, NFlickInfoResponseClass))
 
 /* Photo set */
 
@@ -450,6 +469,25 @@ typedef struct                  _NFlickSetListWorkerPrivate NFlickSetListWorkerP
 #define                         NFLICK_SET_LIST_WORKER_GET_CLASS(obj) \
                                 (G_TYPE_INSTANCE_GET_CLASS ((obj), NFLICK_TYPE_SET_LIST_WORKER, NFlickSetListWorkerClass))
                                 
+                                
+                                /* Info worker */
+
+typedef struct                  _NFlickInfoWorkerClass NFlickInfoWorkerClass;
+
+typedef struct                  _NFlickInfoWorker NFlickInfoWorker;
+
+typedef struct                  _NFlickInfoWorkerPrivate NFlickInfoWorkerPrivate;
+
+#define                         NFLICK_TYPE_INFO_WORKER (nflick_info_worker_get_type ())
+
+#define                         NFLICK_IS_INFO_WORKER(obj) \
+                                (G_TYPE_CHECK_INSTANCE_TYPE ((obj), NFLICK_TYPE_INFO_WORKER))
+
+#define                         NFLICK_INFO_WORKER(obj) \
+                                (G_TYPE_CHECK_INSTANCE_CAST ((obj), NFLICK_TYPE_INFO_WORKER, NFlickInfoWorker)
+
+#define                         NFLICK_INFO_WORKER_GET_CLASS(obj) \
+                                (G_TYPE_INSTANCE_GET_CLASS ((obj), NFLICK_TYPE_INFO_WORKER, NFlickInfoWorkerClass))
 /* Photo search worked */
 #define                         NFLICK_TYPE_PHOTO_SEARCH_WORKER (nflick_photo_search_worker_get_type ())
 

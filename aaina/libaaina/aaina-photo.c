@@ -19,8 +19,6 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include <GL/gl.h>
-
 #include "aaina-behave.h"
 
 #include "aaina-photo.h"
@@ -41,6 +39,8 @@ struct _AainaPhotoPrivate
   gchar        *id;
   gchar        *title;
   gchar        *author;
+  gchar        *realname;
+  gchar        *desc;
   gchar        *date;
 
   gboolean      viewed;
@@ -61,6 +61,8 @@ struct _AainaPhotoPrivate
   
   ClutterTimeline *zoom_time;
   ClutterTimeline *restore_time;
+  gint          temp_x;
+  gint          temp_y;
 };
 
 enum
@@ -71,7 +73,9 @@ enum
   PROP_TITLE,
   PROP_DATE,
   PROP_AUTHOR,
-  PROP_VIEWED
+  PROP_VIEWED,
+  PROP_REALNAME,
+  PROP_DESC
 };
 
 enum
@@ -132,11 +136,13 @@ aaina_photo_restore (AainaPhoto *photo)
   g_return_if_fail (AAINA_IS_PHOTO (photo));
   priv = photo->priv;
 
+  priv->temp_x = clutter_actor_get_x (CLUTTER_ACTOR (photo));
+  priv->temp_y = clutter_actor_get_y (CLUTTER_ACTOR (photo));
+
   clutter_timeline_start (priv->restore_time);
 }
 
 static void
-
 aaina_photo_alpha_restore (ClutterBehaviour *behave, 
                            guint32 alpha_value, 
                            AainaPhoto *photo)
@@ -153,8 +159,8 @@ aaina_photo_alpha_restore (ClutterBehaviour *behave,
 
   factor = (gfloat)alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
 
-  x = clutter_actor_get_x (CLUTTER_ACTOR (photo));
-  y = clutter_actor_get_y (CLUTTER_ACTOR (photo));
+  x = priv->temp_x; //clutter_actor_get_x (CLUTTER_ACTOR (photo));
+  y = priv->temp_y; //clutter_actor_get_y (CLUTTER_ACTOR (photo));
   clutter_actor_get_size (CLUTTER_ACTOR (photo), &width, &height);
   clutter_actor_get_scale (CLUTTER_ACTOR (photo), &scale, &scale);
 
@@ -177,10 +183,11 @@ aaina_photo_alpha_restore (ClutterBehaviour *behave,
   clutter_actor_set_position (CLUTTER_ACTOR (photo), new_x, new_y);
   clutter_actor_set_scale (CLUTTER_ACTOR (photo), new_scale, new_scale);
   
-  if (factor > 0.9)
+  if (factor == 1)
   {
     clutter_actor_set_opacity (priv->dim, priv->save_dim);
     clutter_actor_set_depth (CLUTTER_ACTOR (photo), priv->save_depth);
+    g_signal_emit (G_OBJECT (photo), _photo_signals[PHOTO_RESTORED], 0);
   }
   clutter_actor_queue_redraw (CLUTTER_ACTOR (photo));
 }
@@ -384,6 +391,12 @@ aaina_photo_set_property (GObject      *object,
     case PROP_VIEWED:
         priv->viewed = g_value_get_boolean (value);
         break;
+     case PROP_REALNAME:
+        priv->realname = g_strdup (g_value_get_string (value));
+        break;
+     case PROP_DESC:
+        priv->desc = g_strdup (g_value_get_string (value));
+        break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -421,6 +434,12 @@ aaina_photo_get_property (GObject    *object,
     case PROP_VIEWED:
       g_value_set_boolean (value, priv->viewed);
       break;
+    case PROP_REALNAME:
+      g_value_set_string (value, priv->realname);
+      break;
+    case PROP_DESC:
+      g_value_set_string (value, priv->desc);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -438,6 +457,7 @@ aaina_photo_finalize (GObject *object)
 {
   G_OBJECT_CLASS (aaina_photo_parent_class)->finalize (object);
 }
+
 
 static void
 aaina_photo_class_init (AainaPhotoClass *klass)
@@ -506,6 +526,24 @@ aaina_photo_class_init (AainaPhotoClass *klass)
                          "The photo has been view",
                          FALSE,
                          G_PARAM_CONSTRUCT|G_PARAM_READWRITE));
+  
+  g_object_class_install_property (
+    gobject_class,
+    PROP_REALNAME,
+    g_param_spec_string ("realname",
+                         "Realname",
+                         "The authors real name",
+                         NULL,
+                         G_PARAM_CONSTRUCT|G_PARAM_READWRITE));
+
+  g_object_class_install_property (
+    gobject_class,
+    PROP_DESC,
+    g_param_spec_string ("desc",
+                         "Description",
+                         "The photos description",
+                         NULL,
+                         G_PARAM_CONSTRUCT|G_PARAM_READWRITE));
 
   _photo_signals[PHOTO_ZOOMED] = 
     g_signal_new ("photo_zoomed",
@@ -562,7 +600,7 @@ aaina_photo_init (AainaPhoto *photo)
 
   clutter_actor_show_all (CLUTTER_ACTOR (photo));
 
-  priv->zoom_time = clutter_timeline_new (120, 40);
+  priv->zoom_time = clutter_timeline_new (60, 30);
   alpha = clutter_alpha_new_full (priv->zoom_time,
                                   alpha_sine_inc_func,
                                   NULL, NULL);
@@ -570,7 +608,7 @@ aaina_photo_init (AainaPhoto *photo)
                              (AainaBehaveAlphaFunc)aaina_photo_alpha_zoom,
                              (gpointer)photo);
 
-  priv->restore_time = clutter_timeline_new (120, 40);
+  priv->restore_time = clutter_timeline_new (120, 30);
   alpha = clutter_alpha_new_full (priv->restore_time,
                                   alpha_sine_inc_func,
                                   NULL, NULL);

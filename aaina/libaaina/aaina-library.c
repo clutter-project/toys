@@ -33,6 +33,7 @@ struct _AainaLibraryPrivate
 	AainaCompareRowFunc 	sort;
 	gpointer         	sort_data;
 	EggSequence     	*photos;
+  GList             *list;
 };
 
 static void
@@ -126,6 +127,7 @@ aaina_library_init (AainaLibrary *self)
 	AainaLibraryPrivate *priv = LIBRARY_PRIVATE(self);
 
 	priv->photos = egg_sequence_new (NULL);
+  priv->list = NULL;
 }
 
 static gboolean 
@@ -149,6 +151,8 @@ aaina_library_photo_count (AainaLibrary *library)
 	EggSequenceIter     *iter;
 	gint                 n = 0;
 
+  return g_list_length (priv->list);
+
 	if (priv->filter == NULL)
 		return egg_sequence_get_length (priv->photos);    
 
@@ -170,7 +174,9 @@ aaina_library_get_photo (AainaLibrary *library, gint index)
 	EggSequenceIter     *iter;
 	gint                 n = 0;
 
-	if (priv->filter == NULL)
+	return (AainaPhoto*)g_list_nth_data (priv->list, index);
+
+  if (priv->filter == NULL)
 		return (AainaPhoto*)egg_sequence_get 
 			     (egg_sequence_get_iter_at_pos (priv->photos, index));
 
@@ -220,7 +226,7 @@ aaina_library_append_photo (AainaLibrary *library, AainaPhoto *photo)
 
 	g_signal_connect (photo, "notify", G_CALLBACK (on_photo_changed), library);
 
-	g_object_ref (photo);
+	/*
 
 	if (priv->sort)
 		iter = egg_sequence_insert_sorted (priv->photos, (gpointer)photo,
@@ -228,9 +234,17 @@ aaina_library_append_photo (AainaLibrary *library, AainaPhoto *photo)
 				       	   	   priv->sort_data);
 	else
 		iter = egg_sequence_append (priv->photos, (gpointer)photo);
+  */
+	priv->list = g_list_append (priv->list, photo);
+  g_signal_emit (library, _library_signals[PHOTO_ADDED], 0, photo);
+}
 
-	if (check_filter (library, iter))
-		g_signal_emit (library, _library_signals[PHOTO_ADDED], 0, photo);
+void
+aaina_library_remove_photo (AainaLibrary *library, const AainaPhoto *photo)
+{
+  AainaLibraryPrivate *priv = LIBRARY_PRIVATE(library);
+
+  priv->list = g_list_remove (priv->list, (gconstpointer)photo);
 }
 
 
@@ -241,18 +255,25 @@ aaina_library_foreach (AainaLibrary      *library,
 {
 	AainaLibraryPrivate *priv = LIBRARY_PRIVATE(library);
 	EggSequenceIter     *iter;
+  GList *l;
 
-	iter = egg_sequence_get_begin_iter (priv->photos);
-
+  for (l = priv->list; l != NULL; l = l->next)
+  {
+    if (AAINA_IS_PHOTO (l->data))
+      func (library, (AainaPhoto*)l->data, data );
+  }
+  return;
+/*
+  iter = egg_sequence_get_begin_iter (priv->photos);
 	while (!egg_sequence_iter_is_end (iter)) {
 		if (check_filter (library, iter))
 			if (func (library, 
-			    	  (AainaPhoto*)egg_sequence_get (iter),
-		                  data) == FALSE)
+			    	  (AainaPhoto*)egg_sequence_get (iter, data) == FALSE)
 	  			return;
 	
 		iter = egg_sequence_iter_next (iter);
 	}
+  */
 }
 
 void

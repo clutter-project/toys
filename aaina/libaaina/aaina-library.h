@@ -79,6 +79,9 @@ void
 aaina_library_append_photo (AainaLibrary *library, AainaPhoto *photo);
 
 void
+aaina_library_remove_photo (AainaLibrary *library, const AainaPhoto *photo);
+
+void
 aaina_library_set_filter (AainaLibrary    *library,
 			  AainaFilterRowFunc  filter, 
 			  gpointer         data);

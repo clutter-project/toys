@@ -1,3 +1,51 @@
+2007-07-10  Neil J. Patel  <njp@o-hand.com>
+
+	* libaaina/aaina-library.c: (aaina_library_init),
+	(aaina_library_photo_count), (aaina_library_get_photo),
+	(aaina_library_append_photo), (aaina_library_remove_photo),
+	(aaina_library_foreach):
+	* libaaina/aaina-library.h:
+	Changed to use GList as a backend as we don't need the power of eggsequence.
+
+	* libaaina/aaina-photo.c: (aaina_photo_restore),
+	(aaina_photo_alpha_restore), (aaina_photo_set_property),
+	(aaina_photo_get_property), (aaina_photo_class_init),
+	(aaina_photo_init):
+	Add the 'realname' and 'desc' properties.
+	Remove unused gl.h #include.
+
+	* libnflick/Makefile.am:
+	* libnflick/nflick-info-response-private.h:
+	* libnflick/nflick-info-response.c:
+	(nflick_info_response_get_type), (nflick_info_response_class_init),
+	(nflick_info_response_init), (private_init), (private_dispose),
+	(nflick_info_response_dispose), (nflick_info_response_finalize),
+	(nflick_info_response_get), (all_fields_valid), (fill_blanks),
+	(parse_func), (nflick_info_response_get_property):
+	* libnflick/nflick-info-response.h:
+	* libnflick/nflick-info-worker-private.h:
+	* libnflick/nflick-info-worker.c: (nflick_info_worker_get_type),
+	(nflick_info_worker_class_init), (nflick_info_worker_init),
+	(private_init), (private_dispose), (nflick_info_worker_dispose),
+	(nflick_info_worker_finalize), (thread_func),
+	(nflick_info_worker_get), (nflick_info_worker_new),
+	(nflick_info_worker_get_property):
+	* libnflick/nflick-info-worker.h:
+	* libnflick/nflick-types.h:
+	Add a worker/response to get information about a photo.
+
+	* sources/aaina-source-flickr.c: (on_info_thread_abort),
+	(on_info_thread_error), (on_info_thread_ok), (manage_queue),
+	(add_to_library), (on_pixbuf_thread_ok), (get_pixbuf),
+	(on_thread_ok), (get_photos), (aaina_source_flickr_init):
+	Limit the amount of photos added to the library to 100. 
+	Wait until library is < 100 before adding anymore.
+	Make sure to unref workers, as they eat up memory.
+
+	* src/aaina-slide-show.c: (on_photo_zoomed), (restore_photo),
+	(aaina_slide_show_move):
+	If a photo has been viewed, delete it.
+
 2007-07-08  Neil J. Patel  <njp@o-hand.com>
 
 	* sources/aaina-source-flickr.c: (manage_queue),

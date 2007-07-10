@@ -61,6 +61,17 @@ static void     on_photo_added (AainaLibrary    *library,
                                 AainaSlideShow  *data);
 static gboolean zoom_photo (AainaSlideShow *slide_show);
 
+static void
+on_photo_zoomed (AainaPhoto *photo, AainaSlideShow *slide_show)
+{
+  AainaSlideShowPrivate *priv;
+
+  g_return_if_fail (AAINA_IS_SLIDE_SHOW (slide_show));
+  priv = slide_show->priv;
+
+  priv->zoomed = NULL;
+}
+
 static gboolean
 restore_photo (AainaSlideShow *slide_show)
 {
@@ -80,10 +91,12 @@ restore_photo (AainaSlideShow *slide_show)
   for (i = 0; i < N_LANES; i++)
     clutter_timeline_start (priv->timelines[i]);
 
+  g_signal_connect (G_OBJECT (priv->zoomed), "photo_restored",
+                    G_CALLBACK (on_photo_zoomed), (gpointer)slide_show);
+
   g_timeout_add (g_rand_int_range (rand, 4000, 10000), 
                  (GSourceFunc)zoom_photo, 
                  (gpointer)slide_show);
-  priv->zoomed = NULL;
   return FALSE;
 }
 /*
@@ -193,7 +206,7 @@ aaina_slide_show_move (ClutterBehaviour *behave,
     guint width;
     gboolean viewed;
 
-    if (!l->data)
+    if (!AAINA_IS_PHOTO (l->data))
       continue;
 
     g_object_get (G_OBJECT (l->data), 
@@ -202,10 +215,16 @@ aaina_slide_show_move (ClutterBehaviour *behave,
                   "viewed", &viewed,
                   NULL);
     if (l->data == priv->zoomed)
-      return;
+      continue;
     else if (viewed)
     {
-      g_object_set (G_OBJECT (l->data), "x", x - 1, NULL); 
+      if (x < leftmost)
+      {
+        aaina_library_remove_photo (priv->library, AAINA_PHOTO (l->data));
+        clutter_actor_destroy (CLUTTER_ACTOR (l->data));
+      }
+      else
+        g_object_set (G_OBJECT (l->data), "x", x - 1, NULL); 
     }
     else
     {

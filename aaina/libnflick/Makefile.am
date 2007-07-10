@@ -28,6 +28,12 @@ libnflick_la_SOURCES =	\
 	nflick-gft-response.c			\
 	nflick-gft-response.h			\
 	nflick-gft-response-private.h		\
+	nflick-info-response.c			\
+	nflick-info-response.h			\
+	nflick-info-response-private.h \
+	nflick-info-worker.c			\
+	nflick-info-worker.h			\
+	nflick-info-worker-private.h \
 	nflick-no-set-response.c		\
 	nflick-no-set-response.h		\
 	nflick-no-set-response-private.h	\
