@@ -19,8 +19,6 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include <GL/gl.h>
-
 #include "aaina-behave.h"
 
 #include "aaina-photo.h"

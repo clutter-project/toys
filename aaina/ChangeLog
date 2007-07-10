@@ -1,5 +1,10 @@
 2007-07-10  Neil J. Patel  <njp@o-hand.com>
 
+	* libaaina/aaina-photo.c:
+	Remove the gl.h #include, which made its way back into the file.
+
+2007-07-10  Neil J. Patel  <njp@o-hand.com>
+
 	* libaaina/aaina-photo.c: (aaina_photo_set_pixbuf),
 	(aaina_photo_set_property), (aaina_photo_get_property),
 	(aaina_photo_class_init):
