@@ -19,6 +19,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#include <GL/gl.h>
+
 #include "aaina-behave.h"
 
 #include "aaina-photo.h"
@@ -39,8 +41,6 @@ struct _AainaPhotoPrivate
   gchar        *id;
   gchar        *title;
   gchar        *author;
-  gchar        *realname;
-  gchar        *desc;
   gchar        *date;
 
   gboolean      viewed;
@@ -73,9 +73,7 @@ enum
   PROP_TITLE,
   PROP_DATE,
   PROP_AUTHOR,
-  PROP_VIEWED,
-  PROP_REALNAME,
-  PROP_DESC
+  PROP_VIEWED
 };
 
 enum
@@ -227,6 +225,7 @@ aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
 {
   AainaPhotoPrivate *priv;
   gint width, height;
+  GError *err = NULL;
     
   g_return_if_fail (AAINA_IS_PHOTO (photo));
   g_return_if_fail (GDK_IS_PIXBUF (pixbuf));
@@ -241,8 +240,13 @@ aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
   clutter_actor_set_size (priv->bg, width+20, height+20);
   clutter_actor_set_position (priv->bg, 0, 0);
   
-  clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture), pixbuf, NULL);
-  clutter_actor_set_position (priv->texture, 10, 10);
+  clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture), pixbuf, &err);
+  if (err)
+    g_warning ("Error: %s\n", err->message);
+  else
+    clutter_actor_set_position (priv->texture, 10, 10);
+
+  clutter_actor_show_all (priv->texture);
 }
 
 void
@@ -391,12 +395,6 @@ aaina_photo_set_property (GObject      *object,
     case PROP_VIEWED:
         priv->viewed = g_value_get_boolean (value);
         break;
-     case PROP_REALNAME:
-        priv->realname = g_strdup (g_value_get_string (value));
-        break;
-     case PROP_DESC:
-        priv->desc = g_strdup (g_value_get_string (value));
-        break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -434,12 +432,6 @@ aaina_photo_get_property (GObject    *object,
     case PROP_VIEWED:
       g_value_set_boolean (value, priv->viewed);
       break;
-    case PROP_REALNAME:
-      g_value_set_string (value, priv->realname);
-      break;
-    case PROP_DESC:
-      g_value_set_string (value, priv->desc);
-      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -457,7 +449,6 @@ aaina_photo_finalize (GObject *object)
 {
   G_OBJECT_CLASS (aaina_photo_parent_class)->finalize (object);
 }
-
 
 static void
 aaina_photo_class_init (AainaPhotoClass *klass)
@@ -525,24 +516,6 @@ aaina_photo_class_init (AainaPhotoClass *klass)
                          "If viewed",
                          "The photo has been view",
                          FALSE,
-                         G_PARAM_CONSTRUCT|G_PARAM_READWRITE));
-  
-  g_object_class_install_property (
-    gobject_class,
-    PROP_REALNAME,
-    g_param_spec_string ("realname",
-                         "Realname",
-                         "The authors real name",
-                         NULL,
-                         G_PARAM_CONSTRUCT|G_PARAM_READWRITE));
-
-  g_object_class_install_property (
-    gobject_class,
-    PROP_DESC,
-    g_param_spec_string ("desc",
-                         "Description",
-                         "The photos description",
-                         NULL,
                          G_PARAM_CONSTRUCT|G_PARAM_READWRITE));
 
   _photo_signals[PHOTO_ZOOMED] = 

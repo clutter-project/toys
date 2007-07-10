@@ -45,11 +45,13 @@ _load_photos (AainaLibrary *library, const gchar *directory)
     else
     {
       GdkPixbuf *pixbuf = NULL;
+      GError *err = NULL;
+
       pixbuf = gdk_pixbuf_new_from_file_at_scale (path, 
                                                   CLUTTER_STAGE_WIDTH ()/2,
                                                   CLUTTER_STAGE_HEIGHT ()/2,
                                                   TRUE,
-                                                  NULL);
+                                                  &err);
       if (pixbuf)
       {
         ClutterActor *photo = aaina_photo_new ();
@@ -57,7 +59,12 @@ _load_photos (AainaLibrary *library, const gchar *directory)
         aaina_photo_set_pixbuf (AAINA_PHOTO (photo), pixbuf);
         aaina_library_append_photo (library, AAINA_PHOTO (photo));
 
+      } else if (err)
+      {
+        g_warning ("Error: %s\n", err->message);
       }
+      else
+        ;
     }
     g_free (path);
   }

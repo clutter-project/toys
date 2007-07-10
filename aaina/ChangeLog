@@ -1,5 +1,16 @@
 2007-07-10  Neil J. Patel  <njp@o-hand.com>
 
+	* libaaina/aaina-photo.c: (aaina_photo_set_pixbuf),
+	(aaina_photo_set_property), (aaina_photo_get_property),
+	(aaina_photo_class_init):
+	Send a GError to clutter_texture_set_pixbuf.
+	Add an extra clutter_actor_show_all on texture.
+	
+	* sources/aaina-source-directory.c: (_load_photos):
+	Send an GError to gdk_pixbuf_new_from_file_at_scale.
+
+2007-07-10  Neil J. Patel  <njp@o-hand.com>
+
 	* libaaina/aaina-library.c: (aaina_library_init),
 	(aaina_library_photo_count), (aaina_library_get_photo),
 	(aaina_library_append_photo), (aaina_library_remove_photo),
