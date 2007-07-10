@@ -92,9 +92,30 @@ static gboolean
 on_info_thread_ok (AainaPhoto *photo)
 {
   NFlickWorker *worker;
+  gchar *rotation = NULL;
+  gint rot;
+  gchar *realname = NULL;
+  gchar *desc = NULL;
+
   worker = (NFlickWorker*)g_object_get_qdata (G_OBJECT (photo), worker_quark);
+    
+  nflick_info_worker_get ((NFlickInfoWorker*)worker,
+                          &rotation,
+                          &realname,
+                          &desc);
+  /* find the rotation */
+  rot = atoi (rotation);
   
-  
+  if (!realname)
+    g_object_get (G_OBJECT (photo), "author", &realname, NULL);
+  g_object_set (G_OBJECT (photo),
+                "rotation", rot,
+                "author", realname,
+                "desc", desc,
+                NULL);
+
+  g_print ("%d %s %s\n", rot, realname, desc);
+
   g_object_unref (G_OBJECT (worker));  
   return FALSE;
 }

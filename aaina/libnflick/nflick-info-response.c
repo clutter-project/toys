@@ -168,15 +168,15 @@ nflick_info_response_finalize (NFlickInfoResponse *self)
 
 void
 nflick_info_response_get (NFlickInfoResponse *self,
-                          gchar *rotation,
-                          gchar *realname,
-                          gchar *desc)
+                          gchar **rotation,
+                          gchar **realname,
+                          gchar **desc)
 {
   g_return_if_fail (NFLICK_IS_INFO_RESPONSE (self));
 
-  rotation = self->Private->rotation;
-  realname = self->Private->realname;
-  desc = self->Private->desc;
+  *rotation = self->Private->rotation;
+  *realname = self->Private->realname;
+  *desc = self->Private->desc;
 }
 
 

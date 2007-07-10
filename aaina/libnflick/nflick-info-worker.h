@@ -52,8 +52,8 @@ GType                           nflick_info_worker_get_type (void);
 NFlickInfoWorker*               nflick_info_worker_new (const gchar *photoid, gint32 width, gint32 height, const gchar *token);
 
 void
-nflick_info_worker_get (NFlickInfoResponse *self,
-                          gchar *rotation,
-                          gchar *realname,
-                          gchar *desc);
+nflick_info_worker_get (NFlickInfoWorker    *self,
+                        gchar              **rotation,
+                        gchar              **realname,
+                        gchar              **desc);
 #endif

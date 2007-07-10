@@ -168,7 +168,8 @@ thread_func (NFlickInfoWorker *self)
                                           self->Private->PhotoId);
 
         nflick_api_request_sign (get_sizes_request);
-        if (nflick_api_request_exec (get_sizes_request) != TRUE) {
+        if (nflick_api_request_exec (get_sizes_request) != TRUE) 
+        {
                 nflick_worker_set_network_error ((NFlickWorker *) self);
                 goto Error;
         }
@@ -186,6 +187,11 @@ thread_func (NFlickInfoWorker *self)
         if (nflick_worker_parse_api_response ((NFlickWorker*) self, 
                                               get_sizes_response) == FALSE)
                 goto Error;
+        
+        nflick_info_response_get ((NFlickInfoResponse*)get_sizes_response,
+                                  &self->Private->rotation,
+                                  &self->Private->realname,
+                                  &self->Private->desc);
 
         /* All ok */
         goto Done;
@@ -211,16 +217,16 @@ Done:
 }
 
 void
-nflick_info_worker_get (NFlickInfoResponse *self,
-                        gchar              *rotation,
-                        gchar              *realname,
-                        gchar              *desc)
+nflick_info_worker_get (NFlickInfoWorker    *self,
+                        gchar              **rotation,
+                        gchar              **realname,
+                        gchar              **desc)
 {
-  g_return_if_fail (NFLICK_IS_INFO_RESPONSE (self));
+  g_return_if_fail (NFLICK_IS_INFO_WORKER (self));
 
-  //rotation = self->Private->rotation;
-  //realname = self->Private->realname;
-  //desc = self->Private->desc;
+  *rotation = self->Private->rotation;
+  *realname = self->Private->realname;
+  *desc = self->Private->desc;
 }
 
 NFlickInfoWorker*               

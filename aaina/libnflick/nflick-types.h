@@ -254,7 +254,8 @@ typedef struct                  _NFlickInfoResponsePrivate NFlickInfoResponsePri
                                 (G_TYPE_CHECK_INSTANCE_TYPE ((obj), NFLICK_TYPE_INFO_RESPONSE))
 
 #define                         NFLICK_INFO_RESPONSE(obj) \
-                                (G_TYPE_CHECK_INSTANCE_CAST ((obj), NFLICK_TYPE_INFO_RESPONSE, NFlickInfoResponse)
+                                (G_TYPE_CHECK_INSTANCE_CAST ((obj),\
+                                NFLICK_TYPE_INFO_RESPONSE, NFlickInfoResponse)
 
 #define                         NFLICK_INFO_RESPONSE_GET_CLASS(obj) \
                                 (G_TYPE_INSTANCE_GET_CLASS ((obj), NFLICK_TYPE_INFO_RESPONSE, NFlickInfoResponseClass))

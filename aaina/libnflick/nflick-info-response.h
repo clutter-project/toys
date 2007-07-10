@@ -48,8 +48,8 @@ GType                           nflick_info_response_get_type (void);
   
 void
 nflick_info_response_get (NFlickInfoResponse *self,
-                          gchar *rotation,
-                          gchar *realname,
-                          gchar *desc);
+                          gchar **rotation,
+                          gchar **realname,
+                          gchar **desc);
 
 #endif

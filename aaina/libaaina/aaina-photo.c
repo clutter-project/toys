@@ -40,6 +40,8 @@ struct _AainaPhotoPrivate
   gchar        *title;
   gchar        *author;
   gchar        *date;
+  gint          rotation;
+  gchar        *desc;
 
   gboolean      viewed;
 
@@ -71,7 +73,9 @@ enum
   PROP_TITLE,
   PROP_DATE,
   PROP_AUTHOR,
-  PROP_VIEWED
+  PROP_VIEWED,
+  PROP_ROTATION,
+  PROP_DESC
 };
 
 enum
@@ -229,6 +233,13 @@ aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
   g_return_if_fail (GDK_IS_PIXBUF (pixbuf));
   priv = photo->priv;
 
+  if (priv->rotation)
+  {
+    GdkPixbuf *old = pixbuf;
+    pixbuf = gdk_pixbuf_rotate_simple (old, 360-priv->rotation);
+    g_object_unref (G_OBJECT (old));
+  }
+
   width = gdk_pixbuf_get_width (pixbuf);
   height = gdk_pixbuf_get_height (pixbuf);
 
@@ -243,6 +254,31 @@ aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
     g_warning ("%s\n", err->message);
   clutter_actor_set_position (priv->texture, 10, 10);
   clutter_actor_show (priv->texture);
+}
+
+static void
+update_rotation (AainaPhoto *photo)
+{
+  AainaPhotoPrivate *priv;
+  GdkPixbuf *old;
+  GdkPixbuf *new;
+
+  g_return_if_fail (AAINA_IS_PHOTO (photo));
+  priv = photo->priv;
+
+  old = clutter_texture_get_pixbuf (CLUTTER_TEXTURE (priv->texture));
+
+  if (!old)
+  {
+    g_print ("No pixbuf\n");
+    return;
+  }
+  new = gdk_pixbuf_rotate_simple (old, priv->rotation);
+
+  aaina_photo_set_pixbuf (photo, new);
+
+  if (G_IS_OBJECT (old))
+    g_object_unref (G_OBJECT (old));
 }
 
 void
@@ -391,6 +427,12 @@ aaina_photo_set_property (GObject      *object,
     case PROP_VIEWED:
         priv->viewed = g_value_get_boolean (value);
         break;
+    case PROP_ROTATION:
+        priv->rotation = g_value_get_int (value);
+        break;
+    case PROP_DESC:
+        priv->desc = g_strdup (g_value_get_string (value));
+        break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -427,6 +469,12 @@ aaina_photo_get_property (GObject    *object,
       break;
     case PROP_VIEWED:
       g_value_set_boolean (value, priv->viewed);
+      break;
+    case PROP_ROTATION:
+      g_value_set_int (value, priv->rotation);
+      break;
+    case PROP_DESC:
+      g_value_set_string (value, priv->desc);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -512,6 +560,24 @@ aaina_photo_class_init (AainaPhotoClass *klass)
                          "If viewed",
                          "The photo has been view",
                          FALSE,
+                         G_PARAM_CONSTRUCT|G_PARAM_READWRITE));
+
+  g_object_class_install_property (
+    gobject_class,
+    PROP_ROTATION,
+    g_param_spec_int ("rotation",
+                      "Rotation",
+                      "The photos rotation",
+                      0, 360, 0,
+                      G_PARAM_CONSTRUCT|G_PARAM_READWRITE));
+
+ g_object_class_install_property (
+    gobject_class,
+    PROP_DESC,
+    g_param_spec_string ("desc",
+                         "Description",
+                         "The photos description",
+                         NULL,
                          G_PARAM_CONSTRUCT|G_PARAM_READWRITE));
 
   _photo_signals[PHOTO_ZOOMED] = 

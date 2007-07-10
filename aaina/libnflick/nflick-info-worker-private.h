@@ -30,10 +30,9 @@ struct                          _NFlickInfoWorkerPrivate
         gint32 Width;
         gint32 Height;
         GdkPixbuf *Pixbuf;
-
-        char *rotation;
-        char *realname;
-        char *desc;
+        gchar *rotation;
+        gchar *realname;
+        gchar *desc;
 };
 
 enum 

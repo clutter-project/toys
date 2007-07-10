@@ -1,6 +1,27 @@
 2007-07-10  Neil J. Patel  <njp@o-hand.com>
 
 	* libaaina/aaina-photo.c: (aaina_photo_set_pixbuf),
+	(update_rotation), (aaina_photo_set_property),
+	(aaina_photo_get_property), (aaina_photo_class_init):
+	Added rotation and description properties.
+	Honours rotation property on new pixbufs.
+	
+	* libnflick/nflick-info-response.c: (nflick_info_response_get):
+	* libnflick/nflick-info-response.h:
+	* libnflick/nflick-info-worker-private.h:
+	* libnflick/nflick-info-worker.c: (thread_func),
+	(nflick_info_worker_get):
+	* libnflick/nflick-info-worker.h:
+	* libnflick/nflick-types.h:
+	Added *_get functions to retrieve a photos rotation/authors real name and
+	description.
+
+	* sources/aaina-source-flickr.c: (on_info_thread_ok):
+	Gets the rotation/real name/description info and updates the photo with it.
+
+2007-07-10  Neil J. Patel  <njp@o-hand.com>
+
+	* libaaina/aaina-photo.c: (aaina_photo_set_pixbuf),
 	(aaina_photo_init):
 	Do clutter actor_show instead of clutter_actor_show_all.
 	
