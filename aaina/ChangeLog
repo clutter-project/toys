@@ -1,5 +1,14 @@
 2007-07-10  Neil J. Patel  <njp@o-hand.com>
 
+	* libaaina/aaina-photo.c: (aaina_photo_set_pixbuf),
+	(aaina_photo_init):
+	Do clutter actor_show instead of clutter_actor_show_all.
+	
+	* src/aaina-slide-show.c: (restore_photo):
+	Check priv->zoomed is a AainaPhoto before making calls.
+
+2007-07-10  Neil J. Patel  <njp@o-hand.com>
+
 	* libaaina/aaina-photo.c:
 	Remove the gl.h #include, which made its way back into the file.
 

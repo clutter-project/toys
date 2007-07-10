@@ -85,6 +85,9 @@ restore_photo (AainaSlideShow *slide_show)
   if (rand == NULL)
     rand = g_rand_new ();
 
+  if (!AAINA_IS_PHOTO (priv->zoomed))
+    return FALSE;
+
   aaina_photo_set_viewed (priv->zoomed, TRUE);
   aaina_photo_restore (priv->zoomed);
 

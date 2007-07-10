@@ -240,11 +240,9 @@ aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
   
   clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture), pixbuf, &err);
   if (err)
-    g_warning ("Error: %s\n", err->message);
-  else
-    clutter_actor_set_position (priv->texture, 10, 10);
-
-  clutter_actor_show_all (priv->texture);
+    g_warning ("%s\n", err->message);
+  clutter_actor_set_position (priv->texture, 10, 10);
+  clutter_actor_show (priv->texture);
 }
 
 void
@@ -560,6 +558,7 @@ aaina_photo_init (AainaPhoto *photo)
 
   priv->bg = clutter_rectangle_new_with_color (&white);
   clutter_group_add (CLUTTER_GROUP (photo), priv->bg);
+  clutter_actor_show (priv->bg);
     
   priv->texture = clutter_texture_new ();
   clutter_actor_set_size (priv->texture, width, height);
@@ -568,8 +567,9 @@ aaina_photo_init (AainaPhoto *photo)
 
   priv->dim = clutter_rectangle_new_with_color (&black);
   clutter_group_add (CLUTTER_GROUP (photo), priv->dim);
+  clutter_actor_show (priv->dim);
 
-  clutter_actor_show_all (CLUTTER_ACTOR (photo));
+  clutter_actor_show (CLUTTER_ACTOR (photo));
 
   priv->zoom_time = clutter_timeline_new (60, 30);
   alpha = clutter_alpha_new_full (priv->zoom_time,
