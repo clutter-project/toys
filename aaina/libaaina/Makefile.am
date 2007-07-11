@@ -19,6 +19,8 @@ libaaina_la_SOURCES =	\
 	aaina-photo.h					\
 	aaina-source.c					\
 	aaina-source.h					\
+	clutter-texture-label.c	\
+	clutter-texture-label.h \
 	eggsequence.c					\
 	eggsequence.h
 

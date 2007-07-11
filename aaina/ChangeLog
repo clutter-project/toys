@@ -1,5 +1,34 @@
 2007-07-11  Neil J. Patel  <njp@o-hand.com>
 
+	* libaaina/Makefile.am:
+	* libaaina/aaina-photo.c: (aaina_photo_alpha_restore),
+	(aaina_photo_set_pixbuf), (aaina_photo_zoom),
+	(aaina_photo_alpha_zoom), (aaina_photo_init):
+	Added title and author display on zoom.
+
+	* libaaina/clutter-texture-label.c:
+	(clutter_texture_label_make_pixbuf), (timeline_cb),
+	(clutter_texture_label_show), (clutter_texture_label_hide),
+	(clutter_texture_label_set_property),
+	(clutter_texture_label_get_property),
+	(clutter_texture_label_dispose), (clutter_texture_label_finalize),
+	(clutter_texture_label_class_init), (clutter_texture_label_init),
+	(clutter_texture_label_new_with_text), (clutter_texture_label_new),
+	(clutter_texture_label_get_text), (clutter_texture_label_set_text),
+	(clutter_texture_label_get_font_name),
+	(clutter_texture_label_set_font_name),
+	(clutter_texture_label_set_text_extents),
+	(clutter_texture_label_get_text_extents),
+	(clutter_texture_label_set_color),
+	(clutter_texture_label_get_color):
+	* libaaina/clutter-texture-label.h:
+	Imported Matthews crazy label for use with the zoomed photo.
+
+	* src/main.c: (main):
+	Remove stray printf.
+
+2007-07-11  Neil J. Patel  <njp@o-hand.com>
+
 	* src/main.c: (main), (on_key_release_event):
 	Quit gracefully when Esc is pressed.
 

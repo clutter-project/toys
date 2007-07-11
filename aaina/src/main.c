@@ -130,8 +130,6 @@ main (int argc, char **argv)
       return EXIT_FAILURE;
     }
 
-  g_print ("photo count: %d\n", aaina_library_photo_count (library));
-
   show = aaina_slide_show_get_default ();
   g_object_set (G_OBJECT (show), "library", library, NULL);
 
