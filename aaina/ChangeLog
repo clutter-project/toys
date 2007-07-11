@@ -1,3 +1,22 @@
+2007-07-11  Neil J. Patel  <njp@o-hand.com>
+
+	* libaaina/aaina-library.c: (aaina_library_init),
+	(aaina_library_get_pending), (aaina_library_set_pending),
+	(aaina_library_is_full), (aaina_library_set_max),
+	(aaina_library_photo_count), (aaina_library_append_photo),
+	(aaina_library_remove_photo):
+	* libaaina/aaina-library.h:
+	Added support for a max_photos property and a method to determine if there
+	are photos waiting to be added.
+
+	* sources/aaina-source-flickr.c: (manage_queue),
+	(on_pixbuf_thread_ok), (get_photos):
+	Use new functions to determine whether it is okay to add photos.
+
+	* src/aaina-slide-show.c: (aaina_slide_show_move):
+	Only delete a photo from the stream if there are photos waiting to be
+	input into the library.
+
 2007-07-10  Neil J. Patel  <njp@o-hand.com>
 
 	* libaaina/aaina-photo.c: (aaina_photo_set_pixbuf),

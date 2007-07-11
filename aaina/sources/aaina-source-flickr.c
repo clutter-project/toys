@@ -135,9 +135,13 @@ manage_queue (AainaSourceFlickr *source)
     g_timeout_add (100, (GSourceFunc)get_pixbuf, (gpointer)source);
 
     priv->running = TRUE;
+    aaina_library_set_pending (priv->library, TRUE);
   }
   else
+  {
     priv->running = FALSE;
+    aaina_library_set_pending (priv->library, FALSE);
+  }
 
 }
 
@@ -180,9 +184,11 @@ add_to_library (AainaSourceFlickr *source)
   g_return_val_if_fail (AAINA_IS_SOURCE (source), FALSE);
   priv = source->priv;
 
-  if (aaina_library_photo_count (priv->library) >= MAX_PHOTOS)
+  if (aaina_library_is_full (priv->library))
+  {
+    aaina_library_set_pending (priv->library, TRUE);
     return TRUE;
-
+  }
   photo = AAINA_PHOTO (g_queue_pop_head (priv->add_queue));
 
   if (photo)
@@ -192,6 +198,7 @@ add_to_library (AainaSourceFlickr *source)
   }
   else
   {
+    aaina_library_set_pending (priv->library, FALSE);
     priv->add_running = FALSE;
     return FALSE;
   }
@@ -213,8 +220,7 @@ on_pixbuf_thread_ok (AainaSourceFlickr *source)
   {
     aaina_photo_set_pixbuf (priv->current, pixbuf);
 
-    if (priv->add_running 
-          || aaina_library_photo_count (priv->library) >= MAX_PHOTOS)
+    if (priv->add_running || aaina_library_is_full (priv->library))
     {
       g_queue_push_tail (priv->add_queue, (gpointer)priv->current);
 
@@ -222,6 +228,7 @@ on_pixbuf_thread_ok (AainaSourceFlickr *source)
       {
         g_timeout_add (5000, (GSourceFunc)add_to_library, (gpointer)source);
         priv->add_running = TRUE;
+        aaina_library_set_pending (priv->library, TRUE);
       }
     }
     else
@@ -380,8 +387,6 @@ get_photos (AainaSourceFlickr *source)
   if (G_IS_OBJECT (source->priv->worker))
     g_object_unref (G_OBJECT (source->priv->worker));
 
-  if (source->priv->worker)
-    g_object_unref (G_OBJECT (source->priv->worker));
   source->priv->worker = worker;
   
   nflick_worker_set_custom_data (worker, source);

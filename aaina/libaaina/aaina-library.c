@@ -34,6 +34,9 @@ struct _AainaLibraryPrivate
 	gpointer         	sort_data;
 	EggSequence     	*photos;
   GList             *list;
+  guint              size;
+  guint              max_photos;
+  gboolean           pending;
 };
 
 static void
@@ -128,6 +131,9 @@ aaina_library_init (AainaLibrary *self)
 
 	priv->photos = egg_sequence_new (NULL);
   priv->list = NULL;
+  priv->size = 0;
+  priv->max_photos = 100;
+  priv->pending = FALSE;
 }
 
 static gboolean 
@@ -144,6 +150,55 @@ check_filter (AainaLibrary *library, EggSequenceIter *iter)
 	return res;
 }
 
+gboolean
+aaina_library_get_pending (AainaLibrary *library)
+{
+  AainaLibraryPrivate *priv;
+
+  g_return_val_if_fail (AAINA_IS_LIBRARY (library), FALSE);
+  priv = LIBRARY_PRIVATE (library);
+
+  return priv->pending;
+}
+
+void
+aaina_library_set_pending (AainaLibrary *library, gboolean pending)
+{
+  AainaLibraryPrivate *priv;
+
+  g_return_if_fail (AAINA_IS_LIBRARY (library));
+  priv = LIBRARY_PRIVATE (library);
+
+  priv->pending = pending;
+}
+
+gboolean
+aaina_library_is_full (AainaLibrary *library)
+{
+  AainaLibraryPrivate *priv;
+
+  g_return_val_if_fail (AAINA_IS_LIBRARY (library), FALSE);
+  priv = LIBRARY_PRIVATE (library);
+
+  if (priv->size >= priv->max_photos)
+  {
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+void
+aaina_library_set_max (AainaLibrary *library, gint max_photos)
+{
+  AainaLibraryPrivate *priv;
+
+  g_return_if_fail (AAINA_IS_LIBRARY (library));
+  priv = LIBRARY_PRIVATE (library);
+
+  priv->max_photos = max_photos;
+}
+  
 guint
 aaina_library_photo_count (AainaLibrary *library)
 {
@@ -151,6 +206,7 @@ aaina_library_photo_count (AainaLibrary *library)
 	EggSequenceIter     *iter;
 	gint                 n = 0;
 
+  return priv->size;
   return g_list_length (priv->list);
 
 	if (priv->filter == NULL)
@@ -236,6 +292,7 @@ aaina_library_append_photo (AainaLibrary *library, AainaPhoto *photo)
 		iter = egg_sequence_append (priv->photos, (gpointer)photo);
   */
 	priv->list = g_list_append (priv->list, photo);
+  priv->size++;
   g_signal_emit (library, _library_signals[PHOTO_ADDED], 0, photo);
 }
 
@@ -245,6 +302,7 @@ aaina_library_remove_photo (AainaLibrary *library, const AainaPhoto *photo)
   AainaLibraryPrivate *priv = LIBRARY_PRIVATE(library);
 
   priv->list = g_list_remove (priv->list, (gconstpointer)photo);
+  priv->size--;
 }
 
 

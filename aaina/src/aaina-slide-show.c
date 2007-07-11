@@ -223,8 +223,20 @@ aaina_slide_show_move (ClutterBehaviour *behave,
     {
       if (x < leftmost)
       {
-        aaina_library_remove_photo (priv->library, AAINA_PHOTO (l->data));
-        clutter_actor_destroy (CLUTTER_ACTOR (l->data));
+        if (aaina_library_get_pending (priv->library))
+        {
+          aaina_library_remove_photo (priv->library, AAINA_PHOTO (l->data));
+          clutter_actor_destroy (CLUTTER_ACTOR (l->data));
+          l->data = NULL;
+          g_print ("Deleteing\n");
+        }
+        else
+        {
+          aaina_photo_set_viewed (AAINA_PHOTO (l->data), FALSE);
+          on_photo_added (NULL, l->data, slide_show);
+          l->data = NULL;
+          g_print ("Re-adding\n");
+        }
       }
       else
         g_object_set (G_OBJECT (l->data), "x", x - 1, NULL); 

@@ -96,6 +96,16 @@ aaina_library_foreach (AainaLibrary      *library,
 		      AainaForeachRowFunc   func,
 		      gpointer           data);
 
+gboolean
+aaina_library_get_pending (AainaLibrary *library);
+void
+aaina_library_set_pending (AainaLibrary *library, gboolean pending);
+
+gboolean
+aaina_library_is_full (AainaLibrary *library);
+void
+aaina_library_set_max (AainaLibrary *library, gint max_photos);
+
 G_END_DECLS
 
 #endif
