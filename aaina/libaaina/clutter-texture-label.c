@@ -66,6 +66,8 @@ struct _ClutterTextureLabelPrivate
   gint                  detail;
   gint                  detail_direction;
   ClutterTimeline      *timeline;
+
+  gboolean              visible;
 };
 
 static void
@@ -85,8 +87,8 @@ clutter_texture_label_make_pixbuf (ClutterTextureLabel *label)
 
   if (priv->layout == NULL || priv->desc == NULL || priv->text == NULL)
     {
-      //g_debug("*** FAIL: layout: %p , desc: %p, text %p ***",
-	    //  priv->layout, priv->desc, priv->text);
+      g_debug("*** FAIL: layout: %p , desc: %p, text %p ***",
+	      priv->layout, priv->desc, priv->text);
       return;
     }
 
@@ -105,7 +107,7 @@ clutter_texture_label_make_pixbuf (ClutterTextureLabel *label)
 
   if (w == 0 || h == 0)
     {
-      //g_debug("aborting w:%i , h:%i", w, h);
+      g_debug("aborting w:%i , h:%i", w, h);
       return;
     }
 
@@ -154,14 +156,15 @@ clutter_texture_label_make_pixbuf (ClutterTextureLabel *label)
 
   g_free (ft_bitmap.buffer);
 
-  /*g_debug("Calling set_pixbuf with text : '%s' , pixb %ix%i"
+  /*
+  g_debug("Calling set_pixbuf with text : '%s' , pixb %ix%i"
 	  " rendered with color %i,%i,%i,%i", 
 	  priv->text, w, h, 
 	  priv->fgcol.red,
 	  priv->fgcol.green,
 	  priv->fgcol.blue,
 	  priv->fgcol.alpha);
-*/
+  */
   clutter_texture_set_pixbuf (CLUTTER_TEXTURE (label), pixbuf, NULL);
   
   /* Texture has the ref now */
@@ -186,6 +189,21 @@ timeline_cb (ClutterTimeline     *timeline,
 }
 
 static void
+timeline_completed (ClutterTimeline *timeline,
+                    ClutterActor    *label)
+{
+  ClutterTextureLabelPrivate *priv;
+  
+  g_return_if_fail (CLUTTER_IS_TEXTURE_LABEL (label));
+  priv = CLUTTER_TEXTURE_LABEL (label)->priv;
+
+  if (!priv->visible)
+  {
+    CLUTTER_ACTOR_CLASS (clutter_texture_label_parent_class)->hide (label);
+  }
+}
+
+static void
 clutter_texture_label_show (ClutterActor *actor)
 {
   ClutterTextureLabel        *label;
@@ -196,6 +214,7 @@ clutter_texture_label_show (ClutterActor *actor)
 
   priv->detail = 512;
   priv->detail_direction = 1;
+  priv->visible = TRUE;
 
   clutter_timeline_start (priv->timeline);
 
@@ -213,11 +232,12 @@ clutter_texture_label_hide (ClutterActor *actor)
 
   priv->detail = 1;
   priv->detail_direction = -1;
+  priv->visible = FALSE;
 
   clutter_timeline_rewind (priv->timeline);
   clutter_timeline_start (priv->timeline);
-
-  // CLUTTER_ACTOR_CLASS (clutter_texture_label_parent_class)->hide (actor);
+  
+  //CLUTTER_ACTOR_CLASS (clutter_texture_label_parent_class)->hide (actor);
 }
 
 static void
@@ -402,6 +422,12 @@ clutter_texture_label_init (ClutterTextureLabel *self)
 		    "new-frame", 
 		    G_CALLBACK (timeline_cb), 
 		    self);
+
+  g_signal_connect (priv->timeline,
+        "completed",
+        G_CALLBACK (timeline_completed),
+        self);
+
 #if 0
   g_signal_connect (self,
 		    "show",

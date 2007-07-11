@@ -30,6 +30,8 @@ G_DEFINE_TYPE (AainaPhoto, aaina_photo, CLUTTER_TYPE_GROUP);
 #define AAINA_PHOTO_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj),\
 	AAINA_TYPE_PHOTO, \
 	AainaPhotoPrivate))
+
+#define DIV 9
 	
 static GdkPixbuf	*default_pic = NULL;
 
@@ -147,6 +149,9 @@ aaina_photo_restore (AainaPhoto *photo)
   priv->temp_x = clutter_actor_get_x (CLUTTER_ACTOR (photo));
   priv->temp_y = clutter_actor_get_y (CLUTTER_ACTOR (photo));
 
+  clutter_actor_hide (priv->title_text);
+  clutter_actor_hide (priv->desc_text);
+
   clutter_timeline_start (priv->restore_time);
 }
 
@@ -195,12 +200,12 @@ aaina_photo_alpha_restore (ClutterBehaviour *behave,
  
   /* This is the title y */
   height += 20;
-  new_y = ((height/10) - ((height/10) * factor)) * -1;
+  new_y = ((height/DIV) - ((height/DIV) * factor)) * -1;
   g_object_set (priv->title_bg, "y", new_y, NULL);
   clutter_actor_set_position (priv->title_text, 20, new_y+5);
   clutter_actor_set_opacity (priv->title_bg, 255 - (255*factor));
   
-  new_y = (height) - ((height/10)*factor);
+  new_y = (height) - ((height/DIV)*factor);
   g_object_set (priv->desc_bg, "y", new_y, NULL);
   clutter_actor_set_position (priv->desc_text, 20, new_y);
   clutter_actor_set_opacity (priv->desc_bg, 255 - (255 *factor));
@@ -209,8 +214,6 @@ aaina_photo_alpha_restore (ClutterBehaviour *behave,
   {
     clutter_actor_set_opacity (priv->title_text, 0);
     clutter_actor_set_opacity (priv->desc_text, 0);
-    clutter_actor_hide (priv->title_text);
-    clutter_actor_hide (priv->desc_text);
   }
 
   if (factor == 1)
@@ -277,18 +280,18 @@ aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
   h = height + 20;
 
   /* Set up the title & desc */
-  clutter_actor_set_size (priv->title_bg, w, h/10);
+  clutter_actor_set_size (priv->title_bg, w, h/DIV);
   clutter_actor_set_position (priv->title_bg, 0, 0);
 
-  clutter_actor_set_size (priv->title_text, w, h/2);
+  //clutter_actor_set_size (priv->title_text, w, h/2);
   clutter_actor_set_position (priv->title_text, 20, 0);
   clutter_actor_set_clip (priv->title_text, 0, 0, w, CLUTTER_STAGE_HEIGHT ());
 
-  clutter_actor_set_size (priv->desc_bg, w, h/10);
-  clutter_actor_set_position (priv->desc_bg, 0, (h - (h/10))+10);
+  clutter_actor_set_size (priv->desc_bg, w, h/DIV);
+  clutter_actor_set_position (priv->desc_bg, 0, (h - (h/9))+10);
 
-  clutter_actor_set_size (priv->desc_text, w, h/2);
-  clutter_actor_set_position (priv->desc_text, 20, (h - (h/10))-10);
+  //clutter_actor_set_size (priv->desc_text, w, h/2);
+  clutter_actor_set_position (priv->desc_text, 20, (h - (h/DIV))-10);
 
   /* The 'dimming' back rectangle */
   clutter_actor_set_size (priv->dim, width+20, height+20);
@@ -340,20 +343,14 @@ aaina_photo_zoom (AainaPhoto *photo)
 
   if (priv->title)
   {
-    clutter_label_set_text (CLUTTER_LABEL (priv->title_text), 
+    clutter_texture_label_set_text (CLUTTER_TEXTURE_LABEL (priv->title_text), 
                             priv->title);
-    clutter_actor_set_size (priv->title_text,
-                            clutter_actor_get_width (priv->texture),
-                            clutter_actor_get_height (priv->texture)/10);
   }
   if (priv->author)
   {
-    clutter_label_set_text (CLUTTER_LABEL (priv->desc_text),
+    clutter_texture_label_set_text (CLUTTER_TEXTURE_LABEL (priv->desc_text),
                             priv->author);
-    clutter_actor_set_size (priv->desc_text,
-                            clutter_actor_get_width (priv->texture),
-                            clutter_actor_get_height (priv->texture)/10);
-  }
+   }
   clutter_actor_hide (priv->title_text);
   clutter_actor_hide (priv->desc_text);
 
@@ -408,13 +405,13 @@ aaina_photo_alpha_zoom (ClutterBehaviour *behave,
 
   /* This is the title y */
   height += 20;
-  new_y = (height/10) * factor * -1;
+  new_y = (height/DIV) * factor * -1;
   g_object_set (priv->title_bg, "y", new_y, NULL);
-  //g_object_set (priv->title_text, "y", (-1*(height/10))*factor, NULL);
+  //g_object_set (priv->title_text, "y", (-1*(height/DIV))*factor, NULL);
   clutter_actor_set_position (priv->title_text, 20, new_y+5);
   clutter_actor_set_opacity (priv->title_bg, 255*factor);
   
-  new_y = (height- (height/10)) + ((height/10)*factor);
+  new_y = (height- (height/DIV)) + ((height/DIV)*factor);
   g_object_set (priv->desc_bg, "y", new_y, NULL);
   //g_object_set (priv->desc_text, "y", new_y, NULL);
   clutter_actor_set_position (priv->desc_text, 20, new_y);
@@ -716,7 +713,7 @@ aaina_photo_init (AainaPhoto *photo)
 
   /* The font */
   font_size = height/12;
-  title_font = g_strdup_printf ("Coolvetica %d", font_size);
+  title_font = g_strdup_printf ("Coolvetica %d", font_size-4);
   desc_font = g_strdup_printf ("Coolvetica %d", font_size-4); 
 
   /* Add the title and description actors */
@@ -725,13 +722,14 @@ aaina_photo_init (AainaPhoto *photo)
   clutter_group_add (CLUTTER_GROUP (photo), priv->title_bg);
   clutter_actor_show (priv->title_bg);
   
-  /*
+  
   priv->title_text = clutter_texture_label_new_with_text (title_font, "Title");
   clutter_texture_label_set_color (CLUTTER_TEXTURE_LABEL (priv->title_text),
-                                   &black);
-  */
+                                   &title);
+  /*
   priv->title_text = clutter_label_new_full (title_font, " ", &title);
   clutter_label_set_line_wrap (CLUTTER_LABEL (priv->title_text), FALSE);
+  */
   clutter_group_add (CLUTTER_GROUP (photo), priv->title_text);
 
   priv->desc_bg = clutter_rectangle_new_with_color (&white);
@@ -739,15 +737,16 @@ aaina_photo_init (AainaPhoto *photo)
   clutter_group_add (CLUTTER_GROUP (photo), priv->desc_bg);
   clutter_actor_show (priv->desc_bg);
 
-  /*
+  
   priv->desc_text = clutter_texture_label_new_with_text (desc_font, "Desc");
   clutter_texture_label_set_color (CLUTTER_TEXTURE_LABEL (priv->desc_text),
-                                   &black);
-  */
+                                   &desc);
+  /*
   priv->desc_text = clutter_label_new_full (desc_font, " ", &desc);
   clutter_label_set_line_wrap (CLUTTER_LABEL (priv->desc_text), FALSE);
   clutter_label_set_alignment (CLUTTER_LABEL (priv->desc_text),
                                PANGO_ALIGN_CENTER);
+  */
   clutter_group_add (CLUTTER_GROUP (photo), priv->desc_text);
 
   priv->bg = clutter_rectangle_new_with_color (&white);
