@@ -70,6 +70,13 @@ static GOptionEntry entries[] =
     NULL
   }
 };
+  
+static void on_key_release_event (ClutterStage *stage, 
+                                  ClutterEvent *event,
+                                  gpointer      null);
+
+
+
 
 int 
 main (int argc, char **argv)
@@ -132,7 +139,25 @@ main (int argc, char **argv)
 
   /*clutter_actor_set_scale (stage, 0.25, 0.25);*/
 
+  g_signal_connect (G_OBJECT (stage), "key-release-event",
+                    G_CALLBACK (on_key_release_event), NULL);
+
   clutter_main ();
 
   return EXIT_SUCCESS;
 }
+
+static void
+on_key_release_event (ClutterStage *stage, 
+                      ClutterEvent *event,
+                      gpointer      null)
+{
+  switch (clutter_key_event_symbol ((ClutterKeyEvent*)event))
+  {
+    case CLUTTER_Escape:
+      clutter_main_quit ();
+      break;
+    default:
+      break;
+  }
+} 

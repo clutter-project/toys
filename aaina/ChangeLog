@@ -1,5 +1,10 @@
 2007-07-11  Neil J. Patel  <njp@o-hand.com>
 
+	* src/main.c: (main), (on_key_release_event):
+	Quit gracefully when Esc is pressed.
+
+2007-07-11  Neil J. Patel  <njp@o-hand.com>
+
 	* sources/aaina-source-flickr.c: (on_pixbuf_thread_ok),
 	(on_thread_ok):
 	Get rid of stray printfs.
