@@ -234,7 +234,12 @@ process_directory (const gchar * name,
  	  make_img_item (stage, fname);
  	  clutter_actor_raise_top (notice);
 	}
-      else if (g_str_has_suffix (fname, ".ogg"))
+      else if (g_str_has_suffix (fname, ".flv")
+	       || g_str_has_suffix (fname, ".avi")
+	       || g_str_has_suffix (fname, ".mpg")
+	       || g_str_has_suffix (fname, ".mp4")
+	       || g_str_has_suffix (fname, ".mov")
+	       || g_str_has_suffix (fname, ".ogg"))
 	{
 	  make_vid_item (stage, fname);
 	  clutter_actor_raise_top (notice);
