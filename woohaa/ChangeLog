@@ -1,5 +1,15 @@
 2007-07-11  Matthew Allum  <mallum@openedhand.com>
 
+	* data/arrow-next.svg:
+	* data/arrow-prev.svg:
+	* wh-screen-video.c:
+	* wh-slider-menu.c:
+	* wh-video-view.c:
+	Improve look of arrows (a little).
+	Change keys so enter also pauses, q exits video playback
+
+2007-07-11  Matthew Allum  <mallum@openedhand.com>
+
 	* wh-screen-video.c:
 	* wh-slider-menu.c: 
 	* wh-video-view.c:

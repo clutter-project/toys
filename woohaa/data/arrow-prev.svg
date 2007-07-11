@@ -8,14 +8,14 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="40"
-   height="80"
+   width="480"
+   height="960"
    id="svg3200"
    sodipodi:version="0.32"
    inkscape:version="0.45"
    version="1.0"
-   sodipodi:docbase="/tmp"
-   sodipodi:docname="arrow-next.svg"
+   sodipodi:docbase="/home/mallum/Projects/clutter-trunk/toys/woohaa/data"
+   sodipodi:docname="arrow-prev.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
    sodipodi:modified="true">
   <defs
@@ -27,15 +27,15 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.1917808"
-     inkscape:cx="34"
-     inkscape:cy="36.5"
+     inkscape:zoom="0.5921875"
+     inkscape:cx="160"
+     inkscape:cy="671.24011"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:document-units="px"
      inkscape:grid-bbox="true"
-     width="40px"
-     height="80px"
+     width="480px"
+     height="960px"
      inkscape:window-width="772"
      inkscape:window-height="581"
      inkscape:window-x="10"
@@ -56,8 +56,8 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer">
     <path
-       style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#cccccc;stroke-width:15;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="M 31.733747,70.041194 L 7.989332,40.065885 L 32.010668,9.9588057"
+       style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#cccccc;stroke-width:180;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 380.80497,840.49434 L 95.871989,480.79062 L 384.12801,119.50566"
        id="path3210" />
   </g>
 </svg>

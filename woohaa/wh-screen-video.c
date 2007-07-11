@@ -262,7 +262,10 @@ video_input_cb (ClutterStage *stage,
 
       switch (clutter_key_event_symbol (kev))
 	{
+	case CLUTTER_Return:
 	case CLUTTER_p:
+	  if (clutter_media_get_playing (CLUTTER_MEDIA(priv->video)))
+	    video_show_controls (screen);	    
 	  clutter_media_set_playing 
 	    (CLUTTER_MEDIA(priv->video),
 		  !clutter_media_get_playing (CLUTTER_MEDIA(priv->video)));
@@ -289,20 +292,12 @@ video_input_cb (ClutterStage *stage,
 	    (CLUTTER_MEDIA(priv->video),
 	     clutter_media_get_volume (CLUTTER_MEDIA(priv->video)) - 0.1);
 	  break;
-	case CLUTTER_Return:
-	  video_show_controls (screen);
-	  if (!priv->video_playing)
-	    break;
-	  break;
 	case CLUTTER_e:
 	  if (!clutter_timeline_is_playing (priv->cheese_timeline))
 	    clutter_timeline_start (priv->cheese_timeline);
 	  break;
-	case CLUTTER_Escape:
-	  wh_screen_video_deactivate (screen);
-	  break;
 	case CLUTTER_q:
-	  clutter_main_quit();
+	  wh_screen_video_deactivate (screen);
 	  break;
 	default:
 	  break;

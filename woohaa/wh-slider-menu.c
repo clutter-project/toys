@@ -191,13 +191,13 @@ wh_slider_menu_request_coords (ClutterActor    *self,
       clutter_actor_set_parent (priv->bg, self);
       clutter_actor_show (priv->bg);
 
-      priv->next = util_actor_from_file (PKGDATADIR "/arrow-next.svg", -1, -1);
-      clutter_actor_set_size (priv->next, h/8, h/4);
+      priv->next = util_actor_from_file (PKGDATADIR "/arrow-next.svg", h/8, h/4);
+      // clutter_actor_set_size (priv->next, h/8, h/4);
       clutter_actor_set_parent (priv->next, CLUTTER_ACTOR (self));
       clutter_actor_show (priv->next);
 
-      priv->prev = util_actor_from_file (PKGDATADIR "/arrow-prev.svg", -1, -1);
-      clutter_actor_set_size (priv->prev, h/8, h/4);
+      priv->prev = util_actor_from_file (PKGDATADIR "/arrow-prev.svg", h/8, h/4);
+      // clutter_actor_set_size (priv->prev, h/8, h/4);
       clutter_actor_set_parent (priv->prev, CLUTTER_ACTOR (self));
       clutter_actor_show (priv->prev);
     }

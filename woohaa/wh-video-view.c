@@ -277,10 +277,10 @@ ensure_layout (WHVideoView *view,
 						 width, priv->row_height);
 	  clutter_actor_set_parent (priv->selector, CLUTTER_ACTOR(view));
 
-	  priv->up = util_actor_from_file (PKGDATADIR "/arrow-up.svg", -1, -1);
+	  priv->up = util_actor_from_file (PKGDATADIR "/arrow-up.svg", priv->row_height/4, priv->row_height/8);
 	  clutter_actor_set_parent (priv->up, CLUTTER_ACTOR (view));
 
-	  priv->down = util_actor_from_file (PKGDATADIR "/arrow-down.svg", -1, -1);
+	  priv->down = util_actor_from_file (PKGDATADIR "/arrow-down.svg", priv->row_height/4, priv->row_height/8);
 	  clutter_actor_set_parent (priv->down, CLUTTER_ACTOR (view));
 
 	  priv->play = util_actor_from_file (PKGDATADIR "/play.svg", -1, -1);
@@ -291,13 +291,17 @@ ensure_layout (WHVideoView *view,
       clutter_actor_set_size (priv->selector, width, priv->row_height);
       clutter_actor_set_position (priv->selector, 0, 0);  
 
+      /*
       clutter_actor_set_size (priv->up, 
 			      priv->row_height/4, priv->row_height/8);
+      */
       clutter_actor_set_position (priv->up, 
 				  width - priv->row_height/2, 
 				  priv->row_height/8);  
+      /*
       clutter_actor_set_size (priv->down, 
 			      priv->row_height/4, priv->row_height/8);
+      */
       clutter_actor_set_position (priv->down, 
 				  width - priv->row_height/2, 
 				  priv->row_height - priv->row_height/4);  
