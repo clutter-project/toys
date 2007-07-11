@@ -183,6 +183,9 @@ wh_slider_menu_request_coords (ClutterActor    *self,
 
       priv->bg = util_actor_from_file (PKGDATADIR "/header.svg", w, h);
 
+      if (priv->bg == NULL)
+	g_warning ("Unable to load " PKGDATADIR "/header.svg");
+
       clutter_actor_set_size (priv->bg, w, h);
       clutter_actor_set_position (priv->bg, w/20, 0);
       clutter_actor_set_parent (priv->bg, self);
@@ -488,12 +491,12 @@ clutter_behaviour_alpha_notify (ClutterBehaviour *behave,
 
   clutter_actor_set_opacity (slide->old->actor, 
 			     0xff + (alpha_value 
-				     * (0x33 - 0xff)
+				     * (0x66 - 0xff)
 				     / CLUTTER_ALPHA_MAX_ALPHA));
 
   clutter_actor_set_opacity (slide->new->actor, 
-			     0x33 + (alpha_value 
-				     * (0xff - 0x33)
+			     0x66 + (alpha_value 
+				     * (0xff - 0x66)
 				     / CLUTTER_ALPHA_MAX_ALPHA));
 
   scale = (0.3 * alpha_value) / (gdouble)CLUTTER_ALPHA_MAX_ALPHA;

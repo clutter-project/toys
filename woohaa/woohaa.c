@@ -626,13 +626,14 @@ main (int argc, char *argv[])
   wh->db    = wh_db_new ();
 
   stage = clutter_stage_get_default ();
-  // clutter_actor_set_size (stage, 640, 480); 
+  //clutter_actor_set_size (stage, 640, 480); 
   g_object_set (stage, "fullscreen", TRUE, "cursor-visible", FALSE, NULL);
   clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
 
   bg = util_actor_from_file (PKGDATADIR"/bg.png", CSW(), CSH());
 
-  clutter_actor_set_size (bg, CSW(), CSH());
+  /* XXX Dont size but really we need to tile here  */
+  /* clutter_actor_set_size (bg, CSW(), CSH()); */
   clutter_group_add (CLUTTER_GROUP(stage), bg);
   clutter_actor_show (bg);
 

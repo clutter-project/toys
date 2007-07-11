@@ -1,3 +1,11 @@
+2007-07-11  Matthew Allum  <mallum@openedhand.com>
+
+	* wh-screen-video.c:
+	* wh-slider-menu.c: 
+	* wh-video-view.c:
+	* woohaa.c:
+	Various minor tweaks to look.
+
 2007-07-09  Neil J. Patel  <njp@o-hand.com>
 
 	* woohaa.c: (main):

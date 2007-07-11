@@ -626,6 +626,7 @@ wh_screen_video_activate (WHScreenVideo *screen, WHVideoView *view)
 			  (series != NULL || episode != NULL) ? ")" : "");
       
   clutter_label_set_text (CLUTTER_LABEL(priv->title), title);
+  clutter_actor_set_width (priv->title, CSW() - CSW()/4 - 2*(clutter_actor_get_width (priv->position)/2 + 10));
 
   g_free (title);
 

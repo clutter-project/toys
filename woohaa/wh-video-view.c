@@ -493,9 +493,9 @@ wh_video_view_activate (WHVideoView  *view,
       clutter_effect_fade (priv->button_effect_temp,
 			   priv->up,
 			   0xff,
-			   0x66,
-			   NULL,
-			   NULL);
+			   0x99,
+			   (ClutterEffectCompleteFunc)clutter_actor_set_opacity,
+			   GINT_TO_POINTER(0xff));
     }
   else
     {
@@ -503,9 +503,9 @@ wh_video_view_activate (WHVideoView  *view,
       clutter_effect_fade (priv->button_effect_temp,
 			   priv->down,
 			   0xff,
-			   0x66,
-			   NULL,
-			   NULL);
+			   0x99,
+			   (ClutterEffectCompleteFunc)clutter_actor_set_opacity,
+			   GINT_TO_POINTER(0xff));
     }
 
   row = wh_video_model_get_row (priv->model, priv->active_item_num);
@@ -744,7 +744,7 @@ wh_video_view_init (WHVideoView *self)
 
   priv->button_effect_temp
     = clutter_effect_template_new (clutter_timeline_new (10, 60),
-				   CLUTTER_ALPHA_SINE_HALF);
+				   CLUTTER_ALPHA_SINE_DEC);
 
   /* Fade in */
   priv->effect_template 
