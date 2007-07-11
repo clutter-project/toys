@@ -241,8 +241,6 @@ on_pixbuf_thread_ok (AainaSourceFlickr *source)
 
   static gint i = 0;
   i++;
-  g_print ("%d\n", i);
-
   return FALSE;
 }
 
@@ -325,7 +323,6 @@ on_thread_ok (AainaSourceFlickr *source)
   /* Grab the list of photos from the worker */
   list = nflick_photo_search_worker_take_list (NFLICK_PHOTO_SEARCH_WORKER 
                                                                 (priv->worker));
-  g_print ("\n\n");
   for (l = list; l != NULL; l = l->next)
   {
     FlickrPhoto *photo = (FlickrPhoto*)l->data;
@@ -354,8 +351,6 @@ on_thread_ok (AainaSourceFlickr *source)
     
     /* Add the photo to the download queue */
     g_queue_push_tail (priv->queue, (gpointer)aphoto);
-    
-    g_print ("%s : %s\n", photo->id, photo->title);
 
     /* Free the the photo struct and its data */
     g_free (photo->id);

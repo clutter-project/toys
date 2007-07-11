@@ -1,3 +1,9 @@
+2007-07-11  Neil J. Patel  <njp@o-hand.com>
+
+	* sources/aaina-source-flickr.c: (on_pixbuf_thread_ok),
+	(on_thread_ok):
+	Get rid of stray printfs.
+
 2007-07-11  Emmanuele Bassi  <ebassi@o-hand.com>
 
 	* src/main.c: Use the G_OPTION_FILENAME type for the directory
