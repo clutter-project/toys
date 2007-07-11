@@ -1,3 +1,9 @@
+2007-07-11  Emmanuele Bassi  <ebassi@o-hand.com>
+
+	* src/main.c: Use the G_OPTION_FILENAME type for the directory
+	command line parameter; also switch to arrays of filenames, to
+	allow multiple unparented directories on the comman line.
+
 2007-07-11  Neil J. Patel  <njp@o-hand.com>
 
 	* libaaina/aaina-library.c: (aaina_library_init),

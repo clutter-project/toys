@@ -36,9 +36,9 @@
 #include "aaina-slide-show.h"
 
 /* Command line options */
-static gboolean fullscreen = FALSE;
-static gchar   *directory = NULL;
-static gchar   *flickr_tag = NULL;
+static gboolean   fullscreen  = FALSE;
+static gchar    **directories = NULL;
+static gchar     *flickr_tags = NULL;
 
 static GOptionEntry entries[] =
 {
@@ -53,18 +53,18 @@ static GOptionEntry entries[] =
   {
     "directory",
     'd', 0,
-    G_OPTION_ARG_STRING,
-    &directory,
+    G_OPTION_ARG_FILENAME_ARRAY,
+    &directories,
     "The directory to load pictures from",
-    NULL
+    "PATH"
   },
   {
     "tag",
     't', 0,
     G_OPTION_ARG_STRING,
-    &flickr_tag,
-    "A tag to search flickr with",
-    NULL
+    &flickr_tags,
+    "A set of comma-separated tags to search flickr with",
+    "TAG"
   },
   {
     NULL
@@ -78,17 +78,20 @@ main (int argc, char **argv)
   AainaSource *source;
   ClutterActor *stage;
   AainaSlideShow *show;
-  ClutterColor black = {0x00, 0x00, 0x00, 0xff};
+  ClutterColor black = { 0x00, 0x00, 0x00, 0xff };
+  GError *error = NULL;
 
   g_thread_init (NULL);
-  clutter_init_with_args (&argc, &argv,
-                          "Aaina Image Slideshow",
-                          entries,
-                          NULL, NULL);
 
-  if (!directory && !flickr_tag)
+  g_set_application_name ("Aaina Image Slideshow");
+  clutter_init_with_args (&argc, &argv,
+                          " - Aaina Image Slideshow", entries,
+                          NULL,
+                          &error);
+  if (error)
     {
-      g_print ("Usage: %s --directory <path>\n", argv[0]);
+      g_print ("Unable to run Aaina: %s", error->message);
+      g_error_free (error);
       return EXIT_FAILURE;
     }
 
@@ -102,13 +105,25 @@ main (int argc, char **argv)
 
   /* Load the test source */
   library = aaina_library_new ();
-  if (directory)
-    source = aaina_source_directory_new (library, directory);
-  else if (flickr_tag)
-    source = aaina_source_flickr_new (library, flickr_tag);  
+
+  if (directories && directories[0])
+    {
+      gint n_directories, i;
+
+      n_directories = g_strv_length (directories);
+      for (i = 0; i < n_directories; i++)
+        source = aaina_source_directory_new (library, directories[i]);
+    }
+  else if (flickr_tags)
+    source = aaina_source_flickr_new (library, flickr_tags);
   else
-    ;
-  g_print ("%d\n", aaina_library_photo_count (library));
+    {
+      g_print ("Usage: aaina -d <path>\n"
+               "       aaina -t <tag>[,<tag>,....]\n");
+      return EXIT_FAILURE;
+    }
+
+  g_print ("photo count: %d\n", aaina_library_photo_count (library));
 
   show = aaina_slide_show_get_default ();
   g_object_set (G_OBJECT (show), "library", library, NULL);
