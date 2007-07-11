@@ -716,8 +716,8 @@ aaina_photo_init (AainaPhoto *photo)
 
   /* The font */
   font_size = height/12;
-  title_font = g_strdup_printf ("Cookie %d", font_size);
-  desc_font = g_strdup_printf ("Cookie %d", font_size-4); 
+  title_font = g_strdup_printf ("Coolvetica %d", font_size);
+  desc_font = g_strdup_printf ("Coolvetica %d", font_size-4); 
 
   /* Add the title and description actors */
   priv->title_bg = clutter_rectangle_new_with_color (&white);
