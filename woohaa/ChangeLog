@@ -1,3 +1,10 @@
+2007-07-12  Matthew Allum  <mallum@openedhand.com>
+
+	* wh-screen-video.c:
+	* wh-video-view.c:
+	Improve video controls look.
+	Clean up a couple of compiler warnings.
+
 2007-07-11  Matthew Allum  <mallum@openedhand.com>
 
 	* data/arrow-next.svg:

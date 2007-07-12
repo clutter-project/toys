@@ -20,7 +20,7 @@ struct _WHScreenVideoPrivate
   ClutterActor      *video_controls;
   ClutterActor      *video_seekbar;
   ClutterActor      *video_seekbar_bg;
-  ClutterActor      *duration, *title, *position;
+  ClutterActor      *duration, *title, *position, *vol_label;
   ClutterTimeline   *foo_effect;
   gboolean           video_playing;
   gboolean           video_controls_visible;
@@ -258,6 +258,7 @@ video_input_cb (ClutterStage *stage,
 
   if (event->type == CLUTTER_KEY_RELEASE)
     {
+      gchar buf[16];
       ClutterKeyEvent* kev = (ClutterKeyEvent *) event;
 
       switch (clutter_key_event_symbol (kev))
@@ -286,11 +287,19 @@ video_input_cb (ClutterStage *stage,
 	  clutter_media_set_volume 
 	    (CLUTTER_MEDIA(priv->video),
 	     clutter_media_get_volume (CLUTTER_MEDIA(priv->video)) + 0.1);
+	  g_snprintf (buf, sizeof(buf), "Vol:%.2i", 
+		      (gint)(clutter_media_get_volume (CLUTTER_MEDIA(priv->video))/0.1));
+	  clutter_label_set_text (CLUTTER_LABEL(priv->vol_label), buf);
+	  video_show_controls (screen);
 	  break;
 	case CLUTTER_Down:
 	  clutter_media_set_volume 
 	    (CLUTTER_MEDIA(priv->video),
 	     clutter_media_get_volume (CLUTTER_MEDIA(priv->video)) - 0.1);
+	  g_snprintf (buf, sizeof(buf), "Vol:%.2i", 
+		      (gint)(clutter_media_get_volume (CLUTTER_MEDIA(priv->video))/0.1));
+	  clutter_label_set_text (CLUTTER_LABEL(priv->vol_label), buf);
+	  video_show_controls (screen);
 	  break;
 	case CLUTTER_e:
 	  if (!clutter_timeline_is_playing (priv->cheese_timeline))
@@ -403,8 +412,7 @@ video_make_controls (WHScreenVideo *screen)
   gchar                 font_desc[32];
   gint                  h, w, so;
   ClutterActor         *actor;
-  ClutterColor          bgcol = { 0xff, 0xff, 0xff, 0xcc },
-                        seekcol = { 0xbb, 0xbb, 0xbb, 0xff },
+  ClutterColor          seekcol = { 0xbb, 0xbb, 0xbb, 0xff },
                         txtcol = { 0x72, 0x9f, 0xcf, 0xff },
                         fgcol = { 0x72, 0x9f, 0xcf, 0xff };
 
@@ -415,51 +423,59 @@ video_make_controls (WHScreenVideo *screen)
   */
   h = CSH()/6;
   w = CSW() - CSW()/4;
-  
-  actor = clutter_rectangle_new_with_color (&bgcol);
-  clutter_actor_set_size (actor, w, h);
+
+  actor = util_actor_from_file (PKGDATADIR "/header.svg", w, h);
   clutter_group_add (CLUTTER_GROUP(priv->video_controls), actor);
 
-  g_snprintf(font_desc, 32, "Sans %ipx", h/5); 
+  g_snprintf(font_desc, 32, "Sans Bold %ipx", h/8); 
   priv->duration = clutter_label_new_full (font_desc, "00:00", &fgcol);
   priv->position = clutter_label_new_full (font_desc, "00:00", &fgcol);
 
   so = clutter_actor_get_width (priv->position)/2 + 10;
 
-  g_snprintf(font_desc, 32, "Sans %ipx", h/3); 
+  g_snprintf(font_desc, 32, "Sans Bold %ipx", h/6); 
 
   priv->title = clutter_label_new_with_text (font_desc, "");
   clutter_label_set_color (CLUTTER_LABEL(priv->title), &txtcol);
   clutter_label_set_line_wrap (CLUTTER_LABEL(priv->title), FALSE);
   clutter_label_set_ellipsize  (CLUTTER_LABEL(priv->title), 
 				PANGO_ELLIPSIZE_MIDDLE);
-  clutter_actor_set_width (priv->title, w - (2*so));
+  clutter_actor_set_width (priv->title, w/2);
   clutter_actor_set_position (priv->title, so, 10);
   clutter_group_add (CLUTTER_GROUP(priv->video_controls), priv->title);
+
+  priv->vol_label = clutter_label_new_with_text (font_desc, "");
+  clutter_label_set_color (CLUTTER_LABEL(priv->vol_label), &seekcol);
+  clutter_label_set_line_wrap (CLUTTER_LABEL(priv->vol_label), FALSE);
+  clutter_actor_set_width (priv->vol_label, w/8);
+  clutter_actor_set_position (priv->vol_label, w-(w/8)-10, 10);
+  clutter_group_add (CLUTTER_GROUP(priv->video_controls), priv->vol_label);
 
   /* Seek bar */
   priv->video_seekbar_bg = clutter_rectangle_new_with_color (&seekcol);
   clutter_actor_set_size (priv->video_seekbar_bg, w - (2*so), 20);
-  clutter_actor_set_position (priv->video_seekbar_bg, so, h/2);
+  clutter_actor_set_position (priv->video_seekbar_bg, so, 
+			      15 + clutter_actor_get_height (priv->title));
   clutter_group_add (CLUTTER_GROUP(priv->video_controls), 
 		     priv->video_seekbar_bg);
 
   priv->video_seekbar = clutter_rectangle_new_with_color (&fgcol);
   clutter_actor_set_size (priv->video_seekbar, 0, 20);
-  clutter_actor_set_position (priv->video_seekbar, so, h/2);
+  clutter_actor_set_position (priv->video_seekbar, so, 
+			      15 + clutter_actor_get_height (priv->title));
   clutter_group_add (CLUTTER_GROUP(priv->video_controls), priv->video_seekbar);
 
 
   clutter_group_add (CLUTTER_GROUP(priv->video_controls), priv->duration);
   clutter_actor_set_position (priv->duration, 
 			      w - clutter_actor_get_width (priv->duration)-10, 
-			      h/2 + 20);  
+			      15 + clutter_actor_get_height (priv->title) + 20);  
 
   clutter_group_add (CLUTTER_GROUP(priv->video_controls), priv->position);
-  clutter_actor_set_position (priv->position, so, h/2 + 20);  
+  clutter_actor_set_position (priv->position, so, 15 + clutter_actor_get_height (priv->title) + 20);  
 
   clutter_actor_set_position (priv->video_controls, 
-			      CSW()/8, CSH() - CSH()/3);
+			      CSW()/8, h/3);
 
   clutter_actor_set_parent (CLUTTER_ACTOR(priv->video_controls), 
 			    CLUTTER_ACTOR(screen)); 
@@ -575,7 +591,7 @@ void
 wh_screen_video_activate (WHScreenVideo *screen, WHVideoView *view)
 {
   WHScreenVideoPrivate *priv  = SCREEN_VIDEO_PRIVATE(screen);
-  gchar *episode = NULL, *series = NULL, *title = NULL;
+  gchar *episode = NULL, *series = NULL, *title = NULL, buf[16];
 
   priv->video_row = wh_video_view_get_selected (WH_VIDEO_VIEW(view));
 
@@ -610,6 +626,10 @@ wh_screen_video_activate (WHScreenVideo *screen, WHVideoView *view)
 
   priv->video_controls_visible = FALSE;
 
+  g_snprintf (buf, sizeof(buf), "Vol:%.2i", 
+	      (gint)(clutter_media_get_volume (CLUTTER_MEDIA(priv->video))/0.1));
+  clutter_label_set_text (CLUTTER_LABEL(priv->vol_label), buf);
+
   wh_video_model_row_get_extended_info (priv->video_row, &series, &episode);
   
   title = g_strdup_printf("%s%s%s%s%s%s",
@@ -621,7 +641,7 @@ wh_screen_video_activate (WHScreenVideo *screen, WHVideoView *view)
 			  (series != NULL || episode != NULL) ? ")" : "");
       
   clutter_label_set_text (CLUTTER_LABEL(priv->title), title);
-  clutter_actor_set_width (priv->title, CSW() - CSW()/4 - 2*(clutter_actor_get_width (priv->position)/2 + 10));
+  clutter_actor_set_width (priv->title, CSW()/2);
 
   g_free (title);
 

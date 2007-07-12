@@ -71,11 +71,6 @@ ensure_layout (WHVideoView *view,
 static void
 on_model_rows_change (WHVideoModel *model, gpointer *userdata);
 
-static void
-on_model_row_added (WHVideoModel    *model, 
-		    WHVideoModelRow *row,
-		    gpointer         *userdata);
-
 void 
 on_show_complete (ClutterActor *actor,
 		  gpointer user_data)
