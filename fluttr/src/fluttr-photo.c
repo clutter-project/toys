@@ -401,8 +401,8 @@ fluttr_photo_opt_alpha_func (ClutterBehaviour *behave,
 		clutter_actor_set_opacity (priv->texture, 255-(255*factor));
 		clutter_actor_set_opacity (priv->frame, 255-(255*factor));
 		
-		clutter_actor_rotate_y (CLUTTER_ACTOR (data), 180 *factor,
-					width /2, 0);
+	//	clutter_actor_rotate_y (CLUTTER_ACTOR (data), 180 *factor,
+	//				width /2, 0);
 	} else {
 		sw = (CLUTTER_STAGE_WIDTH ()/(float)width) * (1.0 - factor);
 		if (sw >ACT_SCALE + 1.0)
@@ -410,8 +410,8 @@ fluttr_photo_opt_alpha_func (ClutterBehaviour *behave,
 		clutter_actor_set_opacity (priv->texture, (255*factor));
 		clutter_actor_set_opacity (priv->frame, (255*factor));
 		
-		clutter_actor_rotate_y (CLUTTER_ACTOR (data), 180+ (180*factor),
-					width /2, 0);			
+	      //clutter_actor_rotate_y (CLUTTER_ACTOR (data), 180+ (180*factor),
+		//			width /2, 0);			
 	}
 	
 	if (factor > 0.9)
