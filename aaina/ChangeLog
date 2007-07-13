@@ -1,5 +1,12 @@
 2007-07-13  Neil J. Patel  <njp@o-hand.com>
 
+	* src/main.c: (im_spinning_around), (main), (on_key_release_event),
+	(spin_me):
+	Added spinning of the stage via arrow keys,
+	Added a 1 minute timeout for spinning (needs work);
+
+2007-07-13  Neil J. Patel  <njp@o-hand.com>
+
 	* libaaina/aaina-photo.c: (aaina_photo_alpha_restore),
 	(aaina_photo_set_pixbuf), (aaina_photo_alpha_zoom),
 	(aaina_photo_init):
