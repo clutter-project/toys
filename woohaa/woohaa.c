@@ -340,6 +340,7 @@ browse_input_cb (ClutterStage *stage,
 	  clutter_actor_show (wh->busy);
 
 	  break;
+	case CLUTTER_Escape:
 	case CLUTTER_q:
 	  clutter_main_quit();
 	  break;

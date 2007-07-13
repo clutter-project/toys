@@ -1,5 +1,10 @@
 2007-07-13  Matthew Allum  <mallum@openedhand.com>
 
+	* woohaa.c: (browse_input_cb):
+	Escape also exit app.
+
+2007-07-13  Matthew Allum  <mallum@openedhand.com>
+
 	* wh-screen-video.c:
 	Escape also quit video.
 	* woohaa.c: 
