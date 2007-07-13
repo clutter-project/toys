@@ -1,5 +1,10 @@
 2007-07-13  Neil J. Patel  <njp@o-hand.com>
 
+	* src/main.c: (main):
+	Change spinning timeout to two minutes.
+
+2007-07-13  Neil J. Patel  <njp@o-hand.com>
+
 	* src/main.c: (im_spinning_around), (main), (on_key_release_event),
 	(spin_me):
 	Added spinning of the stage via arrow keys,

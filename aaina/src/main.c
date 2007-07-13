@@ -166,7 +166,7 @@ main (int argc, char **argv)
                           CLUTTER_STAGE_WIDTH ()/2,
                           CLUTTER_STAGE_HEIGHT ());
 
-  g_timeout_add (10000, (GSourceFunc)im_spinning_around, timeline);
+  g_timeout_add (120000, (GSourceFunc)im_spinning_around, timeline);
   clutter_main ();
 
   return EXIT_SUCCESS;
