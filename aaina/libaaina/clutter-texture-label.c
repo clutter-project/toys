@@ -87,8 +87,8 @@ clutter_texture_label_make_pixbuf (ClutterTextureLabel *label)
 
   if (priv->layout == NULL || priv->desc == NULL || priv->text == NULL)
     {
-      g_debug("*** FAIL: layout: %p , desc: %p, text %p ***",
-	      priv->layout, priv->desc, priv->text);
+      //g_debug("*** FAIL: layout: %p , desc: %p, text %p ***",
+	    //  priv->layout, priv->desc, priv->text);
       return;
     }
 
@@ -107,7 +107,7 @@ clutter_texture_label_make_pixbuf (ClutterTextureLabel *label)
 
   if (w == 0 || h == 0)
     {
-      g_debug("aborting w:%i , h:%i", w, h);
+      //g_debug("aborting w:%i , h:%i", w, h);
       return;
     }
 

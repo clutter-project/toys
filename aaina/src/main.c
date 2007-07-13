@@ -29,6 +29,7 @@
 
 #include <libaaina/aaina-library.h>
 #include <libaaina/aaina-source.h>
+#include <libaaina/aaina-behave.h>
 
 #include <sources/aaina-source-directory.h>
 #include <sources/aaina-source-flickr.h>
@@ -74,8 +75,6 @@ static GOptionEntry entries[] =
 static void on_key_release_event (ClutterStage *stage, 
                                   ClutterEvent *event,
                                   gpointer      null);
-
-
 
 
 int 
@@ -140,6 +139,18 @@ main (int argc, char **argv)
   g_signal_connect (G_OBJECT (stage), "key-release-event",
                     G_CALLBACK (on_key_release_event), NULL);
 
+  /*
+  timeline = clutter_timeline_new (60, 30);
+  alpha = clutter_alpha_new_full (priv->timeline,
+                                  alpha_sine_inc_func,
+                                  NULL, NULL);
+  behave = aaina_behave_new (alpha, 
+                             (AainaBehaveAlphaFunc)spin_me,
+                             (gpointer)stage);
+  */
+  clutter_actor_rotate_y (stage, 0, 
+                          CLUTTER_STAGE_WIDTH ()/2,
+                          CLUTTER_STAGE_HEIGHT ());
   clutter_main ();
 
   return EXIT_SUCCESS;

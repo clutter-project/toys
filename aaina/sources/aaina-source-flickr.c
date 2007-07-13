@@ -91,6 +91,7 @@ on_info_thread_error (AainaPhoto *photo)
 static gboolean
 on_info_thread_ok (AainaPhoto *photo)
 {
+  g_print ("Got info\n");
   NFlickWorker *worker;
   gchar *rotation = NULL;
   gint rot;
@@ -113,8 +114,6 @@ on_info_thread_ok (AainaPhoto *photo)
                 "author", realname,
                 "desc", desc,
                 NULL);
-
-  g_print ("%d %s %s\n", rot, realname, desc);
 
   g_object_unref (G_OBJECT (worker));  
   return FALSE;
@@ -207,6 +206,7 @@ add_to_library (AainaSourceFlickr *source)
 static gboolean
 on_pixbuf_thread_ok (AainaSourceFlickr *source)
 {
+  g_print ("Got pixbuf\n");
   AainaSourceFlickrPrivate *priv;
   GdkPixbuf *pixbuf;
   
@@ -226,7 +226,7 @@ on_pixbuf_thread_ok (AainaSourceFlickr *source)
 
       if (!priv->add_running)
       {
-        g_timeout_add (5000, (GSourceFunc)add_to_library, (gpointer)source);
+        g_timeout_add (1000, (GSourceFunc)add_to_library, (gpointer)source);
         priv->add_running = TRUE;
         aaina_library_set_pending (priv->library, TRUE);
       }
@@ -236,7 +236,7 @@ on_pixbuf_thread_ok (AainaSourceFlickr *source)
 
     priv->current = NULL;
   }
-
+ 
   manage_queue (source);
 
   static gint i = 0;
@@ -247,6 +247,7 @@ on_pixbuf_thread_ok (AainaSourceFlickr *source)
 static gboolean
 get_pixbuf (AainaSourceFlickr *source)
 {
+  g_print ("Fetch pixbuf \n");
   AainaSourceFlickrPrivate *priv;
   NFlickWorker *worker;
   AainaPhoto *photo;
@@ -276,8 +277,9 @@ get_pixbuf (AainaSourceFlickr *source)
                                 (NFlickWorkerIdleFunc)on_pixbuf_thread_error);
   nflick_worker_set_ok_idle (worker,
                              (NFlickWorkerIdleFunc)on_pixbuf_thread_ok);
-
+  
   nflick_worker_start (worker);  
+  g_print ("Started 1st worker\n");
 
   worker = (NFlickWorker*)nflick_info_worker_new (id, 22, 22, " ");
   nflick_worker_start (worker);
@@ -293,6 +295,8 @@ get_pixbuf (AainaSourceFlickr *source)
                              (NFlickWorkerIdleFunc)on_info_thread_ok);
 
   g_object_set_qdata (G_OBJECT (photo), worker_quark, (gpointer)worker);
+  g_print ("Started 2nd worker\n");
+
   return FALSE;
 }
 

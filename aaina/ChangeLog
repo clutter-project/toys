@@ -1,3 +1,13 @@
+2007-07-13  Neil J. Patel  <njp@o-hand.com>
+
+	* libaaina/clutter-texture-label.c:
+	(clutter_texture_label_make_pixbuf):
+	* sources/aaina-source-flickr.c: (on_info_thread_ok),
+	(on_pixbuf_thread_ok), (get_pixbuf):
+	* src/aaina-slide-show.c: (aaina_slide_show_move):
+	* src/main.c: (main):
+	Added some debugging printf's.
+
 2007-07-11  Neil J. Patel  <njp@o-hand.com>
 
 	* libaaina/aaina-photo.c: (aaina_photo_restore),

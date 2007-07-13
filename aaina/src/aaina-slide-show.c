@@ -223,12 +223,13 @@ aaina_slide_show_move (ClutterBehaviour *behave,
     {
       if (x < leftmost)
       {
-        if (aaina_library_get_pending (priv->library))
+        if (aaina_library_get_pending (priv->library)
+              && aaina_library_is_full (priv->library))
         {
           aaina_library_remove_photo (priv->library, AAINA_PHOTO (l->data));
           clutter_actor_destroy (CLUTTER_ACTOR (l->data));
           l->data = NULL;
-          g_print ("Deleteing\n");
+          g_print ("Deleting\n");
         }
         else
         {
