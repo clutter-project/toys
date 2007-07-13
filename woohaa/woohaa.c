@@ -626,7 +626,7 @@ main (int argc, char *argv[])
   wh->db    = wh_db_new ();
 
   stage = clutter_stage_get_default ();
-  //clutter_actor_set_size (stage, 640, 480); 
+  //clutter_actor_set_size (stage, 800, 600); 
   g_object_set (stage, "fullscreen", TRUE, "cursor-visible", FALSE, NULL);
   clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
 
@@ -819,8 +819,8 @@ main (int argc, char *argv[])
 		       screen_start,
 		       0xff,
 		       0,
-		       NULL,
-		       NULL);
+		       (ClutterEffectCompleteFunc)clutter_actor_hide,
+		       screen_start);
 
   clutter_effect_scale (effect_template,
 			screen_start,

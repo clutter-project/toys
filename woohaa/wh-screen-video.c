@@ -305,6 +305,7 @@ video_input_cb (ClutterStage *stage,
 	  if (!clutter_timeline_is_playing (priv->cheese_timeline))
 	    clutter_timeline_start (priv->cheese_timeline);
 	  break;
+	case CLUTTER_Escape:
 	case CLUTTER_q:
 	  wh_screen_video_deactivate (screen);
 	  break;

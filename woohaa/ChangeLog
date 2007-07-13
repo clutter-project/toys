@@ -1,3 +1,10 @@
+2007-07-13  Matthew Allum  <mallum@openedhand.com>
+
+	* wh-screen-video.c:
+	Escape also quit video.
+	* woohaa.c: 
+	Really hide startup screen.
+
 2007-07-12  Matthew Allum  <mallum@openedhand.com>
 
 	* wh-screen-video.c:
