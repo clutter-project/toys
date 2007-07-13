@@ -1,5 +1,14 @@
 2007-07-13  Neil J. Patel  <njp@o-hand.com>
 
+	* libaaina/aaina-photo.c: (aaina_photo_alpha_restore),
+	(aaina_photo_set_pixbuf), (aaina_photo_alpha_zoom),
+	(aaina_photo_init):
+	* src/main.c: (main):
+	Change the title and desc showing so they are inline on a black 
+	background.
+
+2007-07-13  Neil J. Patel  <njp@o-hand.com>
+
 	* sources/aaina-source-flickr.c: (on_info_thread_ok),
 	(on_pixbuf_thread_ok), (get_pixbuf):
 	Remove the printfs

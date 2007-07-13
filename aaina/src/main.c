@@ -103,6 +103,7 @@ main (int argc, char **argv)
 
   stage = clutter_stage_get_default ();
   clutter_actor_set_size (stage, 720, 480);
+  clutter_stage_hide_cursor (CLUTTER_STAGE (stage));
   
   if (fullscreen)
     clutter_stage_fullscreen (CLUTTER_STAGE (stage));
