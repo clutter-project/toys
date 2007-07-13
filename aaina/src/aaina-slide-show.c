@@ -23,7 +23,7 @@
 
 #include "aaina-slide-show.h"
 
-G_DEFINE_TYPE (AainaSlideShow, aaina_slide_show, G_TYPE_OBJECT);
+G_DEFINE_TYPE (AainaSlideShow, aaina_slide_show, CLUTTER_TYPE_GROUP);
 
 #define AAINA_SLIDE_SHOW_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj),\
 	AAINA_TYPE_SLIDE_SHOW, \
@@ -315,7 +315,7 @@ on_photo_added (AainaLibrary    *library,
   aaina_photo_set_dim (photo, dim);
 
   if (!clutter_actor_get_parent (CLUTTER_ACTOR (photo)))
-    clutter_group_add (CLUTTER_GROUP (clutter_stage_get_default ()), 
+    clutter_group_add (CLUTTER_GROUP (data), 
                        CLUTTER_ACTOR (photo));
   clutter_actor_show_all (CLUTTER_ACTOR (photo));
 

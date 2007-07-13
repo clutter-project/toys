@@ -1,5 +1,16 @@
 2007-07-13  Neil J. Patel  <njp@o-hand.com>
 
+	* src/aaina-slide-show.c: (on_photo_added):
+	* src/aaina-slide-show.h:
+	* src/main.c: (im_spinning_around), (main), (on_key_release_event),
+	(spin_me):
+	Move all photos to the slide show group.
+	Left right rotates stage.
+	Up starts the slide show spinning timeline.
+	The slide show will spin at every two minutes.
+
+2007-07-13  Neil J. Patel  <njp@o-hand.com>
+
 	* src/main.c: (main):
 	Change spinning timeout to two minutes.
 

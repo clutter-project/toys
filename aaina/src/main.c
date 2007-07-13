@@ -36,6 +36,9 @@
 
 #include "aaina-slide-show.h"
 
+static AainaSlideShow *show = NULL;
+static ClutterTimeline *timeline = NULL;
+
 /* Command line options */
 static gboolean   fullscreen  = FALSE;
 static gchar    **directories = NULL;
@@ -81,9 +84,10 @@ static void spin_me (ClutterBehaviour *behave,
                      gpointer          null);
 
 static gboolean
-im_spinning_around (ClutterTimeline *timeline)
+im_spinning_around (ClutterTimeline *time)
 {
-  clutter_timeline_start (timeline);
+  if (!clutter_timeline_is_playing (timeline))
+    clutter_timeline_start (timeline);
   return TRUE;
 }
   
@@ -93,8 +97,6 @@ main (int argc, char **argv)
   AainaLibrary *library;
   AainaSource *source;
   ClutterActor *stage;
-  AainaSlideShow *show;
-  ClutterTimeline *timeline;
   ClutterAlpha *alpha;
   ClutterBehaviour *behave;
   ClutterColor black = { 0x00, 0x00, 0x00, 0xff };
@@ -144,6 +146,12 @@ main (int argc, char **argv)
     }
 
   show = aaina_slide_show_get_default ();
+  clutter_group_add (CLUTTER_GROUP (stage), CLUTTER_ACTOR (show));
+  clutter_actor_set_position (CLUTTER_ACTOR (show), 0, 0);
+  clutter_actor_set_size (CLUTTER_ACTOR (show), 
+                          CLUTTER_STAGE_WIDTH (),
+                          CLUTTER_STAGE_HEIGHT ()) ;
+  clutter_actor_show_all (CLUTTER_ACTOR (show));
   g_object_set (G_OBJECT (show), "library", library, NULL);
 
   clutter_actor_show_all (stage);
@@ -200,7 +208,10 @@ on_key_release_event (ClutterStage *stage,
                                CLUTTER_STAGE_WIDTH ()/2,
                                CLUTTER_STAGE_HEIGHT ());
        break;
-
+    case CLUTTER_Up:
+       if (!clutter_timeline_is_playing (timeline))
+          clutter_timeline_start (timeline);
+       break;
     default:
       break;
   }
@@ -214,9 +225,9 @@ spin_me (ClutterBehaviour *behave,
 {
  gfloat factor = (gfloat)alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
  
- clutter_actor_rotate_y (clutter_stage_get_default (),
+ clutter_actor_rotate_y (CLUTTER_ACTOR (show),
                          factor * 360,
                          CLUTTER_STAGE_WIDTH ()/2,
-                         CLUTTER_STAGE_HEIGHT ());
+                         0);
 
 }
