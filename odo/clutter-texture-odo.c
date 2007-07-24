@@ -149,7 +149,7 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex,
 		  tyf2 = (float)(j+1) / (float) pheight2;
 		}
 	      
-	      for (i = 0; i < pwidth; i++)
+	      for (i = 0; i < pwidth; i += 8)
 		{
 		  gint x2, y2, z2;
 
