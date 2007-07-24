@@ -43,6 +43,8 @@ enum
   PROP_PARENT_TEXTURE,
   PROP_DISTORT_FUNC,
   PROP_DISTORT_FUNC_DATA,
+  PROP_TILE_WIDTH,
+  PROP_TILE_HEIGHT,
 };
 
 G_DEFINE_TYPE (ClutterTextureOdo,
@@ -63,6 +65,9 @@ struct _ClutterTextureOdoPrivate
 
   ClutterTextureDistortFunc    distort_func;
   gpointer                     distort_func_data;
+
+  guint tile_width;
+  guint tile_height;
 };
 
 static void
@@ -134,26 +139,26 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex,
 	  
 	  glShadeModel(GL_SMOOTH);
 
-	  for (j = 0; j < pheight - 1; j++)
+	  for (j = 0; j < pheight - 1; )
 	    {
 	      glBegin(GL_QUAD_STRIP);
 	      
 	      if (clutter_feature_available(CLUTTER_FEATURE_TEXTURE_RECTANGLE))
 		{
 		  tyf1 = (float) j;
-		  tyf2 = (float) (j+1);
+		  tyf2 = (float) (j + priv->tile_height);
 		}
 	      else
 		{
 		  tyf1 = (float)j / (float) pheight2;
-		  tyf2 = (float)(j+1) / (float) pheight2;
+		  tyf2 = (float)(j + priv->tile_height) / (float) pheight2;
 		}
 	      
-	      for (i = 0; i < pwidth; i += 8)
+	      for (i = 0; i < pwidth; )
 		{
 		  gint x2, y2, z2;
 
-		    if (clutter_feature_available(CLUTTER_FEATURE_TEXTURE_RECTANGLE))
+		  if (clutter_feature_available(CLUTTER_FEATURE_TEXTURE_RECTANGLE))
 		    {
 		      txf  = (float) i;
 		    }
@@ -170,13 +175,27 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex,
 		  glVertex3i(x2, y2, z2);
 		  
 		  priv->distort_func (priv->parent_texture,
-				      i, j + 1, 0, &x2, &y2, &z2,
+				      i, j + priv->tile_height, 0,
+				      &x2, &y2, &z2,
 				      priv->distort_func_data);
 		  
 		  glTexCoord2f (txf, tyf2);
 		  glVertex3i(x2, y2, z2);
+
+		  /* Handle any remnant not divisible by tile_width */
+		  i += priv->tile_width;
+
+		  if (i > pwidth && i < pwidth + priv->tile_width - 1)
+		    i = pwidth - 1;
 		}
+
 	      glEnd();
+
+	      /* Handle any remnant not divisible by tile_height */
+	      j += priv->tile_height;
+
+	      if (j > pheight && j < pheight + priv->tile_height - 1)
+		j = pheight - 1;
 	  }
 	}
 
@@ -352,6 +371,12 @@ clutter_texture_odo_set_property (GObject      *object,
     case PROP_DISTORT_FUNC_DATA:
       priv->distort_func_data = g_value_get_pointer(value);
       break;
+    case PROP_TILE_WIDTH:
+      priv->tile_width = g_value_get_int (value);
+      break;
+    case PROP_TILE_HEIGHT:
+      priv->tile_height = g_value_get_int (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -377,6 +402,12 @@ clutter_texture_odo_get_property (GObject    *object,
       break;
     case PROP_DISTORT_FUNC_DATA:
       g_value_set_pointer (value, priv->distort_func_data);
+      break;
+    case PROP_TILE_WIDTH:
+      g_value_set_int (value, priv->tile_width);
+      break;
+    case PROP_TILE_HEIGHT:
+      g_value_set_int (value, priv->tile_height);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -417,6 +448,24 @@ clutter_texture_odo_class_init (ClutterTextureOdoClass *klass)
 							 "Data for distortion function",
 							 G_PARAM_CONSTRUCT | CLUTTER_PARAM_READWRITE));
   
+
+  g_object_class_install_property (gobject_class,
+                                   PROP_TILE_WIDTH,
+                                   g_param_spec_int ("tile-width",
+                                                "width of the tile to use",
+                                                "width of the tile to use",
+                                                0, G_MAXINT,
+                                                0,
+                                                G_PARAM_CONSTRUCT | CLUTTER_PARAM_READWRITE));
+
+  g_object_class_install_property (gobject_class,
+                                   PROP_TILE_HEIGHT,
+                                   g_param_spec_int ("tile-height",
+                                                "height of the tile to use",
+                                                "height of the tile to use",
+                                                0, G_MAXINT,
+                                                0,
+                                                G_PARAM_CONSTRUCT | CLUTTER_PARAM_READWRITE));
   
   g_type_class_add_private (gobject_class, sizeof (ClutterTextureOdoPrivate));
 }
@@ -443,12 +492,16 @@ clutter_texture_odo_init (ClutterTextureOdo *self)
  * Return value: the newly created #ClutterTextureOdo
  */
 ClutterActor *
-clutter_texture_odo_new (ClutterTexture *texture)
+clutter_texture_odo_new (ClutterTexture *texture,
+			 guint           tile_width,
+			 guint           tile_height)
 {
   g_return_val_if_fail (texture == NULL || CLUTTER_IS_TEXTURE (texture), NULL);
 
   return g_object_new (CLUTTER_TYPE_TEXTURE_ODO,
  		       "parent-texture", texture,
+		       "tile-width", tile_width,
+		       "tile-height", tile_height,
 		       NULL);
 }
 

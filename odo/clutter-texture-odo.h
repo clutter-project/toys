@@ -83,7 +83,9 @@ typedef void (*ClutterTextureDistortFunc) (ClutterTexture * tex,
 
 GType           clutter_texture_odo_get_type           (void) G_GNUC_CONST;
 
-ClutterActor *  clutter_texture_odo_new                (ClutterTexture      *texture);
+ClutterActor *  clutter_texture_odo_new                (ClutterTexture      *texture,
+							guint                tile_width,
+							guint                tile_height);
 ClutterTexture *clutter_texture_odo_get_parent_texture (ClutterTextureOdo   *otex);
 void            clutter_texture_odo_set_parent_texture (ClutterTextureOdo   *otex,
 							ClutterTexture      *tex);

@@ -7,6 +7,9 @@
 #include <clutter/clutter.h>
 #include "clutter-texture-odo.h"
 
+static int tile_width  = 8;
+static int tile_height = 8;
+
 struct distort_data
 {
     ClutterFixed t;
@@ -123,7 +126,7 @@ static ClutterActor * beget_odo (ClutterTexture * tex,
 				 ClutterTextureDistortFunc func,
 				 gpointer data)
 {
-  ClutterActor * odo = clutter_texture_odo_new (tex);
+  ClutterActor * odo = clutter_texture_odo_new (tex, tile_width, tile_height);
   clutter_actor_set_position (odo, x, y);
   clutter_actor_rotate_x (odo, rotate_x, 0, 0);
   clutter_actor_rotate_y (odo, rotate_y, 0, 0);
@@ -143,6 +146,25 @@ main (int argc, char *argv[])
   GdkPixbuf        *pixbuf;
   struct distort_data data;
   ClutterTimeline  *timeline;
+  gint              i;
+
+  for (i = 1; i < argc; ++i)
+    {
+      if (!strncmp (argv[i], "--tile-height", 13))
+	{
+	  tile_height = atoi (argv[i] + 14);
+
+	  if (!tile_height)
+	    tile_height = 8;
+	}
+      else if (!strncmp (argv[i], "--tile-width", 12))
+	{
+	  tile_width = atoi (argv[i] + 13);
+
+	  if (!tile_width)
+	    tile_height = 8;
+	}
+    }
   
   clutter_init (&argc, &argv);
 
