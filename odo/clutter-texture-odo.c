@@ -45,6 +45,7 @@ enum
   PROP_DISTORT_FUNC_DATA,
   PROP_TILE_WIDTH,
   PROP_TILE_HEIGHT,
+  PROP_MESH,
 };
 
 G_DEFINE_TYPE (ClutterTextureOdo,
@@ -68,6 +69,8 @@ struct _ClutterTextureOdoPrivate
 
   guint tile_width;
   guint tile_height;
+
+  ClutterMesh   mesh;
 };
 
 static void
@@ -124,15 +127,70 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex,
 	  ty = (float) pheight / (float) pheight2;
 	}
 
-      if (!priv->distort_func)
+      if (priv->mesh.points)
 	{
-	  cogl_texture_quad (x1, x2, y1, y2, 
-			     0,
-			     0,
-			     CLUTTER_FLOAT_TO_FIXED (tx),
-			     CLUTTER_FLOAT_TO_FIXED (ty));
+	  guint i, j, im, jm;
+	  gfloat txf, tyf1, tyf2;
+	  guint tile_width, tile_height;
+
+	  tile_width  = pwidth  / (priv->mesh.dimension_x - 1);
+	  tile_height = pheight / (priv->mesh.dimension_y - 1);
+
+	  glShadeModel(GL_SMOOTH);
+
+	  for (j = 0, jm = 0; j < pheight - 1; ++jm)
+	    {
+	      glBegin(GL_QUAD_STRIP);
+	      
+	      if (clutter_feature_available(CLUTTER_FEATURE_TEXTURE_RECTANGLE))
+		{
+		  tyf1 = (float) j;
+		  tyf2 = (float) (j + tile_height);
+		}
+	      else
+		{
+		  tyf1 = (float)j / (float) pheight2;
+		  tyf2 = (float)(j + tile_height) / (float) pheight2;
+		}
+	      
+	      for (i = 0, im = 0; i < pwidth; ++im)
+		{
+		  if (clutter_feature_available(CLUTTER_FEATURE_TEXTURE_RECTANGLE))
+		    {
+		      txf  = (float) i;
+		    }
+		  else
+		    {
+		      txf = (float)i / (float) pwidth2;  
+		    }
+#define P(a,b) priv->mesh.points[a*priv->mesh.dimension_x + b]
+		  glTexCoord2f (txf, tyf1);
+		  glVertex3i(P (im, jm).x,
+			     P (im, jm).y,
+			     P (im, jm).z);
+		  
+		  glTexCoord2f (txf, tyf2);
+		  glVertex3i(P (im, jm+1).x,
+			     P (im, jm+1).y,
+			     P (im, jm+1).z);
+#undef P
+		  /* Handle any remnant not divisible by tile_width */
+		  i += tile_width;
+		  
+		  if (i >= pwidth && i < pwidth + tile_width - 1)
+		    i = pwidth - 1;
+		}
+
+	      glEnd();
+
+	      /* Handle any remnant not divisible by tile_height */
+	      j += tile_height;
+
+	      if (j > pheight && j < pheight + tile_height - 1)
+		j = pheight - 1;
+	  }
 	}
-      else
+      else if (priv->distort_func)
 	{
 	  guint i, j;
 	  gfloat txf, tyf1, tyf2;
@@ -185,7 +243,7 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex,
 		  /* Handle any remnant not divisible by tile_width */
 		  i += priv->tile_width;
 
-		  if (i > pwidth && i < pwidth + priv->tile_width - 1)
+		  if (i >= pwidth && i < pwidth + priv->tile_width - 1)
 		    i = pwidth - 1;
 		}
 
@@ -198,7 +256,15 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex,
 		j = pheight - 1;
 	  }
 	}
-
+      else
+	{
+	  cogl_texture_quad (x1, x2, y1, y2, 
+			     0,
+			     0,
+			     CLUTTER_FLOAT_TO_FIXED (tx),
+			     CLUTTER_FLOAT_TO_FIXED (ty));
+	}
+	
       return;
     }
 
@@ -377,6 +443,16 @@ clutter_texture_odo_set_property (GObject      *object,
     case PROP_TILE_HEIGHT:
       priv->tile_height = g_value_get_int (value);
       break;
+    case PROP_MESH:
+      {
+	ClutterMesh * mesh = g_value_get_boxed (value);
+
+	if (mesh)
+	  priv->mesh = *mesh;
+	else
+	  priv->mesh.points = NULL;
+      }
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -409,6 +485,9 @@ clutter_texture_odo_get_property (GObject    *object,
     case PROP_TILE_HEIGHT:
       g_value_set_int (value, priv->tile_height);
       break;
+    case PROP_MESH:
+      g_value_set_boxed (value, &priv->mesh);
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -466,6 +545,14 @@ clutter_texture_odo_class_init (ClutterTextureOdoClass *klass)
                                                 0, G_MAXINT,
                                                 0,
                                                 G_PARAM_CONSTRUCT | CLUTTER_PARAM_READWRITE));
+
+  g_object_class_install_property (gobject_class,
+                                   PROP_MESH,
+                                   g_param_spec_boxed ("mesh",
+                                                       "Mesh",
+                                                       "Mesh to lay texture over",
+                                                       CLUTTER_TYPE_MESH,
+                                                       G_PARAM_CONSTRUCT | CLUTTER_PARAM_READWRITE));
   
   g_type_class_add_private (gobject_class, sizeof (ClutterTextureOdoPrivate));
 }
@@ -476,7 +563,8 @@ clutter_texture_odo_init (ClutterTextureOdo *self)
   ClutterTextureOdoPrivate *priv;
 
   self->priv = priv = CLUTTER_TEXTURE_ODO_GET_PRIVATE (self);
-  priv->parent_texture = NULL;
+
+  priv->tile_width = priv->tile_height = 8;
 }
 
 /**
@@ -492,16 +580,12 @@ clutter_texture_odo_init (ClutterTextureOdo *self)
  * Return value: the newly created #ClutterTextureOdo
  */
 ClutterActor *
-clutter_texture_odo_new (ClutterTexture *texture,
-			 guint           tile_width,
-			 guint           tile_height)
+clutter_texture_odo_new (ClutterTexture *texture)
 {
   g_return_val_if_fail (texture == NULL || CLUTTER_IS_TEXTURE (texture), NULL);
 
   return g_object_new (CLUTTER_TYPE_TEXTURE_ODO,
  		       "parent-texture", texture,
-		       "tile-width", tile_width,
-		       "tile-height", tile_height,
 		       NULL);
 }
 
@@ -545,4 +629,50 @@ clutter_texture_odo_set_parent_texture (ClutterTextureOdo *clone,
 
   g_object_notify (G_OBJECT (clone), "parent-texture");
   g_object_unref (clone);
+}
+
+static ClutterMesh*
+clutter_mesh_copy (const ClutterMesh *mesh)
+{
+  ClutterMesh *result = g_new (ClutterMesh, 1);
+
+  *result = *mesh;
+
+  return result;
+}
+
+GType
+clutter_mesh_get_type (void)
+{
+  static GType our_type = 0;
+
+  if (our_type == 0)
+    our_type = g_boxed_type_register_static (g_intern_static_string ("ClutterMesh"),
+                                             (GBoxedCopyFunc) clutter_mesh_copy,
+                                             (GBoxedFreeFunc) g_free);
+
+  return our_type;
+}
+
+static ClutterMeshPoint*
+clutter_mesh_point_copy (const ClutterMeshPoint *point)
+{
+  ClutterMeshPoint *result = g_new (ClutterMeshPoint, 1);
+
+  *result = *point;
+
+  return result;
+}
+
+GType
+clutter_mesh_point_get_type (void)
+{
+  static GType our_type = 0;
+
+  if (our_type == 0)
+    our_type = g_boxed_type_register_static (g_intern_static_string ("ClutterMeshPoint"),
+                                             (GBoxedCopyFunc) clutter_mesh_point_copy,
+                                             (GBoxedFreeFunc) g_free);
+
+  return our_type;
 }

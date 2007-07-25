@@ -31,6 +31,8 @@
 
 G_BEGIN_DECLS
 
+#define CLUTTER_TYPE_MESH (clutter_mesh_get_type ())
+#define CLUTTER_TYPE_MESH_POINT (clutter_mesh_point_get_type ())
 #define CLUTTER_TYPE_TEXTURE_ODO (clutter_texture_odo_get_type ())
 
 #define CLUTTER_TEXTURE_ODO(obj) \
@@ -53,6 +55,8 @@ G_BEGIN_DECLS
   (G_TYPE_INSTANCE_GET_CLASS ((obj), \
   CLUTTER_TYPE_TEXTURE_ODO, ClutterTextureOdoClass))
 
+typedef struct _ClutterMesh              ClutterMesh;
+typedef struct _ClutterMeshPoint         ClutterMeshPoint;
 typedef struct _ClutterTextureOdo        ClutterTextureOdo;
 typedef struct _ClutterTextureOdoPrivate ClutterTextureOdoPrivate;
 typedef struct _ClutterTextureOdoClass   ClutterTextureOdoClass;
@@ -81,11 +85,26 @@ typedef void (*ClutterTextureDistortFunc) (ClutterTexture * tex,
 					   gint *x2, gint *y2, gint *z2,
 					   gpointer user_data);
 
+struct _ClutterMeshPoint
+{
+  gint x;
+  gint y;
+  gint z;
+};
+
+struct _ClutterMesh
+{
+  ClutterMeshPoint * points;
+  gint               dimension_x;
+  gint               dimension_y;
+};
+
+
+GType           clutter_mesh_get_type                  (void) G_GNUC_CONST;
+GType           clutter_mesh_point_get_type            (void) G_GNUC_CONST;
 GType           clutter_texture_odo_get_type           (void) G_GNUC_CONST;
 
-ClutterActor *  clutter_texture_odo_new                (ClutterTexture      *texture,
-							guint                tile_width,
-							guint                tile_height);
+ClutterActor *  clutter_texture_odo_new                (ClutterTexture      *texture);
 ClutterTexture *clutter_texture_odo_get_parent_texture (ClutterTextureOdo   *otex);
 void            clutter_texture_odo_set_parent_texture (ClutterTextureOdo   *otex,
 							ClutterTexture      *tex);

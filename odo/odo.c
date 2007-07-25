@@ -9,6 +9,7 @@
 
 static int tile_width  = 8;
 static int tile_height = 8;
+static char * image = "redhand.png";
 
 struct distort_data
 {
@@ -126,14 +127,15 @@ static ClutterActor * beget_odo (ClutterTexture * tex,
 				 ClutterTextureDistortFunc func,
 				 gpointer data)
 {
-  ClutterActor * odo = clutter_texture_odo_new (tex, tile_width, tile_height);
+  ClutterActor * odo = clutter_texture_odo_new (tex);
   clutter_actor_set_position (odo, x, y);
   clutter_actor_rotate_x (odo, rotate_x, 0, 0);
   clutter_actor_rotate_y (odo, rotate_y, 0, 0);
-  
+
+  g_object_set (G_OBJECT (odo), "tile-width", tile_width, NULL);
+  g_object_set (G_OBJECT (odo), "tile-height", tile_height, NULL);
   g_object_set (G_OBJECT (odo), "distort-func-data", data, NULL);
   g_object_set (G_OBJECT (odo), "distort-func", func, NULL);
-
   return odo;
 }
 
@@ -147,7 +149,8 @@ main (int argc, char *argv[])
   struct distort_data data;
   ClutterTimeline  *timeline;
   gint              i;
-
+  ClutterMesh       mesh;
+  
   for (i = 1; i < argc; ++i)
     {
       if (!strncmp (argv[i], "--tile-height", 13))
@@ -164,6 +167,8 @@ main (int argc, char *argv[])
 	  if (!tile_width)
 	    tile_height = 8;
 	}
+      else if (!strncmp (argv[i], "--image", 7))
+	  image = argv[i] + 8;
     }
   
   clutter_init (&argc, &argv);
@@ -174,7 +179,7 @@ main (int argc, char *argv[])
                     G_CALLBACK (on_event),
                     NULL);
 
-  pixbuf = gdk_pixbuf_new_from_file ("redhand.png", NULL);
+  pixbuf = gdk_pixbuf_new_from_file (image, NULL);
 
   if (!pixbuf)
     g_error("pixbuf load failed");
@@ -200,7 +205,7 @@ main (int argc, char *argv[])
   clutter_container_add (CLUTTER_CONTAINER (stage), odo, NULL);
 
   odo = beget_odo (CLUTTER_TEXTURE (hand),
-		   400, 400,
+		   570, 400,
 		   340.0, 0.0,
 		   distort_func2,
 		   &data);
@@ -208,14 +213,53 @@ main (int argc, char *argv[])
   clutter_container_add (CLUTTER_CONTAINER (stage), odo, NULL);
 
   odo = beget_odo (CLUTTER_TEXTURE (hand),
-		   350, 20,
+		   600, 20,
 		   0.0, 0.0,
 		   distort_func3,
 		   &data);
 		   
   clutter_container_add (CLUTTER_CONTAINER (stage), odo, NULL);
+
+  mesh.dimension_x = 4;
+  mesh.dimension_y = 4;
+  mesh.points = g_new (ClutterMeshPoint, 16);
+
+#define P(a,b,_x,_y,_z) \
+   mesh.points[b*mesh.dimension_x + a].x = _x; \
+   mesh.points[b*mesh.dimension_x + a].y = _y; \
+   mesh.points[b*mesh.dimension_x + a].z = _z
+
+  P (0,0,  0,0,0);
+  P (0,1, 80,0,0);
+  P (0,2,160,0,0);
+  P (0,3,240,0,0);
+
+  P (1,0,  0,80,0);
+  P (1,1, 80,80,160);
+  P (1,2,160,80,160);
+  P (1,3,240,80,0);
+
+  P (2,0,  0,160,0);
+  P (2,1, 80,160,160);
+  P (2,2,160,160,160);
+  P (2,3,240,160,0);
+
+  P (3,0,  0,240,0);
+  P (3,1, 80,240,0);
+  P (3,2,160,240,0);
+  P (3,3,240,240,0);
+#undef P
   
-  timeline = clutter_timeline_new (104, 26);
+  odo = clutter_texture_odo_new (CLUTTER_TEXTURE (hand));
+  clutter_actor_set_position (odo, 290, 200);
+  clutter_actor_rotate_x (odo, 0.0, 0, 0);
+  clutter_actor_rotate_y (odo, 0.0, 0, 0);
+
+  g_object_set (G_OBJECT (odo), "mesh", &mesh, NULL);
+  
+  clutter_container_add (CLUTTER_CONTAINER (stage), odo, NULL);
+
+  timeline = clutter_timeline_new (106, 26);
   g_object_set (timeline, "loop", TRUE, NULL);
   
   g_signal_connect (timeline, "new-frame", G_CALLBACK (new_frame_cb), &data);
