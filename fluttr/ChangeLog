@@ -1,5 +1,10 @@
 2007-08-01  Neil J. Patel  <njp@o-hand.com>
 
+	* prepare-ChangeLog.pl:
+	Should not be here.
+
+2007-08-01  Neil J. Patel  <njp@o-hand.com>
+
 	* AUTHORS:
 	Include email address.
 
