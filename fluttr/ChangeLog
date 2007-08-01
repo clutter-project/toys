@@ -1,3 +1,8 @@
+2007-08-01  Neil J. Patel  <njp@o-hand.com>
+
+	* AUTHORS:
+	Include email address.
+
 2007-07-12  Neil J. Patel  <njp@o-hand.com>
 
 	* src/fluttr-photo.c: (fluttr_photo_opt_alpha_func):
