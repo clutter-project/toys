@@ -102,6 +102,10 @@ rotate_items (App *app, int step)
       ang_start = ang;
       ang_end   = ang + (STEP * step);
 
+      clutter_behaviour_ellipse_set_direction 
+	(CLUTTER_BEHAVIOUR_ELLIPSE(item->ellipse_behave), 
+	 step > 0 ? CLUTTER_ROTATE_CW : CLUTTER_ROTATE_CCW);
+
       clutter_behaviour_ellipse_set_angle_begin 
 	(CLUTTER_BEHAVIOUR_ELLIPSE(item->ellipse_behave), ang_start);
 
@@ -239,13 +243,13 @@ main (int argc, char *argv[])
 
       item->ellipse_behave 
 	= clutter_behaviour_ellipse_new (app->alpha_sine_inc,
-					 10,   /* center x */
-					 CSH()/2 - (64),   /* center y */
+					 CSW()/4,   /* center x */
+					 CSH() - (CSH()/3),   /* center y */
 					 CSW()/2,   /* width */
 					 CSH() - (CSH()/4),   /* height */
+					 CLUTTER_ROTATE_CW,
 					 ang,
-					 ang + STEP,
-					 0.0    /* tilt */ );
+					 ang + STEP);
       item->opacity_behave 
 	= clutter_behaviour_opacity_new (app->alpha_sine_inc, 0x66, 0x66);
 
@@ -266,7 +270,7 @@ main (int argc, char *argv[])
   app->label = clutter_label_new_with_text ("Coolvetica 60px", "");
   clutter_label_set_color (CLUTTER_LABEL(app->label), &white);
   clutter_label_set_line_wrap (CLUTTER_LABEL(app->label), FALSE);
-  clutter_actor_set_position (app->label, CSW()/2 - 40, CSH()/2 - 20);
+  clutter_actor_set_position (app->label, CSW()/2 - 40, CSH()/3 - 40);
   clutter_group_add (CLUTTER_GROUP(stage), app->label);  
 
   behave = clutter_behaviour_opacity_new (app->alpha_ramp, 0xff, 0);
