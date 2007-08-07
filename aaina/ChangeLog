@@ -1,3 +1,8 @@
+2007-08-07  Neil J. Patel  <njp@o-hand.com>
+
+	* configure.ac:
+	Bump to 0.4.
+
 2007-07-13  Neil J. Patel  <njp@o-hand.com>
 
 	* src/aaina-slide-show.c: (on_photo_added):
