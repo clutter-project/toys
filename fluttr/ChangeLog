@@ -1,3 +1,8 @@
+2007-08-07  Neil J. Patel  <njp@o-hand.com>
+
+	* configure.ac:
+	Bump to 0.4. Remove check and warning for 0.2.
+
 2007-08-01  Neil J. Patel  <njp@o-hand.com>
 
 	* prepare-ChangeLog.pl:
