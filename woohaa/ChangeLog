@@ -1,3 +1,8 @@
+2007-08-07  Matthew Allum  <mallum@openedhand.com>
+
+	* configure.ac:
+	Update for 0.4
+
 2007-07-13  Matthew Allum  <mallum@openedhand.com>
 
 	* woohaa.c: (browse_input_cb):
