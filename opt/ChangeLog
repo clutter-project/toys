@@ -1,3 +1,8 @@
+2007-08-07  Matthew Allum  <mallum@openedhand.com>
+
+	* configure.ac:
+	Update to use 0.4
+
 2007-06-19  Matthew Allum  <mallum@openedhand.com>
 
 	* demo.xml:
