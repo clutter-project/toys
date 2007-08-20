@@ -1,3 +1,15 @@
+/* 
+ * foofone
+ *
+ * Foofone is a quick 3 hour hack to experiment with effects and create a
+ * dummy phone interface. Thats all it is.
+ *
+ * Copyright 2007 OpenedHand Ltd
+ * Authored by Matthew Allum <mallum@o-hand.com>
+ * Licensed under the GPL v2 or greater.
+ *
+ */
+
 #include <clutter/clutter.h>
 
 #define CSW 240
@@ -156,8 +168,8 @@ call_activate (App *app)
 		       app->screen_dial,
 		       0x66,
 		       0xff,
-		       on_call_activate_complete,
-		       app);
+		       NULL,
+		       NULL);
 
   clutter_effect_scale (app->call_effect_tmpl,
 			app->screen_dial,
@@ -212,12 +224,15 @@ call_activate (App *app)
   knots[1].x = app->dpyx;
   knots[1].y = -clutter_actor_get_height (app->dpy);
 
+  /* HACK: Note, here we kind of assume this timeline will complete
+   * last but that is not guarenteed because of dropped frames etc.
+  */
   clutter_effect_move (app->call_effect_tmpl,
 		       app->dpy,
 		       knots,
 		       2,
-		       NULL,
-		       NULL);
+		       on_call_activate_complete,
+		       app);
 }
 
 void  
@@ -245,16 +260,19 @@ button_activate (App *app, Button *b)
 					    b->actor,
 					    0xff,
 					    0,
-					    on_button_effect_complete,
-					    b);
+					    NULL,
+					    NULL);
 
+  /* HACK: Note, here we kind of assume this timeline will complete
+   * last but that is not guarenteed because of dropped frames etc.
+  */
   b->pressed_scale = clutter_effect_scale (app->button_effect_tmpl,
 					   b->actor,
 					   1.0,
 					   2.0,
 					   CLUTTER_GRAVITY_CENTER,
-					   NULL,
-					   NULL);
+					   on_button_effect_complete,
+					   b);
 }
 
 void 
