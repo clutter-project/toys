@@ -263,9 +263,6 @@ button_activate (App *app, Button *b)
 					    NULL,
 					    NULL);
 
-  /* HACK: Note, here we kind of assume this timeline will complete
-   * last but that is not guarenteed because of dropped frames etc.
-  */
   b->pressed_scale = clutter_effect_scale (app->button_effect_tmpl,
 					   b->actor,
 					   1.0,
@@ -424,6 +421,8 @@ make_ui (App *app)
   app->button_effect_tmpl 
     = clutter_effect_template_new (clutter_timeline_new (10, 120),
 				   CLUTTER_ALPHA_RAMP_INC);
+  /* Always use the same timeline to keep things in sync */
+  clutter_effect_template_set_timeline_clone (app->button_effect_tmpl, FALSE);
 
   /* dial 'screen' */
 
@@ -454,6 +453,9 @@ make_ui (App *app)
   app->call_effect_tmpl
     = clutter_effect_template_new (clutter_timeline_new (30, 120),
 				   CLUTTER_ALPHA_SINE_INC);
+
+  /* Always use the same timeline to keep things in sync */
+  clutter_effect_template_set_timeline_clone (app->call_effect_tmpl, FALSE);
 }
 
 int
