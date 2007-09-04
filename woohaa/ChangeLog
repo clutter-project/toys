@@ -1,3 +1,26 @@
+2007-09-04  Matthew Allum  <mallum@openedhand.com>
+
+	* Makefile.am:
+	* totem-resources.c:
+	* totem-resources.h:
+	* wh-db.c:
+	* wh-screen-video.c:
+	* wh-video-thumbnailer.c:
+	* woohaa.c: 
+	Big Patch from Sir Bastien Nocera:
+        
+	- Use totem-resources.[ch] to avoid the thumbnailer running
+          amok (avoids signals, use threads and monitor memory usage
+          as well).
+	- Put the woohaa db in ~/.local/share/woohaa, as per XDG-ish
+	- Don't use GNOME_VFS_PERM_ACCESS_READABLE, it's only
+          implemented by the file method in gnome-vfs (so doesn't work
+          remotely)
+        - Make sure URIs and not local file paths are getting passed around
+        - Get a list from GConf so that we can use ":" (as in "smb://blah") in
+          the URI
+        - Don't leak the GConfClient (it's not a singleton)
+
 2007-08-07  Matthew Allum  <mallum@openedhand.com>
 
 	* configure.ac:

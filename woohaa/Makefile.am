@@ -28,13 +28,13 @@ woohaa_SOURCES = woohaa.c               \
 		wh-db.h                 \
 		wh-theme.c              \
 		wh-theme.h              \
-		eggsequence.c	        \
+		eggsequence.c           \
 		eggsequence.h           \
 		util.c                  \
-		util.h                  
+		util.h
 
 wh_video_thumbnailer_LDADD = $(DEPS_LIBS) 
-wh_video_thumbnailer_SOURCES = wh-video-thumbnailer.c
+wh_video_thumbnailer_SOURCES = wh-video-thumbnailer.c totem-resources.c totem-resources.h
 
 MAINTAINERCLEANFILES = aclocal.m4 compile config.guess config.sub configure depcomp install-sh ltmain.sh Makefile.in missing
 

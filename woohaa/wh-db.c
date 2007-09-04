@@ -138,16 +138,15 @@ static void
 wh_db_init (WHDB *self)
 {
   int           res, i;
-  const gchar  *conf_dir;
+  const gchar  *data_dir;
   gchar        *db_filename, *path;
   WHDBPrivate  *priv = DB_PRIVATE(self);
 
   gnome_vfs_init ();
 
-  /* FIXME: use XDG  */
-  conf_dir = g_getenv("HOME");
+  data_dir = g_get_user_data_dir ();
 
-  db_filename = g_build_filename (conf_dir, ".woohaa", "db", NULL);
+  db_filename = g_build_filename (data_dir, "woohaa", "db", NULL);
   path = g_path_get_dirname (db_filename);
   g_mkdir_with_parents (path, 0755);
 
@@ -213,23 +212,25 @@ wh_db_import_uri (WHDB *db, const gchar *uri)
   /* FIXME: hack - really I think importing needs to be in a thread */
   while (g_main_context_pending (NULL))
     g_main_context_iteration (NULL, FALSE);
-  
+
   vfs_info   = gnome_vfs_file_info_new ();
   vfs_result = gnome_vfs_get_file_info (uri, vfs_info, vfs_options);
-  
-  if (vfs_result != GNOME_VFS_OK)	
+
+  if (vfs_result != GNOME_VFS_OK)
     goto cleanup;
 
   if (! (vfs_info->valid_fields & (GNOME_VFS_FILE_INFO_FIELDS_PERMISSIONS
 				   |GNOME_VFS_FILE_INFO_FIELDS_TYPE)))
     goto cleanup;
 
-  if (! (vfs_info->permissions & GNOME_VFS_PERM_ACCESS_READABLE))
+  /* GNOME_VFS_PERM_ACCESS_READABLE would be better, but only the
+   * file method implements it */
+  if (! (vfs_info->permissions & GNOME_VFS_PERM_USER_READ))
     goto cleanup;
 
   if (vfs_info->type == GNOME_VFS_FILE_TYPE_DIRECTORY)
     {
-        GnomeVFSMonitorHandle   *monitor_handle;
+      GnomeVFSMonitorHandle   *monitor_handle;
 
       ret = wh_db_walk_directory (db, uri);
 
@@ -243,12 +244,12 @@ wh_db_import_uri (WHDB *db, const gchar *uri)
     {
       if (uri_is_media(uri))
 	  wh_db_media_file_found (db, uri, vfs_info); 
-      
+
       ret = TRUE;
     }
 
  cleanup:
- 
+
  if (vfs_info)
     gnome_vfs_file_info_unref (vfs_info);
   

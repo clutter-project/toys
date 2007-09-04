@@ -1,14 +1,10 @@
 #include <clutter/clutter.h>
 #include <clutter-gst/clutter-gst.h>
 #include <gst/gst.h>
-#include <signal.h>
 #include <unistd.h>
 #include <stdio.h>
 
-void alarm_catcher (int sig) 
-{
-  exit(-1);
-}
+#include "totem-resources.h"
 
 int
 main (int argc, char *argv[])
@@ -16,19 +12,8 @@ main (int argc, char *argv[])
   ClutterActor *video;
   GdkPixbuf    *shot;
   gint          duration;
-  struct sigaction sact;
-
-  sigemptyset( &sact.sa_mask );
-  sact.sa_flags = 0;
-  sact.sa_handler = alarm_catcher;
-  sigaction( SIGALRM, &sact, NULL );
-
-  alarm(100); /* If we are left running for more than 1 minute something
-	       * is really wrong and thus attempt to abort. 
-	      */
 
   gst_init (&argc, &argv);
-
   clutter_init (&argc, &argv);
 
   if (argc < 3)
@@ -37,9 +22,14 @@ main (int argc, char *argv[])
       exit(-1);
     }
 
+  totem_resources_monitor_start (argv[1], 60 * G_USEC_PER_SEC);
+
   video = clutter_gst_video_texture_new ();
 
-  clutter_media_set_filename(CLUTTER_MEDIA(video), argv[1]);
+  if (argv[1][0] == '/')
+    clutter_media_set_filename(CLUTTER_MEDIA(video), argv[1]);
+  else
+    clutter_media_set_uri(CLUTTER_MEDIA(video), argv[1]);
   clutter_media_set_volume (CLUTTER_MEDIA(video), 0);
   clutter_media_set_playing (CLUTTER_MEDIA(video), TRUE);
 
@@ -64,8 +54,8 @@ main (int argc, char *argv[])
   } while (clutter_media_get_position (CLUTTER_MEDIA(video)) <= duration/3);
 
   shot = clutter_texture_get_pixbuf (CLUTTER_TEXTURE(video));
-      
 
+  totem_resources_monitor_stop ();
 
   if (shot)
     {

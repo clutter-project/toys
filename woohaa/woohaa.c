@@ -591,29 +591,34 @@ main (int argc, char *argv[])
 {
   WooHaa        *wh;
   ClutterActor  *stage, *bg, *screen_start, *desktop, *label;
-  gchar         *gconf_paths;
-  gchar         **pathv, *font_str;
-  gint           i = 0, menu_h, browse_h;
+  GConfClient   *client;
+  GSList         *gconf_paths, *path;
+  gchar         *font_str;
+  gint           menu_h, browse_h;
   GError        *error = NULL;
   ClutterEffectTemplate *effect_template;
   ClutterColor   stage_color = { 0xff, 0xff, 0xf7, 0xff },
 		  grey_col   = { 0x72, 0x9f, 0xcf, 0xff};
-		 
+
+  gnome_vfs_init ();
   gst_init (&argc, &argv);
   clutter_init (&argc, &argv);
 
-  gconf_paths = gconf_client_get_string (gconf_client_get_default (),
-					 WOOHAA_GCONF_PREFIX "/paths",
-					 &error);
+  client = gconf_client_get_default ();
+  gconf_paths = gconf_client_get_list (client,
+				       WOOHAA_GCONF_PREFIX "/paths",
+				       GCONF_VALUE_STRING,
+				       &error);
+  g_object_unref (client);
 
   if (gconf_paths == NULL)
     {
       g_printf("\n ***************************************************************************\n");
       g_printf("  To run woohaa you must set the GConf key; \n");
       g_printf("    '" WOOHAA_GCONF_PREFIX "/paths' \n");
-      g_printf("  to a ':' seprated list of paths containing movie files.\n\n");
+      g_printf("  to a list of paths containing movie files.\n\n");
       g_printf("  To set the key, run;\n\n");
-      g_printf("    gconftool-2 -s " WOOHAA_GCONF_PREFIX "/paths --type string <paths> \n");
+      g_printf("    gconftool-2 -s -t list --list-type=string " WOOHAA_GCONF_PREFIX "/paths \'[/path1,smb://10.1.1.1/path2]\'\n");
       g_printf("\n ***************************************************************************\n\n");
 
       exit(-1);
@@ -783,12 +788,16 @@ main (int argc, char *argv[])
 		    G_CALLBACK (on_db_row_created), 
 		    wh);
 
-  pathv = g_strsplit (gconf_paths, ":", 0);
-  while (pathv[i] != NULL)
+  for (path = gconf_paths; path != NULL; path = path->next)
     {
-      wh_db_import_uri (wh->db, pathv[i++]);
+      char *uri = NULL;
+      if (strstr (path->data, "://") == NULL)
+        uri = g_filename_to_uri (path->data, NULL, NULL);
+      wh_db_import_uri (wh->db, uri ? uri : path->data);
+      g_free (uri);
+      g_free (path->data);
     }
-  g_strfreev(pathv) ;
+  g_slist_free (gconf_paths);
 
   /* view widget */
 

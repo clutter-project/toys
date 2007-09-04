@@ -646,7 +646,7 @@ wh_screen_video_activate (WHScreenVideo *screen, WHVideoView *view)
 
   g_free (title);
 
-  clutter_media_set_filename(CLUTTER_MEDIA(priv->video), 
-			     wh_video_model_row_get_path(priv->video_row));
+  clutter_media_set_uri(CLUTTER_MEDIA(priv->video), 
+			wh_video_model_row_get_path(priv->video_row));
   clutter_media_set_playing (CLUTTER_MEDIA(priv->video), TRUE);
 }
