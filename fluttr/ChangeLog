@@ -1,3 +1,18 @@
+2007-09-07  Neil J. Patel  <njp@o-hand.com>
+
+	Patch by: Andre Magalhaes <andrunko@gmail.com>
+
+	* configure.ac:
+	Bump to 0.5
+
+	* src/fluttr-list-view.c: (fluttr_list_view_advance):
+	Make sure the active_actor is raised to the top.
+
+	* src/main.c: (main), (photo_input_cb), (list_input_cb),
+	(sets_input_cb):
+	Add a list_view into the app struct, as two objects were sharing the same
+	reference :-/.
+
 2007-08-07  Neil J. Patel  <njp@o-hand.com>
 
 	* configure.ac:

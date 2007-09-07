@@ -38,6 +38,7 @@ typedef struct {
 	ClutterActor 		*auth;
 	ClutterActor		*sets;
 	ClutterActor		*list;
+	ClutterActor		*list_view;
 	ClutterActor		*viewer;
 	
 	/* Current view info */
@@ -247,13 +248,13 @@ main (int argc, char **argv)
 	clutter_actor_set_position (sets, 0, 0);
 	
 	/* The list view */
-	fluttr->list = fluttr_list_view_new ();
-	g_object_set (G_OBJECT (fluttr->list), "cols", cols, NULL);
-	clutter_group_add (CLUTTER_GROUP (fluttr->stage), fluttr->list);
-	clutter_actor_set_size (fluttr->list, CLUTTER_STAGE_WIDTH (),
+	fluttr->list_view = fluttr_list_view_new ();
+	g_object_set (G_OBJECT (fluttr->list_view), "cols", cols, NULL);
+	clutter_group_add (CLUTTER_GROUP (fluttr->stage), fluttr->list_view);
+	clutter_actor_set_size (fluttr->list_view, CLUTTER_STAGE_WIDTH (),
 				CLUTTER_STAGE_HEIGHT ());
-	clutter_actor_set_position (fluttr->list, 0, 0);
-	clutter_actor_set_opacity (fluttr->list, 0);	
+	clutter_actor_set_position (fluttr->list_view, 0, 0);
+	clutter_actor_set_opacity (fluttr->list_view, 0);	
 	
 	clutter_actor_show_all (fluttr->stage);	    
 	
@@ -504,9 +505,9 @@ photo_input_cb (ClutterStage *stage,
 		case CLUTTER_KP_Enter:
 		case CLUTTER_Escape:
 			fluttr_list_view_advance_col 
-					(FLUTTR_LIST_VIEW (fluttr->list), 0);
+					(FLUTTR_LIST_VIEW (fluttr->list_view), 0);
 			photo = fluttr_list_view_get_active 
-					(FLUTTR_LIST_VIEW (fluttr->list));
+					(FLUTTR_LIST_VIEW (fluttr->list_view));
 			fluttr->view = FLUTTR_VIEW_PHOTOS;
 			fluttr_viewer_show (FLUTTR_VIEWER (fluttr->viewer),
 					    FALSE);
@@ -542,27 +543,27 @@ list_input_cb (ClutterStage *stage,
 		switch (clutter_key_event_symbol (kev)) {
 		case CLUTTER_Left:
 			fluttr_list_view_advance_col 
-					(FLUTTR_LIST_VIEW (fluttr->list), -1);
+					(FLUTTR_LIST_VIEW (fluttr->list_view), -1);
 			break;
 		case CLUTTER_Right:
 			fluttr_list_view_advance_col 
-					(FLUTTR_LIST_VIEW (fluttr->list), 1);
+					(FLUTTR_LIST_VIEW (fluttr->list_view), 1);
 			break;
 		case CLUTTER_Up:
 			fluttr_list_view_advance_row 
-					(FLUTTR_LIST_VIEW (fluttr->list), -1);
+					(FLUTTR_LIST_VIEW (fluttr->list_view), -1);
 			break;
 		case CLUTTER_Down:
 			fluttr_list_view_advance_row 
-					(FLUTTR_LIST_VIEW (fluttr->list), 1);
+					(FLUTTR_LIST_VIEW (fluttr->list_view), 1);
 			break;
 		case CLUTTER_Return:
 		case CLUTTER_space:
 		case CLUTTER_KP_Enter:
 			fluttr_list_view_activate (FLUTTR_LIST_VIEW 
-								(fluttr->list));
+								(fluttr->list_view));
 			photo = fluttr_list_view_get_active 
-					(FLUTTR_LIST_VIEW (fluttr->list));
+					(FLUTTR_LIST_VIEW (fluttr->list_view));
 			fluttr_photo_show_options (photo, TRUE);
 			fluttr->view = FLUTTR_VIEW_PHOTO;
 			
@@ -572,11 +573,11 @@ list_input_cb (ClutterStage *stage,
 			break;
 		case CLUTTER_Escape:
 			fluttr->in = fluttr->sets;
-			fluttr->out = fluttr->list;
+			fluttr->out = fluttr->list_view;
 			if (!clutter_timeline_is_playing (fluttr->timeline))
 				clutter_timeline_start (fluttr->timeline);
 			/*
-			clutter_actor_set_opacity (fluttr->list, 0);
+			clutter_actor_set_opacity (fluttr->list_view, 0);
 			clutter_actor_set_opacity (fluttr->sets, 255);
 			*/
 			fluttr->view = FLUTTR_VIEW_SETS; 
@@ -624,9 +625,9 @@ sets_input_cb (ClutterStage *stage,
 			set = fluttr_set_view_get_active (FLUTTR_SET_VIEW 
 								(fluttr->sets));
 			if (set) {
-				g_object_set (G_OBJECT (fluttr->list),
+				g_object_set (G_OBJECT (fluttr->list_view),
 					      "set", set, NULL);
-				fluttr->in = fluttr->list;
+				fluttr->in = fluttr->list_view;
 				fluttr->out = fluttr->sets;
 				if (!clutter_timeline_is_playing (
 							fluttr->timeline))
@@ -634,7 +635,7 @@ sets_input_cb (ClutterStage *stage,
 							fluttr->timeline);
 				fluttr->view = FLUTTR_VIEW_PHOTOS; 
 				fluttr_list_view_advance 
-					(FLUTTR_LIST_VIEW (fluttr->list), 0);
+					(FLUTTR_LIST_VIEW (fluttr->list_view), 0);
 			}
 			break;
 		case CLUTTER_Escape:

@@ -148,7 +148,8 @@ fluttr_list_view_advance (FluttrListView *list_view, gint n)
 		} else
 			fluttr_photo_set_active (FLUTTR_PHOTO (photo), FALSE);
 	}
-	clutter_actor_raise_top (priv->active_actor);
+	if (priv->active_actor)
+		clutter_actor_raise_top (priv->active_actor);
 }
 
 static gboolean
