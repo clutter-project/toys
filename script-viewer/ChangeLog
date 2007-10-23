@@ -1,3 +1,9 @@
+2007-10-23  Øyvind Kolås  <pippin@gimp.org>
+
+	* behaviours.json: added a sample animating text labels using scale,
+	rotate, opacity, depth and ellipse behaviours, with some BUG comments
+	sprinkled around the code.
+
 2007-10-23  Øyvind Kolås  <pippin@o-hand.com>
 
 	Initial import to svn.

@@ -1,0 +1,112 @@
+# there are inconsistencies in the naming of the nicks of the
+# properties: 
+#               foo-begin vs start-foo vs foo-start
+
+[
+  {
+    "id" : "animation",
+    "type" : "ClutterTimeline",
+    "num-frames" : 300,
+    "fps" : 60,
+    "loop" : true
+  },
+  {
+    "id" : "root",
+    "type" : "ClutterGroup",
+    "x": 0,
+    "y": 0
+    "children" : [
+      {
+        "type": "ClutterLabel",
+        "text": "Scale",
+        "font-name": "Sans 30px",
+        "visible":true,
+        "x":50,
+        "y":100,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourScale",
+              "scale-begin"   : 1.0,
+              "scale-end"     : 0.5,
+              "scale-gravity" : "center",
+              "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
+            },
+          ]
+      },
+
+      {
+        "type": "ClutterLabel",
+        "text": "Rotate",
+        "font-name": "Sans 30px",
+        "color": "blue",
+        "visible":true,
+        "x":150,
+        "y":100,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourRotate",
+              "angle-begin"   : 0.0,
+              "angle-end"     : 359.0,
+              "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
+            },
+          ]
+      },
+      {
+        "type": "ClutterLabel",
+        "text": "Opacity",
+        "font-name": "Sans 30px",
+        "visible":true,
+        "x":300,
+        "y":100,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourOpacity",
+              "opacity-start"   : 100,
+              "opacity-end"     : 255,
+              "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
+            }
+          ]
+      },
+      {
+        "type": "ClutterLabel",
+        "text": "Depth",
+        "font-name": "Sans 30px",
+        "visible":true,
+        "x":450,
+        "y":100,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourDepth",
+              "start-depth"   : 100,
+              "end-depth"     : 0,      # BUG: clutterscript (gscanner), doesn't support negative values.
+              "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
+            }
+          ]
+      },
+
+      {
+        "type": "ClutterLabel",
+        "text": "Ellipse (unable to set center)",
+        "font-name": "Sans 30px",
+        "visible":true,
+        "x":300,
+        "y":100,
+        "wrap":false,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourEllipse",
+              "center"   : [300, 200],  # BUG, doesn't seem to apply
+              "width":   400,
+              "height":   500,
+              "angle-begin": 90.0,
+              "angle-end": 180.0,
+              "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
+            }
+          ]
+      }
+
+      # ClutterBehaviourPath     BUG: NYI
+      # CLutterBehaviourBSpline  BUG: NYI
+    ]
+  }
+]
