@@ -1,0 +1,56 @@
+ClutterScriptViewer
+===================
+
+ClutterScriptViewer, a minimalistic hacker editing tool for authoring and
+experimenting with ClutterScript. Compile by typing make, if that worked well.
+You can now start using script-viewer. The main use of script-viewer is editing
+and tweaking layouts in your favourite editor whilst script-viewer provides a
+live preview.
+
+Documentation
+-------------
+
+The core documentation for script-viewer is the usage shown when no commands
+are passed in, default values are shown in paranthesises after each option,
+by adding -h to the end of your list of options the script-viewer will show
+the parsed values for different options.
+
+$ ./script-viewer -h
+
+Usage: ./script-viewer [options] <clutterscript>
+
+  -s <widthXheight>       stage size                  (640x480)
+  -fs                     run fullscreen              (FALSE)
+  -bg <color>             stage color                 (gray)
+  -id <actor id>          which actor id to show      (root)
+  -timeline <timeline id> a timeline to play          (NULL)
+  -o <file.png>           write screenshot, then quit (NULL)
+  -h                      this help
+
+Examples
+--------
+
+Load the file foo.json and show the actor/group with id 'root' on stage.
+
+$ ./script-viewer foo.json
+
+
+Load the file foo.json and show the actor/group with id 'bar' on a stage
+with a black background.
+
+$ ./script-viewer foo.json -id 'bar' -bg black
+
+
+Load the file foo.json and show the actor/group with id 'bar' to a stage size
+400x300 and save a screenshot to the file screenshot.png, note that the stage
+itself will appear transparent in the screenshot even when it has a color on
+screen.
+
+$ ./script-viewer foo.json -id 'bar' -o screenshot.png -s 400x300
+
+
+Load the file foo.json and show the actor/group with id 'bar' to stage
+and start playing the timeline with id 'baz'
+
+$ ./script-viewer foo.json -id 'bar' -timeline 'baz'
+

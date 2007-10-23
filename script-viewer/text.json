@@ -1,0 +1,107 @@
+[
+  {
+    "id" : "animation",
+    "type" : "ClutterTimeline",
+    "num-frames" : 300,
+    "fps" : 60,
+    "loop" : true
+  },
+  {
+    "id" : "root",
+    "type" : "ClutterGroup",
+    "x": 50,
+    "y": 40
+    "children" : [
+      {
+        "type": "ClutterTexture",
+        "pixbuf" :"redhand.png",
+        "visible":true
+        "x": 200,
+        "y": 200,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourRotate",
+              "alpha"         : {"timeline"  : "animation", "function"  : "ramp-inc"}
+            },
+
+          ]
+      },
+
+      {
+        "type": "ClutterLabel",
+        "text": "Clutter",
+        "font-name": "Sans 60px",
+        "visible":true,
+        "x":100,
+        "y":100,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourScale",
+              "scale-begin"   : 1.0,
+              "scale-end"     : 0.5,
+              "scale-gravity" : "center",
+              "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
+            },
+            {
+              "type"          : "ClutterBehaviourOpacity",
+              "opacity-start"   : 100,
+              "opacity-end"     : 255,
+              "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
+            }
+
+          ]
+      },
+
+      {
+        "type": "ClutterLabel",
+        "text": "Script",
+        "font-name": "Sans 60px",
+        "color": "blue",
+        "visible":true,
+        "x":160,
+        "y":130,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourScale",
+              "scale-begin"   : 0.5,
+              "scale-end"     : 1.0,
+              "scale-gravity" : "center",
+              "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
+            },
+            {
+              "type"          : "ClutterBehaviourOpacity",
+              "opacity-start"   : 100,
+              "opacity-end"     : 255,
+              "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
+            }
+
+          ]
+      },
+      {
+        "type": "ClutterLabel",
+        "text": "Viewer",
+        "font-name": "Sans 60px",
+        "visible":true,
+        "x":200,
+        "y":170,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourScale",
+              "scale-begin"   : 1.0,
+              "scale-end"     : 0.5,
+              "scale-gravity" : "center",
+              "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
+            },
+            {
+              "type"          : "ClutterBehaviourOpacity",
+              "opacity-start"   : 100,
+              "opacity-end"     : 255,
+              "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
+            }
+
+          ]
+      },
+
+    ]
+  }
+]
