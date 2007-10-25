@@ -1,4 +1,9 @@
-2007-10-23  Øyvind Kolås  <pippin@gimp.org>
+2007-10-25  Øyvind Kolås  <pippin@o-hand.com>
+
+	* behaviours.json: updated with path, bspline and fixed ellipse
+	after updates to ClutterScript.
+
+2007-10-23  Øyvind Kolås  <pippin@o-hand.com>
 
 	* behaviours.json: added a sample animating text labels using scale,
 	rotate, opacity, depth and ellipse behaviours, with some BUG comments

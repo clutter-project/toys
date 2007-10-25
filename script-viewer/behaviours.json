@@ -6,7 +6,7 @@
   {
     "id" : "animation",
     "type" : "ClutterTimeline",
-    "num-frames" : 300,
+    "num-frames" : 120,
     "fps" : 60,
     "loop" : true
   },
@@ -40,7 +40,7 @@
         "font-name": "Sans 30px",
         "color": "blue",
         "visible":true,
-        "x":150,
+        "x":250,
         "y":100,
         "behaviours" : [
             {
@@ -56,7 +56,7 @@
         "text": "Opacity",
         "font-name": "Sans 30px",
         "visible":true,
-        "x":300,
+        "x":400,
         "y":100,
         "behaviours" : [
             {
@@ -72,8 +72,8 @@
         "text": "Depth",
         "font-name": "Sans 30px",
         "visible":true,
-        "x":450,
-        "y":100,
+        "x":100,
+        "y":200,
         "behaviours" : [
             {
               "type"          : "ClutterBehaviourDepth",
@@ -86,26 +86,54 @@
 
       {
         "type": "ClutterLabel",
-        "text": "Ellipse (unable to set center)",
+        "text": "Ellipse",
         "font-name": "Sans 30px",
         "visible":true,
-        "x":300,
-        "y":100,
         "wrap":false,
         "behaviours" : [
             {
               "type"          : "ClutterBehaviourEllipse",
-              "center"   : [300, 200],  # BUG, doesn't seem to apply
-              "width":   400,
-              "height":   500,
+              "center"   : [150, 200],
+              "width":   100,
+              "height":   100,
               "angle-begin": 90.0,
               "angle-end": 180.0,
               "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
             }
           ]
+      },
+
+      {
+        "type": "ClutterLabel",
+        "text": "Path",
+        "font-name": "Sans 30px",
+        "visible":true,
+        "wrap":false,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourPath",
+              "knots"   : [[300, 200], [400,230], [300,150], [300,200]],
+              "alpha"         : {"timeline"  : "animation", "function"  : "sine-inc"}
+            }
+          ]
+      },
+
+      {
+        "type": "ClutterLabel",
+        "text": "BSpline",
+        "font-name": "Sans 30px",
+        "visible":true,
+        "wrap":false,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourBSpline",
+              "knots"   : [[100, 300], [200,300], [300,300],
+                           [400, 400], [450, 400], [450, 400], [500, 400]],
+              "alpha"         : {"timeline"  : "animation", "function"  : "ramp-dec"}
+            }
+          ]
       }
 
-      # ClutterBehaviourPath     BUG: NYI
       # CLutterBehaviourBSpline  BUG: NYI
     ]
   }
