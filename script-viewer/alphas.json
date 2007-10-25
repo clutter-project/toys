@@ -1,0 +1,191 @@
+# there are inconsistencies in the naming of the nicks of the
+# properties: 
+#               foo-begin vs start-foo vs foo-start
+
+[
+  {
+    "id" : "animation",
+    "type" : "ClutterTimeline",
+    "num-frames" : 120,
+    "fps" : 60,
+    "loop" : true
+  },
+  {
+    "id" : "root",
+    "type" : "ClutterGroup",
+    "x": 0,
+    "y": 0
+    "children" : [
+
+      {
+        "type": "ClutterLabel",
+        "text": "ramp-inc",
+        "font-name": "Sans 20px",
+        "visible":true,
+        "wrap":false,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourPath",
+              "knots" : [[20, 10], [400, 10]],
+              "alpha" : {"timeline"  : "animation", "function"  : "ramp-inc"}
+            }
+          ]
+      },
+      {
+        "type": "ClutterLabel",
+        "text": "ramp-dec",
+        "font-name": "Sans 20px",
+        "visible":true,
+        "wrap":false,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourPath",
+              "knots" : [[20, 40], [400, 40]],
+              "alpha" : {"timeline"  : "animation", "function"  : "ramp-dec"}
+            }
+          ]
+      },
+      {
+        "type": "ClutterLabel",
+        "text": "sine-inc",
+        "font-name": "Sans 20px",
+        "visible":true,
+        "wrap":false,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourPath",
+              "knots" : [[20, 60], [400, 60]],
+              "alpha" : {"timeline"  : "animation", "function"  : "sine-inc"}
+            }
+          ]
+      },
+      {
+        "type": "ClutterLabel",
+        "text": "sine-dec",
+        "font-name": "Sans 20px",
+        "visible":true,
+        "wrap":false,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourPath",
+              "knots" : [[20, 80], [400, 80]],
+              "alpha" : {"timeline"  : "animation", "function"  : "sine-dec"}
+            }
+          ]
+      },
+      {
+        "type": "ClutterLabel",
+        "text": "sine",
+        "font-name": "Sans 20px",
+        "visible":true,
+        "wrap":false,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourPath",
+              "knots" : [[20, 100], [400, 100]],
+              "alpha" : {"timeline"  : "animation", "function"  : "sine"}
+            }
+          ]
+      },
+      {
+        "type": "ClutterLabel",
+        "text": "ramp",
+        "font-name": "Sans 20px",
+        "visible":true,
+        "wrap":false,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourPath",
+              "knots" : [[20, 120], [400, 120]],
+              "alpha" : {"timeline"  : "animation", "function"  : "ramp"}
+            }
+          ]
+      },
+      {
+        "type": "ClutterLabel",
+        "text": "ramp",
+        "font-name": "Sans 20px",
+        "visible":true,
+        "wrap":false,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourPath",
+              "knots" : [[20, 140], [400, 140]],
+              "alpha" : {"timeline"  : "animation", "function"  : "square"}
+            }
+          ]
+      },
+      {
+        "type": "ClutterLabel",
+        "text": "exp-inc",
+        "font-name": "Sans 20px",
+        "visible":true,
+        "wrap":false,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourPath",
+              "knots" : [[20, 160], [400, 160]],
+              "alpha" : {"timeline"  : "animation", "function"  : "exp-inc"}
+            }
+          ]
+      },
+      {
+        "type": "ClutterLabel",
+        "text": "exp-dec",
+        "font-name": "Sans 20px",
+        "visible":true,
+        "wrap":false,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourPath",
+              "knots" : [[20, 180], [400, 180]],
+              "alpha" : {"timeline"  : "animation", "function"  : "exp-dec"}
+            }
+          ]
+      },
+      {
+        "type": "ClutterLabel",
+        "text": "sine-half",
+        "font-name": "Sans 20px",
+        "visible":true,
+        "wrap":false,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourPath",
+              "knots" : [[20, 200], [400, 200]],
+              "alpha" : {"timeline"  : "animation", "function"  : "sine-half"}
+            }
+          ]
+      },
+      {
+        "type": "ClutterLabel",
+        "text": "smoothstep-inc",
+        "font-name": "Sans 20px",
+        "visible":true,
+        "wrap":false,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourPath",
+              "knots" : [[20, 220], [400, 220]],
+              "alpha" : {"timeline"  : "animation", "function"  : "smoothstep-inc"}
+            }
+          ]
+      },
+      {
+        "type": "ClutterLabel",
+        "text": "smoothstep-dec",
+        "font-name": "Sans 20px",
+        "visible":true,
+        "wrap":false,
+        "behaviours" : [
+            {
+              "type"          : "ClutterBehaviourPath",
+              "knots" : [[20, 240], [400, 240]],
+              "alpha" : {"timeline"  : "animation", "function"  : "smoothstep-dec"}
+            }
+          ]
+      },
+
+    ]
+  }
+]

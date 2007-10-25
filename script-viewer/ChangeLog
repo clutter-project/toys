@@ -1,5 +1,10 @@
 2007-10-25  Øyvind Kolås  <pippin@o-hand.com>
 
+	* alphas.json: added illustrations of all alphas going along a
+	horizontal path simultanously.
+
+2007-10-25  Øyvind Kolås  <pippin@o-hand.com>
+
 	* behaviours.json: updated with path, bspline and fixed ellipse
 	after updates to ClutterScript.
 
