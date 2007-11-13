@@ -1,5 +1,10 @@
 2007-10-25  Øyvind Kolås  <pippin@o-hand.com>
 
+	* script-viewer.c: add the error label actor to stage and show it upon
+	errors.
+
+2007-10-25  Øyvind Kolås  <pippin@o-hand.com>
+
 	* alphas.json: added illustrations of all alphas going along a
 	horizontal path simultanously.
 

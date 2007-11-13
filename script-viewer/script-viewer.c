@@ -147,9 +147,14 @@ load_script (const gchar *path)
   if (error)
     {
       ClutterColor error_color = { 0xff, 0, 0, 0xff };
-      actor = clutter_label_new_with_text ("Sans 25px", error->message);
+      actor = clutter_label_new_with_text ("Sans 20px", error->message);
+      clutter_actor_set_size (actor, clutter_actor_get_width (stage),
+                                     200);
+      g_print ("%s\n", error->message);
+      clutter_group_add (CLUTTER_GROUP (stage), actor);
+      clutter_actor_show_all (stage);
       clutter_label_set_color (CLUTTER_LABEL (actor), &error_color);
-      g_error_free (error);
+      g_clear_error (&error);
       return;
     }
 
