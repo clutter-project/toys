@@ -1,5 +1,15 @@
 2008-01-09  Neil J. Patel  <njp@o-hand.com>
 
+	* src/astro-appview.c: (astro_appview_show),
+	(on_hide_timeline_completed), (astro_appview_hide),
+	(astro_appview_class_init), (astro_appview_init):
+	Override ClutterActor->show/hide to have an animation.
+
+	* src/astro-desktop.c: (on_key_release_event):
+	Change CLUTTER_Enter to activate show/hide for testing.
+
+2008-01-09  Neil J. Patel  <njp@o-hand.com>
+
 	* data/icons/Makefile.am:
 	Added a few more icons.
 

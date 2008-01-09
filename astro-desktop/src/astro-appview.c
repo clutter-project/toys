@@ -46,6 +46,11 @@ struct _AstroAppviewPrivate
   ClutterEffectTemplate *move_temp;
   ClutterTimeline       *move_time;
 
+  ClutterEffectTemplate *show_temp;
+  ClutterTimeline       *show_time;
+
+  ClutterEffectTemplate *hide_temp;
+  ClutterTimeline       *hide_time;
 };
 
 enum
@@ -156,6 +161,67 @@ on_appicon_clicked (AstroAppicon     *icon,
     }
 }
 
+static void
+astro_appview_show (ClutterActor *view)
+{
+  AstroAppviewPrivate *priv;
+  static ClutterTimeline *show_time = NULL;
+  
+  g_return_if_fail (ASTRO_IS_APPVIEW (view));
+  priv = ASTRO_APPVIEW (view)->priv;
+
+  if (CLUTTER_IS_TIMELINE (show_time) &&clutter_timeline_is_playing (show_time))
+    {
+      clutter_timeline_stop (show_time);
+      g_object_unref (show_time);
+    }
+
+  clutter_actor_set_x (view, CSW());
+  CLUTTER_ACTOR_CLASS (astro_appview_parent_class)->show (view);
+
+  show_time = clutter_effect_move (priv->show_temp,
+                                   CLUTTER_ACTOR (view),
+                                   CSW()/2,
+                                   clutter_actor_get_y (CLUTTER_ACTOR (view)),
+                                   NULL, NULL);
+
+  g_signal_connect (show_time, "new-frame",
+                    G_CALLBACK (on_move_timeline_new_frame), view); 
+}
+
+static void
+on_hide_timeline_completed (ClutterTimeline *timeline, ClutterActor *view)
+{
+  CLUTTER_ACTOR_CLASS (astro_appview_parent_class)->hide (view);
+}
+
+static void
+astro_appview_hide (ClutterActor *view)
+{
+  AstroAppviewPrivate *priv;
+  static ClutterTimeline *hide_time = NULL;
+  
+  g_return_if_fail (ASTRO_IS_APPVIEW (view));
+  priv = ASTRO_APPVIEW (view)->priv;
+
+  if (CLUTTER_IS_TIMELINE (hide_time) &&clutter_timeline_is_playing (hide_time))
+    {
+      clutter_timeline_stop (hide_time);
+      g_object_unref (hide_time);
+    }
+  
+  hide_time = clutter_effect_move (priv->hide_temp,
+                                   CLUTTER_ACTOR (view),
+                                   CSW(), //-1 * clutter_actor_get_width (view),
+                                   clutter_actor_get_y (CLUTTER_ACTOR (view)),
+                                   NULL, NULL);
+
+  g_signal_connect (hide_time, "new-frame",
+                    G_CALLBACK (on_move_timeline_new_frame), view); 
+  g_signal_connect (hide_time, "completed",
+                    G_CALLBACK (on_hide_timeline_completed), view);
+  priv->active = 0;
+}
 /* Public Functions */
 void
 astro_appview_set_app_list (AstroAppview *view, 
@@ -231,6 +297,10 @@ static void
 astro_appview_class_init (AstroAppviewClass *klass)
 {
   GObjectClass        *gobject_class = G_OBJECT_CLASS (klass);
+  ClutterActorClass *actor_class = CLUTTER_ACTOR_CLASS (klass);
+
+  actor_class->show = astro_appview_show;
+  actor_class->hide = astro_appview_hide;
 
   _appview_signals[LAUNCH_APP] = 
     g_signal_new ("launch-app",
@@ -258,7 +328,14 @@ astro_appview_init (AstroAppview *appview)
   priv->move_time = clutter_timeline_new_for_duration (300);
   priv->move_temp = clutter_effect_template_new (priv->move_time, 
                                                  clutter_sine_inc_func);
-}
+
+  priv->show_time = clutter_timeline_new_for_duration (600);
+  priv->show_temp = clutter_effect_template_new (priv->show_time, 
+                                                 clutter_sine_inc_func);
+  priv->hide_time = clutter_timeline_new_for_duration (300);
+  priv->hide_temp = clutter_effect_template_new (priv->hide_time, 
+                                                 clutter_sine_inc_func);
+ }
 
 ClutterActor * 
 astro_appview_new (void)

@@ -55,6 +55,7 @@ on_key_release_event (ClutterActor *actor,
                       AstroDesktop *desktop)
 {
   AstroDesktopPrivate *priv;
+  static gboolean showed = TRUE;
 
   g_return_val_if_fail (ASTRO_IS_DESKTOP (desktop), FALSE);
   priv = desktop->priv;
@@ -65,6 +66,11 @@ on_key_release_event (ClutterActor *actor,
       case CLUTTER_KP_Enter:
       case CLUTTER_ISO_Enter:
         g_print ("Activate\n");
+        if (showed)
+          clutter_actor_hide (priv->appview);
+        else
+          clutter_actor_show (priv->appview);
+        showed = !showed;
         break;
       case CLUTTER_Left:
       case CLUTTER_KP_Left:
