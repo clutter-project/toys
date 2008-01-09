@@ -1,0 +1,57 @@
+2008-01-09  Neil J. Patel  <njp@o-hand.com>
+
+	* AUTHORS:
+	* Makefile.am:
+	* applets/Makefile.am:
+	* applets/cal.json:
+	* applets/clock.json:
+	* applets/mail.json:
+	* applets/weather.json:
+	* autogen.sh:
+	* configure.ac:
+	* data/Makefile.am:
+	* data/background.svg:
+	* data/icons/Makefile.am:
+	* libastro-desktop/Makefile.am:
+	* libastro-desktop/astro-application.c:
+	(astro_application_get_title), (astro_application_set_title),
+	(astro_application_get_icon), (astro_application_set_icon),
+	(astro_application_get_window), (astro_application_close),
+	(astro_application_get_property), (astro_application_set_property),
+	(astro_application_class_init), (astro_application_init):
+	* libastro-desktop/astro-application.h:
+	* libastro-desktop/astro-defines.h:
+	* libastro-desktop/astro.h:
+	* src/Makefile.am:
+	* src/astro-appicon.c: (on_clicked), (astro_appicon_get_title),
+	(astro_appicon_set_application), (astro_appicon_set_blur),
+	(astro_appicon_class_init), (astro_appicon_init),
+	(astro_appicon_new):
+	* src/astro-appicon.h:
+	* src/astro-applet-manager.c: (astro_applet_manager_class_init),
+	(_load_script), (astro_applet_manager_init),
+	(astro_applet_manager_new):
+	* src/astro-applet-manager.h:
+	* src/astro-applet.c: (astro_applet_paint),
+	(astro_applet_class_init), (astro_applet_init), (astro_applet_new):
+	* src/astro-applet.h:
+	* src/astro-appview.c: (ensure_layout),
+	(on_move_timeline_new_frame), (on_appicon_clicked),
+	(astro_appview_set_app_list), (astro_appview_advance),
+	(astro_appview_class_init), (astro_appview_init),
+	(astro_appview_new):
+	* src/astro-appview.h:
+	* src/astro-desktop.c: (on_key_release_event), (load_applications),
+	(astro_desktop_class_init), (astro_desktop_init),
+	(astro_desktop_new):
+	* src/astro-desktop.h:
+	* src/astro-example.c: (get_title), (set_title), (get_icon),
+	(set_icon), (get_window), (set_window), (close),
+	(astro_example_class_init), (astro_example_init),
+	(astro_example_new):
+	* src/astro-example.h:
+	* src/astro-panel.c: (on_home_clicked), (on_close_clicked),
+	(astro_panel_class_init), (astro_panel_init), (astro_panel_new):
+	* src/astro-panel.h:
+	* src/main.c: (main), (load_background):
+	Inital import

@@ -1,0 +1,31 @@
+{
+  "id" : "applet-child",
+   "type" : "ClutterGroup",
+   "visible" : true,
+   "children": 
+     [ 
+       { "id" : "label-temp",
+         "type" : "ClutterLabel",
+         "x" : 8,
+         "y" : 60,
+         "width" : 55,
+         "text" : "Tuesday",
+         "font-name" : "Sans 12px",
+         "color" : "white",
+         "alignment" : "center",
+         "wrap" : false,
+         "ellipsize" : "none",
+         "visible" : true
+       },       
+       
+       {
+         "id" : "cloud",
+         "type" : "ClutterTexture",
+         "x" : 12,
+         "y" : 0,
+         "pixbuf" : "cal.png",
+         "visible" : true
+       }
+      
+     ]
+}

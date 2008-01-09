@@ -1,0 +1,45 @@
+{
+  "id" : "applet-child",
+   "type" : "ClutterGroup",
+   "visible" : true,
+   "children": 
+     [ 
+       { "id" : "label-temp",
+         "type" : "ClutterLabel",
+         "x" : 70,
+         "y" : 18,
+         "width" : 60,
+         "text" : "14 C",
+         "font-name" : "Sans 22px",
+         "color" : "white",
+         "alignment" : "center",
+         "wrap" : false,
+         "ellipsize" : "none",
+         "visible" : true
+       },       
+     
+     { "id" : "label-tomorrow",
+         "type" : "ClutterLabel",
+         "x" : 0,
+         "y" : 60,
+         "width" : 130,
+         "text" : "Tomorrow: 15 C",
+         "font-name" : "Sans 12px",
+         "color" : "white",
+         "alignment" : "center",
+         "wrap" : false,
+         "ellipsize" : "none",
+         "visible" : true
+       },       
+       
+       {
+         "id" : "cloud",
+         "type" : "ClutterTexture",
+         "x" : 0,
+         "y" : 0,
+         "pixbuf" : "clouds.png",
+         "visible" : true
+       }
+      
+     ]
+}
