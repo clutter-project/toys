@@ -120,14 +120,13 @@ astro_applet_manager_init (AstroAppletManager *applet_manager)
 
           if (!CLUTTER_IS_ACTOR (applet))
             { 
-              g_print ("Not actor\n");
               g_free (filename);
               continue;
             }
           clutter_container_add_actor (CLUTTER_CONTAINER (applet_manager),
                                        applet);
           clutter_actor_set_position (applet, offset, 0);
-
+          
           offset+= clutter_actor_get_width (applet) + ASTRO_APPLET_PADDING;
           g_free (filename);
         }

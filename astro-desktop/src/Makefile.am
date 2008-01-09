@@ -1,6 +1,6 @@
 INCLUDES = \
 	$(DEPS_CFLAGS) \
-	$(WARN_CFLAGS)
+	$(GCC_CFLAGS)
 
 bin_PROGRAMS = astro-desktop
 
@@ -29,6 +29,8 @@ astro_desktop_SOURCES = \
 	astro-example.h \
 	astro-panel.c \
 	astro-panel.h \
+	astro-systray.c \
+	astro-systray.h \
 	main.c
 
 	

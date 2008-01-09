@@ -22,9 +22,9 @@
 
 #include "astro-panel.h"
 
-#include <tidy/tidy-button.h>
-
 #include <libastro-desktop/astro-defines.h>
+
+#include "astro-systray.h"
 
 G_DEFINE_TYPE (AstroPanel, astro_panel, CLUTTER_TYPE_GROUP);
 
@@ -155,14 +155,26 @@ astro_panel_init (AstroPanel *panel)
     {
       priv->close = clutter_texture_new_from_pixbuf (pixbuf);
       clutter_container_add_actor (CLUTTER_CONTAINER (panel), priv->close);
+      clutter_actor_set_anchor_point_from_gravity (priv->close,
+                                                   CLUTTER_GRAVITY_WEST);
       clutter_actor_set_position (priv->close, 
                    CSW () - clutter_actor_get_width (priv->close) - (PADDING/2),
-                                  PADDING/2);
+                                  ASTRO_PANEL_HEIGHT () /2);
       clutter_actor_set_reactive (priv->close, TRUE);
 
       g_signal_connect (priv->close, "button-release-event",
                         G_CALLBACK (on_close_clicked), panel);
     }
+
+  /* Systray */
+  priv->systray = astro_systray_new ();
+  clutter_container_add_actor (CLUTTER_CONTAINER (panel), priv->systray);
+  clutter_actor_set_position (priv->systray,
+                              CSW () 
+                                - clutter_actor_get_width (priv->close)
+                                - clutter_actor_get_width (priv->systray)
+                                - PADDING*2,
+                              PADDING/2);
 
   clutter_actor_show_all (CLUTTER_ACTOR (panel));
 }

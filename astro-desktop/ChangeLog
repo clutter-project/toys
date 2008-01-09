@@ -1,5 +1,23 @@
 2008-01-09  Neil J. Patel  <njp@o-hand.com>
 
+	* data/icons/Makefile.am:
+	Added a few more icons.
+
+	* src/Makefile.am:
+	* src/astro-appicon.c:
+	* src/astro-applet-manager.c: (astro_applet_manager_init):
+	Some spacing fixes.
+
+	* src/astro-panel.c: (astro_panel_init):
+	Added the systray.
+	
+	* src/astro-systray.c: (set_time), (astro_systray_class_init),
+	(astro_systray_init), (astro_systray_new):
+	* src/astro-systray.h:
+	Poor mans systray, with date/time and everything!
+
+2008-01-09  Neil J. Patel  <njp@o-hand.com>
+
 	* AUTHORS:
 	* Makefile.am:
 	* applets/Makefile.am:

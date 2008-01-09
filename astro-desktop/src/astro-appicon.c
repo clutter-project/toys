@@ -22,8 +22,6 @@
 
 #include "astro-appicon.h"
 
-#include <tidy/tidy-button.h>
-
 #include <libastro-desktop/astro-defines.h>
 
 G_DEFINE_TYPE (AstroAppicon, astro_appicon, CLUTTER_TYPE_GROUP);
