@@ -54,7 +54,7 @@ astro_applet_paint (ClutterActor *applet)
                           clutter_actor_get_height (applet));
 
   c = clutter_container_get_children (CLUTTER_CONTAINER (applet));
-  for (c; c; c = c->next)
+  for (c = c; c; c = c->next)
     clutter_actor_paint (c->data);
     
 }

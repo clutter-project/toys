@@ -1,5 +1,23 @@
 2008-01-10  Neil J. Patel  <njp@o-hand.com>
 
+	* configure.ac:
+	* libastro-desktop/Makefile.am:
+	* src/Makefile.am:
+	Make sure we are compiling with -Werror, cos it's fun.
+
+	* src/astro-appicon.c: (on_clicked),
+	(astro_appicon_set_application):
+	* src/astro-applet-manager.c: (_load_script):
+	* src/astro-applet.c: (astro_applet_paint):
+	* src/astro-appview.c: (ensure_layout):
+	* src/astro-desktop.c: (on_appview_activated),
+	(astro_desktop_init):
+	* src/astro-systray.c: (set_time):
+	* src/main.c: (main):
+	Consequences of compiling with -Werror.
+
+2008-01-10  Neil J. Patel  <njp@o-hand.com>
+
 	* libastro-desktop/astro-defines.h:
 	Add ASTRO_APPICON_SPACING() #define.
 	Set the spacing to 0.9 of the icon size.

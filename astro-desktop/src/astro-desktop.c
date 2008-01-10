@@ -49,6 +49,19 @@ struct _AstroDesktopPrivate
 /* Public Functions */
 
 /* Private functions */
+static void
+on_appview_activated (AstroAppview     *appview, 
+                      AstroApplication *application,
+                      AstroDesktop     *desktop)
+{
+  AstroDesktopPrivate *priv;
+
+  g_return_if_fail (ASTRO_IS_DESKTOP (desktop));
+  priv = desktop->priv;
+
+  g_debug ("Application activated\n");
+}
+
 static gboolean
 on_key_release_event (ClutterActor *actor, 
                       ClutterEvent *event,
@@ -148,6 +161,9 @@ astro_desktop_init (AstroDesktop *desktop)
                           ASTRO_WINDOW_HEIGHT ());
   clutter_actor_set_position (priv->appview, CSW(), 0);
   astro_appview_set_app_list (ASTRO_APPVIEW (priv->appview), priv->apps);
+
+  g_signal_connect (priv->appview, "launch-app",
+                    G_CALLBACK (on_appview_activated), desktop);
 
   /* Load the applets */
   priv->applets = astro_applet_manager_new ();

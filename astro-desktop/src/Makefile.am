@@ -1,10 +1,8 @@
-INCLUDES = \
-	$(DEPS_CFLAGS) \
-	$(GCC_CFLAGS)
-
 bin_PROGRAMS = astro-desktop
 
 AM_CFLAGS = \
+	$(DEPS_CFLAGS) \
+	$(GCC_CFLAGS) \
 	-DDATADIR=\""$(datadir)"\" \
 	-DLIBDIR=\""$(libdir)"\" \
 	-DPKGDATADIR=\""$(pkgdatadir)"\" \

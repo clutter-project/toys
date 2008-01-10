@@ -4,7 +4,7 @@ INCLUDES = \
 	-DPREFIX=\""$(prefix)"\" 		\
 	-DLIBDIR=\""$(libdir)"\" 		\
 	-DDATADIR=\""$(datadir)"\"		\
-	$(GCC_FLAGS) 				\
+	$(GCC_CFLAGS) 				\
 	$(DEPS_CFLAGS) 	
 
 noinst_LTLIBRARIES = libastro-desktop.la

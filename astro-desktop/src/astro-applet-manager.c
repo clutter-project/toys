@@ -118,7 +118,6 @@ _load_script (const gchar *name)
   ClutterActor *applet;
   ClutterActor *child = NULL;
   GError *error = NULL;
-  guint merge_id;
   gint res;
   
   script = clutter_script_new ();

@@ -77,7 +77,7 @@ ensure_layout (AstroAppview *view)
   center = CSW()/2;
 
   l = clutter_container_get_children (CLUTTER_CONTAINER (view));
-  for (l; l; l = l->next)
+  for (l = l; l; l = l->next)
     {
       ClutterActor *icon = l->data;
       gint realx, diff, y_diff;;

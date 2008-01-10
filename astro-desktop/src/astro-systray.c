@@ -47,7 +47,7 @@ set_time (AstroSystray *systray)
   struct tm *timeinfo;
   char buffer [100];
 
-  g_return_if_fail (ASTRO_IS_SYSTRAY (systray));
+  g_return_val_if_fail (ASTRO_IS_SYSTRAY (systray), FALSE);
   priv = systray->priv;
 
   time (&rawtime);

@@ -3,6 +3,7 @@
 
 #include <glib.h>
 #include <clutter/clutter.h>
+#include <gdk/gdk.h>
 
 #include <libastro-desktop/astro.h>
 
@@ -51,7 +52,6 @@ gint
 main (gint argc, gchar *argv[])
 {
   ClutterActor *stage, *bg, *desktop;
-  ClutterColor black = { 0xff, 0xff, 0xff, 0xff };
   GError *error = NULL;
 
   g_thread_init (NULL);

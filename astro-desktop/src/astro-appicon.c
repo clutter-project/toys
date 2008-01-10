@@ -68,7 +68,7 @@ static gchar *source = "uniform float radius ;"
 static gboolean
 on_clicked (ClutterActor *home, ClutterEvent *event, AstroAppicon *appicon)
 {
-  g_return_if_fail (ASTRO_APPICON (appicon));
+  g_return_val_if_fail (ASTRO_APPICON (appicon), FALSE);
   g_debug ("app button clicked");
 
   g_signal_emit (appicon, _appicon_signals[CLICKED], 
@@ -113,6 +113,8 @@ astro_appicon_set_application (AstroAppicon *appicon, AstroApplication *app)
                         G_CALLBACK (on_clicked), appicon);
 
     }
+  else
+    return;
   /* Set up shader */
   priv->shader = shader = clutter_shader_new ();
   clutter_shader_set_fragment_source (shader, source, -1);
