@@ -228,8 +228,6 @@ load_applications (AstroDesktop *desktop)
     }
   g_dir_close (dir);
   
-  return;
-  /* Some extra applications */
   pixbuf = gdk_pixbuf_new_from_file (PKGDATADIR "/icons/exec.png", NULL);
   for (i = 0; i < 5; i++)
     {

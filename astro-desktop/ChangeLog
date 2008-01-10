@@ -1,5 +1,10 @@
 2008-01-10  Neil J. Patel  <njp@o-hand.com>
 
+	* src/astro-desktop.c: (load_applications):
+	Add back the 'filler' apps, so the main list still looks good.
+
+2008-01-10  Neil J. Patel  <njp@o-hand.com>
+
 	* Makefile.am:
 	* applications/Makefile.am:
 	* applications/example/Makefile.am:
