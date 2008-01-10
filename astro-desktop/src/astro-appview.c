@@ -269,7 +269,7 @@ astro_appview_advance (AstroAppview *view,
   priv = view->priv;
 
   new_active = priv->active + n;
-  if (new_active < 0 || new_active > g_list_length (priv->apps))
+  if (new_active < 0 || new_active >= g_list_length (priv->apps))
     return;
   priv->active = new_active;
 
