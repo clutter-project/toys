@@ -91,7 +91,7 @@ astro_application_set_icon  (AstroApplication *application,
   /* FIXME: emit signal */
 }
 
-ClutterActor *     
+AstroWindow *     
 astro_application_get_window (AstroApplication *application)
 {
   AstroApplicationClass *klass;

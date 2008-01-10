@@ -1,5 +1,13 @@
 2008-01-10  Neil J. Patel  <njp@o-hand.com>
 
+	* libastro-desktop/astro-application.c:
+	* libastro-desktop/astro-application.h:
+	* src/astro-desktop.c: (astro_desktop_show_application):
+	* src/astro-example.c: (get_window), (astro_example_class_init):
+	Make AstroWindow manditory.
+
+2008-01-10  Neil J. Patel  <njp@o-hand.com>
+
 	* libastro-desktop/Makefile.am:
 	* libastro-desktop/astro-window.c: (astro_window_show),
 	(astro_window_hide), (astro_window_close),

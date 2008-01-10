@@ -75,7 +75,7 @@ set_icon (AstroApplication *app, GdkPixbuf *icon)
   ASTRO_EXAMPLE (app)->priv->icon = icon;
 }
 
-static ClutterActor *
+static AstroWindow *
 get_window (AstroApplication *app)
 {
   AstroExamplePrivate *priv;
@@ -99,16 +99,7 @@ get_window (AstroApplication *app)
 
   ASTRO_EXAMPLE (app)->priv->window = window;
 
-  return window;
-}
-
-static void
-set_window (AstroApplication *app, ClutterActor *window)
-{
-  g_return_if_fail (ASTRO_IS_EXAMPLE (app));
-  g_return_if_fail (CLUTTER_IS_ACTOR (window));
-
-  ASTRO_EXAMPLE (app)->priv->window = window;
+  return ASTRO_WINDOW (window);
 }
 
 static void
@@ -135,7 +126,6 @@ astro_example_class_init (AstroExampleClass *klass)
   app_class->get_icon = get_icon;
   app_class->set_icon = set_icon;
   app_class->get_window = get_window;
-  app_class->set_window = set_window;
   app_class->close = close;
 
   g_type_class_add_private (gobject_class, sizeof (AstroExamplePrivate));

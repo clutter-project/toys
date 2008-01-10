@@ -70,7 +70,8 @@ astro_desktop_show_application (AstroDesktop     *desktop,
   clutter_actor_hide (priv->appview);
   clutter_actor_hide (priv->applets);
 
-  priv->active_window = astro_application_get_window (application);
+  priv->active_window = (ClutterActor*)astro_application_get_window 
+                                                                 (application);
   clutter_container_add_actor (CLUTTER_CONTAINER (desktop), 
                                priv->active_window);
   clutter_actor_set_position (priv->active_window, 

@@ -23,6 +23,8 @@
 #include <glib.h>
 #include <clutter/clutter.h>
 
+#include "astro-window.h"
+
 #ifndef _HAVE_ASTRO_APPLICATION_H
 #define _HAVE_ASTRO_APPLICATION_H
 
@@ -68,9 +70,8 @@ struct _AstroApplicationClass
   GdkPixbuf    * (*get_icon)   (AstroApplication *application);
   void           (*set_icon)   (AstroApplication *application,
                                 GdkPixbuf        *icon);
-  ClutterActor * (*get_window) (AstroApplication *application);
-  void           (*set_window) (AstroApplication *application,
-                                ClutterActor     *window);
+  AstroWindow  * (*get_window) (AstroApplication *application);
+
   void           (*close)      (AstroApplication *application);
   
 }; 
@@ -83,8 +84,7 @@ void               astro_application_set_title  (AstroApplication *application,
 GdkPixbuf   *      astro_application_get_icon   (AstroApplication *application);
 void               astro_application_set_icon   (AstroApplication *application,
                                                  GdkPixbuf        *pixbuf);
-ClutterActor *     astro_application_get_window (AstroApplication *application);
-void               astro_application_set_window (AstroApplication *application);
+AstroWindow *      astro_application_get_window (AstroApplication *application);
 void               astro_application_close      (AstroApplication *application);
   
 G_END_DECLS
