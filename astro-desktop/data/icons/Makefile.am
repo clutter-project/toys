@@ -3,6 +3,7 @@ dist_default_DATA = \
 	close.png \
 	exec.png \
 	home.png \
+	music.png \
 	nm.png
 
 defaultdir = $(pkgdatadir)/icons

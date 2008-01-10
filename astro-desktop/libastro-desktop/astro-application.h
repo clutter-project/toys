@@ -76,7 +76,7 @@ struct _AstroApplicationClass
   
 };
 
-typedef GObject * (*AstroApplicationInitFunc) ();
+typedef AstroApplication * (*AstroApplicationInitFunc) ();
 
 GType astro_application_get_type (void) G_GNUC_CONST;
 

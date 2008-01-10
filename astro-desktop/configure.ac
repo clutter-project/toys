@@ -31,5 +31,6 @@ libastro-desktop/Makefile
 applets/Makefile
 applications/Makefile
 applications/example/Makefile
+applications/music/Makefile
 src/Makefile
 ])

@@ -1,5 +1,23 @@
 2008-01-10  Neil J. Patel  <njp@o-hand.com>
 
+	* applications/Makefile.am:
+	* applications/example/init.c: (astro_application_factory_init):
+	* applications/music/Makefile.am:
+	* applications/music/astro-music.c: (get_title), (set_title),
+	(get_icon), (set_icon), (get_window), (close),
+	(astro_music_class_init), (astro_music_init), (astro_music_new):
+	* applications/music/astro-music.h:
+	* applications/music/init.c: (astro_application_factory_init):
+	* configure.ac:
+	* data/icons/Makefile.am:
+	* libastro-desktop/astro-application.h:
+	Add the begginings of an music application.
+	Sort out the typing in the module loading function.
+	Add in the music icon.
+	Realise that I may need to learn shader programming.
+
+2008-01-10  Neil J. Patel  <njp@o-hand.com>
+
 	* src/astro-desktop.c: (load_applications):
 	Add back the 'filler' apps, so the main list still looks good.
 
