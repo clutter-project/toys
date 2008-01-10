@@ -70,15 +70,14 @@ struct _AstroAppviewClass
   void (*launch_app) (AstroAppview *view, AstroApplication *application);
 }; 
 
-GType astro_appview_get_type (void) G_GNUC_CONST;
+GType              astro_appview_get_type       (void) G_GNUC_CONST;
 
-ClutterActor *  astro_appview_new          (void);
-
-void            astro_appview_set_app_list (AstroAppview *view,
-                                            GList        *apps);
-void            astro_appview_advance      (AstroAppview *view,
-                                            gint          n);
-
+ClutterActor *     astro_appview_new            (void);
+void               astro_appview_set_app_list   (AstroAppview *view,
+                                                 GList        *apps);
+void               astro_appview_advance        (AstroAppview *view,
+                                                 gint          n);
+AstroApplication * astro_appview_get_active_app (AstroAppview *view);
 
 G_END_DECLS
 

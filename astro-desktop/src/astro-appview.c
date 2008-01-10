@@ -153,7 +153,10 @@ on_appicon_clicked (AstroAppicon     *icon,
   active_app = g_list_nth_data (priv->apps, priv->active);
 
   if (active_app == app)
-    g_print ("Active\n");
+    {
+      g_signal_emit (view, _appview_signals[LAUNCH_APP], 
+                     0, g_list_nth_data (priv->apps, priv->active));
+    }
   else
     {
       gint new_active = g_list_index (priv->apps, app);
@@ -290,6 +293,14 @@ astro_appview_advance (AstroAppview *view,
                     G_CALLBACK (on_move_timeline_new_frame), view);
 }
 
+AstroApplication * 
+astro_appview_get_active_app (AstroAppview *view)
+{
+  g_return_val_if_fail (ASTRO_IS_APPVIEW (view), NULL);
+
+  return g_list_nth_data (view->priv->apps, view->priv->active);
+}
+
 /* GObject stuff */
 static void
 astro_appview_class_init (AstroAppviewClass *klass)
@@ -307,7 +318,7 @@ astro_appview_class_init (AstroAppviewClass *klass)
                   G_STRUCT_OFFSET (AstroAppviewClass, launch_app),
                   NULL, NULL,
                   g_cclosure_marshal_VOID__OBJECT,
-                  G_TYPE_NONE, 0,
+                  G_TYPE_NONE, 1,
                   ASTRO_TYPE_APPLICATION);
 
 

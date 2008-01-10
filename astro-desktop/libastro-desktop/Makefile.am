@@ -10,7 +10,8 @@ INCLUDES = \
 noinst_LTLIBRARIES = libastro-desktop.la
 
 libastro_desktop_la_SOURCES = \
-	astro-application.c
+	astro-application.c \
+	astro-window.c
 
 libastro_desktop_la_LIBADD = $(DEPS_LIBS)
 libastro_desktop_la_LDFLAGS = $(DEPS_LT_LDFLAGS) -version-info 0:1:0

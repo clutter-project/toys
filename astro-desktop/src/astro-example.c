@@ -24,6 +24,7 @@
 
 #include <libastro-desktop/astro-defines.h>
 #include <libastro-desktop/astro-application.h>
+#include <libastro-desktop/astro-window.h>
 
 G_DEFINE_TYPE (AstroExample, astro_example, ASTRO_TYPE_APPLICATION);
 
@@ -79,15 +80,22 @@ get_window (AstroApplication *app)
 {
   AstroExamplePrivate *priv;
   ClutterColor color = { 0xff, 0xff, 0x22, 0x22 };
-  ClutterActor *window = NULL;
+  ClutterActor *window = NULL, *rect;
 
   g_return_val_if_fail (ASTRO_IS_EXAMPLE (app), NULL);
   priv = ASTRO_EXAMPLE (app)->priv;
 
-  if (priv->window)
+  if (CLUTTER_IS_ACTOR (priv->window))
     window = priv->window;
   else
-    window = clutter_rectangle_new_with_color (&color);
+    {
+      window = astro_window_new ();
+      
+      rect = clutter_rectangle_new_with_color (&color);
+      clutter_container_add_actor (CLUTTER_CONTAINER (window), rect);
+      clutter_actor_set_size (rect, CSW (), CSH()-ASTRO_PANEL_HEIGHT());
+      clutter_actor_show (rect);
+    }
 
   ASTRO_EXAMPLE (app)->priv->window = window;
 

@@ -1,5 +1,29 @@
 2008-01-10  Neil J. Patel  <njp@o-hand.com>
 
+	* libastro-desktop/Makefile.am:
+	* libastro-desktop/astro-window.c: (astro_window_show),
+	(astro_window_hide), (astro_window_close),
+	(astro_window_class_init), (astro_window_init), (astro_window_new):
+	* libastro-desktop/astro-window.h:
+	A wrapper for app windows, with transitions.
+	
+	* src/astro-appview.c: (on_appicon_clicked),
+	(astro_appview_get_active_app), (astro_appview_class_init):
+	* src/astro-appview.h:
+	A function to retrieve the active application.
+	
+	* src/astro-desktop.c: (astro_desktop_show_application),
+	(astro_desktop_hide_application), (on_appview_activated),
+	(on_key_release_event), (on_panel_home_clicked),
+	(astro_desktop_init):
+	Actually show/hide application windows when icon is activated.
+	Connect to the panel signals to restore the desktop/close a window.
+	
+	* src/astro-example.c: (get_window):
+	Use the AstroWindow actor.
+
+2008-01-10  Neil J. Patel  <njp@o-hand.com>
+
 	* configure.ac:
 	* libastro-desktop/Makefile.am:
 	* src/Makefile.am:

@@ -22,8 +22,9 @@
 
 #include "astro-desktop.h"
 
-#include <libastro-desktop/astro-defines.h>
 #include <libastro-desktop/astro-application.h>
+#include <libastro-desktop/astro-defines.h>
+#include <libastro-desktop/astro-window.h>
 
 #include "astro-applet-manager.h"
 #include "astro-appview.h"
@@ -43,12 +44,61 @@ struct _AstroDesktopPrivate
 
   GList            *apps;
   GList            *apps_modules;
-	AstroApplication *active_app;
+	
+  AstroApplication *active_app;
+  ClutterActor     *active_window;
 };
 
 /* Public Functions */
 
 /* Private functions */
+static void
+astro_desktop_show_application (AstroDesktop     *desktop,
+                                AstroApplication *application)
+{
+  AstroDesktopPrivate *priv;
+
+  g_return_if_fail (ASTRO_IS_DESKTOP (desktop));
+  priv = desktop->priv;
+ 
+  if (ASTRO_IS_WINDOW (priv->active_window))
+    {
+      astro_window_close (ASTRO_WINDOW (priv->active_window));
+    }
+
+  clutter_ungrab_keyboard ();  
+  clutter_actor_hide (priv->appview);
+  clutter_actor_hide (priv->applets);
+
+  priv->active_window = astro_application_get_window (application);
+  clutter_container_add_actor (CLUTTER_CONTAINER (desktop), 
+                               priv->active_window);
+  clutter_actor_set_position (priv->active_window, 
+                              0, 
+                              ASTRO_PANEL_HEIGHT ());
+  clutter_actor_show (priv->active_window);
+}
+
+static void
+astro_desktop_hide_application (AstroDesktop     *desktop)
+{
+  AstroDesktopPrivate *priv;
+
+  g_return_if_fail (ASTRO_IS_DESKTOP (desktop));
+  priv = desktop->priv;
+ 
+  if (!ASTRO_IS_WINDOW (priv->active_window))
+    return; 
+ 
+  astro_window_close (ASTRO_WINDOW (priv->active_window));
+
+  clutter_actor_show (priv->applets);
+  clutter_actor_show (priv->appview);
+
+  clutter_grab_keyboard (CLUTTER_ACTOR (desktop));
+}
+
+
 static void
 on_appview_activated (AstroAppview     *appview, 
                       AstroApplication *application,
@@ -59,7 +109,7 @@ on_appview_activated (AstroAppview     *appview,
   g_return_if_fail (ASTRO_IS_DESKTOP (desktop));
   priv = desktop->priv;
 
-  g_debug ("Application activated\n");
+  astro_desktop_show_application (desktop, application);
 }
 
 static gboolean
@@ -68,7 +118,7 @@ on_key_release_event (ClutterActor *actor,
                       AstroDesktop *desktop)
 {
   AstroDesktopPrivate *priv;
-  static gboolean showed = TRUE;
+  AstroApplication *application;
 
   g_return_val_if_fail (ASTRO_IS_DESKTOP (desktop), FALSE);
   priv = desktop->priv;
@@ -78,18 +128,9 @@ on_key_release_event (ClutterActor *actor,
       case CLUTTER_Return:
       case CLUTTER_KP_Enter:
       case CLUTTER_ISO_Enter:
-        g_print ("Activate\n");
-        if (showed)
-          {
-            clutter_actor_hide (priv->appview);
-            clutter_actor_hide (priv->applets);
-          }
-        else
-          {
-            clutter_actor_show (priv->appview);
-            clutter_actor_show (priv->applets);
-          }
-        showed = !showed;
+        application = astro_appview_get_active_app 
+                                               (ASTRO_APPVIEW (priv->appview));
+        astro_desktop_show_application (desktop, application);
         break;
       case CLUTTER_Left:
       case CLUTTER_KP_Left:
@@ -104,6 +145,14 @@ on_key_release_event (ClutterActor *actor,
     }
 
   return FALSE;
+}
+
+static void
+on_panel_home_clicked (AstroPanel *panel, AstroDesktop *desktop)
+{
+  g_return_if_fail (ASTRO_IS_DESKTOP (desktop));
+
+  astro_desktop_hide_application (desktop);
 }
 
 static void
@@ -151,6 +200,10 @@ astro_desktop_init (AstroDesktop *desktop)
   priv->panel = astro_panel_new ();
   clutter_container_add_actor (CLUTTER_CONTAINER (desktop), priv->panel);
   clutter_actor_set_position (priv->panel, 0, 0);
+  g_signal_connect (priv->panel, "show-home",
+                    G_CALLBACK (on_panel_home_clicked), desktop);
+  g_signal_connect (priv->panel, "close-window",
+                    G_CALLBACK (on_panel_home_clicked), desktop);
 
   /* Load the applications */
   load_applications (desktop);
