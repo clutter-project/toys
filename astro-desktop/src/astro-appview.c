@@ -176,13 +176,13 @@ astro_appview_show (ClutterActor *view)
       g_object_unref (show_time);
     }
 
-  clutter_actor_set_x (view, CSW());
+  clutter_actor_set_x (view, -1* clutter_actor_get_width (view));
   CLUTTER_ACTOR_CLASS (astro_appview_parent_class)->show (view);
 
   show_time = clutter_effect_move (priv->show_temp,
                                    CLUTTER_ACTOR (view),
-                                   CSW()/2,
-                                   clutter_actor_get_y (CLUTTER_ACTOR (view)),
+                             (CSW()/2)- (priv->active * ASTRO_APPICON_SIZE ()),
+                             clutter_actor_get_y (CLUTTER_ACTOR (view)),
                                    NULL, NULL);
 
   g_signal_connect (show_time, "new-frame",
@@ -212,7 +212,7 @@ astro_appview_hide (ClutterActor *view)
   
   hide_time = clutter_effect_move (priv->hide_temp,
                                    CLUTTER_ACTOR (view),
-                                   CSW(), //-1 * clutter_actor_get_width (view),
+                                   -1 * clutter_actor_get_width (view),
                                    clutter_actor_get_y (CLUTTER_ACTOR (view)),
                                    NULL, NULL);
 
@@ -220,7 +220,7 @@ astro_appview_hide (ClutterActor *view)
                     G_CALLBACK (on_move_timeline_new_frame), view); 
   g_signal_connect (hide_time, "completed",
                     G_CALLBACK (on_hide_timeline_completed), view);
-  priv->active = 0;
+  //priv->active = 0;
 }
 /* Public Functions */
 void

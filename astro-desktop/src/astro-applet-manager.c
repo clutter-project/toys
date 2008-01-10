@@ -91,7 +91,7 @@ astro_applet_manager_hide (ClutterActor *appman)
   
   hide_time = clutter_effect_move (priv->hide_temp,
                                    CLUTTER_ACTOR (appman),
-                                   CSW(),
+                                   -1*clutter_actor_get_width (appman),
                                    clutter_actor_get_y (CLUTTER_ACTOR (appman)),
                                    NULL, NULL);
 

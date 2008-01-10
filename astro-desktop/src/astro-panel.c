@@ -131,7 +131,10 @@ astro_panel_init (AstroPanel *panel)
     {
       priv->home = clutter_texture_new_from_pixbuf (pixbuf);
       clutter_container_add_actor (CLUTTER_CONTAINER (panel), priv->home);
-      clutter_actor_set_position (priv->home, PADDING/2, PADDING/2);
+      clutter_actor_set_anchor_point_from_gravity (priv->home,
+                                                   CLUTTER_GRAVITY_WEST);
+      clutter_actor_set_position (priv->home, PADDING/2,
+                                  ASTRO_PANEL_HEIGHT ()/2);
       clutter_actor_set_reactive (priv->home, TRUE);
 
       g_signal_connect (priv->home, "button-release-event",
@@ -142,9 +145,11 @@ astro_panel_init (AstroPanel *panel)
   font = g_strdup_printf ("Sans %d", (int)(ASTRO_PANEL_HEIGHT () * 0.4));
   priv->title = clutter_label_new_full (font, "Home", &white);
   clutter_container_add_actor (CLUTTER_CONTAINER (panel), priv->title);
+  clutter_actor_set_anchor_point_from_gravity (priv->title, 
+                                               CLUTTER_GRAVITY_WEST);
   clutter_actor_set_position (priv->title, 
                               clutter_actor_get_width (priv->home)+(PADDING*3),
-          (ASTRO_PANEL_HEIGHT ()/2)-(clutter_actor_get_height (priv->title)/3));
+                              (ASTRO_PANEL_HEIGHT ()/2) + PADDING);
   g_free (font);
 
   /* Close button */

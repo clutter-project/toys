@@ -1,5 +1,17 @@
 2008-01-10  Neil J. Patel  <njp@o-hand.com>
 
+
+	* src/astro-applet-manager.c: (astro_applet_manager_hide):
+	Move off to the left.
+
+	* src/astro-appview.c: (astro_appview_show), (astro_appview_hide):
+	Move off the left; Restore to the last active icon.
+
+	* src/astro-panel.c: (astro_panel_init):
+	Correct the home icon & title label positioning.
+
+2008-01-10  Neil J. Patel  <njp@o-hand.com>
+
 	* src/astro-appview.c: (astro_appview_advance):
 	Correct bounds check on main list.
 
