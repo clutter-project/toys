@@ -67,9 +67,15 @@ on_key_release_event (ClutterActor *actor,
       case CLUTTER_ISO_Enter:
         g_print ("Activate\n");
         if (showed)
-          clutter_actor_hide (priv->appview);
+          {
+            clutter_actor_hide (priv->appview);
+            clutter_actor_hide (priv->applets);
+          }
         else
-          clutter_actor_show (priv->appview);
+          {
+            clutter_actor_show (priv->appview);
+            clutter_actor_show (priv->applets);
+          }
         showed = !showed;
         break;
       case CLUTTER_Left:
@@ -140,14 +146,14 @@ astro_desktop_init (AstroDesktop *desktop)
   clutter_actor_set_size (priv->appview, 
                           ASTRO_WINDOW_WIDTH (), 
                           ASTRO_WINDOW_HEIGHT ());
-  clutter_actor_set_position (priv->appview, CSW()/2, 0);
+  clutter_actor_set_position (priv->appview, CSW(), 0);
   astro_appview_set_app_list (ASTRO_APPVIEW (priv->appview), priv->apps);
 
   /* Load the applets */
   priv->applets = astro_applet_manager_new ();
   clutter_container_add_actor (CLUTTER_CONTAINER (desktop), priv->applets);
   clutter_actor_set_position (priv->applets, 
-                              ASTRO_APPLET_PADDING, 
+                              CSW(), 
                        CSH() - ASTRO_APPLET_HEIGHT() -(ASTRO_APPLET_PADDING*3));
 
   g_signal_connect (desktop, "key-release-event",

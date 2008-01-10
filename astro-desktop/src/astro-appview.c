@@ -248,15 +248,12 @@ astro_appview_set_app_list (AstroAppview *view,
       clutter_actor_set_anchor_point_from_gravity (icon,CLUTTER_GRAVITY_CENTER);
 
       clutter_actor_set_position (icon, offset, CSH ()/2);
-
+      clutter_actor_show (icon);
       g_signal_connect (icon, "clicked",
                         G_CALLBACK (on_appicon_clicked), view);
 
       offset += ASTRO_APPICON_SIZE ();
     }
-
-  clutter_actor_show_all (CLUTTER_ACTOR (view));
-
   astro_appview_advance (view, 0);
 }
 

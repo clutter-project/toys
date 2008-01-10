@@ -33,14 +33,80 @@ G_DEFINE_TYPE (AstroAppletManager, astro_applet_manager, CLUTTER_TYPE_GROUP);
 struct _AstroAppletManagerPrivate
 {
   GList *applets;
+
+  ClutterEffectTemplate *show_temp;
+  ClutterTimeline       *show_time;
+
+  ClutterEffectTemplate *hide_temp;
+  ClutterTimeline       *hide_time;
 };
 
 
 /* GObject stuff */
 static void
+astro_applet_manager_show (ClutterActor *appman)
+{
+  AstroAppletManagerPrivate *priv;
+  static ClutterTimeline *show_time = NULL;
+  
+  g_return_if_fail (ASTRO_IS_APPLET_MANAGER (appman));
+  priv = ASTRO_APPLET_MANAGER (appman)->priv;
+
+  if (CLUTTER_IS_TIMELINE (show_time) &&clutter_timeline_is_playing (show_time))
+    {
+      clutter_timeline_stop (show_time);
+      g_object_unref (show_time);
+    }
+
+  clutter_actor_set_x (appman, CSW());
+  CLUTTER_ACTOR_CLASS (astro_applet_manager_parent_class)->show (appman);
+
+  show_time = clutter_effect_move (priv->show_temp,
+                                   CLUTTER_ACTOR (appman),
+                                   ASTRO_APPLET_PADDING,
+                                   clutter_actor_get_y (CLUTTER_ACTOR (appman)),
+                                   NULL, NULL);
+}
+
+static void
+on_hide_timeline_completed (ClutterTimeline *timeline, ClutterActor *appman)
+{
+  CLUTTER_ACTOR_CLASS (astro_applet_manager_parent_class)->hide (appman);
+}
+
+static void
+astro_applet_manager_hide (ClutterActor *appman)
+{
+  AstroAppletManagerPrivate *priv;
+  static ClutterTimeline *hide_time = NULL;
+  
+  g_return_if_fail (ASTRO_IS_APPLET_MANAGER (appman));
+  priv = ASTRO_APPLET_MANAGER (appman)->priv;
+
+  if (CLUTTER_IS_TIMELINE (hide_time) &&clutter_timeline_is_playing (hide_time))
+    {
+      clutter_timeline_stop (hide_time);
+      g_object_unref (hide_time);
+    }
+  
+  hide_time = clutter_effect_move (priv->hide_temp,
+                                   CLUTTER_ACTOR (appman),
+                                   CSW(),
+                                   clutter_actor_get_y (CLUTTER_ACTOR (appman)),
+                                   NULL, NULL);
+
+  g_signal_connect (hide_time, "completed",
+                    G_CALLBACK (on_hide_timeline_completed), appman);
+}
+
+static void
 astro_applet_manager_class_init (AstroAppletManagerClass *klass)
 {
   GObjectClass        *gobject_class = G_OBJECT_CLASS (klass);
+  ClutterActorClass *actor_class = CLUTTER_ACTOR_CLASS (klass);
+
+  actor_class->show = astro_applet_manager_show;
+  actor_class->hide = astro_applet_manager_hide;
 
   g_type_class_add_private (gobject_class, sizeof (AstroAppletManagerPrivate));
 }
@@ -132,6 +198,13 @@ astro_applet_manager_init (AstroAppletManager *applet_manager)
         }
     }
   g_dir_close (dir);
+
+  priv->show_time = clutter_timeline_new_for_duration (600);
+  priv->show_temp = clutter_effect_template_new (priv->show_time, 
+                                                 clutter_sine_inc_func);
+  priv->hide_time = clutter_timeline_new_for_duration (300);
+  priv->hide_temp = clutter_effect_template_new (priv->hide_time, 
+                                                 clutter_sine_inc_func);
 }
 
 ClutterActor * 

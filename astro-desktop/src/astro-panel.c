@@ -74,6 +74,7 @@ on_close_clicked (ClutterActor *home, ClutterEvent *event, AstroPanel *panel)
 }
 
 
+
 /* GObject stuff */
 static void
 astro_panel_class_init (AstroPanelClass *klass)

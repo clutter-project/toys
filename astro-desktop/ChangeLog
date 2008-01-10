@@ -1,3 +1,20 @@
+2008-01-10  Neil J. Patel  <njp@o-hand.com>
+
+	* src/astro-applet-manager.c: (astro_applet_manager_show),
+	(on_hide_timeline_completed), (astro_applet_manager_hide),
+	(astro_applet_manager_class_init), (astro_applet_manager_init):
+	Override hide/show to make it a transition.
+
+	* src/astro-appview.c: (astro_appview_set_app_list):
+	Call _show () on actors individually, rather than the entire group.
+
+	* src/astro-desktop.c: (on_key_release_event),
+	(astro_desktop_init):
+	Also hide/show the applets in enter (for testing).
+
+	* src/astro-panel.c:
+	?
+
 2008-01-09  Neil J. Patel  <njp@o-hand.com>
 
 	* src/astro-appview.c: (astro_appview_show),
