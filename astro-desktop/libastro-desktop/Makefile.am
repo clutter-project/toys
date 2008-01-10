@@ -7,7 +7,7 @@ INCLUDES = \
 	$(GCC_CFLAGS) 				\
 	$(DEPS_CFLAGS) 	
 
-noinst_LTLIBRARIES = libastro-desktop.la
+lib_LTLIBRARIES = libastro-desktop.la
 
 libastro_desktop_la_SOURCES = \
 	astro-application.c \

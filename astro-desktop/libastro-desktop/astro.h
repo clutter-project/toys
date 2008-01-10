@@ -23,7 +23,7 @@
 #ifndef _HAVE_ASTRO_H
 #define _HAVE_ASTRO_H
 
-#include "astro-defines.h"
 #include "astro-application.h"
-
+#include "astro-defines.h"
+#include "astro-window.h"
 #endif

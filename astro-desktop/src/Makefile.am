@@ -6,6 +6,7 @@ AM_CFLAGS = \
 	-DDATADIR=\""$(datadir)"\" \
 	-DLIBDIR=\""$(libdir)"\" \
 	-DPKGDATADIR=\""$(pkgdatadir)"\" \
+	-DPKGLIBDIR=\""$(libdir)/astro-desktop"\" \
 	-I$(top_builddir)/libastro-desktop
 
 astro_desktop_LDADD  = \

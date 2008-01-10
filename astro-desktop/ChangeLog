@@ -1,5 +1,26 @@
 2008-01-10  Neil J. Patel  <njp@o-hand.com>
 
+	* Makefile.am:
+	* applications/Makefile.am:
+	* applications/example/Makefile.am:
+	* applications/example/astro-example.c: (get_title), (set_title),
+	(get_icon), (set_icon), (get_window), (close),
+	(astro_example2_class_init), (astro_example2_init),
+	(astro_example2_new):
+	* applications/example/astro-example.h:
+	* applications/example/init.c: (astro_application_factory_init):
+	* configure.ac:
+	* libastro-desktop/Makefile.am:
+	* libastro-desktop/astro-application.c:
+	* libastro-desktop/astro-application.h:
+	* libastro-desktop/astro.h:
+	* src/Makefile.am:
+	* src/astro-desktop.c: (_load_app_module), (load_applications):
+	Allow applications to be loaded as .so modules.
+	Added an simple example application.
+
+2008-01-10  Neil J. Patel  <njp@o-hand.com>
+
 	* libastro-desktop/astro-application.c:
 	* libastro-desktop/astro-application.h:
 	* src/astro-desktop.c: (astro_desktop_show_application):

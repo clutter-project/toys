@@ -29,5 +29,7 @@ data/Makefile
 data/icons/Makefile
 libastro-desktop/Makefile
 applets/Makefile
+applications/Makefile
+applications/example/Makefile
 src/Makefile
 ])

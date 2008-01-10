@@ -24,7 +24,7 @@
 
 #include "astro-defines.h"
 
-G_DEFINE_ABSTRACT_TYPE (AstroApplication, astro_application, G_TYPE_OBJECT);
+G_DEFINE_TYPE (AstroApplication, astro_application, G_TYPE_OBJECT);
 	
 enum
 {

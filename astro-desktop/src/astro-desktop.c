@@ -156,19 +156,82 @@ on_panel_home_clicked (AstroPanel *panel, AstroDesktop *desktop)
   astro_desktop_hide_application (desktop);
 }
 
+static AstroApplication *
+_load_app_module (const gchar *filename)
+{
+  GModule *module;
+  AstroApplication *app;
+  AstroApplicationInitFunc init_func;
+
+  module = g_module_open (filename, G_MODULE_BIND_LAZY | G_MODULE_BIND_LOCAL);
+  if (module == NULL)
+    {
+      g_warning ("Unable to load module %s : %s\n",filename, g_module_error ());
+      return NULL;
+    }
+
+  /* Try and load the init symbol */
+  if (g_module_symbol (module, "astro_application_factory_init",
+                       (void*)&init_func)) 
+    {
+      app = (AstroApplication*)init_func ();
+      if (ASTRO_IS_APPLICATION (app))
+        {
+          g_object_set_data (G_OBJECT (app), "module", module);
+          return app;
+        }
+    } 
+  
+  g_warning ("Cannot init module %s: %s", filename, g_module_error ());
+
+  g_module_close (module);
+
+  return NULL;
+}
+
 static void
 load_applications (AstroDesktop *desktop)
 {
   AstroDesktopPrivate *priv;
   GdkPixbuf *pixbuf;
+  GDir *dir;
+  const gchar *leaf;
   gint i;
 
   g_return_if_fail (ASTRO_IS_DESKTOP (desktop));
   priv = desktop->priv;
 
-  /* FIXME: We should scan a directory for .so files */
+  /* Load .so applications */
+  dir = g_dir_open (PKGLIBDIR"/apps", 0, NULL);
+  if (!dir)
+    { 
+      g_warning ("%s doesn't exist", PKGLIBDIR"/apps");
+      return;
+    }
+  while ((leaf = g_dir_read_name (dir)))
+    {
+      AstroApplication *app;
+      gchar *filename;
+
+      if (!g_str_has_suffix (leaf, ".so"))
+        continue;
+
+      filename = g_build_filename (PKGLIBDIR"/apps", leaf, NULL);
+      app = _load_app_module (filename);
+
+      if (ASTRO_IS_APPLICATION (app))
+        priv->apps = g_list_append (priv->apps, app);
+      else
+        g_debug ("load failed\n");
+
+      g_free (filename);
+    }
+  g_dir_close (dir);
+  
+  return;
+  /* Some extra applications */
   pixbuf = gdk_pixbuf_new_from_file (PKGDATADIR "/icons/exec.png", NULL);
-  for (i = 0; i < 10; i++)
+  for (i = 0; i < 5; i++)
     {
       AstroApplication *app;
       gchar *title;
