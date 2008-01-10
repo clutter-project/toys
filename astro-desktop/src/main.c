@@ -70,7 +70,7 @@ main (gint argc, gchar *argv[])
   /* Set up the stage */
   stage = clutter_stage_get_default ();
   clutter_actor_set_size (stage, width, height);
-  
+    
   if (fullscreen)
     clutter_stage_fullscreen (CLUTTER_STAGE (stage));
 

@@ -1,5 +1,15 @@
 2008-01-10  Neil J. Patel  <njp@o-hand.com>
 
+	* libastro-desktop/astro-defines.h:
+	Add ASTRO_APPICON_SPACING() #define.
+	Set the spacing to 0.9 of the icon size.
+
+	* src/astro-appview.c: (astro_appview_show), (astro_appview_hide),
+	(astro_appview_set_app_list), (astro_appview_advance):
+	Use ASTRO_APPICON_SPACING () to allow different spacing widths.
+
+2008-01-10  Neil J. Patel  <njp@o-hand.com>
+
 	* src/astro-applet-manager.c: (astro_applet_manager_show):
 	Actually make it hide in the right direction!
 
