@@ -58,7 +58,7 @@ astro_applet_manager_show (ClutterActor *appman)
       g_object_unref (show_time);
     }
 
-  clutter_actor_set_x (appman, CSW());
+  clutter_actor_set_x (appman, clutter_actor_get_width (appman) * -1);
   CLUTTER_ACTOR_CLASS (astro_applet_manager_parent_class)->show (appman);
 
   show_time = clutter_effect_move (priv->show_temp,

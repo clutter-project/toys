@@ -1,5 +1,10 @@
 2008-01-10  Neil J. Patel  <njp@o-hand.com>
 
+	* src/astro-applet-manager.c: (astro_applet_manager_show):
+	Actually make it hide in the right direction!
+
+2008-01-10  Neil J. Patel  <njp@o-hand.com>
+
 
 	* src/astro-applet-manager.c: (astro_applet_manager_hide):
 	Move off to the left.
