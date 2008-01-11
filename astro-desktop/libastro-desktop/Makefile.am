@@ -11,6 +11,7 @@ lib_LTLIBRARIES = libastro-desktop.la
 
 libastro_desktop_la_SOURCES = \
 	astro-application.c \
+	astro-behave.c \
 	astro-window.c
 
 libastro_desktop_la_LIBADD = $(DEPS_LIBS)

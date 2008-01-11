@@ -1,5 +1,16 @@
 2008-01-11  Neil J. Patel  <njp@o-hand.com>
 
+	* applications/music/astro-music-window.c: (ensure_layout),
+	(make_cover), (load_details), (load_albums), (astro_music_alpha),
+	(astro_music_window_init):
+	* libastro-desktop/Makefile.am:
+	* libastro-desktop/astro-behave.c: (astro_behave_alpha_notify),
+	(astro_behave_class_init), (astro_behave_init), (astro_behave_new):
+	* libastro-desktop/astro-behave.h:
+	Intermediate commit before laying the smackdown on the music app.
+
+2008-01-11  Neil J. Patel  <njp@o-hand.com>
+
 	* applications/music/Makefile.am:
 	* applications/music/astro-music-window.c: (ensure_layout),
 	(make_cover), (load_albums), (astro_music_window_init):
