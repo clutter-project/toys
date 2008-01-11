@@ -1,6 +1,27 @@
 2008-01-11  Neil J. Patel  <njp@o-hand.com>
 
 	* applications/music/Makefile.am:
+	* applications/music/astro-music-window.c: (ensure_layout),
+	(make_cover), (load_albums), (astro_music_window_init):
+	* applications/music/astro-reflection.c:
+	(astro_reflection_set_pixbuf), (astro_reflection_set_property),
+	(astro_reflection_get_property), (astro_reflection_class_init),
+	(astro_reflection_init), (astro_reflection_new):
+	* applications/music/astro-reflection.h:
+	* applications/music/clutter-reflect-texture.c:
+	(reflect_texture_render_to_gl_quad),
+	(clutter_reflect_texture_paint),
+	(clutter_reflect_texture_set_property),
+	(clutter_reflect_texture_get_property),
+	(clutter_reflect_texture_class_init),
+	(clutter_reflect_texture_init), (clutter_reflect_texture_new):
+	* applications/music/clutter-reflect-texture.h:
+	Add a reflected texture actor which wraps ClutterReflectTexture.
+	Needs work, everything is white!
+
+2008-01-11  Neil J. Patel  <njp@o-hand.com>
+
+	* applications/music/Makefile.am:
 	* applications/music/astro-music-window.c: (make_cover),
 	(load_albums), (astro_music_window_class_init),
 	(astro_music_window_init), (astro_music_window_new):

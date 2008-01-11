@@ -22,9 +22,12 @@
 
 #include "astro-music-window.h"
 
+#include <math.h>
 #include <libastro-desktop/astro-defines.h>
 #include <libastro-desktop/astro-application.h>
 #include <libastro-desktop/astro-window.h>
+
+#include "astro-reflection.h"
 
 G_DEFINE_TYPE (AstroMusicWindow, astro_music_window, ASTRO_TYPE_WINDOW);
 
@@ -32,7 +35,7 @@ G_DEFINE_TYPE (AstroMusicWindow, astro_music_window, ASTRO_TYPE_WINDOW);
         ASTRO_TYPE_MUSIC_WINDOW, AstroMusicWindowPrivate))
 
 #define ALBUM_DIR PKGDATADIR"/albums"
-#define ALBUM_SIZE (CSW()/3)
+#define ALBUM_SIZE (CSW()/4)
 
 struct _AstroMusicWindowPrivate
 {
@@ -45,6 +48,51 @@ struct _AstroMusicWindowPrivate
 /* Public Functions */
 
 /* Private functions */
+static void
+ensure_layout (AstroMusicWindow *window)
+{
+#define VARIANCE 200
+  AstroMusicWindowPrivate *priv;
+  GList *l;
+  gint groupx = 0;
+  gint center = 0;
+  gint i = 0;
+  
+  priv = window->priv;
+
+  groupx = clutter_actor_get_x (CLUTTER_ACTOR (priv->albums));
+  center = CSW()/2;
+
+  l = clutter_container_get_children (CLUTTER_CONTAINER (priv->albums));
+  for (l = l; l; l = l->next)
+    {
+      ClutterActor *cover = l->data;
+      gint realx, diff;
+      gfloat scale;
+
+      realx = clutter_actor_get_x (cover) + groupx;
+      
+      if (realx > center && realx < CSW ())
+        {
+          diff = center - (realx - center);
+        }
+      else if (realx > 0 && realx <= center)
+        {
+          diff = realx;
+        }
+      else
+        {
+          diff = 0;
+        }
+  
+      scale = (gfloat)diff/center;
+      scale = 0.5 + (0.5 * scale);
+      clutter_actor_set_scale (cover, scale, scale);
+    
+      i++;
+    }
+}
+
 static ClutterActor *
 make_cover (const gchar *filename)
 {
@@ -57,10 +105,7 @@ make_cover (const gchar *filename)
   if (!pixbuf)
     return NULL;
 
-  texture = clutter_texture_new_from_pixbuf (pixbuf);
-
-  clutter_actor_set_anchor_point_from_gravity (texture, CLUTTER_GRAVITY_CENTER);
-
+  texture = astro_reflection_new (pixbuf);
   return texture;
 }
 
@@ -106,7 +151,7 @@ load_albums (AstroMusicWindow *window)
 
       g_free (filename);
 
-      offset += ALBUM_SIZE;
+      offset += ALBUM_SIZE * 0.9;
     }
 }
 
@@ -131,7 +176,10 @@ astro_music_window_init (AstroMusicWindow *window)
   clutter_container_add_actor (CLUTTER_CONTAINER (window), priv->albums);
   clutter_actor_set_anchor_point_from_gravity (priv->albums, 
                                                CLUTTER_GRAVITY_WEST);
-  clutter_actor_set_position (priv->albums, 0, CSH()/2);
+  clutter_actor_set_position (priv->albums, 
+                              (CSW()/2) - ((ALBUM_SIZE * 0.9)*2), 
+                              CSH()/2);
+
   load_albums (window);
 
   priv->label = clutter_label_new_full ("Sans 18", 
@@ -142,6 +190,8 @@ astro_music_window_init (AstroMusicWindow *window)
   clutter_actor_set_anchor_point_from_gravity (priv->label, 
                                                CLUTTER_GRAVITY_CENTER);
   clutter_actor_set_position (priv->label, CSW()/2, CSH()*0.8);
+
+  ensure_layout (window);
 
   clutter_actor_show_all (CLUTTER_ACTOR (window));
 }

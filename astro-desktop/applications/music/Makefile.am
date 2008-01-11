@@ -11,7 +11,9 @@ INCLUDES =\
 APP_SOURCES = \
 	init.c \
 	astro-music.c \
-	astro-music-window.c
+	astro-music-window.c \
+	astro-reflection.c \
+	clutter-reflect-texture.c
 
 APP_LDADD = \
 	$(DEPS_LIBS) \

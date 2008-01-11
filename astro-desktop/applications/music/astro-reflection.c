@@ -1,0 +1,173 @@
+/*
+ * Copyright (C) 2007 OpenedHand Limited
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Library General Public
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
+ *
+ * Author: Neil Jagdish Patel <njp@o-hand.com>
+ */
+
+
+#include "astro-reflection.h"
+
+#include <libastro-desktop/astro-defines.h>
+
+#include "clutter-reflect-texture.h"
+
+G_DEFINE_TYPE (AstroReflection, astro_reflection, CLUTTER_TYPE_GROUP);
+
+#define ASTRO_REFLECTION_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj),\
+        ASTRO_TYPE_REFLECTION, AstroReflectionPrivate))
+
+struct _AstroReflectionPrivate
+{
+  ClutterActor *texture;
+  ClutterActor *reflect;
+  GdkPixbuf    *pixbuf;
+};
+
+enum
+{
+  PROP_0,
+
+  PROP_PIXBUF
+};
+
+void
+astro_reflection_set_pixbuf (AstroReflection *reflection,
+                             GdkPixbuf       *pixbuf)
+{
+  AstroReflectionPrivate *priv;
+  gint height;
+  
+  g_return_if_fail (ASTRO_IS_REFLECTION (reflection));
+  priv = reflection->priv;
+
+  if (CLUTTER_IS_ACTOR (priv->texture))
+    clutter_actor_destroy (priv->texture);
+  
+  if (CLUTTER_IS_ACTOR (priv->reflect))
+    clutter_actor_destroy (priv->reflect);
+
+  priv->texture = g_object_new (CLUTTER_TYPE_TEXTURE,
+                                "pixbuf", pixbuf,
+                                "tiled", FALSE,
+                                NULL);
+
+  clutter_container_add_actor (CLUTTER_CONTAINER (reflection),
+                               priv->texture);
+  clutter_actor_set_position (priv->texture, 0, 0);
+
+  height = clutter_actor_get_height (priv->texture);
+  
+  priv->reflect = clutter_reflect_texture_new (CLUTTER_TEXTURE (priv->texture),
+                                               height * 0.7);
+  clutter_actor_set_opacity (priv->reflect, 100);
+  clutter_container_add_actor (CLUTTER_CONTAINER (reflection), 
+                               priv->reflect);
+  clutter_actor_set_position (priv->reflect, 0, height+1);
+  
+  clutter_actor_set_anchor_point (CLUTTER_ACTOR (reflection),
+                                  clutter_actor_get_width (priv->texture)/2,
+                                  height/2);
+
+  clutter_actor_show_all (CLUTTER_ACTOR (reflection));
+}
+
+/* GObject stuff */
+static void
+astro_reflection_set_property (GObject      *object, 
+                          guint         prop_id,
+                          const GValue *value,
+                          GParamSpec   *pspec)
+{
+  AstroReflectionPrivate *priv;
+  
+  g_return_if_fail (ASTRO_IS_REFLECTION (object));
+  priv = ASTRO_REFLECTION (object)->priv;
+
+  switch (prop_id)
+  {
+    case PROP_PIXBUF:
+      astro_reflection_set_pixbuf (ASTRO_REFLECTION (object),
+                                   GDK_PIXBUF (g_value_get_object (value)));
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+  }
+}
+
+static void
+astro_reflection_get_property (GObject    *object, 
+                               guint       prop_id,
+                               GValue     *value,
+                               GParamSpec *pspec)
+{
+  AstroReflectionPrivate *priv;
+  
+  g_return_if_fail (ASTRO_IS_REFLECTION (object));
+  priv = ASTRO_REFLECTION (object)->priv;
+
+  switch (prop_id)
+  {
+    case PROP_PIXBUF:
+      g_value_set_object (value, G_OBJECT (priv->pixbuf));
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+  }
+}
+
+static void
+astro_reflection_class_init (AstroReflectionClass *klass)
+{
+  GObjectClass        *gobject_class = G_OBJECT_CLASS (klass);
+
+  gobject_class->set_property = astro_reflection_set_property;
+  gobject_class->get_property = astro_reflection_get_property;
+
+  g_object_class_install_property (
+    gobject_class,
+    PROP_PIXBUF,
+    g_param_spec_object ("pixbuf",
+                         "Pixbuf",
+                         "A pixbuf",
+                         GDK_TYPE_PIXBUF,
+                         G_PARAM_READWRITE));
+
+  g_type_class_add_private (gobject_class, sizeof (AstroReflectionPrivate));
+}
+
+static void
+astro_reflection_init (AstroReflection *reflection)
+{
+  AstroReflectionPrivate *priv;
+  priv = reflection->priv = ASTRO_REFLECTION_GET_PRIVATE (reflection);
+
+  priv->texture = NULL;
+  priv->reflect = NULL;
+}
+
+ClutterActor *
+astro_reflection_new (GdkPixbuf *pixbuf)
+{
+  ClutterActor *reflection =  g_object_new (ASTRO_TYPE_REFLECTION,
+                                            "pixbuf", pixbuf,
+                                            NULL);
+  return CLUTTER_ACTOR (reflection);
+}
+
