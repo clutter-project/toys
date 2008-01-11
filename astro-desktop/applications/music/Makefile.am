@@ -10,7 +10,8 @@ INCLUDES =\
 
 APP_SOURCES = \
 	init.c \
-	astro-music.c
+	astro-music.c \
+	astro-music-window.c
 
 APP_LDADD = \
 	$(DEPS_LIBS) \

@@ -26,6 +26,8 @@
 #include <libastro-desktop/astro-application.h>
 #include <libastro-desktop/astro-window.h>
 
+#include "astro-music-window.h"
+
 G_DEFINE_TYPE (AstroMusic, astro_music, ASTRO_TYPE_APPLICATION);
 
 #define ASTRO_MUSIC_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj),\
@@ -79,8 +81,7 @@ static AstroWindow *
 get_window (AstroApplication *app)
 {
   AstroMusicPrivate *priv;
-  ClutterColor color = { 0xff, 0xff, 0x22, 0x22 };
-  ClutterActor *window = NULL, *rect;
+  ClutterActor *window = NULL;
 
   g_return_val_if_fail (ASTRO_IS_MUSIC (app), NULL);
   priv = ASTRO_MUSIC (app)->priv;
@@ -89,12 +90,7 @@ get_window (AstroApplication *app)
     window = priv->window;
   else
     {
-      window = astro_window_new ();
-      
-      rect = clutter_rectangle_new_with_color (&color);
-      clutter_container_add_actor (CLUTTER_CONTAINER (window), rect);
-      clutter_actor_set_size (rect, CSW (), CSH()-ASTRO_PANEL_HEIGHT());
-      clutter_actor_show (rect);
+      window = CLUTTER_ACTOR (astro_music_window_new ());
     }
 
   ASTRO_MUSIC (app)->priv->window = window;

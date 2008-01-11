@@ -76,7 +76,7 @@ astro_desktop_show_application (AstroDesktop     *desktop,
                                priv->active_window);
   clutter_actor_set_position (priv->active_window, 
                               0, 
-                              ASTRO_PANEL_HEIGHT ());
+                              0);
   clutter_actor_show (priv->active_window);
 }
 

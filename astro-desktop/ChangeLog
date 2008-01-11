@@ -1,3 +1,22 @@
+2008-01-11  Neil J. Patel  <njp@o-hand.com>
+
+	* applications/music/Makefile.am:
+	* applications/music/astro-music-window.c: (make_cover),
+	(load_albums), (astro_music_window_class_init),
+	(astro_music_window_init), (astro_music_window_new):
+	* applications/music/astro-music-window.h:
+	* applications/music/astro-music.c: (get_window):
+	Beginings of a music browser/player.
+
+	* configure.ac:
+	* data/Makefile.am:
+	* data/albums/Makefile.am:
+	Added in albums for music app.
+
+	* src/astro-desktop.c: (astro_desktop_show_application):
+	Set the window position as [0, 0], so it can decide where it wants
+	to be.
+
 2008-01-10  Neil J. Patel  <njp@o-hand.com>
 
 	* applications/Makefile.am:

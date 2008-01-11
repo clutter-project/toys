@@ -26,6 +26,7 @@ AC_SUBST(GCC_CFLAGS)
 AC_OUTPUT([
 Makefile
 data/Makefile
+data/albums/Makefile
 data/icons/Makefile
 libastro-desktop/Makefile
 applets/Makefile
