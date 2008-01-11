@@ -1,6 +1,14 @@
 2008-01-11  Neil J. Patel  <njp@o-hand.com>
 
 	* applications/music/astro-music-window.c: (ensure_layout),
+	(astro_music_window_advance), (astro_music_alpha),
+	(on_key_release_event), (astro_music_window_init):
+	Hooked up the keyboard to allow moving between albums.
+	Beefed up the alpha_func + layout calculation.
+
+2008-01-11  Neil J. Patel  <njp@o-hand.com>
+
+	* applications/music/astro-music-window.c: (ensure_layout),
 	(make_cover), (load_details), (load_albums), (astro_music_alpha),
 	(astro_music_window_init):
 	* libastro-desktop/Makefile.am:

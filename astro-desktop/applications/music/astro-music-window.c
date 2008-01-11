@@ -139,7 +139,7 @@ ensure_layout (AstroMusicWindow *window)
           if (diff > 3)
             trans->scale = 0.4;
           else
-            trans->scale = 0.3 + (0.4 * (3-diff)/3);
+            trans->scale = 0.4 + (0.4 * (3-diff)/3);
         }
       else
         {
@@ -150,10 +150,33 @@ ensure_layout (AstroMusicWindow *window)
           if (diff > 3)
             trans->scale = 0.4;
           else
-            trans->scale = 0.3 + (0.4 * (diff)/3);        }
+            trans->scale = 0.4 + (0.4 * (3-diff)/3);        }
 
       i++;
     }
+}
+
+static void
+astro_music_window_advance (AstroMusicWindow *window, gint n)
+{
+  AstroMusicWindowPrivate *priv;
+  gint new_active;
+
+  g_return_if_fail (ASTRO_IS_MUSIC_WINDOW (window));
+  priv = window->priv;
+  
+  new_active = priv->active + n;
+  if (new_active < 0 || 
+   new_active > (clutter_group_get_n_children (CLUTTER_GROUP (priv->albums))-1))
+    return;
+
+  priv->active += n;
+  ensure_layout (window);
+
+  if (clutter_timeline_is_playing (priv->timeline))
+    clutter_timeline_rewind (priv->timeline);
+  else
+    clutter_timeline_start (priv->timeline);
 }
 
 static ClutterActor *
@@ -248,13 +271,14 @@ astro_music_alpha (ClutterBehaviour *behave,
   priv = window->priv;
 
   factor = (gfloat)alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
+  factor = 0.1;
 
   c = clutter_container_get_children (CLUTTER_CONTAINER (priv->albums));
   for (c=c; c; c = c->next)
     {
       ClutterActor *cover = c->data;
       CoverTrans *trans = g_object_get_data (G_OBJECT (cover), "trans");
-      //gfloat currentscale, diffscale;
+      gdouble cscale, dscale;
       gint currentx, diffx;
       
       currentx = clutter_actor_get_x (cover);
@@ -264,9 +288,49 @@ astro_music_alpha (ClutterBehaviour *behave,
         diffx = trans->x - currentx;
 
       clutter_actor_set_x (cover, currentx + (gint)(diffx*factor));
-      g_print ("%d\n", currentx + (gint)(diffx*factor));
 
+      clutter_actor_get_scale (cover, &cscale, &cscale);
+      if (cscale > trans->scale)
+        dscale = (cscale - trans->scale) * -1;
+      else
+        dscale = trans->scale - cscale;
+
+      clutter_actor_set_scale (cover, 
+                              cscale + (dscale*factor),
+                              cscale + (dscale*factor));
     }
+}
+
+static gboolean
+on_key_release_event (ClutterActor     *actor, 
+                      ClutterEvent     *event,
+                      AstroMusicWindow *window)
+{
+  AstroMusicWindowPrivate *priv;
+  
+  g_return_val_if_fail (ASTRO_IS_WINDOW (window), FALSE);
+  priv = window->priv;
+
+  switch (event->key.keyval)
+    {
+      case CLUTTER_Return:
+      case CLUTTER_KP_Enter:
+      case CLUTTER_ISO_Enter:
+        //astro_music_window_active (window);
+        break;
+      case CLUTTER_Left:
+      case CLUTTER_KP_Left:
+        astro_music_window_advance (window, -1);
+        break;
+      case CLUTTER_Right:
+      case CLUTTER_KP_Right:
+        astro_music_window_advance (window, 1);
+        break;
+      default:
+        ;
+    }
+
+  return FALSE;
 }
 
 /* GObject stuff */
@@ -318,6 +382,11 @@ astro_music_window_init (AstroMusicWindow *window)
                                    window);
 
   clutter_timeline_start (priv->timeline);
+
+  g_signal_connect (window, "key-release-event",
+                    G_CALLBACK (on_key_release_event), window);
+  clutter_grab_keyboard (CLUTTER_ACTOR (window));
+
 
   clutter_actor_show_all (CLUTTER_ACTOR (window));
 }
