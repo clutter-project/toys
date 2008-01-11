@@ -1,5 +1,13 @@
 2008-01-11  Neil J. Patel  <njp@o-hand.com>
 
+	* applications/music/astro-music-window.c: (load_albums):
+	Intially set the covers off the screen, so they slide in.
+
+	* libastro-desktop/astro-window.c: (astro_window_close):
+	On close, slide the window out of the RHS.
+
+2008-01-11  Neil J. Patel  <njp@o-hand.com>
+
 	* applications/music/astro-music-window.c: (ensure_layout),
 	(astro_music_window_advance), (astro_music_alpha),
 	(on_key_release_event), (astro_music_window_init):

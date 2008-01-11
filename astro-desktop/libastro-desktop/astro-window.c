@@ -101,6 +101,12 @@ astro_window_close      (AstroWindow *window)
       clutter_timeline_stop (hide_time);
       g_object_unref (hide_time);
     }
+
+  hide_time = clutter_effect_move (priv->hide_temp,
+                                   CLUTTER_ACTOR (window),
+                                   CSW(),
+                                   clutter_actor_get_y (CLUTTER_ACTOR (window)),
+                                   NULL, NULL);
   
   hide_time = clutter_effect_fade (priv->hide_temp,
                                    CLUTTER_ACTOR (window),

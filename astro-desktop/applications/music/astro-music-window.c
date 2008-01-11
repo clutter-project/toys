@@ -219,7 +219,7 @@ load_albums (AstroMusicWindow *window)
   GDir *dir;
   const gchar *leaf;
   GError *error = NULL;
-  gint offset = 0;
+  gint offset = CSW()*2;
 
   priv = window->priv;
 
