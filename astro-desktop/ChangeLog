@@ -1,3 +1,14 @@
+2008-01-12  Neil J. Patel  <njp@o-hand.com>
+
+	* applications/music/astro-music-window.c:
+	(on_main_timeline_completed), (astro_music_window_init):
+	Some fixes for the album view effect.
+
+	* applications/music/clutter-reflect-texture.c:
+	(clutter_reflect_texture_paint):
+	Swapped gl calls for cogl calls and removed glDisable calls, so
+	the ClutterReflectTexture now works perfectly.
+
 2008-01-11  Neil J. Patel  <njp@o-hand.com>
 
 	* applications/music/astro-music-window.c: (load_albums):

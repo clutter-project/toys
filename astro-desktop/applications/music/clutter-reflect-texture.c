@@ -216,25 +216,27 @@ clutter_reflect_texture_paint (ClutterActor *self)
    */  
   if (clutter_feature_available (CLUTTER_FEATURE_TEXTURE_RECTANGLE) &&
       clutter_texture_is_tiled (CLUTTER_TEXTURE (parent_texture)) == FALSE)
-    target_type = GL_TEXTURE_RECTANGLE_ARB;
+    {
+      target_type = CGL_TEXTURE_RECTANGLE_ARB;
+      cogl_enable (CGL_ENABLE_TEXTURE_RECT | CGL_ENABLE_BLEND);
+    }
   else
-    target_type = GL_TEXTURE_2D;
+    {
+      target_type = CGL_TEXTURE_2D;
+      cogl_enable (CGL_ENABLE_TEXTURE_2D|CGL_ENABLE_BLEND);
+    }
   
   cogl_push_matrix ();
 
-  glEnable (GL_BLEND);
-  glEnable (target_type);
   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  //glColor4ub (255, 255, 255, clutter_actor_get_opacity (self));
+  glColor4ub (255, 255, 255, clutter_actor_get_opacity (self));
 
   clutter_actor_get_coords (self, &x1, &y1, &x2, &y2);
 
   /* Parent paint translated us into position */
   reflect_texture_render_to_gl_quad (CLUTTER_REFLECT_TEXTURE (self), 
 				   0, 0, x2 - x1, y2 - y1);
-  glDisable (target_type);
-  glDisable (GL_BLEND);
 
   cogl_pop_matrix ();
 }

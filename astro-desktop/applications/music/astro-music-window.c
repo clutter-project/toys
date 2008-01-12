@@ -301,6 +301,23 @@ astro_music_alpha (ClutterBehaviour *behave,
     }
 }
 
+static void
+on_main_timeline_completed (ClutterTimeline  *timeline,
+                            AstroMusicWindow *window)
+{
+  AstroMusicWindowPrivate *priv;
+  const gchar *details;
+  GList *children;
+
+  g_return_if_fail (ASTRO_MUSIC_WINDOW (window));
+  priv = window->priv;
+
+  children = clutter_container_get_children (CLUTTER_CONTAINER (priv->albums));
+  details = clutter_actor_get_name (g_list_nth_data (children, priv->active));
+
+  clutter_label_set_text (CLUTTER_LABEL (priv->label), details);
+}
+
 static gboolean
 on_key_release_event (ClutterActor     *actor, 
                       ClutterEvent     *event,
@@ -366,7 +383,10 @@ astro_music_window_init (AstroMusicWindow *window)
                                         "Jay Z - American Gangster",
                                         &white);
   clutter_label_set_line_wrap (CLUTTER_LABEL (priv->label), FALSE);
+  clutter_label_set_alignment (CLUTTER_LABEL (priv->label),
+                               PANGO_ALIGN_CENTER);
   clutter_container_add_actor (CLUTTER_CONTAINER (window), priv->label);
+  clutter_actor_set_size (priv->label, CSW(), CSH()/10);
   clutter_actor_set_anchor_point_from_gravity (priv->label, 
                                                CLUTTER_GRAVITY_CENTER);
   clutter_actor_set_position (priv->label, CSW()/2, CSH()*0.8);
@@ -380,6 +400,9 @@ astro_music_window_init (AstroMusicWindow *window)
   priv->behave = astro_behave_new (priv->alpha,
                                    (AstroBehaveAlphaFunc)astro_music_alpha,
                                    window);
+
+  g_signal_connect (priv->timeline, "completed",
+                    G_CALLBACK (on_main_timeline_completed), window);
 
   clutter_timeline_start (priv->timeline);
 
