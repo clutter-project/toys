@@ -66,7 +66,7 @@ astro_reflection_set_active (AstroReflection *reflection,
     x = clutter_actor_get_width (priv->texture);
   else
     x = 0;
-
+  
   clutter_effect_move (priv->songs_temp,
                        priv->songs,
                        x, clutter_actor_get_y (priv->songs),

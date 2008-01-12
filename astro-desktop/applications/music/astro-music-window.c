@@ -49,6 +49,7 @@ struct _AstroMusicWindowPrivate
   ClutterActor *player;
 
   gint active;
+  gboolean activated;
 
   ClutterTimeline  *timeline;
   ClutterAlpha     *alpha;
@@ -141,6 +142,10 @@ on_cover_active_completed (ClutterTimeline *timeline,
                            AstroReflection *reflection)
 {
   astro_reflection_set_active (reflection, TRUE);
+
+  g_signal_handlers_disconnect_by_func (timeline, 
+                                        on_cover_active_completed,
+                                        reflection);
 }
 
 static void
@@ -164,6 +169,8 @@ on_cover_activated (AstroMusicWindow *window)
   trans = g_object_get_data (G_OBJECT (cover), "trans");
   if (!trans)
     return;
+
+  priv->activated = TRUE;
 
   trans->scale = ACTIVE_SCALE;
   trans->x = (CSW()/2) - ((ALBUM_SIZE * ACTIVE_SCALE) * 0.5);
@@ -194,6 +201,15 @@ on_cover_clicked (ClutterActor      *cover,
   children = priv->covers;
   n = g_list_index (children, cover);
 
+  if (priv->activated)
+    {
+      astro_reflection_set_active (g_list_nth_data (priv->covers,
+                                   priv->active), FALSE);
+      priv->activated = FALSE;
+      
+      astro_music_window_advance (window, 0);
+      return FALSE;
+    }
   if (n == priv->active)
     on_cover_activated (window);
   else
@@ -372,11 +388,23 @@ on_key_release_event (ClutterActor     *actor,
         break;
       case CLUTTER_Left:
       case CLUTTER_KP_Left:
+        if (priv->activated)
+          {
+            astro_reflection_set_active (g_list_nth_data (priv->covers,
+                                                          priv->active), FALSE);  
+            priv->activated = FALSE;
+          }
         astro_music_window_advance (window, -1);
         break;
       case CLUTTER_Right:
       case CLUTTER_KP_Right:
-        astro_music_window_advance (window, 1);
+        if (priv->activated)
+          {
+            astro_reflection_set_active (g_list_nth_data (priv->covers,
+                                                        priv->active), FALSE);
+            priv->activated = FALSE;
+          }
+          astro_music_window_advance (window, 1);
         break;
       default:
         ;
@@ -404,6 +432,7 @@ astro_music_window_init (AstroMusicWindow *window)
 
   priv->covers = NULL;
   priv->active = 0;
+  priv->activated = FALSE;
 
   priv->albums = clutter_group_new ();
   clutter_container_add_actor (CLUTTER_CONTAINER (window), priv->albums);

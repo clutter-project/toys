@@ -1,5 +1,16 @@
 2008-01-12  Neil J. Patel  <njp@o-hand.com>
 
+	* applications/music/astro-music-window.c:
+	(on_cover_active_completed), (on_cover_activated),
+	(on_cover_clicked), (on_key_release_event),
+	(astro_music_window_init):
+	Added ability to close ablums covers again & return to original state.
+	
+	* data/disc_bg.svg:
+	Stamped the bg with hand of OH!	
+
+2008-01-12  Neil J. Patel  <njp@o-hand.com>
+
 	* applications/music/astro-music-window.c: (ensure_layout),
 	(astro_music_window_advance), (on_cover_active_completed),
 	(on_cover_activated), (on_cover_clicked), (load_albums),
