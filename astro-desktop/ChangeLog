@@ -1,5 +1,16 @@
 2008-01-12  Neil J. Patel  <njp@o-hand.com>
 
+	* applications/music/init.c: (astro_application_factory_init):
+	Set the correct name for the application.
+
+	* src/astro-desktop.c: (astro_desktop_show_application),
+	(astro_desktop_hide_application):
+	* src/astro-panel.c: (astro_panel_set_header), (astro_panel_init):
+	* src/astro-panel.h:
+	Set the title and icon for the current window.
+
+2008-01-12  Neil J. Patel  <njp@o-hand.com>
+
 	* applications/music/astro-reflection.c: (fix_clip),
 	(astro_reflection_set_active):
 	Some clever clipping to make the reflection look proper.

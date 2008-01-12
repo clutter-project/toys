@@ -14,7 +14,7 @@ astro_application_factory_init ()
  
   pixbuf = gdk_pixbuf_new_from_file (PKGDATADIR "/icons/music.png", NULL);
 
-  app = astro_music_new ("Example Application", pixbuf);
+  app = astro_music_new ("Music Player", pixbuf);
 
   g_debug ("Example applet loaded\n");
 

@@ -73,6 +73,10 @@ struct _AstroPanelClass
 GType astro_panel_get_type (void) G_GNUC_CONST;
 
 ClutterActor *  astro_panel_new       (void);
+
+void            astro_panel_set_header (AstroPanel  *panel,
+                                        const gchar *title,
+                                        GdkPixbuf   *icon);
   
 G_END_DECLS
 

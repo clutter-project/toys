@@ -40,6 +40,8 @@ struct _AstroPanelPrivate
   ClutterActor *title;
   ClutterActor *systray;
   ClutterActor *close;
+
+  GdkPixbuf *home_pixbuf;
 };
 
 enum
@@ -53,6 +55,28 @@ static guint _panel_signals[LAST_SIGNAL] = { 0 };
 
 
 /* Public Functions */
+void
+astro_panel_set_header (AstroPanel  *panel,
+                        const gchar *title,
+                        GdkPixbuf   *icon)
+{
+  AstroPanelPrivate *priv;
+
+  g_return_if_fail (ASTRO_IS_PANEL (panel));
+  priv = panel->priv;
+  
+  clutter_label_set_text (CLUTTER_LABEL (priv->title), title);
+  clutter_actor_set_position (priv->title, 
+                              clutter_actor_get_width (priv->home)+(PADDING*3),
+                              (ASTRO_PANEL_HEIGHT ()/2) + (PADDING*2));
+
+  if (!icon)
+    icon = priv->home_pixbuf;
+
+  clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->home), icon, NULL);
+  clutter_actor_set_position (priv->home, PADDING/2,
+                                  ASTRO_PANEL_HEIGHT ()/2);
+}
 
 /* Callbacks */
 static gboolean
@@ -129,6 +153,7 @@ astro_panel_init (AstroPanel *panel)
                                              NULL);
   if (pixbuf)
     {
+      priv->home_pixbuf = pixbuf;
       priv->home = clutter_texture_new_from_pixbuf (pixbuf);
       clutter_container_add_actor (CLUTTER_CONTAINER (panel), priv->home);
       clutter_actor_set_anchor_point_from_gravity (priv->home,
@@ -144,7 +169,9 @@ astro_panel_init (AstroPanel *panel)
   /* Title label */
   font = g_strdup_printf ("Sans %d", (int)(ASTRO_PANEL_HEIGHT () * 0.4));
   priv->title = clutter_label_new_full (font, "Home", &white);
+  clutter_label_set_line_wrap (CLUTTER_LABEL (priv->title), FALSE);
   clutter_container_add_actor (CLUTTER_CONTAINER (panel), priv->title);
+  clutter_actor_set_size (priv->title, CSW(), ASTRO_PANEL_HEIGHT ());
   clutter_actor_set_anchor_point_from_gravity (priv->title, 
                                                CLUTTER_GRAVITY_WEST);
   clutter_actor_set_position (priv->title, 
