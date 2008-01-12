@@ -1,5 +1,16 @@
 2008-01-12  Neil J. Patel  <njp@o-hand.com>
 
+	* applications/contacts/astro-contacts-window.c: (ensure_layout),
+	(astro_contacts_list_window_advance),
+	(on_contact_active_completed), (on_contact_activated),
+	(on_contact_clicked), (make_contact), (load_details),
+	(load_contacts), (astro_contacts_list_alpha),
+	(on_main_timeline_completed), (on_key_release_event),
+	(astro_contacts_window_init):
+	Created the main contact list, added animations to move through it.
+
+2008-01-12  Neil J. Patel  <njp@o-hand.com>
+
 	* applications/contacts/Makefile.am:
 	* applications/contacts/astro-contacts-window.c: (ensure_layout),
 	(astro_contacts_window_advance), (on_cover_active_completed),

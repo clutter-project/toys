@@ -36,14 +36,14 @@ G_DEFINE_TYPE (AstroContactsWindow, astro_contacts_window, ASTRO_TYPE_WINDOW);
 #define ASTRO_CONTACTS_WINDOW_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj),\
         ASTRO_TYPE_CONTACTS_WINDOW, AstroContactsWindowPrivate))
 
-#define ALBUM_DIR PKGDATADIR"/albums"
+#define ALBUM_DIR PKGDATADIR"/contacts"
 #define ALBUM_SIZE (CSW()/4)
 
 struct _AstroContactsWindowPrivate
 {
-  GList *covers;
+  GList *contacts_list;
 
-  ClutterActor *albums;
+  ClutterActor *contacts;
   ClutterActor *label;
 
   ClutterActor *player;
@@ -56,34 +56,57 @@ struct _AstroContactsWindowPrivate
   ClutterBehaviour *behave;
 };
 
+static gchar *names[] = {
+  "Andrew Zaborowski",
+  "Chris Lord",
+  "Dodji Seketeli",
+  "Emmanuele Bassi",
+  "Iain Holmes",
+  "Jorn Baayen",
+  "Jussi Kukkonen",
+  "Marcin Juszkiewicz",
+  "Matthew Allum",
+  "Neil J. Patel",
+  "Øyvind Kolås",
+  "Paul Cooper",
+  "Richard Purdie",
+  "Robert Bradford",
+  "Ross Burton",
+  "Samuel Ortiz",
+  "Sidske Allum",
+  "Thomas Wood",
+  "Tomas Frydrych"
+};
+
 /* Public Functions */
 
 /* Private functions */
 typedef struct
 {
-  gint x;
+  gint y;
   gfloat scale;
 
-} CoverTrans;
+} ContactTrans;
 
 static void
 ensure_layout (AstroContactsWindow *window)
 {
+#define MAX_DIST 4
   AstroContactsWindowPrivate *priv;
   GList *c;
   gint i = 0;
 
   priv = window->priv;
 
-  c = priv->covers;
+  c = priv->contacts_list;
   for (c=c; c; c = c->next)
     {
-      ClutterActor *cover = c->data;
-      CoverTrans *trans = g_object_get_data (G_OBJECT (cover), "trans");
+      ClutterActor *contact = c->data;
+      ContactTrans *trans = g_object_get_data (G_OBJECT (contact), "trans");
 
       if (i == priv->active)
         {
-          trans->x = CSW ()/2;
+          trans->y = CSH ()/2;
           trans->scale = 1.0;
         }
       else if (i > priv->active)
@@ -91,22 +114,22 @@ ensure_layout (AstroContactsWindow *window)
           gint diff;
 
           diff = i - priv->active;
-          trans->x = (CSW()/2) + ((CSW()/4)*diff);
-          if (diff > 3)
+          trans->y = (CSH()/2) + ((CSH()/5)*diff);
+          if (diff > MAX_DIST)
             trans->scale = 0.4;
           else
-            trans->scale = 0.4 + (0.4 * (3-diff)/3);
+            trans->scale = 0.4 + (0.4 * (MAX_DIST-diff)/MAX_DIST);
         }
       else
         {
           gint diff;
 
           diff = priv->active - i;
-          trans->x = (CSW()/2) - ((CSW()/4)*diff);
-          if (diff > 3)
+          trans->y = (CSH()/2) - ((CSH()/5)*diff);
+          if (diff > MAX_DIST)
             trans->scale = 0.4;
           else
-            trans->scale = 0.4 + (0.4 * (3-diff)/3);        
+            trans->scale = 0.4 + (0.4 * (MAX_DIST-diff)/MAX_DIST);        
         }
 
       i++;
@@ -114,7 +137,7 @@ ensure_layout (AstroContactsWindow *window)
 }
 
 static void
-astro_contacts_window_advance (AstroContactsWindow *window, gint n)
+astro_contacts_list_window_advance (AstroContactsWindow *window, gint n)
 {
   AstroContactsWindowPrivate *priv;
   gint new_active;
@@ -124,7 +147,7 @@ astro_contacts_window_advance (AstroContactsWindow *window, gint n)
   
   new_active = priv->active + n;
   if (new_active < 0 || 
-   new_active > (clutter_group_get_n_children (CLUTTER_GROUP (priv->albums))-1))
+   new_active > (clutter_group_get_n_children (CLUTTER_GROUP (priv->contacts))-1))
     return;
 
   priv->active += n;
@@ -138,44 +161,44 @@ astro_contacts_window_advance (AstroContactsWindow *window, gint n)
 }
 
 static void
-on_cover_active_completed (ClutterTimeline *timeline,
+on_contact_active_completed (ClutterTimeline *timeline,
                            AstroReflection *reflection)
 {
   astro_reflection_set_active (reflection, TRUE);
 
   g_signal_handlers_disconnect_by_func (timeline, 
-                                        on_cover_active_completed,
+                                        on_contact_active_completed,
                                         reflection);
 }
 
 static void
-on_cover_activated (AstroContactsWindow *window)
+on_contact_activated (AstroContactsWindow *window)
 {
 #define ACTIVE_SCALE 1.5
   AstroContactsWindowPrivate *priv;
-  ClutterActor *cover;
+  ClutterActor *contact;
   GList *children;
-  CoverTrans *trans;
+  ContactTrans *trans;
 
   g_return_if_fail (ASTRO_IS_CONTACTS_WINDOW (window));
   priv = window->priv;
 
-  children = priv->covers;
-  cover = g_list_nth_data (children, priv->active);
+  children = priv->contacts_list;
+  contact = g_list_nth_data (children, priv->active);
 
-  if (!CLUTTER_IS_ACTOR (cover))
+  if (!CLUTTER_IS_ACTOR (contact))
     return;
 
-  trans = g_object_get_data (G_OBJECT (cover), "trans");
+  trans = g_object_get_data (G_OBJECT (contact), "trans");
   if (!trans)
     return;
 
   priv->activated = TRUE;
 
   trans->scale = ACTIVE_SCALE;
-  trans->x = (CSW()/2) - ((ALBUM_SIZE * ACTIVE_SCALE) * 0.5);
+  trans->y = (CSW()/2) - ((ALBUM_SIZE * ACTIVE_SCALE) * 0.5);
 
-  clutter_actor_raise_top (cover);
+  clutter_actor_raise_top (contact);
 
   if (clutter_timeline_is_playing (priv->timeline))
     clutter_timeline_rewind (priv->timeline);
@@ -183,11 +206,11 @@ on_cover_activated (AstroContactsWindow *window)
     clutter_timeline_start (priv->timeline);
 
   g_signal_connect (priv->timeline, "completed",
-                    G_CALLBACK (on_cover_active_completed), cover);
+                    G_CALLBACK (on_contact_active_completed), contact);
 }
 
 static gboolean
-on_cover_clicked (ClutterActor      *cover, 
+on_contact_clicked (ClutterActor      *contact, 
                   ClutterEvent      *event,
                   AstroContactsWindow  *window)
 {
@@ -198,20 +221,20 @@ on_cover_clicked (ClutterActor      *cover,
   g_return_val_if_fail (ASTRO_IS_CONTACTS_WINDOW (window), FALSE);
   priv = window->priv;
 
-  children = priv->covers;
-  n = g_list_index (children, cover);
+  children = priv->contacts_list;
+  n = g_list_index (children, contact);
 
   if (priv->activated)
     {
-      astro_reflection_set_active (g_list_nth_data (priv->covers,
+      astro_reflection_set_active (g_list_nth_data (priv->contacts_list,
                                    priv->active), FALSE);
       priv->activated = FALSE;
       
-      astro_contacts_window_advance (window, 0);
+      astro_contacts_list_window_advance (window, 0);
       return FALSE;
     }
   if (n == priv->active)
-    on_cover_activated (window);
+    on_contact_activated (window);
   else
     {
       gint diff;
@@ -219,32 +242,30 @@ on_cover_clicked (ClutterActor      *cover,
         diff = (n-priv->active);
       else
         diff = (priv->active - n) * -1;
-      astro_contacts_window_advance (window, diff);
+      astro_contacts_list_window_advance (window, diff);
     }
 
   return FALSE;
 }
 
 static ClutterActor *
-make_cover (const gchar *filename)
+make_contact (const gchar *name)
 {
-  GdkPixbuf *pixbuf;
-  ClutterActor *texture;
+  ClutterActor *label;
+  ClutterColor white = { 0xff, 0xff, 0xff, 0xff };
 
-  pixbuf = gdk_pixbuf_new_from_file_at_size (filename,
-                                             ALBUM_SIZE, ALBUM_SIZE,
-                                             NULL);
-  if (!pixbuf)
-    return NULL;
+  label = clutter_label_new_full ("Sans 22", name, &white);
+  clutter_label_set_line_wrap (CLUTTER_LABEL (label), FALSE);
+  clutter_actor_set_size (label, CSW()/2, CSH()/10);
 
-  texture = astro_reflection_new (pixbuf);
+  g_object_set_data (G_OBJECT (label), "trans", g_new0 (ContactTrans, 1));
 
-  g_object_set_data (G_OBJECT (texture), "trans", g_new0 (CoverTrans, 1));
-  return texture;
+  return label;
 }
 
+#if 0
 static void
-load_details (ClutterActor *cover, const gchar *leaf)
+load_details (ClutterActor *contact, const gchar *leaf)
 {
   gchar *details;
   gint i;
@@ -254,63 +275,37 @@ load_details (ClutterActor *cover, const gchar *leaf)
   for (i = 0; i < strlen (details); i++)
     if (details[i] == '_') details[i] = ' ';
 
-  clutter_actor_set_name (cover, details);
+  clutter_actor_set_name (contact, details);
   g_free (details);
 }
+#endif
 
 static void
-load_albums (AstroContactsWindow *window)
+load_contacts (AstroContactsWindow *window)
 {
   AstroContactsWindowPrivate *priv;
-  GDir *dir;
-  const gchar *leaf;
-  GError *error = NULL;
-  gint offset = CSW()*2;
-
+  gint i = 0;
+  
   priv = window->priv;
 
-  dir = g_dir_open (ALBUM_DIR, 0, &error);
-  if (error)
-    {
-      g_warning ("Cannot load albums: %s", error->message);
-      g_error_free (error);
-      return;
-    }
-  
-  while ((leaf = g_dir_read_name (dir)))
-    {
-      ClutterActor *cover;
-      gchar *filename;
+  for (i = 0; i < G_N_ELEMENTS (names); i++)
+     {
+      ClutterActor *contact;
 
-      if (!g_str_has_suffix (leaf, ".jpg"))
-        continue;
+      contact = make_contact (names[i]);
+      clutter_container_add_actor (CLUTTER_CONTAINER (priv->contacts), contact);
+      clutter_actor_set_x (contact, CSW()/2);
+      clutter_actor_show_all (contact);
+      clutter_actor_set_reactive (contact, TRUE);
+      g_signal_connect (contact, "button-release-event",
+                        G_CALLBACK (on_contact_clicked), window);
 
-      filename = g_build_filename (ALBUM_DIR, leaf, NULL);
-      cover = make_cover (filename);
-
-      if (!CLUTTER_IS_ACTOR (cover))
-        {
-          g_free (filename);
-          continue;
-        }
-      load_details (cover, leaf);
-      clutter_container_add_actor (CLUTTER_CONTAINER (priv->albums), cover);
-      clutter_actor_set_position (cover, offset, 0);
-      clutter_actor_show_all (cover);
-      clutter_actor_set_reactive (cover, TRUE);
-      g_signal_connect (cover, "button-release-event",
-                        G_CALLBACK (on_cover_clicked), window);
-
-      priv->covers = g_list_append (priv->covers, cover);
-
-      g_free (filename);
-
-      offset += ALBUM_SIZE * 0.9;
+      priv->contacts_list = g_list_append (priv->contacts_list, contact);
     }
 }
 
 static void
-astro_contacts_alpha (ClutterBehaviour *behave,
+astro_contacts_list_alpha (ClutterBehaviour *behave,
                    guint32           alpha_value,
                    AstroContactsWindow *window)
 {
@@ -324,29 +319,29 @@ astro_contacts_alpha (ClutterBehaviour *behave,
   factor = (gfloat)alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
   factor = 0.1;
 
-  c = priv->covers;
+  c = priv->contacts_list;
   for (c=c; c; c = c->next)
     {
-      ClutterActor *cover = c->data;
-      CoverTrans *trans = g_object_get_data (G_OBJECT (cover), "trans");
+      ClutterActor *contact = c->data;
+      ContactTrans *trans = g_object_get_data (G_OBJECT (contact), "trans");
       gdouble cscale, dscale;
-      gint currentx, diffx;
+      gint currenty, diffy;
       
-      currentx = clutter_actor_get_x (cover);
-      if (currentx > trans->x)
-        diffx = (currentx - trans->x) * -1;
+      currenty = clutter_actor_get_y (contact);
+      if (currenty > trans->y)
+        diffy = (currenty - trans->y) * -1;
       else
-        diffx = trans->x - currentx;
+        diffy = trans->y - currenty;
 
-      clutter_actor_set_x (cover, currentx + (gint)(diffx*factor));
+      clutter_actor_set_y (contact, currenty + (gint)(diffy*factor));
 
-      clutter_actor_get_scale (cover, &cscale, &cscale);
+      clutter_actor_get_scale (contact, &cscale, &cscale);
       if (cscale > trans->scale)
         dscale = (cscale - trans->scale) * -1;
       else
         dscale = trans->scale - cscale;
 
-      clutter_actor_set_scale (cover, 
+      clutter_actor_set_scale (contact, 
                               cscale + (dscale*factor),
                               cscale + (dscale*factor));
     }
@@ -357,16 +352,10 @@ on_main_timeline_completed (ClutterTimeline  *timeline,
                             AstroContactsWindow *window)
 {
   AstroContactsWindowPrivate *priv;
-  const gchar *details;
-  GList *children;
-
+  
   g_return_if_fail (ASTRO_CONTACTS_WINDOW (window));
   priv = window->priv;
 
-  children = priv->covers;
-  details = clutter_actor_get_name (g_list_nth_data (children, priv->active));
-
-  clutter_label_set_text (CLUTTER_LABEL (priv->label), details);
 }
 
 static gboolean
@@ -384,27 +373,27 @@ on_key_release_event (ClutterActor     *actor,
       case CLUTTER_Return:
       case CLUTTER_KP_Enter:
       case CLUTTER_ISO_Enter:
-        on_cover_activated (window);
+        on_contact_activated (window);
         break;
-      case CLUTTER_Left:
-      case CLUTTER_KP_Left:
+      case CLUTTER_Up:
+      case CLUTTER_KP_Up:
         if (priv->activated)
           {
-            astro_reflection_set_active (g_list_nth_data (priv->covers,
+            astro_reflection_set_active (g_list_nth_data (priv->contacts_list,
                                                           priv->active), FALSE);  
             priv->activated = FALSE;
           }
-        astro_contacts_window_advance (window, -1);
+        astro_contacts_list_window_advance (window, -1);
         break;
-      case CLUTTER_Right:
-      case CLUTTER_KP_Right:
+      case CLUTTER_Down:
+      case CLUTTER_KP_Down:
         if (priv->activated)
           {
-            astro_reflection_set_active (g_list_nth_data (priv->covers,
+            astro_reflection_set_active (g_list_nth_data (priv->contacts_list,
                                                         priv->active), FALSE);
             priv->activated = FALSE;
           }
-          astro_contacts_window_advance (window, 1);
+          astro_contacts_list_window_advance (window, 1);
         break;
       default:
         ;
@@ -426,34 +415,20 @@ static void
 astro_contacts_window_init (AstroContactsWindow *window)
 {
   AstroContactsWindowPrivate *priv;
-  ClutterColor white = { 0xff, 0xff, 0xff, 0xff };
-
+  
   priv = window->priv = ASTRO_CONTACTS_WINDOW_GET_PRIVATE (window);
 
-  priv->covers = NULL;
+  priv->contacts_list = NULL;
   priv->active = 0;
   priv->activated = FALSE;
 
-  priv->albums = clutter_group_new ();
-  clutter_container_add_actor (CLUTTER_CONTAINER (window), priv->albums);
-  clutter_actor_set_anchor_point_from_gravity (priv->albums, 
-                                               CLUTTER_GRAVITY_WEST);
-  clutter_actor_set_position (priv->albums, -(ALBUM_SIZE*0.1), CSH() * 0.4);
+  priv->contacts = clutter_group_new ();
+  clutter_container_add_actor (CLUTTER_CONTAINER (window), priv->contacts);
+  clutter_actor_set_size (priv->contacts, CSW(), CSH());
+  clutter_actor_set_position (priv->contacts, 0, 0);
 
-  load_albums (window);
+  load_contacts (window);
   
-  priv->label = clutter_label_new_full ("Sans 18", 
-                                        "Jay Z - American Gangster",
-                                        &white);
-  clutter_label_set_line_wrap (CLUTTER_LABEL (priv->label), FALSE);
-  clutter_label_set_alignment (CLUTTER_LABEL (priv->label),
-                               PANGO_ALIGN_CENTER);
-  clutter_container_add_actor (CLUTTER_CONTAINER (window), priv->label);
-  clutter_actor_set_size (priv->label, CSW(), CSH()/10);
-  clutter_actor_set_anchor_point_from_gravity (priv->label, 
-                                               CLUTTER_GRAVITY_CENTER);
-  clutter_actor_set_position (priv->label, CSW()/2, CSH()*0.8);
-
   ensure_layout (window);
 
   priv->timeline = clutter_timeline_new_for_duration (400);
@@ -461,7 +436,7 @@ astro_contacts_window_init (AstroContactsWindow *window)
                                         clutter_sine_inc_func,
                                         NULL, NULL);
   priv->behave = astro_behave_new (priv->alpha,
-                                   (AstroBehaveAlphaFunc)astro_contacts_alpha,
+                                   (AstroBehaveAlphaFunc)astro_contacts_list_alpha,
                                    window);
 
   g_signal_connect (priv->timeline, "completed",
