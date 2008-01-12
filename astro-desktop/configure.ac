@@ -31,6 +31,7 @@ data/icons/Makefile
 libastro-desktop/Makefile
 applets/Makefile
 applications/Makefile
+applications/contacts/Makefile
 applications/example/Makefile
 applications/music/Makefile
 src/Makefile

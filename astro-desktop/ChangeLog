@@ -1,5 +1,40 @@
 2008-01-12  Neil J. Patel  <njp@o-hand.com>
 
+	* applications/contacts/Makefile.am:
+	* applications/contacts/astro-contacts-window.c: (ensure_layout),
+	(astro_contacts_window_advance), (on_cover_active_completed),
+	(on_cover_activated), (on_cover_clicked), (make_cover),
+	(load_details), (load_albums), (astro_contacts_alpha),
+	(on_main_timeline_completed), (on_key_release_event),
+	(astro_contacts_window_class_init), (astro_contacts_window_init),
+	(astro_contacts_window_new):
+	* applications/contacts/astro-contacts-window.h:
+	* applications/contacts/astro-contacts.c: (get_title), (set_title),
+	(get_icon), (set_icon), (get_window), (close),
+	(astro_contacts_class_init), (astro_contacts_init),
+	(astro_contacts_new):
+	* applications/contacts/astro-contacts.h:
+	* applications/contacts/astro-reflection.c: (fix_clip),
+	(astro_reflection_set_active), (astro_reflection_set_pixbuf),
+	(astro_reflection_set_property), (astro_reflection_get_property),
+	(astro_reflection_class_init), (astro_reflection_init),
+	(astro_reflection_new):
+	* applications/contacts/astro-reflection.h:
+	* applications/contacts/clutter-reflect-texture.c:
+	(reflect_texture_render_to_gl_quad),
+	(clutter_reflect_texture_paint),
+	(clutter_reflect_texture_set_property),
+	(clutter_reflect_texture_get_property),
+	(clutter_reflect_texture_class_init),
+	(clutter_reflect_texture_init), (clutter_reflect_texture_new):
+	* applications/contacts/clutter-reflect-texture.h:
+	* applications/contacts/init.c: (astro_application_factory_init):
+	* configure.ac:
+	* data/icons/Makefile.am:
+	Beginings of a contacts application.
+
+2008-01-12  Neil J. Patel  <njp@o-hand.com>
+
 	* applications/music/init.c: (astro_application_factory_init):
 	Set the correct name for the application.
 
