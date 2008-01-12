@@ -1,5 +1,17 @@
 2008-01-12  Neil J. Patel  <njp@o-hand.com>
 
+	* applications/music/astro-reflection.c:
+	(astro_reflection_set_active), (astro_reflection_set_pixbuf):
+	Added reflections for album slide out.
+	
+	* libastro-desktop/Makefile.am:
+	* libastro-desktop/astro-utils.c: (astro_utils_set_clip):
+	* libastro-desktop/astro-utils.h:
+	Beginings of a clutter_actor_set_clip wrapper which we can disable at
+	compile-time for gles chips which can handle clips.
+
+2008-01-12  Neil J. Patel  <njp@o-hand.com>
+
 	* applications/music/astro-music-window.c:
 	(on_cover_active_completed), (on_cover_activated),
 	(on_cover_clicked), (on_key_release_event),

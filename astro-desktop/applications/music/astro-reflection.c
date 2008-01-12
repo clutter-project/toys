@@ -23,6 +23,7 @@
 #include "astro-reflection.h"
 
 #include <libastro-desktop/astro-defines.h>
+#include <libastro-desktop/astro-utils.h>
 
 #include "clutter-reflect-texture.h"
 
@@ -36,7 +37,7 @@ static GdkPixbuf *disc_bg = NULL;
 struct _AstroReflectionPrivate
 {
   ClutterActor *songs;
-  ClutterActor *song_reflect;
+  ClutterActor *songs_reflect;
   ClutterActor *texture;
   ClutterActor *reflect;
   GdkPixbuf    *pixbuf;
@@ -57,20 +58,32 @@ astro_reflection_set_active (AstroReflection *reflection,
                              gboolean         active)
 {
   AstroReflectionPrivate *priv;
-  gint x;
+  gint x = 0;
+  gint fade = 0;
    
   g_return_if_fail (ASTRO_IS_REFLECTION (reflection));
   priv = reflection->priv;
 
   if (active)
-    x = clutter_actor_get_width (priv->texture);
-  else
-    x = 0;
+  {
+    x = clutter_actor_get_width (priv->texture); 
+    fade = 100;
+  }
   
   clutter_effect_move (priv->songs_temp,
                        priv->songs,
                        x, clutter_actor_get_y (priv->songs),
                        NULL, NULL);
+  clutter_effect_move (priv->songs_temp,
+                       priv->songs_reflect,
+                       x, clutter_actor_get_y (priv->songs_reflect),
+                       NULL, NULL);
+
+  clutter_effect_fade (priv->songs_temp,
+                       priv->songs_reflect,
+                       fade,
+                       NULL, NULL);
+
 }
 
 void
@@ -101,7 +114,14 @@ astro_reflection_set_pixbuf (AstroReflection *reflection,
   clutter_container_add_actor (CLUTTER_CONTAINER (reflection), priv->songs);
   clutter_actor_set_size (priv->songs, height, height);
   clutter_actor_set_position (priv->songs, 0, 0);
-  
+
+  priv->songs_reflect = clutter_reflect_texture_new (CLUTTER_TEXTURE (priv->songs),
+                                               height * 0.7);
+  clutter_actor_set_opacity (priv->songs_reflect, 0);
+  clutter_container_add_actor (CLUTTER_CONTAINER (reflection), 
+                               priv->songs_reflect);
+  clutter_actor_set_position (priv->songs_reflect, 0, height+1);
+
   /* Album cover */
   priv->texture = g_object_new (CLUTTER_TYPE_TEXTURE,
                                 "pixbuf", pixbuf,
