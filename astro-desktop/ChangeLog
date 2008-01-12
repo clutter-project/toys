@@ -1,5 +1,13 @@
 2008-01-12  Neil J. Patel  <njp@o-hand.com>
 
+	* applications/contacts/astro-contacts-window.c: (ensure_layout):
+	Some more spacing fixes.
+
+	* data/background.svg:
+	Changed to a darker backgrounf to get some more contrast.
+
+2008-01-12  Neil J. Patel  <njp@o-hand.com>
+
 
 	* applications/contacts/astro-contacts-window.c: (make_contact),
 	(load_contacts), (astro_contacts_list_alpha),

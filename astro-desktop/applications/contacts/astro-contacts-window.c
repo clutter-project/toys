@@ -97,6 +97,7 @@ static void
 ensure_layout (AstroContactsWindow *window)
 {
 #define MAX_DIST 4
+#define SPACING (CSH()/6)
   AstroContactsWindowPrivate *priv;
   GList *c;
   gint i = 0;
@@ -119,7 +120,7 @@ ensure_layout (AstroContactsWindow *window)
           gint diff;
 
           diff = i - priv->active;
-          trans->y = (CSH()/2) + ((CSH()/5)*diff);
+          trans->y = (CSH()/2) + (SPACING * diff);
           if (diff > MAX_DIST)
             trans->scale = 0.4;
           else
@@ -130,7 +131,7 @@ ensure_layout (AstroContactsWindow *window)
           gint diff;
 
           diff = priv->active - i;
-          trans->y = (CSH()/2) - ((CSH()/5)*diff);
+          trans->y = (CSH()/2) - (SPACING * diff);
           if (diff > MAX_DIST)
             trans->scale = 0.4;
           else
