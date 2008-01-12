@@ -1,6 +1,22 @@
 2008-01-12  Neil J. Patel  <njp@o-hand.com>
 
 	* applications/music/astro-music-window.c: (ensure_layout),
+	(astro_music_window_advance), (on_cover_active_completed),
+	(on_cover_activated), (on_cover_clicked), (load_albums),
+	(astro_music_alpha), (on_main_timeline_completed),
+	(on_key_release_event), (astro_music_window_init):
+	* applications/music/astro-reflection.c:
+	(astro_reflection_set_active), (astro_reflection_set_pixbuf),
+	(astro_reflection_init):
+	* applications/music/astro-reflection.h:
+	* data/Makefile.am:
+	* data/disc_bg.svg:	
+	Added album activation, and a 'starting' songs widget (press
+	enter/click on an album).
+
+2008-01-12  Neil J. Patel  <njp@o-hand.com>
+
+	* applications/music/astro-music-window.c: (ensure_layout),
 	(on_cover_clicked), (load_albums), (astro_music_window_init):
 	Respond to button-press-events, tweak the animation some more.
 

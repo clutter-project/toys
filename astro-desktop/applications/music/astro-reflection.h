@@ -69,7 +69,10 @@ struct _AstroReflectionClass
 
 GType astro_reflection_get_type (void) G_GNUC_CONST;
 
-ClutterActor *  astro_reflection_new       (GdkPixbuf    *pixbuf);
+ClutterActor *  astro_reflection_new        (GdkPixbuf    *pixbuf);
+
+void            astro_reflection_set_active (AstroReflection *reflection,
+                                             gboolean         active);
   
 G_END_DECLS
 

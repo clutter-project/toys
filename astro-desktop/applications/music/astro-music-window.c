@@ -41,6 +41,8 @@ G_DEFINE_TYPE (AstroMusicWindow, astro_music_window, ASTRO_TYPE_WINDOW);
 
 struct _AstroMusicWindowPrivate
 {
+  GList *covers;
+
   ClutterActor *albums;
   ClutterActor *label;
 
@@ -72,7 +74,7 @@ ensure_layout (AstroMusicWindow *window)
 
   priv = window->priv;
 
-  c = clutter_container_get_children (CLUTTER_CONTAINER (priv->albums));
+  c = priv->covers;
   for (c=c; c; c = c->next)
     {
       ClutterActor *cover = c->data;
@@ -131,6 +133,50 @@ astro_music_window_advance (AstroMusicWindow *window, gint n)
     clutter_timeline_rewind (priv->timeline);
   else
     clutter_timeline_start (priv->timeline);
+
+}
+
+static void
+on_cover_active_completed (ClutterTimeline *timeline,
+                           AstroReflection *reflection)
+{
+  astro_reflection_set_active (reflection, TRUE);
+}
+
+static void
+on_cover_activated (AstroMusicWindow *window)
+{
+#define ACTIVE_SCALE 1.5
+  AstroMusicWindowPrivate *priv;
+  ClutterActor *cover;
+  GList *children;
+  CoverTrans *trans;
+
+  g_return_if_fail (ASTRO_IS_MUSIC_WINDOW (window));
+  priv = window->priv;
+
+  children = priv->covers;
+  cover = g_list_nth_data (children, priv->active);
+
+  if (!CLUTTER_IS_ACTOR (cover))
+    return;
+
+  trans = g_object_get_data (G_OBJECT (cover), "trans");
+  if (!trans)
+    return;
+
+  trans->scale = ACTIVE_SCALE;
+  trans->x = (CSW()/2) - ((ALBUM_SIZE * ACTIVE_SCALE) * 0.5);
+
+  clutter_actor_raise_top (cover);
+
+  if (clutter_timeline_is_playing (priv->timeline))
+    clutter_timeline_rewind (priv->timeline);
+  else
+    clutter_timeline_start (priv->timeline);
+
+  g_signal_connect (priv->timeline, "completed",
+                    G_CALLBACK (on_cover_active_completed), cover);
 }
 
 static gboolean
@@ -145,11 +191,11 @@ on_cover_clicked (ClutterActor      *cover,
   g_return_val_if_fail (ASTRO_IS_MUSIC_WINDOW (window), FALSE);
   priv = window->priv;
 
-  children = clutter_container_get_children (CLUTTER_CONTAINER (priv->albums));
+  children = priv->covers;
   n = g_list_index (children, cover);
 
   if (n == priv->active)
-    g_debug ("Active!\n");
+    on_cover_activated (window);
   else
     {
       gint diff;
@@ -239,6 +285,8 @@ load_albums (AstroMusicWindow *window)
       g_signal_connect (cover, "button-release-event",
                         G_CALLBACK (on_cover_clicked), window);
 
+      priv->covers = g_list_append (priv->covers, cover);
+
       g_free (filename);
 
       offset += ALBUM_SIZE * 0.9;
@@ -260,7 +308,7 @@ astro_music_alpha (ClutterBehaviour *behave,
   factor = (gfloat)alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
   factor = 0.1;
 
-  c = clutter_container_get_children (CLUTTER_CONTAINER (priv->albums));
+  c = priv->covers;
   for (c=c; c; c = c->next)
     {
       ClutterActor *cover = c->data;
@@ -299,7 +347,7 @@ on_main_timeline_completed (ClutterTimeline  *timeline,
   g_return_if_fail (ASTRO_MUSIC_WINDOW (window));
   priv = window->priv;
 
-  children = clutter_container_get_children (CLUTTER_CONTAINER (priv->albums));
+  children = priv->covers;
   details = clutter_actor_get_name (g_list_nth_data (children, priv->active));
 
   clutter_label_set_text (CLUTTER_LABEL (priv->label), details);
@@ -320,7 +368,7 @@ on_key_release_event (ClutterActor     *actor,
       case CLUTTER_Return:
       case CLUTTER_KP_Enter:
       case CLUTTER_ISO_Enter:
-        //astro_music_window_active (window);
+        on_cover_activated (window);
         break;
       case CLUTTER_Left:
       case CLUTTER_KP_Left:
@@ -354,15 +402,14 @@ astro_music_window_init (AstroMusicWindow *window)
 
   priv = window->priv = ASTRO_MUSIC_WINDOW_GET_PRIVATE (window);
 
+  priv->covers = NULL;
   priv->active = 0;
 
   priv->albums = clutter_group_new ();
   clutter_container_add_actor (CLUTTER_CONTAINER (window), priv->albums);
   clutter_actor_set_anchor_point_from_gravity (priv->albums, 
                                                CLUTTER_GRAVITY_WEST);
-  clutter_actor_set_position (priv->albums, 
-                              0, 
-                              CSH()*0.4);
+  clutter_actor_set_position (priv->albums, -(ALBUM_SIZE*0.1), CSH() * 0.4);
 
   load_albums (window);
   

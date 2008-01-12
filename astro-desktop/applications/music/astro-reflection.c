@@ -31,11 +31,18 @@ G_DEFINE_TYPE (AstroReflection, astro_reflection, CLUTTER_TYPE_GROUP);
 #define ASTRO_REFLECTION_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj),\
         ASTRO_TYPE_REFLECTION, AstroReflectionPrivate))
 
+static GdkPixbuf *disc_bg = NULL;
+
 struct _AstroReflectionPrivate
 {
+  ClutterActor *songs;
+  ClutterActor *song_reflect;
   ClutterActor *texture;
   ClutterActor *reflect;
   GdkPixbuf    *pixbuf;
+
+  ClutterEffectTemplate *songs_temp;
+  ClutterTimeline       *songs_time;
 };
 
 enum
@@ -44,6 +51,27 @@ enum
 
   PROP_PIXBUF
 };
+
+void
+astro_reflection_set_active (AstroReflection *reflection,
+                             gboolean         active)
+{
+  AstroReflectionPrivate *priv;
+  gint x;
+   
+  g_return_if_fail (ASTRO_IS_REFLECTION (reflection));
+  priv = reflection->priv;
+
+  if (active)
+    x = clutter_actor_get_width (priv->texture);
+  else
+    x = 0;
+
+  clutter_effect_move (priv->songs_temp,
+                       priv->songs,
+                       x, clutter_actor_get_y (priv->songs),
+                       NULL, NULL);
+}
 
 void
 astro_reflection_set_pixbuf (AstroReflection *reflection,
@@ -61,6 +89,20 @@ astro_reflection_set_pixbuf (AstroReflection *reflection,
   if (CLUTTER_IS_ACTOR (priv->reflect))
     clutter_actor_destroy (priv->reflect);
 
+  height = gdk_pixbuf_get_height (pixbuf);
+
+  /* Songs widget */
+  if (!disc_bg)
+    {
+      disc_bg = gdk_pixbuf_new_from_file_at_size (PKGDATADIR"/disc_bg.svg",
+                                                  height, height, NULL);
+    }
+  priv->songs = clutter_texture_new_from_pixbuf (disc_bg);
+  clutter_container_add_actor (CLUTTER_CONTAINER (reflection), priv->songs);
+  clutter_actor_set_size (priv->songs, height, height);
+  clutter_actor_set_position (priv->songs, 0, 0);
+  
+  /* Album cover */
   priv->texture = g_object_new (CLUTTER_TYPE_TEXTURE,
                                 "pixbuf", pixbuf,
                                 "tiled", FALSE,
@@ -69,8 +111,6 @@ astro_reflection_set_pixbuf (AstroReflection *reflection,
   clutter_container_add_actor (CLUTTER_CONTAINER (reflection),
                                priv->texture);
   clutter_actor_set_position (priv->texture, 0, 0);
-
-  height = clutter_actor_get_height (priv->texture);
   
   priv->reflect = clutter_reflect_texture_new (CLUTTER_TEXTURE (priv->texture),
                                                height * 0.7);
@@ -160,6 +200,10 @@ astro_reflection_init (AstroReflection *reflection)
 
   priv->texture = NULL;
   priv->reflect = NULL;
+
+  priv->songs_time = clutter_timeline_new_for_duration (600);
+  priv->songs_temp = clutter_effect_template_new (priv->songs_time, 
+                                                  clutter_sine_inc_func);
 }
 
 ClutterActor *
