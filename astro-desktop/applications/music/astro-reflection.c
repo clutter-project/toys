@@ -53,11 +53,30 @@ enum
   PROP_PIXBUF
 };
 
+static void
+fix_clip (ClutterTimeline *timeline,
+          gint             frame_num,
+          AstroReflection *reflection)
+{
+  AstroReflectionPrivate *priv;
+  gint size;
+   
+  g_return_if_fail (ASTRO_IS_REFLECTION (reflection));
+  priv = reflection->priv;
+
+  size = clutter_actor_get_width (priv->songs);
+
+  astro_utils_set_clip (priv->songs_reflect,
+                        size - clutter_actor_get_x (priv->songs_reflect),
+                        0, size, size);
+}
+
 void
 astro_reflection_set_active (AstroReflection *reflection,
                              gboolean         active)
 {
   AstroReflectionPrivate *priv;
+  static ClutterTimeline *fade_time = NULL;
   gint x = 0;
   gint fade = 0;
    
@@ -79,10 +98,12 @@ astro_reflection_set_active (AstroReflection *reflection,
                        x, clutter_actor_get_y (priv->songs_reflect),
                        NULL, NULL);
 
-  clutter_effect_fade (priv->songs_temp,
-                       priv->songs_reflect,
-                       fade,
-                       NULL, NULL);
+  fade_time = clutter_effect_fade (priv->songs_temp,
+                                   priv->songs_reflect,
+                                   fade,
+                                   NULL, NULL);
+  g_signal_connect (fade_time, "new-frame",
+                    G_CALLBACK (fix_clip), reflection);
 
 }
 
@@ -121,7 +142,7 @@ astro_reflection_set_pixbuf (AstroReflection *reflection,
   clutter_container_add_actor (CLUTTER_CONTAINER (reflection), 
                                priv->songs_reflect);
   clutter_actor_set_position (priv->songs_reflect, 0, height+1);
-
+     
   /* Album cover */
   priv->texture = g_object_new (CLUTTER_TYPE_TEXTURE,
                                 "pixbuf", pixbuf,
