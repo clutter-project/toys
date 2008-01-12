@@ -56,53 +56,6 @@ struct _AstroMusicWindowPrivate
 /* Public Functions */
 
 /* Private functions */
-#if 0
-static void
-ensure_layout (AstroMusicWindow *window)
-{
-#define VARIANCE 200
-  AstroMusicWindowPrivate *priv;
-  GList *l;
-  gint groupx = 0;
-  gint center = 0;
-  gint i = 0;
-  
-  priv = window->priv;
-
-  groupx = clutter_actor_get_x (CLUTTER_ACTOR (priv->albums));
-  center = CSW()/2;
-
-  l = clutter_container_get_children (CLUTTER_CONTAINER (priv->albums));
-  for (l = l; l; l = l->next)
-    {
-      ClutterActor *cover = l->data;
-      gint realx, diff;
-      gfloat scale;
-
-      realx = clutter_actor_get_x (cover) + groupx;
-      
-      if (realx > center && realx < CSW ())
-        {
-          diff = center - (realx - center);
-        }
-      else if (realx > 0 && realx <= center)
-        {
-          diff = realx;
-        }
-      else
-        {
-          diff = 0;
-        }
-  
-      scale = (gfloat)diff/center;
-      scale = 0.5 + (0.5 * scale);
-      clutter_actor_set_scale (cover, scale, scale);
-    
-      i++;
-    }
-}
-#endif
-
 typedef struct
 {
   gint x;
@@ -150,7 +103,8 @@ ensure_layout (AstroMusicWindow *window)
           if (diff > 3)
             trans->scale = 0.4;
           else
-            trans->scale = 0.4 + (0.4 * (3-diff)/3);        }
+            trans->scale = 0.4 + (0.4 * (3-diff)/3);        
+        }
 
       i++;
     }
@@ -177,6 +131,36 @@ astro_music_window_advance (AstroMusicWindow *window, gint n)
     clutter_timeline_rewind (priv->timeline);
   else
     clutter_timeline_start (priv->timeline);
+}
+
+static gboolean
+on_cover_clicked (ClutterActor      *cover, 
+                  ClutterEvent      *event,
+                  AstroMusicWindow  *window)
+{
+  AstroMusicWindowPrivate *priv;
+  GList *children;
+  gint n;
+
+  g_return_val_if_fail (ASTRO_IS_MUSIC_WINDOW (window), FALSE);
+  priv = window->priv;
+
+  children = clutter_container_get_children (CLUTTER_CONTAINER (priv->albums));
+  n = g_list_index (children, cover);
+
+  if (n == priv->active)
+    g_debug ("Active!\n");
+  else
+    {
+      gint diff;
+      if (n > priv->active)
+        diff = (n-priv->active);
+      else
+        diff = (priv->active - n) * -1;
+      astro_music_window_advance (window, diff);
+    }
+
+  return FALSE;
 }
 
 static ClutterActor *
@@ -251,6 +235,9 @@ load_albums (AstroMusicWindow *window)
       clutter_container_add_actor (CLUTTER_CONTAINER (priv->albums), cover);
       clutter_actor_set_position (cover, offset, 0);
       clutter_actor_show_all (cover);
+      clutter_actor_set_reactive (cover, TRUE);
+      g_signal_connect (cover, "button-release-event",
+                        G_CALLBACK (on_cover_clicked), window);
 
       g_free (filename);
 
@@ -378,7 +365,7 @@ astro_music_window_init (AstroMusicWindow *window)
                               CSH()*0.4);
 
   load_albums (window);
-
+  
   priv->label = clutter_label_new_full ("Sans 18", 
                                         "Jay Z - American Gangster",
                                         &white);
@@ -411,6 +398,7 @@ astro_music_window_init (AstroMusicWindow *window)
   clutter_grab_keyboard (CLUTTER_ACTOR (window));
 
 
+  clutter_actor_set_position (CLUTTER_ACTOR (window), 0, 0);
   clutter_actor_show_all (CLUTTER_ACTOR (window));
 }
 

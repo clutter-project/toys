@@ -1,5 +1,11 @@
 2008-01-12  Neil J. Patel  <njp@o-hand.com>
 
+	* applications/music/astro-music-window.c: (ensure_layout),
+	(on_cover_clicked), (load_albums), (astro_music_window_init):
+	Respond to button-press-events, tweak the animation some more.
+
+2008-01-12  Neil J. Patel  <njp@o-hand.com>
+
 	* applications/music/astro-music-window.c:
 	(on_main_timeline_completed), (astro_music_window_init):
 	Some fixes for the album view effect.
