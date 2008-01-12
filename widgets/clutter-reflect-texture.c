@@ -37,6 +37,7 @@
  */
 
 #include <GL/gl.h>
+#include <clutter/cogl.h>
 
 #include "clutter-reflect-texture.h"
 
@@ -70,7 +71,7 @@ reflect_texture_render_to_gl_quad (ClutterReflectTexture *ctexture,
   gint   x, y, i =0, lastx = 0, lasty = 0;
   gint   n_x_tiles, n_y_tiles; 
   gint   pwidth, pheight, rheight;
-  float tx, ty, ty2;
+  float tx, ty, ty2 = 0.0;
 
   ClutterReflectTexturePrivate *priv = ctexture->priv;
   ClutterActor *parent_texture = CLUTTER_ACTOR(clutter_clone_texture_get_parent_texture(CLUTTER_CLONE_TEXTURE(ctexture)));
@@ -215,12 +216,18 @@ clutter_reflect_texture_paint (ClutterActor *self)
    */  
   if (clutter_feature_available (CLUTTER_FEATURE_TEXTURE_RECTANGLE) &&
       clutter_texture_is_tiled (CLUTTER_TEXTURE (parent_texture)) == FALSE)
-    target_type = GL_TEXTURE_RECTANGLE_ARB;
+    {
+      target_type = CGL_TEXTURE_RECTANGLE_ARB;
+      cogl_enable (CGL_ENABLE_TEXTURE_RECT | CGL_ENABLE_BLEND);
+    }
   else
-    target_type = GL_TEXTURE_2D;
+    {
+      target_type = CGL_TEXTURE_2D;
+      cogl_enable (CGL_ENABLE_TEXTURE_2D|CGL_ENABLE_BLEND);
+    }
+  
+  cogl_push_matrix ();
 
-  glEnable (GL_BLEND);
-  glEnable (target_type);
   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   glColor4ub (255, 255, 255, clutter_actor_get_opacity (self));
@@ -230,8 +237,8 @@ clutter_reflect_texture_paint (ClutterActor *self)
   /* Parent paint translated us into position */
   reflect_texture_render_to_gl_quad (CLUTTER_REFLECT_TEXTURE (self), 
 				   0, 0, x2 - x1, y2 - y1);
-  glDisable (target_type);
-  glDisable (GL_BLEND);
+
+  cogl_pop_matrix ();
 }
 
 
