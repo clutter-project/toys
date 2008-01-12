@@ -1,5 +1,16 @@
 2008-01-12  Neil J. Patel  <njp@o-hand.com>
 
+	* applications/contacts/astro-contacts-window.c:
+	(astro_contacts_window_init):
+	* data/Makefile.am:
+	* data/contact-bar.svg:
+	Woo! Contact Bar! Does nothing usefule yet!
+	
+	* data/disc_bg.svg:
+	Added a border so you can see it clearer now.
+
+2008-01-12  Neil J. Patel  <njp@o-hand.com>
+
 	* applications/contacts/astro-contacts-window.c: (ensure_layout):
 	Some more spacing fixes.
 

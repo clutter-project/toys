@@ -48,6 +48,8 @@ struct _AstroContactsWindowPrivate
 
   ClutterActor *row;
 
+  ClutterActor *bar;
+
   ClutterActor *contacts;
   ClutterActor *label;
 
@@ -422,6 +424,7 @@ static void
 astro_contacts_window_init (AstroContactsWindow *window)
 {
   AstroContactsWindowPrivate *priv;
+  GdkPixbuf *pixbuf;
   
   priv = window->priv = ASTRO_CONTACTS_WINDOW_GET_PRIVATE (window);
 
@@ -447,6 +450,13 @@ astro_contacts_window_init (AstroContactsWindow *window)
                                                CLUTTER_GRAVITY_WEST);
   clutter_actor_set_position (priv->row, CSW ()/2, CSH()/2);
 
+  /* Contact bar */
+  pixbuf = gdk_pixbuf_new_from_file (PKGDATADIR"/contact-bar.svg", NULL);
+  priv->bar = clutter_texture_new_from_pixbuf (pixbuf);
+  clutter_container_add_actor (CLUTTER_CONTAINER (window), priv->bar);
+  clutter_actor_set_anchor_point_from_gravity (priv->bar, 
+                                               CLUTTER_GRAVITY_CENTER);
+  clutter_actor_set_position (priv->bar, CSW ()*0.25, CSH()*0.75);
 
   priv->contacts = clutter_group_new ();
   clutter_container_add_actor (CLUTTER_CONTAINER (window), priv->contacts);
