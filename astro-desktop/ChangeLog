@@ -1,5 +1,10 @@
 2008-01-13  Neil J. Patel  <njp@o-hand.com>
 
+	* applications/Makefile.am:
+	Actually make the contacts application!
+
+2008-01-13  Neil J. Patel  <njp@o-hand.com>
+
 	* applications/contacts/Makefile.am:
 	* applications/contacts/astro-contacts-details.c:
 	(astro_contact_details_set_pixbuf),
