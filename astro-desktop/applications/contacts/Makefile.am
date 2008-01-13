@@ -11,8 +11,8 @@ INCLUDES =\
 APP_SOURCES = \
 	init.c \
 	astro-contacts.c \
+	astro-contacts-details.c \
 	astro-contacts-window.c \
-	astro-reflection.c \
 	clutter-reflect-texture.c
 
 APP_LDADD = \

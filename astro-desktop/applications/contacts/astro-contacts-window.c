@@ -30,7 +30,7 @@
 #include <libastro-desktop/astro-behave.h>
 #include <tidy/tidy-texture-frame.h>
 
-#include "astro-reflection.h"
+#include "astro-contacts-details.h"
 
 G_DEFINE_TYPE (AstroContactsWindow, astro_contacts_window, ASTRO_TYPE_WINDOW);
 
@@ -169,17 +169,6 @@ astro_contacts_list_window_advance (AstroContactsWindow *window, gint n)
 }
 
 static void
-on_contact_active_completed (ClutterTimeline *timeline,
-                           AstroReflection *reflection)
-{
-  astro_reflection_set_active (reflection, TRUE);
-
-  g_signal_handlers_disconnect_by_func (timeline, 
-                                        on_contact_active_completed,
-                                        reflection);
-}
-
-static void
 on_contact_activated (AstroContactsWindow *window)
 {
 #define ACTIVE_SCALE 1.5
@@ -213,8 +202,8 @@ on_contact_activated (AstroContactsWindow *window)
   else
     clutter_timeline_start (priv->timeline);
 
-  g_signal_connect (priv->timeline, "completed",
-                    G_CALLBACK (on_contact_active_completed), contact);
+ /* g_signal_connect (priv->timeline, "completed",
+                    G_CALLBACK (on_contact_active_completed), contact);*/
 }
 
 static gboolean
@@ -234,8 +223,6 @@ on_contact_clicked (ClutterActor      *contact,
 
   if (priv->activated)
     {
-      astro_reflection_set_active (g_list_nth_data (priv->contacts_list,
-                                   priv->active), FALSE);
       priv->activated = FALSE;
       
       astro_contacts_list_window_advance (window, 0);
@@ -304,7 +291,7 @@ load_contacts (AstroContactsWindow *window)
 
       contact = make_contact (names[i]);
       clutter_container_add_actor (CLUTTER_CONTAINER (priv->contacts), contact);
-      clutter_actor_set_x (contact, PADDING);
+      clutter_actor_set_position (contact, PADDING, CSH());
       clutter_actor_show_all (contact);
       clutter_actor_set_reactive (contact, TRUE);
       g_signal_connect (contact, "button-release-event",
@@ -388,8 +375,6 @@ on_key_release_event (ClutterActor     *actor,
       case CLUTTER_KP_Up:
         if (priv->activated)
           {
-            astro_reflection_set_active (g_list_nth_data (priv->contacts_list,
-                                                          priv->active), FALSE);  
             priv->activated = FALSE;
           }
         astro_contacts_list_window_advance (window, -1);
@@ -398,8 +383,6 @@ on_key_release_event (ClutterActor     *actor,
       case CLUTTER_KP_Down:
         if (priv->activated)
           {
-            astro_reflection_set_active (g_list_nth_data (priv->contacts_list,
-                                                        priv->active), FALSE);
             priv->activated = FALSE;
           }
           astro_contacts_list_window_advance (window, 1);

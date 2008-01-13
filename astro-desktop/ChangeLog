@@ -1,3 +1,21 @@
+2008-01-13  Neil J. Patel  <njp@o-hand.com>
+
+	* applications/contacts/Makefile.am:
+	* applications/contacts/astro-contacts-details.c:
+	(astro_contact_details_set_pixbuf),
+	(astro_contact_details_set_property),
+	(astro_contact_details_get_property),
+	(astro_contact_details_class_init), (astro_contact_details_init),
+	(astro_contact_details_new):
+	* applications/contacts/astro-contacts-details.h:
+	* applications/contacts/astro-contacts-window.c:
+	(on_contact_activated), (on_contact_clicked), (load_contacts),
+	(on_key_release_event):
+	Rename astro-reflection as it was conflicting with the one in
+	music.app.
+	Starting of a contact-details widget, to show photo + actions.
+	Initally position all labels at CSH(), so they slide in.
+
 2008-01-12  Neil J. Patel  <njp@o-hand.com>
 
 	* applications/contacts/astro-contacts-window.c:
