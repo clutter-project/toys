@@ -260,9 +260,6 @@ on_contact_activated (AstroContactsWindow *window)
     clutter_timeline_rewind (priv->timeline);
   else
     clutter_timeline_start (priv->timeline);
-
- /* g_signal_connect (priv->timeline, "completed",
-                    G_CALLBACK (on_contact_active_completed), contact);*/
 }
 
 static gboolean
@@ -467,7 +464,7 @@ astro_contacts_window_init (AstroContactsWindow *window)
   priv->contacts = clutter_group_new ();
   clutter_container_add_actor (CLUTTER_CONTAINER (window), priv->contacts);
   clutter_actor_set_size (priv->contacts, CSW(), CSH());
-  clutter_actor_set_position (priv->contacts, CSW()*0.25, 0);
+  clutter_actor_set_position (priv->contacts, 10, 0);
 
   load_contacts (window);
   

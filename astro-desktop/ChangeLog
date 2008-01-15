@@ -1,5 +1,12 @@
 2008-01-15  Neil J. Patel  <njp@o-hand.com>
 
+	* applications/contacts/astro-contacts-window.c:
+	(on_contact_activated), (astro_contacts_window_init):
+	Some more positioning tweaks.
+	Added in the face.png image for contacts application.
+
+2008-01-15  Neil J. Patel  <njp@o-hand.com>
+
 	* applications/contacts/astro-contact-row.c: (on_active_completed),
 	(astro_contact_row_set_active), (_resize_alpha),
 	(astro_contact_row_init):

@@ -80,7 +80,7 @@ on_active_completed (ClutterActor *actor, gpointer data)
   if (clutter_timeline_is_playing (priv->bar_time))
     return;
 
-  priv->bar_time = clutter_effect_fade (priv->bar_temp,
+   priv->bar_time = clutter_effect_fade (priv->bar_temp,
                        priv->bar,
                        255,
                        NULL, NULL);
