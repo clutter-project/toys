@@ -78,6 +78,9 @@ static gchar *names[] = {
   "Tomas Frydrych"
 };
 
+static void on_main_timeline_completed (ClutterTimeline  *timeline,
+                                        AstroContactsWindow *window);
+
 /* Public Functions */
 
 /* Private functions */
@@ -110,7 +113,6 @@ ensure_layout (AstroContactsWindow *window)
         {
           trans->y = CSH ()/2;
           trans->scale = 1.0;          
-          active = TRUE;
         }
       else if (i > priv->active)
         {
@@ -118,11 +120,11 @@ ensure_layout (AstroContactsWindow *window)
 
           diff = i - priv->active;
           trans->y = (CSH()/2) + (SPACING * diff);
-          trans->y += ROW_HEIGHT * 0.5;
           if (diff > MAX_DIST)
             trans->scale = 0.4;
           else
             trans->scale = 0.4 + (0.4 * (MAX_DIST-diff)/MAX_DIST);
+          //trans->scale = 1.0;
         }
       else
         {
@@ -134,6 +136,7 @@ ensure_layout (AstroContactsWindow *window)
             trans->scale = 0.4;
           else
             trans->scale = 0.4 + (0.4 * (MAX_DIST-diff)/MAX_DIST);        
+          //trans->scale = 1.0;
         }
 
       astro_contact_row_set_active (ASTRO_CONTACT_ROW (contact), active);
@@ -142,6 +145,61 @@ ensure_layout (AstroContactsWindow *window)
     }
 }
 
+static void
+ensure_layout_proper (AstroContactsWindow *window)
+{
+#define MAX_DIST 4
+#define SPACING (ROW_HEIGHT * 1.5)
+  AstroContactsWindowPrivate *priv;
+  GList *c;
+  gint i = 0;
+
+  priv = window->priv;
+
+  c = priv->contacts_list;
+  for (c=c; c; c = c->next)
+    {
+      ClutterActor *contact = c->data;
+      ContactTrans *trans = g_object_get_data (G_OBJECT (contact), "trans");
+      gboolean active = FALSE;
+
+      if (i == priv->active)
+        {
+          trans->y = CSH ()/2;
+          trans->scale = 1.0;          
+          active = TRUE;
+        }
+      else if (i > priv->active)
+        {
+          gint diff;
+
+          diff = i - priv->active;
+          trans->y = (CSH()/2) + (SPACING * diff);
+          trans->y += ROW_HEIGHT * 1;
+          if (diff > MAX_DIST)
+            trans->scale = 0.4;
+          else
+            trans->scale = 0.4 + (0.4 * (MAX_DIST-diff)/MAX_DIST);
+          //trans->scale = 1.0;
+        }
+      else
+        {
+          gint diff;
+
+          diff = priv->active - i;
+          trans->y = (CSH()/2) - (SPACING * diff);
+          if (diff > MAX_DIST)
+            trans->scale = 0.4;
+          else
+            trans->scale = 0.4 + (0.4 * (MAX_DIST-diff)/MAX_DIST);        
+          //trans->scale = 1.0;
+        }
+
+      astro_contact_row_set_active (ASTRO_CONTACT_ROW (contact), active);
+
+      i++;
+    }
+}
 static void
 astro_contacts_list_window_advance (AstroContactsWindow *window, gint n)
 {
@@ -159,10 +217,13 @@ astro_contacts_list_window_advance (AstroContactsWindow *window, gint n)
   priv->active += n;
   ensure_layout (window);
 
+  g_signal_connect (priv->timeline, "completed",
+                    G_CALLBACK (on_main_timeline_completed), window);
+
   if (clutter_timeline_is_playing (priv->timeline))
-    clutter_timeline_rewind (priv->timeline);
-  else
-    clutter_timeline_start (priv->timeline);
+    clutter_timeline_stop (priv->timeline);
+
+  clutter_timeline_start (priv->timeline);
 
 }
 
@@ -335,6 +396,12 @@ on_main_timeline_completed (ClutterTimeline  *timeline,
   g_return_if_fail (ASTRO_CONTACTS_WINDOW (window));
   priv = window->priv;
 
+  g_signal_handlers_disconnect_by_func (timeline, 
+                                        on_main_timeline_completed,
+                                        window);
+  
+  ensure_layout_proper (window);
+  clutter_timeline_start (priv->timeline);
 }
 
 static gboolean

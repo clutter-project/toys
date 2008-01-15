@@ -83,8 +83,7 @@ on_active_completed (ClutterActor *actor, gpointer data)
   priv->bar_time = clutter_effect_fade (priv->bar_temp,
                        priv->bar,
                        255,
-                       NULL, NULL); 
-  clutter_timeline_start (priv->active_time);
+                       NULL, NULL);
 }
 
 static void
@@ -120,6 +119,7 @@ astro_contact_row_set_active (AstroContactRow *row,
                                          priv->bg,
                                          255,
                                          on_active_completed, row);
+      clutter_timeline_start (priv->active_time);    
     }
   else
     {
@@ -188,7 +188,7 @@ _resize_alpha (ClutterBehaviour *behave,
   factor = (gfloat)alpha/CLUTTER_ALPHA_MAX_ALPHA;
 
   if (priv->active)
-    dest_height = ROW_HEIGHT * 2;
+    dest_height = (ROW_HEIGHT * 2) + PADDING;
 
   current_height = clutter_actor_get_height (priv->bg);
 
@@ -198,7 +198,7 @@ _resize_alpha (ClutterBehaviour *behave,
     diff_height = dest_height - current_height;
 
   clutter_actor_set_height (priv->bg, 
-                            current_height + (diff_height * factor));
+            current_height + ((diff_height * alpha)/CLUTTER_ALPHA_MAX_ALPHA));
 } 
 
 /* GObject stuff */
@@ -325,8 +325,6 @@ astro_contact_row_init (AstroContactRow *row)
   clutter_label_set_line_wrap (CLUTTER_LABEL (priv->label), FALSE);
   clutter_actor_set_width (priv->label, CSW()/2);
   clutter_container_add_actor (CLUTTER_CONTAINER (row), priv->label);
-  /*clutter_actor_set_anchor_point_from_gravity (priv->label, 
-                                               CLUTTER_GRAVITY_WEST);*/
   clutter_actor_set_position (priv->label, ICON_SIZE + (PADDING *2), 
                               ROW_HEIGHT /2);
   g_free (font);
@@ -341,10 +339,10 @@ astro_contact_row_init (AstroContactRow *row)
   clutter_actor_set_opacity (priv->bar, 0);
 
   /* Timelines */
-  priv->active_time = clutter_timeline_new_for_duration (400);
+  priv->active_time = clutter_timeline_new_for_duration (200);
   priv->active_temp = clutter_effect_template_new (priv->active_time,
                                                    clutter_sine_inc_func);
-  priv->bar_time = clutter_timeline_new_for_duration (1600);
+  priv->bar_time = clutter_timeline_new_for_duration (600);
   priv->bar_temp = clutter_effect_template_new (priv->bar_time,
                                                 clutter_sine_inc_func);
 

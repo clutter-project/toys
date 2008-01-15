@@ -315,14 +315,10 @@ astro_music_alpha (ClutterBehaviour *behave,
                    AstroMusicWindow *window)
 {
   AstroMusicWindowPrivate *priv;
-  gfloat factor;
   GList *c;
 
   g_return_if_fail (ASTRO_IS_MUSIC_WINDOW (window));
   priv = window->priv;
-
-  factor = (gfloat)alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
-  //factor = 0.1;
 
   c = priv->covers;
   for (c=c; c; c = c->next)
@@ -338,7 +334,8 @@ astro_music_alpha (ClutterBehaviour *behave,
       else
         diffx = trans->x - currentx;
 
-      clutter_actor_set_x (cover, currentx + (gint)(diffx*factor));
+      clutter_actor_set_x (cover, currentx 
+        + (gint)((diffx*alpha_value)/CLUTTER_ALPHA_MAX_ALPHA));
 
       clutter_actor_get_scale (cover, &cscale, &cscale);
       if (cscale > trans->scale)
@@ -347,8 +344,8 @@ astro_music_alpha (ClutterBehaviour *behave,
         dscale = trans->scale - cscale;
 
       clutter_actor_set_scale (cover, 
-                              cscale + (dscale*factor),
-                              cscale + (dscale*factor));
+        cscale + ((dscale*alpha_value)/CLUTTER_ALPHA_MAX_ALPHA),
+        cscale + ((dscale*alpha_value)/CLUTTER_ALPHA_MAX_ALPHA));
     }
 }
 
@@ -438,7 +435,7 @@ astro_music_window_init (AstroMusicWindow *window)
   clutter_container_add_actor (CLUTTER_CONTAINER (window), priv->albums);
   clutter_actor_set_anchor_point_from_gravity (priv->albums, 
                                                CLUTTER_GRAVITY_WEST);
-  clutter_actor_set_position (priv->albums, -(ALBUM_SIZE*0.1), CSH() * 0.4);
+  clutter_actor_set_position (priv->albums, 0, CSH() * 0.4);
 
   load_albums (window);
   
