@@ -322,7 +322,7 @@ astro_music_alpha (ClutterBehaviour *behave,
   priv = window->priv;
 
   factor = (gfloat)alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
-  factor = 0.1;
+  //factor = 0.1;
 
   c = priv->covers;
   for (c=c; c; c = c->next)
@@ -456,7 +456,7 @@ astro_music_window_init (AstroMusicWindow *window)
 
   ensure_layout (window);
 
-  priv->timeline = clutter_timeline_new_for_duration (400);
+  priv->timeline = clutter_timeline_new_for_duration (800);
   priv->alpha = clutter_alpha_new_full (priv->timeline,
                                         clutter_sine_inc_func,
                                         NULL, NULL);

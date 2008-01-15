@@ -30,7 +30,7 @@
 #include <libastro-desktop/astro-behave.h>
 #include <tidy/tidy-texture-frame.h>
 
-#include "astro-contacts-details.h"
+#include "astro-contact-row.h"
 
 G_DEFINE_TYPE (AstroContactsWindow, astro_contacts_window, ASTRO_TYPE_WINDOW);
 
@@ -39,16 +39,9 @@ G_DEFINE_TYPE (AstroContactsWindow, astro_contacts_window, ASTRO_TYPE_WINDOW);
 
 #define ALBUM_SIZE (CSW()/4)
 
-static GdkPixbuf    *row_pixbuf = NULL;
-static ClutterActor *row_texture = NULL;
-
 struct _AstroContactsWindowPrivate
 {
   GList *contacts_list;
-
-  ClutterActor *row;
-
-  ClutterActor *bar;
 
   ClutterActor *contacts;
   ClutterActor *label;
@@ -99,7 +92,7 @@ static void
 ensure_layout (AstroContactsWindow *window)
 {
 #define MAX_DIST 4
-#define SPACING (CSH()/6)
+#define SPACING (ROW_HEIGHT * 1.5)
   AstroContactsWindowPrivate *priv;
   GList *c;
   gint i = 0;
@@ -111,11 +104,13 @@ ensure_layout (AstroContactsWindow *window)
     {
       ClutterActor *contact = c->data;
       ContactTrans *trans = g_object_get_data (G_OBJECT (contact), "trans");
+      gboolean active = FALSE;
 
       if (i == priv->active)
         {
           trans->y = CSH ()/2;
-          trans->scale = 1.0;
+          trans->scale = 1.0;          
+          active = TRUE;
         }
       else if (i > priv->active)
         {
@@ -123,6 +118,7 @@ ensure_layout (AstroContactsWindow *window)
 
           diff = i - priv->active;
           trans->y = (CSH()/2) + (SPACING * diff);
+          trans->y += ROW_HEIGHT * 0.5;
           if (diff > MAX_DIST)
             trans->scale = 0.4;
           else
@@ -139,6 +135,8 @@ ensure_layout (AstroContactsWindow *window)
           else
             trans->scale = 0.4 + (0.4 * (MAX_DIST-diff)/MAX_DIST);        
         }
+
+      astro_contact_row_set_active (ASTRO_CONTACT_ROW (contact), active);
 
       i++;
     }
@@ -246,35 +244,20 @@ on_contact_clicked (ClutterActor      *contact,
 static ClutterActor *
 make_contact (const gchar *name)
 {
-  ClutterActor *label;
-  ClutterColor white = { 0xff, 0xff, 0xff, 0xff };
+  ClutterActor *row;
+  static GdkPixbuf *face = NULL;
 
-  label = clutter_label_new_full ("Sans 22", name, &white);
-  clutter_label_set_line_wrap (CLUTTER_LABEL (label), FALSE);
-  clutter_actor_set_width (label, CSW()/2);
-  clutter_actor_set_anchor_point_from_gravity (label, CLUTTER_GRAVITY_WEST);
+  if (!face)
+    face = gdk_pixbuf_new_from_file (PKGDATADIR"/face.png", NULL);
 
-  g_object_set_data (G_OBJECT (label), "trans", g_new0 (ContactTrans, 1));
+  row = astro_contact_row_new (name, face);
 
-  return label;
+  clutter_actor_set_anchor_point_from_gravity (row, CLUTTER_GRAVITY_WEST);
+
+  g_object_set_data (G_OBJECT (row), "trans", g_new0 (ContactTrans, 1));
+
+  return row;
 }
-
-#if 0
-static void
-load_details (ClutterActor *contact, const gchar *leaf)
-{
-  gchar *details;
-  gint i;
-
-  details = g_strndup (leaf, strlen (leaf)-4);
-
-  for (i = 0; i < strlen (details); i++)
-    if (details[i] == '_') details[i] = ' ';
-
-  clutter_actor_set_name (contact, details);
-  g_free (details);
-}
-#endif
 
 static void
 load_contacts (AstroContactsWindow *window)
@@ -407,44 +390,17 @@ static void
 astro_contacts_window_init (AstroContactsWindow *window)
 {
   AstroContactsWindowPrivate *priv;
-  GdkPixbuf *pixbuf;
-  
+    
   priv = window->priv = ASTRO_CONTACTS_WINDOW_GET_PRIVATE (window);
 
   priv->contacts_list = NULL;
   priv->active = 0;
   priv->activated = FALSE;
 
-  if (!CLUTTER_IS_TEXTURE (row_texture))
-    {
-      row_pixbuf = gdk_pixbuf_new_from_file (PKGDATADIR "/applet_bg.png", NULL);
-      row_texture = g_object_new (CLUTTER_TYPE_TEXTURE,
-                                  "pixbuf", row_pixbuf,
-                                  "tiled", FALSE,
-                                  NULL);
-
-    }
-
-  priv->row = tidy_texture_frame_new (CLUTTER_TEXTURE (row_texture), 
-                                      15, 15, 15, 15);
-  clutter_container_add_actor (CLUTTER_CONTAINER (window), priv->row);
-  clutter_actor_set_size (priv->row, CSW ()*0.45, CSH()/10);
-  clutter_actor_set_anchor_point_from_gravity (priv->row, 
-                                               CLUTTER_GRAVITY_WEST);
-  clutter_actor_set_position (priv->row, CSW ()/2, CSH()/2);
-
-  /* Contact bar */
-  pixbuf = gdk_pixbuf_new_from_file (PKGDATADIR"/contact-bar.svg", NULL);
-  priv->bar = clutter_texture_new_from_pixbuf (pixbuf);
-  clutter_container_add_actor (CLUTTER_CONTAINER (window), priv->bar);
-  clutter_actor_set_anchor_point_from_gravity (priv->bar, 
-                                               CLUTTER_GRAVITY_CENTER);
-  clutter_actor_set_position (priv->bar, CSW ()*0.25, CSH()*0.75);
-
   priv->contacts = clutter_group_new ();
   clutter_container_add_actor (CLUTTER_CONTAINER (window), priv->contacts);
   clutter_actor_set_size (priv->contacts, CSW(), CSH());
-  clutter_actor_set_position (priv->contacts, CSW()/2, 0);
+  clutter_actor_set_position (priv->contacts, CSW()*0.25, 0);
 
   load_contacts (window);
   

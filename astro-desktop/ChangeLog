@@ -1,3 +1,21 @@
+2008-01-15  Neil J. Patel  <njp@o-hand.com>
+
+	* applications/contacts/Makefile.am:
+	* applications/contacts/astro-contact-row.c: (on_active_completed),
+	(on_inactive_completed), (astro_contact_row_set_active),
+	(astro_contact_row_set_name), (astro_contact_row_set_icon),
+	(_resize_alpha), (astro_contact_row_set_property),
+	(astro_contact_row_get_property), (astro_contact_row_class_init),
+	(astro_contact_row_init), (astro_contact_row_new):
+	* applications/contacts/astro-contact-row.h:
+	* applications/contacts/astro-contacts-window.c: (ensure_layout),
+	(make_contact), (astro_contacts_window_init):
+	* applications/music/astro-music-window.c: (astro_music_alpha),
+	(astro_music_window_init):
+	* data/Makefile.am:
+	Changing some things around in contacts app to try and make it
+	look/work nicer.
+
 2008-01-13  Neil J. Patel  <njp@o-hand.com>
 
 	* applications/Makefile.am:

@@ -10,6 +10,7 @@ INCLUDES =\
 
 APP_SOURCES = \
 	init.c \
+	astro-contact-row.c \
 	astro-contacts.c \
 	astro-contacts-details.c \
 	astro-contacts-window.c \
