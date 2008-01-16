@@ -153,7 +153,7 @@ astro_contact_row_set_name (AstroContactRow *row, const gchar *name)
 
   clutter_label_set_text (CLUTTER_LABEL (priv->label), name);
 
-  clutter_actor_set_position (priv->label, ICON_SIZE + (PADDING *2), 
+  clutter_actor_set_position (priv->label,PADDING, 
                     (ROW_HEIGHT /2)-(clutter_actor_get_height (priv->label)/2));
 }
 
@@ -310,12 +310,12 @@ astro_contact_row_init (AstroContactRow *row)
                                      15, 15, 15, 15);
   clutter_container_add_actor (CLUTTER_CONTAINER (row), priv->bg);
   clutter_actor_set_position (priv->bg, 0, 0);
-  clutter_actor_set_size (priv->bg, CSW()/2, ROW_HEIGHT);
+  clutter_actor_set_size (priv->bg, CSW()*0.5, ROW_HEIGHT);
   clutter_actor_set_opacity (priv->bg, 0);
 
   /* The icon */
   priv->texture = clutter_texture_new ();
-  clutter_container_add_actor (CLUTTER_CONTAINER (row), priv->texture);
+  //clutter_container_add_actor (CLUTTER_CONTAINER (row), priv->texture);
   clutter_actor_set_position (priv->texture, PADDING, PADDING);
   clutter_actor_set_size (priv->texture, ICON_SIZE, ICON_SIZE);
 
@@ -325,17 +325,19 @@ astro_contact_row_init (AstroContactRow *row)
   clutter_label_set_line_wrap (CLUTTER_LABEL (priv->label), FALSE);
   clutter_actor_set_width (priv->label, CSW()/2);
   clutter_container_add_actor (CLUTTER_CONTAINER (row), priv->label);
-  clutter_actor_set_position (priv->label, ICON_SIZE + (PADDING *2), 
+  clutter_actor_set_position (priv->label, (PADDING), 
                               ROW_HEIGHT /2);
   g_free (font);
 
   /* Contact bar */
   pixbuf = gdk_pixbuf_new_from_file_at_scale (PKGDATADIR"/contact-bar.svg", 
-                                              -1, ROW_HEIGHT, TRUE,
+                                              -1, ROW_HEIGHT-(PADDING*2), TRUE,
                                               NULL);
   priv->bar = clutter_texture_new_from_pixbuf (pixbuf);
   clutter_container_add_actor (CLUTTER_CONTAINER (row), priv->bar);
-  clutter_actor_set_position (priv->bar, ICON_SIZE + (PADDING *2), ROW_HEIGHT);
+  clutter_actor_set_position (priv->bar, 
+                              PADDING,
+                              ROW_HEIGHT + PADDING);
   clutter_actor_set_opacity (priv->bar, 0);
 
   /* Timelines */
