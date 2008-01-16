@@ -470,7 +470,7 @@ astro_contacts_window_init (AstroContactsWindow *window)
   
   ensure_layout (window);
 
-  priv->timeline = clutter_timeline_new_for_duration (600);
+  priv->timeline = clutter_timeline_new_for_duration (800);
   priv->alpha = clutter_alpha_new_full (priv->timeline,
                                         clutter_sine_inc_func,
                                         NULL, NULL);

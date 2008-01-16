@@ -1,6 +1,18 @@
 2008-01-16  Neil J. Patel  <njp@o-hand.com>
 
 	* applications/contacts/astro-contact-row.c:
+	(astro_contact_row_init):
+	* applications/contacts/astro-contacts-details.c:
+	(astro_contact_details_set_pixbuf),
+	(astro_contact_details_get_property), (astro_contact_details_init):
+	* applications/contacts/astro-contacts-window.c:
+	(astro_contacts_window_init):
+	* data/contact-bar.svg:
+	More and more tweaks, plus timelines now match for contact animations.
+
+2008-01-16  Neil J. Patel  <njp@o-hand.com>
+
+	* applications/contacts/astro-contact-row.c:
 	(astro_contact_row_set_name), (astro_contact_row_init):
 	Positioning tweaks.
 

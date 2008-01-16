@@ -32,15 +32,16 @@ G_DEFINE_TYPE (AstroContactDetails, astro_contact_details, CLUTTER_TYPE_GROUP);
 #define ASTRO_CONTACT_DETAILS_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj),\
         ASTRO_TYPE_CONTACT_DETAILS, AstroContactDetailsPrivate))
 
-/*static GdkPixbuf *photo_bg = NULL;*/
+static GdkPixbuf *contact_bar_pixbuf = NULL;
+static GdkPixbuf *photo_bg_pixbuf    = NULL;
 
 struct _AstroContactDetailsPrivate
 {
-  ClutterActor *details;
-  ClutterActor *details_reflect;
-  ClutterActor *texture;
-  ClutterActor *reflect;
-  GdkPixbuf    *pixbuf;
+  ClutterActor *photo_bg;
+  ClutterActor *photo;
+  GdkPixbuf    *photo_pixbuf;
+
+  ClutterActor *contact_bar;
 
   ClutterEffectTemplate *details_temp;
   ClutterTimeline       *details_time;
@@ -58,41 +59,11 @@ astro_contact_details_set_pixbuf (AstroContactDetails *details,
                                   GdkPixbuf           *pixbuf)
 {
   AstroContactDetailsPrivate *priv;
-  gint height;
-  
+    
   g_return_if_fail (ASTRO_IS_CONTACT_DETAILS (details));
   priv = details->priv;
 
-  if (CLUTTER_IS_ACTOR (priv->texture))
-    clutter_actor_destroy (priv->texture);
-  
-  if (CLUTTER_IS_ACTOR (priv->reflect))
-    clutter_actor_destroy (priv->reflect);
 
-  height = gdk_pixbuf_get_height (pixbuf);
-    
-  /* Album cover */
-  priv->texture = g_object_new (CLUTTER_TYPE_TEXTURE,
-                                "pixbuf", pixbuf,
-                                "tiled", FALSE,
-                                NULL);
-
-  clutter_container_add_actor (CLUTTER_CONTAINER (details),
-                               priv->texture);
-  clutter_actor_set_position (priv->texture, 0, 0);
-  
-  priv->reflect = clutter_reflect_texture_new (CLUTTER_TEXTURE (priv->texture),
-                                               height * 0.7);
-  clutter_actor_set_opacity (priv->reflect, 100);
-  clutter_container_add_actor (CLUTTER_CONTAINER (details), 
-                               priv->reflect);
-  clutter_actor_set_position (priv->reflect, 0, height+1);
-  
-  clutter_actor_set_anchor_point (CLUTTER_ACTOR (details),
-                                  clutter_actor_get_width (priv->texture)/2,
-                                  height/2);
-
-  clutter_actor_show_all (CLUTTER_ACTOR (details));
 }
 
 /* GObject stuff */
@@ -133,7 +104,7 @@ astro_contact_details_get_property (GObject    *object,
   switch (prop_id)
   {
     case PROP_PIXBUF:
-      g_value_set_object (value, G_OBJECT (priv->pixbuf));
+      g_value_set_object (value, G_OBJECT (priv->photo_pixbuf));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -167,9 +138,13 @@ astro_contact_details_init (AstroContactDetails *details)
   AstroContactDetailsPrivate *priv;
   priv = details->priv = ASTRO_CONTACT_DETAILS_GET_PRIVATE (details);
 
-  priv->texture = NULL;
-  priv->reflect = NULL;
-  
+  if (!contact_bar_pixbuf)
+    contact_bar_pixbuf = gdk_pixbuf_new_from_file (PKGDATADIR"/contact-bar.svg",
+                                                   NULL);
+  if (!photo_bg_pixbuf)
+    photo_bg_pixbuf = gdk_pixbuf_new_from_file (PKGDATADIR"/applet_bg.png",
+                                                NULL);
+
   priv->details_time = clutter_timeline_new_for_duration (600);
   priv->details_temp = clutter_effect_template_new (priv->details_time, 
                                                     clutter_sine_inc_func);

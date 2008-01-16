@@ -348,7 +348,7 @@ astro_contact_row_init (AstroContactRow *row)
   priv->bar_temp = clutter_effect_template_new (priv->bar_time,
                                                 clutter_sine_inc_func);
 
-  priv->active_time = clutter_timeline_new_for_duration (1200);
+  priv->active_time = clutter_timeline_new_for_duration (800);
   priv->alpha = clutter_alpha_new_full (priv->active_time,
                                         clutter_sine_inc_func,
                                         NULL, NULL);
