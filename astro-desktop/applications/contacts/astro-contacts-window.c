@@ -39,6 +39,9 @@ G_DEFINE_TYPE (AstroContactsWindow, astro_contacts_window, ASTRO_TYPE_WINDOW);
 
 #define ALBUM_SIZE (CSW()/4)
 
+#define OH_ADDRESS "Address"
+#define OH_TEL "01923 820 124"
+
 struct _AstroContactsWindowPrivate
 {
   GList *contacts_list;
@@ -56,27 +59,37 @@ struct _AstroContactsWindowPrivate
   ClutterBehaviour *behave;
 };
 
-static gchar *names[] = {
-  "Andrew Zaborowski",
-  "Chris Lord",
-  "Dodji Seketeli",
-  "Emmanuele Bassi",
-  "Iain Holmes",
-  "Jorn Baayen",
-  "Jussi Kukkonen",
-  "Marcin Juszkiewicz",
-  "Matthew Allum",
-  "Neil J. Patel",
-  "Øyvind Kolås",
-  "Paul Cooper",
-  "Richard Purdie",
-  "Robert Bradford",
-  "Ross Burton",
-  "Samuel Ortiz",
-  "Sidske Allum",
-  "Thomas Wood",
-  "Tomas Frydrych"
+typedef struct {
+  gchar *name;
+  gchar *address;
+  gchar *tel;
+  gchar *email;
+
+} Contact;
+
+static Contact contacts[] = {
+  {"Andrew Zaborowski", OH_ADDRESS, OH_TEL, "andrew@o-hand.com"},
+  {"Chris Lord", OH_ADDRESS, OH_TEL, "chris@o-hand.com"},
+  {"Dodji Seketeli", OH_ADDRESS, OH_TEL, "dodji@o-hand.com"},
+  {"Emmanuele Bassi", OH_ADDRESS, OH_TEL, "ebassi@o-hand.com"},
+  {"Iain Holmes", OH_ADDRESS, OH_TEL, "iain@o-hand.com"},
+  {"Jorn Baayen", OH_ADDRESS, OH_TEL, "jorn@o-hand.com"},
+  {"Jussi Kukkonen", OH_ADDRESS, OH_TEL, "jku@o-hand.com"},
+  {"Marcin Juszkiewicz", OH_ADDRESS, OH_TEL, "hrw@o-hand.com"},
+  {"Matthew Allum", OH_ADDRESS, OH_TEL, "mallum@o-hand.com"},
+  {"Neil J. Patel", OH_ADDRESS, OH_TEL, "njp@o-hand.com"},
+  {"Øyvind Kolås", OH_ADDRESS, OH_TEL, "pippin@o-hand.com"},
+  {"Paul Cooper", OH_ADDRESS, OH_TEL, "pgc@o-hand.com"},
+  {"Richard Purdie", OH_ADDRESS, OH_TEL, "rp@o-hand.com"},
+  {"Robert Bradford", OH_ADDRESS, OH_TEL, "rob@o-hand.com"},
+  {"Ross Burton", OH_ADDRESS, OH_TEL, "ross@o-hand.com"},
+  {"Samuel Ortiz", OH_ADDRESS, OH_TEL, "sameo@o-hand.com"},
+  {"Sidske Allum", OH_ADDRESS, OH_TEL, "sid@o-hand.com"},
+  {"Thomas Wood", OH_ADDRESS, OH_TEL, "thomas@o-hand.com"},
+  {"Tomas Frydrych", OH_ADDRESS, OH_TEL, "tf@o-hand.com"}
 };
+
+
 
 static void on_main_timeline_completed (ClutterTimeline  *timeline,
                                         AstroContactsWindow *window);
@@ -326,11 +339,11 @@ load_contacts (AstroContactsWindow *window)
   
   priv = window->priv;
 
-  for (i = 0; i < G_N_ELEMENTS (names); i++)
+  for (i = 0; i < G_N_ELEMENTS (contacts); i++)
      {
       ClutterActor *contact;
 
-      contact = make_contact (names[i]);
+      contact = make_contact (contacts[i].name);
       clutter_container_add_actor (CLUTTER_CONTAINER (priv->contacts), contact);
       clutter_actor_set_position (contact, PADDING, CSH());
       clutter_actor_show_all (contact);
