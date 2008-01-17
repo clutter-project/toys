@@ -49,7 +49,7 @@ G_BEGIN_DECLS
   ASTRO_TYPE_CONTACT_ROW, \
   AstroContactRowClass))
 
-#define ROW_HEIGHT (CSH()/12)
+#define ROW_HEIGHT (CSH()/11)
 
 typedef struct _AstroContactRow AstroContactRow;
 typedef struct _AstroContactRowClass AstroContactRowClass;

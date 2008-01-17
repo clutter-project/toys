@@ -153,7 +153,7 @@ astro_contact_row_set_name (AstroContactRow *row, const gchar *name)
 
   clutter_label_set_text (CLUTTER_LABEL (priv->label), name);
 
-  clutter_actor_set_position (priv->label,PADDING, 
+  clutter_actor_set_position (priv->label, (PADDING*2)+ICON_SIZE, 
                     (ROW_HEIGHT /2)-(clutter_actor_get_height (priv->label)/2));
 }
 
@@ -315,7 +315,7 @@ astro_contact_row_init (AstroContactRow *row)
 
   /* The icon */
   priv->texture = clutter_texture_new ();
-  //clutter_container_add_actor (CLUTTER_CONTAINER (row), priv->texture);
+  clutter_container_add_actor (CLUTTER_CONTAINER (row), priv->texture);
   clutter_actor_set_position (priv->texture, PADDING, PADDING);
   clutter_actor_set_size (priv->texture, ICON_SIZE, ICON_SIZE);
 
@@ -325,7 +325,7 @@ astro_contact_row_init (AstroContactRow *row)
   clutter_label_set_line_wrap (CLUTTER_LABEL (priv->label), FALSE);
   clutter_actor_set_width (priv->label, CSW()/2);
   clutter_container_add_actor (CLUTTER_CONTAINER (row), priv->label);
-  clutter_actor_set_position (priv->label, (PADDING), 
+  clutter_actor_set_position (priv->label, (PADDING*2) + ICON_SIZE, 
                               ROW_HEIGHT /2);
   g_free (font);
 
