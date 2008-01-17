@@ -6,6 +6,7 @@ dist_default_DATA = \
 	contact.png \
 	contact-bar.svg \
 	disc_bg.svg \
-	face.png
+	face.png \
+	info_bg.png
 
 defaultdir = $(pkgdatadir)

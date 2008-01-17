@@ -336,7 +336,7 @@ astro_contact_row_init (AstroContactRow *row)
   priv->bar = clutter_texture_new_from_pixbuf (pixbuf);
   clutter_container_add_actor (CLUTTER_CONTAINER (row), priv->bar);
   clutter_actor_set_position (priv->bar, 
-                              PADDING,
+                              (PADDING*2) + ICON_SIZE,
                               ROW_HEIGHT + PADDING);
   clutter_actor_set_opacity (priv->bar, 0);
 
