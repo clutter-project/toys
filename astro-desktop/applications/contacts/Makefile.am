@@ -14,7 +14,8 @@ APP_SOURCES = \
 	astro-contacts.c \
 	astro-contacts-details.c \
 	astro-contacts-window.c \
-	clutter-reflect-texture.c
+	clutter-reflect-texture.c \
+	astro-texture-group.c
 
 APP_LDADD = \
 	$(DEPS_LIBS) \

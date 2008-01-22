@@ -24,6 +24,8 @@
 #include <clutter/clutter.h>
 #include <libastro-desktop/astro-application.h>
 
+#include "astro-contacts-window.h"
+
 #ifndef _HAVE_ASTRO_CONTACT_DETAILS_H
 #define _HAVE_ASTRO_CONTACT_DETAILS_H
 
@@ -72,7 +74,7 @@ GType astro_contact_details_get_type (void) G_GNUC_CONST;
 ClutterActor *  astro_contact_details_new        (void);
 
 void            astro_contact_details_set_active (AstroContactDetails *details,
-                                                  gboolean         active);
+                                                  AstroContact        *contact);
   
 G_END_DECLS
 

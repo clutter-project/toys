@@ -67,6 +67,15 @@ struct _AstroContactsWindowClass
   AstroWindowClass parent_class;
 }; 
 
+typedef struct {
+  gchar *name;
+  gchar *address;
+  gchar *tel;
+  gchar *email;
+
+} AstroContact;
+
+
 GType astro_contacts_window_get_type (void) G_GNUC_CONST;
 
 AstroWindow *  astro_contacts_window_new       (void);

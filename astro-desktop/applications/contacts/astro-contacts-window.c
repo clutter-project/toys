@@ -31,6 +31,7 @@
 #include <tidy/tidy-texture-frame.h>
 
 #include "astro-contact-row.h"
+#include "astro-contacts-details.h"
 
 G_DEFINE_TYPE (AstroContactsWindow, astro_contacts_window, ASTRO_TYPE_WINDOW);
 
@@ -38,8 +39,8 @@ G_DEFINE_TYPE (AstroContactsWindow, astro_contacts_window, ASTRO_TYPE_WINDOW);
         ASTRO_TYPE_CONTACTS_WINDOW, AstroContactsWindowPrivate))
 
 #define ALBUM_SIZE (CSW()/4)
+#define OH_ADDRESS "Unit R, Homesdale Business Centre\n216-218 Homesdale Road\nBromley, BR12QZ"
 
-#define OH_ADDRESS "Address"
 #define OH_TEL "01923 820 124"
 
 struct _AstroContactsWindowPrivate
@@ -49,7 +50,7 @@ struct _AstroContactsWindowPrivate
   ClutterActor *contacts;
   ClutterActor *label;
 
-  ClutterActor *player;
+  ClutterActor *details;
 
   gint active;
   gboolean activated;
@@ -59,15 +60,7 @@ struct _AstroContactsWindowPrivate
   ClutterBehaviour *behave;
 };
 
-typedef struct {
-  gchar *name;
-  gchar *address;
-  gchar *tel;
-  gchar *email;
-
-} Contact;
-
-static Contact contacts[] = {
+static AstroContact contacts[] = {
   {"Andrew Zaborowski", OH_ADDRESS, OH_TEL, "andrew@o-hand.com"},
   {"Chris Lord", OH_ADDRESS, OH_TEL, "chris@o-hand.com"},
   {"Dodji Seketeli", OH_ADDRESS, OH_TEL, "dodji@o-hand.com"},
@@ -181,6 +174,9 @@ ensure_layout_proper (AstroContactsWindow *window)
           trans->y = CSH ()/2;
           trans->scale = 1.0;          
           active = TRUE;
+
+          astro_contact_details_set_active (ASTRO_CONTACT_DETAILS (priv->details), 
+              &contacts[g_list_index (priv->contacts_list, contact)]);
         }
       else if (i > priv->active)
         {
@@ -193,8 +189,7 @@ ensure_layout_proper (AstroContactsWindow *window)
             trans->scale = 0.4;
           else
             trans->scale = 0.4 + (0.4 * (MAX_DIST-diff)/MAX_DIST);
-          //trans->scale = 1.0;
-        }
+          }
       else
         {
           gint diff;
@@ -477,7 +472,11 @@ astro_contacts_window_init (AstroContactsWindow *window)
   priv->contacts = clutter_group_new ();
   clutter_container_add_actor (CLUTTER_CONTAINER (window), priv->contacts);
   clutter_actor_set_size (priv->contacts, CSW(), CSH());
-  clutter_actor_set_position (priv->contacts, 10, 0);
+  clutter_actor_set_position (priv->contacts, 0, 0);
+
+  priv->details = astro_contact_details_new ();
+  clutter_container_add_actor (CLUTTER_CONTAINER (window), priv->details);
+  clutter_actor_set_position (priv->details, CSW()*0.54, 0);
 
   load_contacts (window);
   

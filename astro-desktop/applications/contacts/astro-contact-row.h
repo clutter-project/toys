@@ -23,6 +23,7 @@
 #include <glib.h>
 #include <clutter/clutter.h>
 
+#include "astro-contacts-window.h"
 
 #ifndef _HAVE_ASTRO_CONTACT_ROW_H
 #define _HAVE_ASTRO_CONTACT_ROW_H
@@ -71,10 +72,10 @@ struct _AstroContactRowClass
 
 GType astro_contact_row_get_type (void) G_GNUC_CONST;
 
-ClutterActor *  astro_contact_row_new        (const gchar  *name,
-                                              GdkPixbuf    *icon);
+ClutterActor *  astro_contact_row_new        (const gchar     *name,
+                                              GdkPixbuf       *icon);
 void            astro_contact_row_set_active (AstroContactRow *row,
-                                              gboolean         axtive);
+                                              gboolean         active);
 
 G_END_DECLS
 
