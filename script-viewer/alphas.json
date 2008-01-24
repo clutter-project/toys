@@ -6,7 +6,7 @@
   {
     "id" : "animation",
     "type" : "ClutterTimeline",
-    "num-frames" : 120,
+    "num-frames" : 300,
     "fps" : 60,
     "loop" : true
   },

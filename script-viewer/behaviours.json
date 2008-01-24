@@ -25,8 +25,10 @@
         "behaviours" : [
             {
               "type"          : "ClutterBehaviourScale",
-              "scale-start"   : 1.0,
-              "scale-end"     : 0.5,
+              "x-scale-start"   : 1.0,
+              "x-scale-end"     : 0.5,
+              "y-scale-start"   : 1.0,
+              "y-scale-end"     : 0.5,
               "scale-gravity" : "center",
               "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
             },
