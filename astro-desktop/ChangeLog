@@ -1,5 +1,12 @@
 2008-01-25  Neil J. Patel  <njp@o-hand.com>
 
+	* applications/music/astro-music-window.c: (on_cover_clicked):
+	* applications/music/astro-songs.c: (on_event), (astro_songs_init):
+	Added in kinetic scrolling. Needs to be pulled out into own widget and
+	tweaked.
+
+2008-01-25  Neil J. Patel  <njp@o-hand.com>
+
 	* applications/music/astro-reflection.c:
 	(astro_reflection_set_active):
 	* applications/music/astro-songs.c: (astro_songs_set_active),

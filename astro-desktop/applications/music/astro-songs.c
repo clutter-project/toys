@@ -38,8 +38,13 @@ struct _AstroSongsPrivate
   ClutterActor *group;
 
   gboolean mousedown;
-  gint     last_motion;
-  gint     start_y;
+  gint     lasty;
+  gint     starty;
+  guint32  start_time;
+  gint     endy;
+  
+  ClutterEffectTemplate *temp;
+  ClutterTimeline       *timeline;
 };
 
 static gchar *song_names[] = {
@@ -87,48 +92,104 @@ astro_songs_set_active (AstroSongs *songs, gboolean active)
 
 
 /* Private functions */
-static gboolean
+static gboolean 
 on_event (AstroSongs *songs, ClutterEvent *event)
 {
-  AstroSongsPrivate *priv;
-
-  g_return_val_if_fail (ASTRO_IS_SONGS (songs), FALSE);
-  priv = songs->priv;
- 
+#define TIMEOUT 400
+#define SPEED_FACTOR 1.5
+  AstroSongsPrivate *priv = songs->priv;
+    
   if (event->type == CLUTTER_BUTTON_PRESS)
     {
-      g_debug ("button press\n");
-
-      priv->mousedown = TRUE;
-      priv->last_motion = priv->start_y = event->button.y;
-
-      return TRUE;
+      priv->starty = priv->lasty = event->button.y;
+      
+      priv->start_time = event->button.time;
+    
+      if (clutter_timeline_is_playing (priv->timeline))
+        clutter_timeline_stop (priv->timeline);
+    
     }
   else if (event->type == CLUTTER_BUTTON_RELEASE)
     {
-      g_debug ("button release\n");
+      gint endy = clutter_actor_get_y (priv->group);
+      guint32 time = event->button.time - priv->start_time;
+      gfloat factor;
 
-      priv->mousedown = FALSE;
-
-      return TRUE;
+      factor = 2.0 - (time/event->button.time);
+    
+      if (time > TIMEOUT)
+        {
+          priv->endy = endy;
+        }
+      else if (event->button.y > priv->starty)
+        {
+          /* 
+          * The mouse from left to right, so we have to *add* pixels to the
+          * current group position to make it move to the right
+          */
+          endy += (event->motion.y - priv->starty) * SPEED_FACTOR * factor;
+          priv->endy = endy;
+        }
+      else if (event->button.y < priv->starty)
+        {
+          /* 
+          * The mouse from right to left, so we have to *minus* p.yels to the
+          * current group position to make it move to the left
+          */
+          endy -= (priv->starty - event->button.y) * SPEED_FACTOR * factor;
+          priv->endy = endy;
+        }
+      else
+        {
+          /* If the click was fast, treat it as a standard 'clicked' event */
+          if (time < TIMEOUT)
+            g_debug ("Song clicked\n");
+          priv->starty = priv->lasty = 0;
+          return FALSE;
+        }
+  
+      priv->starty = clutter_actor_get_height (priv->group);
+   
+      if (priv->endy < (-1*priv->starty))
+        {
+          /*g_debug ("lowered: %d < %d\n", priv->endy, -(priv->starty));*/
+          priv->endy = (-1*priv->starty) + ALBUM_SIZE/2;
+        }
+      /*
+      if (priv->endy > (ALBUM_SIZE/2))
+        {
+          g_print ("raised: %d > %d\n", priv->endy, ALBUM_SIZE/2);
+          priv->endy = ALBUM_SIZE/2;
+        }
+    
+        g_print ("%d %d %d\n\n", priv->endy, -1*priv->starty, ALBUM_SIZE/2);
+      */
+      priv->timeline = clutter_effect_move (priv->temp, priv->group,
+                                          clutter_actor_get_x (priv->group),
+                                          priv->endy, NULL, NULL);
+      priv->starty =  priv->lasty = 0;
     }
   else if (event->type == CLUTTER_MOTION)
     {
-      if (!priv->mousedown)
+      gint offset;
+
+      if (!priv->starty)
         return FALSE;
-      g_debug ("motion");
-
-      clutter_actor_set_y (priv->group,
-                           clutter_actor_get_y (CLUTTER_ACTOR (priv->group)) +
-                             event->motion.y - priv->last_motion);
-
-      priv->last_motion = event->motion.y;
-    }
-  else
-    {
-
-    }
-
+      if (event->motion.y > priv->lasty)
+        {
+          offset = event->motion.y - priv->lasty;
+        }
+      else
+        {
+          offset = priv->lasty - event->motion.y;
+          offset *= -1;
+        }
+      priv->lasty = event->motion.y;
+      clutter_actor_set_position (priv->group,
+                                  clutter_actor_get_x (priv->group),
+                                  clutter_actor_get_y (priv->group)+ offset);
+    }  
+  
   return FALSE;
 }
 
@@ -177,6 +238,10 @@ astro_songs_init (AstroSongs *songs)
 
       offset += ROW_SPACING;
     }
+
+  priv->timeline = clutter_timeline_new_for_duration (1000);
+  priv->temp = clutter_effect_template_new (priv->timeline,
+                                            clutter_sine_inc_func);
 
   clutter_actor_set_reactive (CLUTTER_ACTOR (songs), TRUE);
   

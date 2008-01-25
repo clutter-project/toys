@@ -28,6 +28,7 @@
 #include <libastro-desktop/astro-application.h>
 #include <libastro-desktop/astro-window.h>
 #include <libastro-desktop/astro-behave.h>
+#include <libastro-desktop/astro-utils.h>
 
 #include "astro-reflection.h"
 
@@ -201,6 +202,8 @@ on_cover_clicked (ClutterActor      *cover,
 
   if (priv->activated)
     {
+      if (event->button.x > CSW()/2)
+        return FALSE;
       astro_reflection_set_active (g_list_nth_data (priv->covers,
                                    priv->active), FALSE);
       priv->activated = FALSE;
@@ -208,6 +211,7 @@ on_cover_clicked (ClutterActor      *cover,
       astro_music_window_advance (window, 0);
       return FALSE;
     }
+
   if (n == priv->active)
     on_cover_activated (window);
   else
