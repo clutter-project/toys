@@ -1,5 +1,17 @@
 2008-01-25  Neil J. Patel  <njp@o-hand.com>
 
+	* applications/music/astro-reflection.c:
+	(astro_reflection_set_active):
+	* applications/music/astro-songs.c: (astro_songs_set_active),
+	(on_event), (astro_songs_init):
+	* applications/music/astro-songs.h:
+	Added poor mans scrolling to the song list..now ot convert it to
+	something resembling kinetic scrolling.
+	Fixed the clips & event capture so that it works without interfering
+	with the rest of the app.
+
+2008-01-25  Neil J. Patel  <njp@o-hand.com>
+
 	* applications/contacts/astro-contacts-window.c:
 	(astro_contacts_list_alpha):
 	* applications/music/Makefile.am:

@@ -35,7 +35,11 @@ G_DEFINE_TYPE (AstroSongs, astro_songs, CLUTTER_TYPE_GROUP);
 	
 struct _AstroSongsPrivate
 {
-  gint hello;
+  ClutterActor *group;
+
+  gboolean mousedown;
+  gint     last_motion;
+  gint     start_y;
 };
 
 static gchar *song_names[] = {
@@ -59,10 +63,74 @@ static gchar *song_names[] = {
   "Hello"
 };
 
+static gboolean on_event (AstroSongs *songs, ClutterEvent *event);
+
 /* Public Functions */
+void 
+astro_songs_set_active (AstroSongs *songs, gboolean active)
+{
+  AstroSongsPrivate *priv;
+
+  g_return_if_fail (ASTRO_IS_SONGS (songs));
+  priv = songs->priv;
+
+  if (active)
+    {
+      g_signal_connect (songs, "event", G_CALLBACK (on_event), NULL);
+    }
+  else
+    {
+      g_signal_handlers_disconnect_by_func (songs, on_event, NULL);
+      priv->mousedown = FALSE;
+    }
+}
+
 
 /* Private functions */
+static gboolean
+on_event (AstroSongs *songs, ClutterEvent *event)
+{
+  AstroSongsPrivate *priv;
 
+  g_return_val_if_fail (ASTRO_IS_SONGS (songs), FALSE);
+  priv = songs->priv;
+ 
+  if (event->type == CLUTTER_BUTTON_PRESS)
+    {
+      g_debug ("button press\n");
+
+      priv->mousedown = TRUE;
+      priv->last_motion = priv->start_y = event->button.y;
+
+      return TRUE;
+    }
+  else if (event->type == CLUTTER_BUTTON_RELEASE)
+    {
+      g_debug ("button release\n");
+
+      priv->mousedown = FALSE;
+
+      return TRUE;
+    }
+  else if (event->type == CLUTTER_MOTION)
+    {
+      if (!priv->mousedown)
+        return FALSE;
+      g_debug ("motion");
+
+      clutter_actor_set_y (priv->group,
+                           clutter_actor_get_y (CLUTTER_ACTOR (priv->group)) +
+                             event->motion.y - priv->last_motion);
+
+      priv->last_motion = event->motion.y;
+    }
+  else
+    {
+
+    }
+
+  return FALSE;
+}
 
 /* GObject stuff */
 static void
@@ -78,12 +146,19 @@ astro_songs_init (AstroSongs *songs)
 {
 #define FONT_SIZE (ALBUM_SIZE/8)
 #define ROW_SPACING (FONT_SIZE*1.5)
+#define PAD 2
   AstroSongsPrivate *priv;
   ClutterColor white = { 0xff, 0xff, 0xff, 0xff };
   gchar *font = NULL;
   gint i, offset = ROW_SPACING/2;
 
   priv = songs->priv = ASTRO_SONGS_GET_PRIVATE (songs);
+
+  priv->mousedown = FALSE;
+
+  priv->group = clutter_group_new ();
+  clutter_container_add_actor (CLUTTER_CONTAINER (songs), priv->group);
+  clutter_actor_set_position (priv->group, 0, 0);
 
   font = g_strdup_printf ("Sans %d", FONT_SIZE);
 
@@ -93,7 +168,7 @@ astro_songs_init (AstroSongs *songs)
            
       row = clutter_label_new_full (font, song_names[i], &white);
       
-      clutter_container_add_actor (CLUTTER_CONTAINER (songs), row);
+      clutter_container_add_actor (CLUTTER_CONTAINER (priv->group), row);
       clutter_actor_set_anchor_point_from_gravity (row, 
                                                    CLUTTER_GRAVITY_WEST);
       clutter_actor_set_position (row, 10, offset);
@@ -102,9 +177,13 @@ astro_songs_init (AstroSongs *songs)
 
       offset += ROW_SPACING;
     }
+
+  clutter_actor_set_reactive (CLUTTER_ACTOR (songs), TRUE);
   
   clutter_actor_set_clip (CLUTTER_ACTOR (songs), 
-                          0, 0, ALBUM_SIZE-2, ALBUM_SIZE-2);
+                          PAD, PAD, ALBUM_SIZE-(2*PAD), ALBUM_SIZE-(2*PAD));
+ 
+  clutter_actor_show_all (CLUTTER_ACTOR (priv->group));
   clutter_actor_show_all (CLUTTER_ACTOR (songs));
   g_free (font);
 }

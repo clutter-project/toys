@@ -111,6 +111,7 @@ astro_reflection_set_active (AstroReflection *reflection,
   g_signal_connect (fade_time, "new-frame",
                     G_CALLBACK (fix_clip), reflection);
 
+  astro_songs_set_active (ASTRO_SONGS (priv->song_list), active);
 }
 
 void

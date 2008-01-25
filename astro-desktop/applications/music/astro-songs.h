@@ -70,6 +70,8 @@ struct _AstroSongsClass
 GType astro_songs_get_type (void) G_GNUC_CONST;
 
 ClutterActor *  astro_songs_new       (void);
+
+void astro_songs_set_active (AstroSongs *songs, gboolean active);
   
 G_END_DECLS
 
