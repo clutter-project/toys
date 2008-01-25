@@ -49,6 +49,9 @@ G_BEGIN_DECLS
   ASTRO_TYPE_MUSIC_WINDOW, \
   AstroMusicWindowClass))
 
+#define ALBUM_SIZE (CSW()/4)
+#define ALBUM_SCALE 1.9
+
 typedef struct _AstroMusicWindow AstroMusicWindow;
 typedef struct _AstroMusicWindowClass AstroMusicWindowClass;
 typedef struct _AstroMusicWindowPrivate AstroMusicWindowPrivate;

@@ -37,7 +37,6 @@ G_DEFINE_TYPE (AstroMusicWindow, astro_music_window, ASTRO_TYPE_WINDOW);
         ASTRO_TYPE_MUSIC_WINDOW, AstroMusicWindowPrivate))
 
 #define ALBUM_DIR PKGDATADIR"/albums"
-#define ALBUM_SIZE (CSW()/4)
 
 struct _AstroMusicWindowPrivate
 {
@@ -151,7 +150,6 @@ on_cover_active_completed (ClutterTimeline *timeline,
 static void
 on_cover_activated (AstroMusicWindow *window)
 {
-#define ACTIVE_SCALE 1.5
   AstroMusicWindowPrivate *priv;
   ClutterActor *cover;
   GList *children;
@@ -172,8 +170,8 @@ on_cover_activated (AstroMusicWindow *window)
 
   priv->activated = TRUE;
 
-  trans->scale = ACTIVE_SCALE;
-  trans->x = (CSW()/2) - ((ALBUM_SIZE * ACTIVE_SCALE) * 0.5);
+  trans->scale = ALBUM_SCALE;
+  trans->x = (CSW()/2) - ((ALBUM_SIZE * ALBUM_SCALE) * 0.5);
 
   clutter_actor_raise_top (cover);
 
@@ -435,7 +433,7 @@ astro_music_window_init (AstroMusicWindow *window)
   clutter_container_add_actor (CLUTTER_CONTAINER (window), priv->albums);
   clutter_actor_set_anchor_point_from_gravity (priv->albums, 
                                                CLUTTER_GRAVITY_WEST);
-  clutter_actor_set_position (priv->albums, 0, CSH() * 0.4);
+  clutter_actor_set_position (priv->albums, 0, CSH() * 0.5);
 
   load_albums (window);
   
@@ -449,11 +447,11 @@ astro_music_window_init (AstroMusicWindow *window)
   clutter_actor_set_size (priv->label, CSW(), CSH()/10);
   clutter_actor_set_anchor_point_from_gravity (priv->label, 
                                                CLUTTER_GRAVITY_CENTER);
-  clutter_actor_set_position (priv->label, CSW()/2, CSH()*0.8);
+  clutter_actor_set_position (priv->label, CSW()/2, CSH()*0.95);
 
   ensure_layout (window);
 
-  priv->timeline = clutter_timeline_new_for_duration (800);
+  priv->timeline = clutter_timeline_new_for_duration (1200);
   priv->alpha = clutter_alpha_new_full (priv->timeline,
                                         clutter_sine_inc_func,
                                         NULL, NULL);

@@ -1,3 +1,20 @@
+2008-01-25  Neil J. Patel  <njp@o-hand.com>
+
+	* applications/contacts/astro-contacts-window.c:
+	(astro_contacts_list_alpha):
+	* applications/music/Makefile.am:
+	* applications/music/astro-music-window.c: (on_cover_activated),
+	(astro_music_window_init):
+	* applications/music/astro-music-window.h:
+	* applications/music/astro-reflection.c:
+	(astro_reflection_set_active), (astro_reflection_set_pixbuf):
+	* applications/music/astro-songs.c: (astro_songs_class_init),
+	(astro_songs_init), (astro_songs_new):
+	* applications/music/astro-songs.h:
+	* data/albums/Makefile.am:
+	Lots more fixes, added a song list (needs scrolling support).
+	Added a few more albums.
+
 2008-01-22  Neil J. Patel  <njp@o-hand.com>
 
 	* applications/contacts/Makefile.am:

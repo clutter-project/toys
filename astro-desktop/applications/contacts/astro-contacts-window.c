@@ -378,7 +378,10 @@ astro_contacts_list_alpha (ClutterBehaviour *behave,
       else
         diffy = trans->y - currenty;
 
-      clutter_actor_set_y (contact, currenty + (gint)(diffy*factor));
+      //clutter_actor_set_y (contact, currenty + (gint)(diffy*factor));
+      clutter_actor_set_y (contact, 
+                           currenty + 
+                           (gint)((diffy*alpha_value)/CLUTTER_ALPHA_MAX_ALPHA));
 
       clutter_actor_get_scale (contact, &cscale, &cscale);
       if (cscale > trans->scale)

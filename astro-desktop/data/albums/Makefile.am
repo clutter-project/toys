@@ -3,6 +3,8 @@ dist_album_DATA = \
 	Jay_Z_-_American_Gangster.jpg \
 	Kanye_West_-_Graduation.jpg \
 	Lupe_Fiasco_-_Food_and_Liquor.jpg \
-	Santana_-_Ultimate_Santana.jpg
+	Red_Hot_Chilli_Peppers_-_Greatest_Hits.jpg \
+	Santana_-_Ultimate_Santana.jpg \
+	Timbaland_-_Shock_Value.jpg
 
 albumdir = $(pkgdatadir)/albums

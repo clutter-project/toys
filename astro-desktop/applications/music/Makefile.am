@@ -13,6 +13,7 @@ APP_SOURCES = \
 	astro-music.c \
 	astro-music-window.c \
 	astro-reflection.c \
+	astro-songs.c \
 	clutter-reflect-texture.c
 
 APP_LDADD = \

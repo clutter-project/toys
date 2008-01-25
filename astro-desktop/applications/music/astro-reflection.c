@@ -26,6 +26,7 @@
 #include <libastro-desktop/astro-utils.h>
 
 #include "clutter-reflect-texture.h"
+#include "astro-songs.h"
 
 G_DEFINE_TYPE (AstroReflection, astro_reflection, CLUTTER_TYPE_GROUP);
 
@@ -38,6 +39,7 @@ struct _AstroReflectionPrivate
 {
   ClutterActor *songs;
   ClutterActor *songs_reflect;
+  ClutterActor *song_list;
   ClutterActor *texture;
   ClutterActor *reflect;
   GdkPixbuf    *pixbuf;
@@ -94,6 +96,10 @@ astro_reflection_set_active (AstroReflection *reflection,
                        x, clutter_actor_get_y (priv->songs),
                        NULL, NULL);
   clutter_effect_move (priv->songs_temp,
+                       priv->song_list,
+                       x, clutter_actor_get_y (priv->song_list),
+                       NULL, NULL);
+  clutter_effect_move (priv->songs_temp,
                        priv->songs_reflect,
                        x, clutter_actor_get_y (priv->songs_reflect),
                        NULL, NULL);
@@ -142,6 +148,13 @@ astro_reflection_set_pixbuf (AstroReflection *reflection,
   clutter_container_add_actor (CLUTTER_CONTAINER (reflection), 
                                priv->songs_reflect);
   clutter_actor_set_position (priv->songs_reflect, 0, height+1);
+
+  /* Song list */
+  priv->song_list = astro_songs_new ();
+  clutter_container_add_actor (CLUTTER_CONTAINER (reflection), priv->song_list);
+  clutter_actor_set_size (priv->song_list, height, height);
+  clutter_actor_set_position (priv->song_list, 0, 0);
+
      
   /* Album cover */
   priv->texture = g_object_new (CLUTTER_TYPE_TEXTURE,
