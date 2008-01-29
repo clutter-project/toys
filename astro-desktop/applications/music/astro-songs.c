@@ -36,6 +36,7 @@ G_DEFINE_TYPE (AstroSongs, astro_songs, CLUTTER_TYPE_GROUP);
 struct _AstroSongsPrivate
 {
   ClutterActor *group;
+  ClutterActor *events;
 
   gboolean mousedown;
   gint     lasty;
@@ -92,6 +93,36 @@ astro_songs_set_active (AstroSongs *songs, gboolean active)
 
 
 /* Private functions */
+static void
+bounds_check (ClutterActor *group, AstroSongs *songs)
+{
+  AstroSongsPrivate *priv;
+  gint y, height;
+
+  g_return_if_fail (ASTRO_IS_SONGS (songs));
+  priv = songs->priv;
+
+  height = clutter_actor_get_height (group);
+  y = clutter_actor_get_y (group);
+   
+  if (y < 0 && y < (-1*height+(ALBUM_SIZE/2)))
+  {
+    y = (-1*height) + ALBUM_SIZE/2;
+  }
+  
+  if ( y > 0 && y > (ALBUM_SIZE/2))
+    {
+      y = ALBUM_SIZE/2;
+    }
+  
+  g_print ("%d %d %d\n\n", y, height, ALBUM_SIZE/2);
+      
+  priv->timeline = clutter_effect_move (priv->temp, priv->group,
+                                        clutter_actor_get_x (priv->group),
+                                        y, 
+                                        NULL, NULL);
+}
+
 static gboolean 
 on_event (AstroSongs *songs, ClutterEvent *event)
 {
@@ -114,7 +145,7 @@ on_event (AstroSongs *songs, ClutterEvent *event)
       gint endy = clutter_actor_get_y (priv->group);
       guint32 time = event->button.time - priv->start_time;
       gfloat factor;
-
+      
       factor = 2.0 - (time/event->button.time);
     
       if (time > TIMEOUT)
@@ -148,25 +179,12 @@ on_event (AstroSongs *songs, ClutterEvent *event)
           return FALSE;
         }
   
-      priv->starty = clutter_actor_get_height (priv->group);
-   
-      if (priv->endy < (-1*priv->starty))
-        {
-          /*g_debug ("lowered: %d < %d\n", priv->endy, -(priv->starty));*/
-          priv->endy = (-1*priv->starty) + ALBUM_SIZE/2;
-        }
-      /*
-      if (priv->endy > (ALBUM_SIZE/2))
-        {
-          g_print ("raised: %d > %d\n", priv->endy, ALBUM_SIZE/2);
-          priv->endy = ALBUM_SIZE/2;
-        }
-    
-        g_print ("%d %d %d\n\n", priv->endy, -1*priv->starty, ALBUM_SIZE/2);
-      */
-      priv->timeline = clutter_effect_move (priv->temp, priv->group,
+     priv->timeline = clutter_effect_move (priv->temp, priv->group,
                                           clutter_actor_get_x (priv->group),
-                                          priv->endy, NULL, NULL);
+                                          priv->endy, 
+                                      (ClutterEffectCompleteFunc)bounds_check, 
+                                          songs);
+
       priv->starty =  priv->lasty = 0;
     }
   else if (event->type == CLUTTER_MOTION)

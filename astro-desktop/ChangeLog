@@ -1,3 +1,8 @@
+2008-01-29  Neil J. Patel  <njp@o-hand.com>
+
+	* applications/music/astro-songs.c: (bounds_check), (on_event):
+	Fixed bounds checking bug.
+
 2008-01-25  Neil J. Patel  <njp@o-hand.com>
 
 	* applications/music/astro-music-window.c: (on_cover_clicked):
