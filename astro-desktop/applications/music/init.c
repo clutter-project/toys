@@ -12,7 +12,10 @@ astro_application_factory_init ()
   AstroApplication *app;
   GdkPixbuf *pixbuf;
  
-  pixbuf = gdk_pixbuf_new_from_file (PKGDATADIR "/icons/music.png", NULL);
+  pixbuf = gdk_pixbuf_new_from_file_at_scale (PKGDATADIR "/icons/music.png",
+                                     ASTRO_APPICON_SIZE(), ASTRO_APPICON_SIZE(),
+                                     TRUE,
+                                     NULL);
 
   app = astro_music_new ("Music Player", pixbuf);
 

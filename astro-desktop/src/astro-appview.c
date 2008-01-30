@@ -34,7 +34,7 @@ G_DEFINE_TYPE (AstroAppview, astro_appview, CLUTTER_TYPE_GROUP);
 
 #define ASTRO_APPVIEW_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj),\
         ASTRO_TYPE_APPVIEW, AstroAppviewPrivate))
-#define VARIANCE 100
+#define VARIANCE (CSH()*-0.2)
 #define MAX_BLUR 10.0
 
 struct _AstroAppviewPrivate

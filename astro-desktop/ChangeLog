@@ -1,3 +1,13 @@
+2008-01-30  Neil J Patel  <njp@o-hand.com>
+
+	* applets/clock.json:
+	* applications/contacts/init.c: (astro_application_factory_init):
+	* applications/music/init.c: (astro_application_factory_init):
+	* libastro-desktop/astro-defines.h:
+	* src/astro-appview.c:
+	* src/astro-desktop.c: (load_applications):
+	Misc fixes to allow astro to run at smaller resolutions.
+
 2008-01-29  Neil J. Patel  <njp@o-hand.com>
 
 	* applications/music/astro-songs.c: (bounds_check), (on_event):

@@ -236,7 +236,10 @@ load_applications (AstroDesktop *desktop)
     }
   g_dir_close (dir);
   
-  pixbuf = gdk_pixbuf_new_from_file (PKGDATADIR "/icons/exec.png", NULL);
+  pixbuf = gdk_pixbuf_new_from_file_at_scale (PKGDATADIR "/icons/exec.png", 
+                                              ASTRO_APPICON_SIZE(), 
+                                              ASTRO_APPICON_SIZE(),
+                                              TRUE, NULL);
   for (i = 0; i < 5; i++)
     {
       AstroApplication *app;

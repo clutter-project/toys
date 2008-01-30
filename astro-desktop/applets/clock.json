@@ -24,6 +24,7 @@
          "x" : 7,
          "y" : 0,
          "pixbuf" : "clock.png",
+         "height" : "10%"
          "visible" : true
        }
       
