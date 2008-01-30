@@ -22,7 +22,7 @@
 
 #include "astro-applet.h"
 
-#include <tidy/tidy-texture-frame.h>
+#include <libastro-desktop/tidy-texture-frame.h>
 
 #include <libastro-desktop/astro-defines.h>
 

@@ -6,13 +6,13 @@
      [ 
        { "id" : "label-temp",
          "type" : "ClutterLabel",
-         "x" : 8,
-         "y" : 60,
-         "width" : 55,
+         "x" : "1%",
+         "y" : "12%",
+         "width" : "12%",
          "text" : "New York",
-         "font-name" : "Sans 12px",
+         "font-name" : "Sans 10px",
          "color" : "white",
-         "alignment" : "center",
+         "alignment" : "left",
          "wrap" : false,
          "ellipsize" : "none",
          "visible" : true
@@ -24,7 +24,8 @@
          "x" : 7,
          "y" : 0,
          "pixbuf" : "clock.png",
-         "height" : "10%"
+         "height" : "10%",
+         "width" : "10%",
          "visible" : true
        }
       

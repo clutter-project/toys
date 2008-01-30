@@ -13,7 +13,8 @@ libastro_desktop_la_SOURCES = \
 	astro-application.c \
 	astro-behave.c \
 	astro-utils.c \
-	astro-window.c
+	astro-window.c \
+	tidy-texture-frame.c
 
 libastro_desktop_la_LIBADD = $(DEPS_LIBS)
 libastro_desktop_la_LDFLAGS = $(DEPS_LT_LDFLAGS) -version-info 0:1:0

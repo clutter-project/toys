@@ -6,13 +6,13 @@
      [ 
        { "id" : "label-temp",
          "type" : "ClutterLabel",
-         "x" : 8,
-         "y" : 60,
-         "width" : 55,
+         "x" : 2,
+         "y" : "12%",
+         "width" : "12%",
          "text" : "Tuesday",
-         "font-name" : "Sans 12px",
+         "font-name" : "Sans 10px",
          "color" : "white",
-         "alignment" : "center",
+         "alignment" : "left",
          "wrap" : false,
          "ellipsize" : "none",
          "visible" : true
@@ -21,11 +21,13 @@
        {
          "id" : "cloud",
          "type" : "ClutterTexture",
-         "x" : 12,
+         "x" : "3%",
          "y" : 0,
+         "width" : "9%",
+         "height" : "10%",
          "pixbuf" : "cal.png",
          "visible" : true
        }
-      
-     ]
+     ],
+  "width" : "20%"
 }

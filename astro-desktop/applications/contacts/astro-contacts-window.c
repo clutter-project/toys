@@ -28,7 +28,7 @@
 #include <libastro-desktop/astro-application.h>
 #include <libastro-desktop/astro-window.h>
 #include <libastro-desktop/astro-behave.h>
-#include <tidy/tidy-texture-frame.h>
+#include <libastro-desktop/tidy-texture-frame.h>
 
 #include "astro-contact-row.h"
 #include "astro-contacts-details.h"

@@ -25,7 +25,7 @@
 #include <libastro-desktop/astro-defines.h>
 #include <libastro-desktop/astro-behave.h>
 
-#include <tidy/tidy-texture-frame.h>
+#include <libastro-desktop/tidy-texture-frame.h>
 
 
 G_DEFINE_TYPE (AstroTextureGroup, astro_texture_group, CLUTTER_TYPE_GROUP);

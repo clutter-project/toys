@@ -1,3 +1,22 @@
+2008-01-30  Neil J. Patel  <njp@o-hand.com>
+
+	* applets/cal.json:
+	* applets/clock.json:
+	* applets/weather.json:
+	* applications/contacts/astro-contact-row.c:
+	* applications/contacts/astro-contacts-window.c:
+	* applications/contacts/astro-texture-group.c:
+	* configure.ac:
+	* libastro-desktop/Makefile.am:
+	* libastro-desktop/astro-defines.h:
+	* libastro-desktop/tidy-texture-frame.c:
+	(tidy_texture_frame_paint), (tidy_texture_frame_set_property),
+	(tidy_texture_frame_get_property), (tidy_texture_frame_class_init),
+	(tidy_texture_frame_init), (tidy_texture_frame_new):
+	* libastro-desktop/tidy-texture-frame.h:
+	* src/astro-applet.c:
+	Bring the Tidy actors in-house.
+
 2008-01-30  Neil J Patel  <njp@o-hand.com>
 
 	* applets/clock.json:
