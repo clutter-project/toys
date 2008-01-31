@@ -1,3 +1,15 @@
+2008-01-31  Neil J Patel,,,  <njp@Neils-MBP>
+
+	* applications/contacts/astro-contact-row.c:
+	(astro_contact_row_init):
+	* applications/contacts/astro-contacts-details.c:
+	* applications/contacts/astro-contacts-window.c:
+	(astro_contacts_window_init):
+	* applications/contacts/astro-texture-group.c:
+	* applications/example/init.c: (astro_application_factory_init):
+	* libastro-desktop/astro.h:
+	Fixes to the contacts application to behave at different resolutions.
+
 2008-01-31  Neil J. Patel  <njp@o-hand.com>
 
 	* libastro-desktop/tidy-private.h:

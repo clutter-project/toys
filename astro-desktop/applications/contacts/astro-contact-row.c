@@ -33,7 +33,7 @@ G_DEFINE_TYPE (AstroContactRow, astro_contact_row, CLUTTER_TYPE_GROUP);
 #define ASTRO_CONTACT_ROW_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj),\
         ASTRO_TYPE_CONTACT_ROW, AstroContactRowPrivate))
 
-#define PADDING 8
+#define PADDING (CSH()/200)
 #define ICON_SIZE (ROW_HEIGHT - (PADDING * 2))
 
 struct _AstroContactRowPrivate
@@ -320,7 +320,7 @@ astro_contact_row_init (AstroContactRow *row)
   clutter_actor_set_size (priv->texture, ICON_SIZE, ICON_SIZE);
 
   /* The label */
-  font = g_strdup_printf ("Sans %d", (gint)(ROW_HEIGHT * 0.5));
+  font = g_strdup_printf ("Sans %d", (gint)(ROW_HEIGHT * 0.3));
   priv->label = clutter_label_new_full (font, " ", &white);
   clutter_label_set_line_wrap (CLUTTER_LABEL (priv->label), FALSE);
   clutter_actor_set_width (priv->label, CSW()/2);
@@ -331,7 +331,7 @@ astro_contact_row_init (AstroContactRow *row)
 
   /* Contact bar */
   pixbuf = gdk_pixbuf_new_from_file_at_scale (PKGDATADIR"/contact-bar.svg", 
-                                              -1, ROW_HEIGHT-(PADDING*2), TRUE,
+                                              -1, ROW_HEIGHT-(PADDING*4), TRUE,
                                               NULL);
   priv->bar = clutter_texture_new_from_pixbuf (pixbuf);
   clutter_container_add_actor (CLUTTER_CONTAINER (row), priv->bar);

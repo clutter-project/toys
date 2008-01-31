@@ -25,5 +25,6 @@
 
 #include "astro-application.h"
 #include "astro-defines.h"
+#include "astro-utils.h"
 #include "astro-window.h"
 #endif

@@ -32,7 +32,7 @@ G_DEFINE_TYPE (AstroContactDetails, astro_contact_details, CLUTTER_TYPE_GROUP);
 #define ASTRO_CONTACT_DETAILS_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj),\
         ASTRO_TYPE_CONTACT_DETAILS, AstroContactDetailsPrivate))
 
-#define PADDING 12
+#define PADDING (CSH()/50)
 
 struct _AstroContactDetailsPrivate
 {

@@ -33,8 +33,8 @@ G_DEFINE_TYPE (AstroTextureGroup, astro_texture_group, CLUTTER_TYPE_GROUP);
 #define ASTRO_TEXTURE_GROUP_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj),\
         ASTRO_TYPE_TEXTURE_GROUP, AstroTextureGroupPrivate))
 
-#define PADDING 8
-#define GROUP_WIDTH (CSW()*0.4)
+#define PADDING (CSH()/30)
+#define GROUP_WIDTH (CSW()*0.45)
 #define GROUP_HEIGHT (CSH()/10) 
 
 static GdkPixbuf    *bg_pixbuf = NULL;

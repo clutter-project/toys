@@ -24,7 +24,7 @@
 
 #include <math.h>
 #include <string.h>
-#include <libastro-desktop/astro-defines.h>
+#include <libastro-desktop/astro.h>
 #include <libastro-desktop/astro-application.h>
 #include <libastro-desktop/astro-window.h>
 #include <libastro-desktop/astro-behave.h>
@@ -502,6 +502,8 @@ astro_contacts_window_init (AstroContactsWindow *window)
                     G_CALLBACK (on_key_release_event), window);
   clutter_grab_keyboard (CLUTTER_ACTOR (window));
 
+  astro_utils_set_clip (CLUTTER_ACTOR (window), 0, ASTRO_PANEL_HEIGHT (),
+                        CSW(), CSH());
 
   clutter_actor_set_position (CLUTTER_ACTOR (window), 0, 0);
   clutter_actor_show_all (CLUTTER_ACTOR (window));
