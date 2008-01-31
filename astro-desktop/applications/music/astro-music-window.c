@@ -426,6 +426,7 @@ astro_music_window_init (AstroMusicWindow *window)
 {
   AstroMusicWindowPrivate *priv;
   ClutterColor white = { 0xff, 0xff, 0xff, 0xff };
+  gchar *font = NULL;
 
   priv = window->priv = ASTRO_MUSIC_WINDOW_GET_PRIVATE (window);
 
@@ -441,7 +442,8 @@ astro_music_window_init (AstroMusicWindow *window)
 
   load_albums (window);
   
-  priv->label = clutter_label_new_full ("Sans 18", 
+  font = g_strdup_printf ("Sans %d", CSH()/30);
+  priv->label = clutter_label_new_full (font, 
                                         "Jay Z - American Gangster",
                                         &white);
   clutter_label_set_line_wrap (CLUTTER_LABEL (priv->label), FALSE);
@@ -452,6 +454,7 @@ astro_music_window_init (AstroMusicWindow *window)
   clutter_actor_set_anchor_point_from_gravity (priv->label, 
                                                CLUTTER_GRAVITY_CENTER);
   clutter_actor_set_position (priv->label, CSW()/2, CSH()*0.95);
+  g_free (font);
 
   ensure_layout (window);
 
