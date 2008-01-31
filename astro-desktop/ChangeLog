@@ -1,3 +1,8 @@
+2008-01-31  Neil J Patel,,,  <njp@Neils-MBP>
+
+	* src/astro-systray.c: (set_time), (astro_systray_init):
+	Choose sizes depending on stage size, rather than magic values.
+
 2008-01-30  Neil J. Patel  <njp@o-hand.com>
 
 	* applets/cal.json:

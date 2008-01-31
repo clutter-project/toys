@@ -53,7 +53,7 @@ set_time (AstroSystray *systray)
   time (&rawtime);
   timeinfo = localtime (&rawtime);
 
-  strftime (buffer, 100, "%A %d %B,%H:%M   ", timeinfo);
+  strftime (buffer, 100, "%a %d %b,%H:%M   ", timeinfo);
   
   clutter_label_set_text (CLUTTER_LABEL (priv->time), buffer);
   
@@ -76,6 +76,7 @@ astro_systray_init (AstroSystray *systray)
   GdkPixbuf *pixbuf;
   ClutterColor white = { 0xff, 0xff, 0xff, 0xff };
   gint width;
+  gchar *font;
   
   priv = systray->priv = ASTRO_SYSTRAY_GET_PRIVATE (systray);
 
@@ -104,7 +105,8 @@ astro_systray_init (AstroSystray *systray)
   width = clutter_actor_get_width (CLUTTER_ACTOR (systray));
 
   /* Time date */
-  priv->time = clutter_label_new_full ("Sans 12", "   ", &white);
+  font = g_strdup_printf ("Sans %d", (int)(ASTRO_PANEL_HEIGHT () * 0.4));
+  priv->time = clutter_label_new_full (font, "   ", &white);
   clutter_label_set_line_wrap (CLUTTER_LABEL (priv->time), FALSE);
   clutter_container_add_actor (CLUTTER_CONTAINER (systray), priv->time);
   clutter_actor_set_anchor_point_from_gravity (priv->time,CLUTTER_GRAVITY_WEST);
@@ -113,6 +115,7 @@ astro_systray_init (AstroSystray *systray)
                               ASTRO_PANEL_HEIGHT ()/2);
 
   g_timeout_add (1000, (GSourceFunc)set_time, systray);
+  g_free (font);
 
   clutter_actor_show_all (CLUTTER_ACTOR (systray));
 }
