@@ -105,7 +105,7 @@ astro_systray_init (AstroSystray *systray)
   width = clutter_actor_get_width (CLUTTER_ACTOR (systray));
 
   /* Time date */
-  font = g_strdup_printf ("Sans %d", (int)(ASTRO_PANEL_HEIGHT () * 0.4));
+  font = g_strdup_printf ("Sans %d", (int)(ASTRO_PANEL_HEIGHT () * 0.3));
   priv->time = clutter_label_new_full (font, "   ", &white);
   clutter_label_set_line_wrap (CLUTTER_LABEL (priv->time), FALSE);
   clutter_container_add_actor (CLUTTER_CONTAINER (systray), priv->time);

@@ -68,7 +68,7 @@ astro_panel_set_header (AstroPanel  *panel,
   clutter_label_set_text (CLUTTER_LABEL (priv->title), title);
   clutter_actor_set_position (priv->title, 
                               clutter_actor_get_width (priv->home)+(PADDING*3),
-                              (ASTRO_PANEL_HEIGHT ()/2) + (PADDING*2));
+                              (ASTRO_PANEL_HEIGHT ()/2));
 
   if (!icon)
     icon = priv->home_pixbuf;

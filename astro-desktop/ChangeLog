@@ -1,10 +1,17 @@
-2008-01-31  Neil J Patel,,,  <njp@o-hand.com>
+2008-02-01  Neil J. Patel  <njp@o-hand.com>
+
+	* applications/music/astro-songs.c: (astro_songs_init):
+	* src/astro-panel.c: (astro_panel_set_header):
+	* src/astro-systray.c: (astro_systray_init):
+	More fixes to sizing and display position.
+
+2008-01-31  Neil J Patel  <njp@o-hand.com>
 
 	* applications/music/astro-music-window.c:
 	(astro_music_window_init):
 	Fix the label size.
 
-2008-01-31  Neil J Patel,,,  <njp@o-hand.com>
+2008-01-31  Neil J Patel  <njp@o-hand.com>
 
 	* applications/contacts/astro-contact-row.c:
 	(astro_contact_row_init):

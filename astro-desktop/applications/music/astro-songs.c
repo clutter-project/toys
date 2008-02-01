@@ -224,7 +224,7 @@ static void
 astro_songs_init (AstroSongs *songs)
 {
 #define FONT_SIZE (ALBUM_SIZE/8)
-#define ROW_SPACING (FONT_SIZE*1.5)
+#define ROW_SPACING (FONT_SIZE*1.3)
 #define PAD 2
   AstroSongsPrivate *priv;
   ClutterColor white = { 0xff, 0xff, 0xff, 0xff };
