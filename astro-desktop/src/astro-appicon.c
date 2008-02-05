@@ -128,7 +128,7 @@ astro_appicon_set_application (AstroAppicon *appicon, AstroApplication *app)
     }
   else
     {
-      clutter_actor_apply_shader (texture, shader);
+      clutter_actor_set_shader (texture, shader);
       clutter_actor_set_shader_param (texture, "radius", 5.0);
     }
 

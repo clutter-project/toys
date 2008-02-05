@@ -1,3 +1,8 @@
+2008-02-05  Neil J. Patel  <njp@o-hand.com>
+
+	* src/astro-appicon.c: (astro_appicon_set_application):
+	Update to new shader api.
+
 2008-02-01  Neil J. Patel  <njp@o-hand.com>
 
 	* applications/music/astro-songs.c: (astro_songs_init):
