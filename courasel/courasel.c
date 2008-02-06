@@ -54,7 +54,7 @@ introduce_items (App *app)
       ang_start = -90.0;
       ang_end   = (STEP * i);
 
-      clutter_behaviour_ellipse_set_angle_begin 
+      clutter_behaviour_ellipse_set_angle_start 
 	(CLUTTER_BEHAVIOUR_ELLIPSE(item->ellipse_behave), ang_start);
 
       clutter_behaviour_ellipse_set_angle_end 
@@ -67,8 +67,10 @@ introduce_items (App *app)
 			"opacity-end", 0xff,
 			NULL);
 	  g_object_set (item->scale_behave,
-			"scale-begin", 0.6,
-			"scale-end", 1.0,
+			"x-scale-start", 0.6,
+			"y-scale-start", 0.6,
+			"x-scale-end", 1.0,
+			"y-scale-end", 1.0,
 			NULL);
 	}
       node = node->next;
@@ -106,7 +108,7 @@ rotate_items (App *app, int step)
 	(CLUTTER_BEHAVIOUR_ELLIPSE(item->ellipse_behave), 
 	 step > 0 ? CLUTTER_ROTATE_CW : CLUTTER_ROTATE_CCW);
 
-      clutter_behaviour_ellipse_set_angle_begin 
+      clutter_behaviour_ellipse_set_angle_start 
 	(CLUTTER_BEHAVIOUR_ELLIPSE(item->ellipse_behave), ang_start);
 
       clutter_behaviour_ellipse_set_angle_end 
@@ -120,8 +122,10 @@ rotate_items (App *app, int step)
 			NULL);
 
 	  g_object_set (item->scale_behave,
-			"scale-begin", 1.0,
-			"scale-end", 0.6,
+			"x-scale-start", 1.0,
+			"y-scale-start", 1.0,
+			"x-scale-end", 0.6,
+			"y-scale-end", 0.6,
 			NULL);
 	}
       else if (i == app->selected_index)
@@ -131,8 +135,10 @@ rotate_items (App *app, int step)
 			"opacity-end", 0xff,
 			NULL);
 	  g_object_set (item->scale_behave,
-			"scale-begin", 0.6,
-			"scale-end", 1.0,
+			"x-scale-start", 0.6,
+			"y-scale-start", 0.6,
+			"x-scale-end", 1.0,
+			"y-scale-end", 1.0,
 			NULL);
 	}
       else
@@ -142,8 +148,10 @@ rotate_items (App *app, int step)
 			"opacity-end", 0x66,
 			NULL);
 	  g_object_set (item->scale_behave,
-			"scale-begin", 0.6,
-			"scale-end", 0.6,
+			"x-scale-start", 0.6,
+			"y-scale-start", 0.6,
+			"x-scale-end", 0.6,
+			"y-scale-end", 0.6,
 			NULL);
 	}
 
@@ -255,8 +263,7 @@ main (int argc, char *argv[])
 
       item->scale_behave 
 	= clutter_behaviour_scale_new (app->alpha_sine_inc, 
-				       0.6, 0.6, 
-				       CLUTTER_GRAVITY_CENTER);
+				       0.6, 0.6, 0.6, 0.6);
 
       clutter_behaviour_apply (item->ellipse_behave, item->actor);
       clutter_behaviour_apply (item->opacity_behave, item->actor);
