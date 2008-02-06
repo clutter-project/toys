@@ -207,17 +207,16 @@ on_video_playback_start (WHScreenVideo *video,
 {
   clutter_actor_raise_top (wh->screen_video);
 
+  clutter_actor_set_scale (wh->screen_browse, 0.7, 0.7);
   clutter_effect_scale (wh->video_effect_tmpl,
 			wh->screen_browse,
-			0.7,
 			0.1,
-			CLUTTER_GRAVITY_CENTER,
+			0.1,
 			NULL,
 			NULL);
 
   clutter_effect_fade (wh->video_effect_tmpl,
 		       wh->screen_browse,
-		       0xff,
 		       0,
 		       NULL,
 		       NULL);
@@ -236,7 +235,6 @@ on_video_playback_start (WHScreenVideo *video,
   /* Stop the busy 'cursor' */
   clutter_effect_fade (wh->video_effect_tmpl,
 		       wh->busy,
-		       0xff,
 		       0,
 		       (ClutterEffectCompleteFunc)clutter_actor_hide,
 		       NULL);
@@ -265,22 +263,19 @@ on_video_playback_finish (WHScreenVideo *video,
 
   clutter_effect_fade (wh->video_effect_tmpl,
 		       wh->screen_browse,
-		       0,
 		       0xff,
 		       NULL,
 		       NULL);
 
   clutter_effect_scale (wh->video_effect_tmpl,
 			wh->screen_browse,
-			0.5,
 			1.0,
-			CLUTTER_GRAVITY_CENTER,
+			1.0,
 			NULL,
 			NULL);
 
   clutter_effect_fade (wh->video_effect_tmpl,
 		       wh->screen_video,
-		       0xff,
 		       0,
 		       (ClutterEffectCompleteFunc)playback_finish_complete,
 		       wh);
@@ -323,15 +318,13 @@ browse_input_cb (ClutterStage *stage,
 
 	  clutter_effect_scale (wh->video_effect_tmpl,
 				wh->screen_browse,
-				1.0,
 				0.7,
-				CLUTTER_GRAVITY_CENTER,
+				0.7,
 				NULL,
 				NULL);
 
 	  clutter_effect_fade (wh->video_effect_tmpl,
 			       wh->busy,
-			       0x00,
 			       0xff,
 			       NULL,
 			       NULL);
@@ -738,6 +731,13 @@ main (int argc, char *argv[])
 
   clutter_group_add (CLUTTER_GROUP(stage), screen_start);
 
+  clutter_actor_move_anchor_point_from_gravity (screen_start,
+                                                CLUTTER_GRAVITY_CENTER);
+  clutter_actor_move_anchor_point_from_gravity (desktop,
+                                                CLUTTER_GRAVITY_CENTER);
+  clutter_actor_move_anchor_point_from_gravity (wh->screen_browse,
+                                                CLUTTER_GRAVITY_CENTER);
+  
   effect_template 
     = clutter_effect_template_new (clutter_timeline_new (60, 60),
 				   CLUTTER_ALPHA_SINE_INC);
@@ -748,33 +748,32 @@ main (int argc, char *argv[])
 
   clutter_actor_show_all (screen_start);
 
+  clutter_actor_set_opacity (screen_start, 0);
   clutter_effect_fade (effect_template,
 		       screen_start,
-		       0,
 		       0xff,
 		       NULL,
 		       NULL);
 
+  clutter_actor_set_scale (screen_start, 0.2, 0.2);
   clutter_effect_scale (effect_template,
 			screen_start,
-			0.2,
 			1.0,
-			CLUTTER_GRAVITY_CENTER,
+			1.0,
 			NULL,
 			NULL);
 
+  clutter_actor_set_opacity (screen_start, 0xFF);
   clutter_effect_fade (effect_template,
 		       desktop,
-		       0xff,
 		       0,
 		       NULL,
 		       NULL);
 
   clutter_effect_scale (effect_template,
 			desktop,
-			1.0,
 			0.1,
-			CLUTTER_GRAVITY_CENTER,
+			0.1,
 			NULL,
 			NULL);
 
@@ -827,16 +826,14 @@ main (int argc, char *argv[])
 
   clutter_effect_fade (effect_template,
 		       screen_start,
-		       0xff,
 		       0,
 		       (ClutterEffectCompleteFunc)clutter_actor_hide,
 		       screen_start);
 
   clutter_effect_scale (effect_template,
 			screen_start,
-			1.0,
 			0.2,
-			CLUTTER_GRAVITY_CENTER,
+			0.2,
 			(ClutterEffectCompleteFunc)screen_fadeout_complete,
 			wh);
 

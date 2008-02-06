@@ -100,15 +100,14 @@ show_handler (ClutterActor *actor)
 {
   WHSliderMenu        *disk;
   WHSliderMenuPrivate *priv;
-  ClutterKnot          knots[2];
+  gint                 x;
+  gint                 y;
 
   disk = WH_SLIDER_MENU(actor);
   priv = disk->priv;
 
-  knots[0].x = clutter_actor_get_x (actor);
-  knots[0].y = -clutter_actor_get_height (actor); 
-  knots[1].x = clutter_actor_get_x (actor);
-  knots[1].y = clutter_actor_get_y (actor);
+  x = clutter_actor_get_x (actor);
+  y = clutter_actor_get_y (actor);
 
   clutter_actor_set_position (actor,
 			      clutter_actor_get_x (actor),
@@ -116,8 +115,8 @@ show_handler (ClutterActor *actor)
 
   clutter_effect_move (priv->effect_template,
 		       actor,
-		       knots,
-		       2,
+		       x,
+		       y,
 		       NULL,
 		       NULL);
 }
@@ -225,18 +224,16 @@ wh_slider_menu_paint (ClutterActor *actor)
 {
   WHSliderMenu      *menu = WH_SLIDER_MENU(actor);
   GList             *entry;
-  ClutterGeometry    clip;
 
   cogl_push_matrix();
 
   clutter_actor_paint (menu->priv->bg);
 
-  clip.x = menu->priv->menu_width / 16;
-  clip.y = 0;
-  clip.width =  menu->priv->menu_width - ( menu->priv->menu_width / 8 );
-  clip.height = clutter_actor_get_height (actor);
-
-  cogl_clip_set (&clip);
+  cogl_clip_set (CLUTTER_INT_TO_FIXED (menu->priv->menu_width / 16),
+                 0,
+                 CLUTTER_INT_TO_FIXED (menu->priv->menu_width -
+                                       ( menu->priv->menu_width / 8 )),
+                 CLUTTER_UNITS_TO_FIXED (clutter_actor_get_heightu (actor)));
 
   cogl_translate (SELECTED_OFFSET, 0, 0);
 

@@ -65,7 +65,6 @@ sync_thumbnail (WHVideoRowRenderer *renderer)
       clutter_actor_show (priv->thumbnail_image);
       clutter_effect_fade (effect,
 			   priv->thumbnail_image,
-			   0,
 			   0xff,
 			   NULL,
 			   NULL);
@@ -225,6 +224,9 @@ wh_video_row_renderer_request_coords (ClutterActor    *self,
       priv->active = ~priv->active;
       wh_video_row_renderer_set_active (row, ~priv->active); 
     }
+  
+  CLUTTER_ACTOR_CLASS (wh_video_row_renderer_parent_class)->
+    request_coords (self, box);
 }
 
 static void

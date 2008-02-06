@@ -21,9 +21,11 @@ timeline_cb (ClutterTimeline *timeline,
 {
   WHBusyPrivate *priv  = BUSY_PRIVATE(busy);
 
-  clutter_actor_rotate_z(priv->texture, (float)frame_num * 4.0, 
-			 clutter_actor_get_width (priv->texture)/2, 
-			 clutter_actor_get_height (priv->texture)/2);
+  clutter_actor_set_rotation (priv->texture, CLUTTER_Z_AXIS,
+                              (float)frame_num * 4.0,
+                              clutter_actor_get_width (priv->texture) / 2,
+                              clutter_actor_get_height (priv->texture) / 2,
+                              0);
 }
 
 static void

@@ -49,10 +49,12 @@ cheese_cb (ClutterTimeline *timeline,
 {
   WHScreenVideoPrivate *priv  = SCREEN_VIDEO_PRIVATE(screen);
 
-  clutter_actor_rotate_y (priv->video,
-			  frame_num * 12,
-			  CLUTTER_STAGE_WIDTH()/2,
-			  0);
+  clutter_actor_set_rotation (priv->video,
+                              CLUTTER_Y_AXIS,
+                              frame_num * 12,
+                              CLUTTER_STAGE_WIDTH()/2,
+                              0,
+                              0);
 }
 
 static void
@@ -95,7 +97,6 @@ video_pixbuf_change (ClutterTexture *texture, WHScreenVideo  *screen)
 
   clutter_effect_fade (priv->fadein_effect_tmpl,
 		       CLUTTER_ACTOR(screen),
-		       0,
 		       0xff,
 		       NULL,
 		       NULL);
@@ -193,7 +194,6 @@ video_hide_controls (WHScreenVideo *screen)
     {
       clutter_effect_fade (priv->controls_effect_tmpl,
 			   priv->video_controls,
-			   0xff,
 			   0,
 			   (ClutterEffectCompleteFunc)clutter_actor_hide,
 			   NULL);
@@ -226,7 +226,6 @@ video_show_controls (WHScreenVideo *screen)
 
       clutter_effect_fade (priv->controls_effect_tmpl,
 			   priv->video_controls,
-			   0,
 			   0xff,
 			   NULL,
 			   NULL);

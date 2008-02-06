@@ -92,7 +92,8 @@ wh_video_view_show (ClutterActor *actor)
 {
   WHVideoView        *view;
   WHVideoViewPrivate *priv;
-  ClutterKnot          knots[2];
+  gint                x;
+  gint                y;
 
   view = WH_VIDEO_VIEW(actor);
   priv = WH_VIDEO_VIEW_GET_PRIVATE(view);
@@ -101,10 +102,8 @@ wh_video_view_show (ClutterActor *actor)
 			  0, 0, CSW(), 
 			  clutter_actor_get_height (CLUTTER_ACTOR(view)));
 
-  knots[0].x = -clutter_actor_get_width (priv->selector); 
-  knots[0].y = clutter_actor_get_y (priv->selector);
-  knots[1].x = clutter_actor_get_x (priv->selector);
-  knots[1].y = clutter_actor_get_y (priv->selector);
+  x = clutter_actor_get_x (priv->selector);
+  y = clutter_actor_get_y (priv->selector);
 
   clutter_actor_set_position (priv->selector,
 			      -clutter_actor_get_width (priv->selector),
@@ -112,15 +111,13 @@ wh_video_view_show (ClutterActor *actor)
 
   clutter_effect_move (priv->effect_template,
 		       priv->selector,
-		       knots,
-		       2,
+		       x,
+		       y,
 		       NULL,
 		       NULL);
 
-  knots[0].x = CSW();
-  knots[0].y = clutter_actor_get_y (priv->rows);
-  knots[1].x = clutter_actor_get_x (priv->rows);
-  knots[1].y = clutter_actor_get_y (priv->rows);
+  x = clutter_actor_get_x (priv->rows);
+  y = clutter_actor_get_y (priv->rows);
 
   clutter_actor_set_position (priv->rows,
 			      CSW(),
@@ -128,8 +125,8 @@ wh_video_view_show (ClutterActor *actor)
 
   clutter_effect_move (priv->effect_template,
 		       priv->rows,
-		       knots,
-		       2,
+		       x,
+		       y,
 		       on_show_complete,
 		       view);
 
@@ -333,7 +330,7 @@ wh_video_view_request_coords (ClutterActor    *actor,
 
   w = CLUTTER_UNITS_TO_INT(box->x2 - box->x1);
   h = CLUTTER_UNITS_TO_INT(box->y2 - box->y1);
-
+  
   view = WH_VIDEO_VIEW(actor);
   priv = WH_VIDEO_VIEW_GET_PRIVATE(view);
 
@@ -343,6 +340,8 @@ wh_video_view_request_coords (ClutterActor    *actor,
       ensure_layout (view, w, h, priv->n_rows_visible);
       // clutter_actor_set_clip (actor, 0, -priv->row_height, w, h+priv->row_height);
     }
+  
+  CLUTTER_ACTOR_CLASS (wh_video_view_parent_class)->request_coords (actor, box);
 }
 
 static void
@@ -491,7 +490,6 @@ wh_video_view_activate (WHVideoView  *view,
       clutter_behaviour_apply (priv->behave_down, priv->rows);
       clutter_effect_fade (priv->button_effect_temp,
 			   priv->up,
-			   0xff,
 			   0x99,
 			   (ClutterEffectCompleteFunc)clutter_actor_set_opacity,
 			   GINT_TO_POINTER(0xff));
@@ -501,7 +499,6 @@ wh_video_view_activate (WHVideoView  *view,
       clutter_behaviour_apply (priv->behave_up, priv->rows);
       clutter_effect_fade (priv->button_effect_temp,
 			   priv->down,
-			   0xff,
 			   0x99,
 			   (ClutterEffectCompleteFunc)clutter_actor_set_opacity,
 			   GINT_TO_POINTER(0xff));
