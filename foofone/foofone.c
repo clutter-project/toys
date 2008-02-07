@@ -43,7 +43,8 @@ on_call_deactivate_complete (ClutterTimeline *timeline,
 {
   App *app = (App*)user_data;
   /* reset the now hidden dialing screen */
-  clutter_actor_rotate_y (app->screen_dial, 0, CSW/2, 0);
+  clutter_actor_set_rotation (app->screen_dial, CLUTTER_Y_AXIS, 0,
+                              0, 0, 0);
   g_object_unref (timeline);
 }
 
@@ -60,7 +61,8 @@ on_call_deactivate_new_frame (ClutterTimeline *timeline,
       /* switch visibility half way through rotation. shouldn't
        * really keep calling this though.	 
       */
-      clutter_actor_rotate_y (app->screen_dial, 0.0, CSW/2, 0);
+      clutter_actor_set_rotation (CLUTTER_ACTOR(app->screen_dial),
+                                  CLUTTER_Y_AXIS, 0.0, 0, 0, 0);
       clutter_actor_hide_all (app->screen_dial);
 
       clutter_actor_show_all (app->screen_dialpad);
@@ -68,15 +70,14 @@ on_call_deactivate_new_frame (ClutterTimeline *timeline,
 	clutter_actor_show (app->buttons[i]->actor);
     }
 
-  clutter_actor_rotate_y (CLUTTER_ACTOR(app->screen_dial),
-			  - (float)frame_num * 6, /* 180/30 = 6 */
-			  CSW/2,
-			  0);
+  clutter_actor_set_rotation (CLUTTER_ACTOR(app->screen_dial), CLUTTER_Y_AXIS,
+                              - (float)frame_num * 6, /* 180/30 = 6 */
+                              0, 0, 0);
 
-  clutter_actor_rotate_y (CLUTTER_ACTOR(app->screen_dialpad),
-                            180 - (frame_num * 6),
-                            CSW/2,
-                            0);
+  clutter_actor_set_rotation (CLUTTER_ACTOR(app->screen_dialpad),
+                              CLUTTER_Y_AXIS,
+                              180 - (frame_num * 6),
+                              CSW/2, 0, 0);
 }
 
 void
@@ -152,85 +153,75 @@ on_call_activate_complete (ClutterActor *actor,
 void
 call_activate (App *app)
 {
-  gint i;
-  ClutterKnot knots[2];
+  gint i, x, y;
 
-  /* Doh effect should set initial values */
-  clutter_actor_set_scale_with_gravity (app->screen_dial,
-					0.1,
-					0.1,
-					CLUTTER_GRAVITY_CENTER);
-  clutter_actor_set_opacity (app->screen_dial, 0);
+  clutter_actor_set_scale (app->screen_dial, 0.1, 0.1);
+  clutter_actor_set_opacity (app->screen_dial, 0x66);
   clutter_actor_show_all (app->screen_dial);
 
   /* zoom in the dialing window */
   clutter_effect_fade (app->call_effect_tmpl,
 		       app->screen_dial,
-		       0x66,
 		       0xff,
 		       NULL,
 		       NULL);
 
   clutter_effect_scale (app->call_effect_tmpl,
 			app->screen_dial,
-			0.1,
 			1.0,
-			CLUTTER_GRAVITY_CENTER,
+			1.0,
 			NULL,
 			NULL);
 
   /* Set up effects to shoot everything offscreen */
   for (i=0; i<12; i++)
     {
-      knots[0].x = app->buttons[i]->sx;
-      knots[0].y = app->buttons[i]->sy;
+      clutter_actor_set_position (app->buttons[i]->actor,
+                                  app->buttons[i]->sx,
+                                  app->buttons[i]->sy);
 
       switch ((i+1) % 3)
 	{
 	case 0:
-	  knots[1].x = CSW;
-	  knots[1].y = app->buttons[i]->sy;
+	  x = CSW;
+	  y = app->buttons[i]->sy;
 	  break;
 	case 1:
-	  knots[1].x = -clutter_actor_get_width (app->buttons[i]->actor);
-	  knots[1].y = app->buttons[i]->sy;
+	  x = -clutter_actor_get_width (app->buttons[i]->actor);
+	  y = app->buttons[i]->sy;
 	  break;
 	case 2:
-	  knots[1].x = app->buttons[i]->sx;
+	  x = app->buttons[i]->sx;
 	  if (i < 3)
-	    knots[1].y =  -clutter_actor_get_height (app->buttons[i]->actor);
+	    y =  -clutter_actor_get_height (app->buttons[i]->actor);
 	  else
-	    knots[1].y = CSH;
+	    y = CSH;
 	  break;
 	}
 
       clutter_effect_move (app->call_effect_tmpl,
 			   app->buttons[i]->actor,
-			   knots,
-			   2,
+			   x,
+			   y,
 			   NULL,
 			   NULL);
 
+      clutter_actor_set_opacity (app->buttons[i]->actor, 0xff);
       clutter_effect_fade (app->call_effect_tmpl,
 			   app->buttons[i]->actor,
-			   0xff,
 			   0x0,
 			   NULL,
 			   NULL);
       }
 
-  knots[0].x = app->dpyx;
-  knots[0].y = app->dpyy;
-  knots[1].x = app->dpyx;
-  knots[1].y = -clutter_actor_get_height (app->dpy);
-
   /* HACK: Note, here we kind of assume this timeline will complete
    * last but that is not guarenteed because of dropped frames etc.
   */
+  clutter_actor_set_position (app->dpy, app->dpyx, app->dpyy);
   clutter_effect_move (app->call_effect_tmpl,
 		       app->dpy,
-		       knots,
-		       2,
+		       app->dpyx,
+		       -clutter_actor_get_height (app->dpy),
 		       on_call_activate_complete,
 		       app);
 }
@@ -243,8 +234,7 @@ on_button_effect_complete (ClutterActor *actor,
 
   /* reset after effect */
   clutter_actor_set_opacity (b->actor, 0xff);
-  clutter_actor_set_scale_with_gravity (b->actor, 1.0, 1.0, 
-					CLUTTER_GRAVITY_CENTER);
+  clutter_actor_set_scale (b->actor, 1.0, 1.0);
   b->pressed_fadeout = NULL;
 }
 
@@ -256,18 +246,18 @@ button_activate (App *app, Button *b)
   if (b->pressed_fadeout)
     return;
 
+  clutter_actor_set_opacity (b->actor, 0xff);
   b->pressed_fadeout = clutter_effect_fade (app->button_effect_tmpl,
 					    b->actor,
-					    0xff,
 					    0,
 					    NULL,
 					    NULL);
 
+  clutter_actor_set_scale (b->actor, 1.0, 1.0);
   b->pressed_scale = clutter_effect_scale (app->button_effect_tmpl,
 					   b->actor,
-					   1.0,
 					   2.0,
-					   CLUTTER_GRAVITY_CENTER,
+					   2.0,
 					   on_button_effect_complete,
 					   b);
 }
@@ -291,6 +281,7 @@ on_input (ClutterStage *stage,
 	}
 
       /* will be nice when actors themselves handle events... */
+      /* TODO: Actors do handle events themselves, update this */
       clutter_event_get_coords (event, &x, &y);
 
       actor = clutter_stage_get_actor_at_pos (stage, x, y);
@@ -325,6 +316,8 @@ make_ui (App *app)
 		black_color = { 0, 0, 0, 0xff };
 
   app->screen_dialpad = clutter_group_new();
+  clutter_actor_move_anchor_point_from_gravity (app->screen_dialpad,
+                                                CLUTTER_GRAVITY_CENTER);
 
   if ((pixb = gdk_pixbuf_new_from_file ("display.png", NULL)) == NULL)
     g_error ("Unable to load '%s'", "display.png");
@@ -403,6 +396,10 @@ make_ui (App *app)
       app->buttons[j]->sx = x;
       app->buttons[j]->sy = y;
 
+      /* Adjust positions for gravity */
+      app->buttons[j]->sx += clutter_actor_get_width (app->buttons[j]->actor)/2;
+      app->buttons[j]->sy += clutter_actor_get_height (app->buttons[j]->actor)/2;
+
       /* Really we should use a Clutter*Box here.. */
       if (i % 3 == 0)
 	{
@@ -415,6 +412,8 @@ make_ui (App *app)
       app->buttons[j]->face = g_strdup (buf);
 
       clutter_actor_show_all (app->buttons[j]->actor);
+      clutter_actor_move_anchor_point_from_gravity (app->buttons[j]->actor,
+                                                    CLUTTER_GRAVITY_CENTER);
     }
 
   /* for button animations */
@@ -448,6 +447,8 @@ make_ui (App *app)
   a = clutter_label_new_full ("Sans Bold 32px", "Calling...", &text_color);
   clutter_actor_set_position (a, 10, (CSH - (CSH/6))/2 + 10);
   clutter_group_add (CLUTTER_GROUP(app->screen_dial), a);
+  clutter_actor_move_anchor_point_from_gravity (app->screen_dial,
+                                                CLUTTER_GRAVITY_CENTER);
   app->dial_label = a;
 
   app->call_effect_tmpl
