@@ -303,6 +303,7 @@ aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
   clutter_actor_set_position (priv->bg, 0, 0);
   
   clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture), pixbuf, &err);
+  clutter_actor_set_size (priv->texture, width, height);
   if (err)
     g_warning ("%s\n", err->message);
   

@@ -170,9 +170,10 @@ main (int argc, char **argv)
                              (AainaBehaveAlphaFunc)spin_me,
                              (gpointer)stage);
   
-  clutter_actor_rotate_y (stage, 0, 
-                          CLUTTER_STAGE_WIDTH ()/2,
-                          CLUTTER_STAGE_HEIGHT ());
+  clutter_actor_set_rotation (stage, CLUTTER_Y_AXIS, 0,
+                              CLUTTER_STAGE_WIDTH ()/2,
+                              0,
+                              CLUTTER_STAGE_HEIGHT ());
 
   g_timeout_add (120000, (GSourceFunc)im_spinning_around, timeline);
   clutter_main ();
@@ -196,17 +197,19 @@ on_key_release_event (ClutterStage *stage,
        i--;
        if (i == 0)
          i = 359;
-       clutter_actor_rotate_y (CLUTTER_ACTOR (stage), i, 
-                               CLUTTER_STAGE_WIDTH ()/2,
-                               CLUTTER_STAGE_HEIGHT ());
+       clutter_actor_set_rotation (CLUTTER_ACTOR (stage), CLUTTER_Y_AXIS, i,
+                                   CLUTTER_STAGE_WIDTH ()/2,
+                                   0,
+                                   CLUTTER_STAGE_HEIGHT ());
        break;
     case CLUTTER_Right:
        i++;
        if (i == 360)
          i = 0;
-       clutter_actor_rotate_y (CLUTTER_ACTOR (stage), i, 
-                               CLUTTER_STAGE_WIDTH ()/2,
-                               CLUTTER_STAGE_HEIGHT ());
+         clutter_actor_set_rotation (CLUTTER_ACTOR (stage), CLUTTER_Y_AXIS, i,
+                                     CLUTTER_STAGE_WIDTH ()/2,
+                                     0,
+                                     CLUTTER_STAGE_HEIGHT ());
        break;
     case CLUTTER_Up:
        if (!clutter_timeline_is_playing (timeline))
@@ -225,9 +228,6 @@ spin_me (ClutterBehaviour *behave,
 {
  gfloat factor = (gfloat)alpha_value / CLUTTER_ALPHA_MAX_ALPHA;
  
- clutter_actor_rotate_y (CLUTTER_ACTOR (show),
-                         factor * 360,
-                         CLUTTER_STAGE_WIDTH ()/2,
-                         0);
-
+ clutter_actor_set_rotation (CLUTTER_ACTOR (show), CLUTTER_Y_AXIS, factor * 360,
+                             CLUTTER_STAGE_WIDTH ()/2, 0, 0);
 }

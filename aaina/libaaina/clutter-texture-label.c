@@ -166,6 +166,7 @@ clutter_texture_label_make_pixbuf (ClutterTextureLabel *label)
 	  priv->fgcol.alpha);
   */
   clutter_texture_set_pixbuf (CLUTTER_TEXTURE (label), pixbuf, NULL);
+  g_object_set (G_OBJECT (label), "sync-size", TRUE, NULL);
   
   /* Texture has the ref now */
   g_object_unref (pixbuf); 
