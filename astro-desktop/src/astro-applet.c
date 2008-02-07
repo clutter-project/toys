@@ -45,16 +45,27 @@ astro_applet_paint (ClutterActor *applet)
 {
   AstroAppletPrivate *priv;
   GList *c;
+  gint width = 0;
 
   g_return_if_fail (ASTRO_IS_APPLET (applet));
   priv = ASTRO_APPLET (applet)->priv;
-
+  
+  c = clutter_container_get_children (CLUTTER_CONTAINER (applet));
+  
+  for (c = c; c; c = c->next)
+    {
+      gint total = clutter_actor_get_y (c->data) + 
+                   clutter_actor_get_width (c->data);
+      if (total > width && c->data != priv->texture)
+        width = total;
+    }
+  
   clutter_actor_set_size (priv->texture,
-                          clutter_actor_get_width (applet),
+                          width,
                           clutter_actor_get_height (applet));
 
-  c = clutter_container_get_children (CLUTTER_CONTAINER (applet));
-  for (c = c; c; c = c->next)
+   c = clutter_container_get_children (CLUTTER_CONTAINER (applet));
+   for (c = c; c; c = c->next)
     clutter_actor_paint (c->data);
     
 }

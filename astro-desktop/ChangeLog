@@ -1,3 +1,18 @@
+2008-02-07  Neil J. Patel  <njp@o-hand.com>
+
+	* applets/cal.json:
+	* applets/clock.json:
+	* applets/mail.json:
+	* applets/weather.json:
+	Fix the sizing so that it is a factor of the stage size.
+	
+	* applications/music/astro-songs.c: (bounds_check):
+	Remove some printfs.
+	 
+	* src/astro-applet.c: (astro_applet_paint):
+	Change the bacground texture size to be the as wide as the widest 
+	child (y+width).
+
 2008-02-05  Neil J. Patel  <njp@o-hand.com>
 
 	* src/astro-appicon.c: (astro_appicon_set_application):
@@ -14,7 +29,7 @@
 
 	* applications/music/astro-music-window.c:
 	(astro_music_window_init):
-	Fix the label size.
+	Fix the label size. 
 
 2008-01-31  Neil J Patel  <njp@o-hand.com>
 

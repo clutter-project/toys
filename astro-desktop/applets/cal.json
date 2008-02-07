@@ -6,9 +6,9 @@
      [ 
        { "id" : "label-temp",
          "type" : "ClutterLabel",
-         "x" : 2,
+         "x" : "1%",
          "y" : "12%",
-         "width" : "12%",
+         "width" : "9%",
          "text" : "Tuesday",
          "font-name" : "Sans 10px",
          "color" : "white",
@@ -21,13 +21,12 @@
        {
          "id" : "cloud",
          "type" : "ClutterTexture",
-         "x" : "3%",
+         "x" : "1%",
          "y" : 0,
-         "width" : "9%",
+         "width" : "7%",
          "height" : "10%",
          "pixbuf" : "cal.png",
          "visible" : true
        }
      ],
-  "width" : "20%"
 }

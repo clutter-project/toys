@@ -8,7 +8,7 @@
          "type" : "ClutterLabel",
          "x" : "1%",
          "y" : "12%",
-         "width" : "12%",
+         "width" : "10%",
          "text" : "New York",
          "font-name" : "Sans 10px",
          "color" : "white",
@@ -19,13 +19,13 @@
        },       
        
        {
-         "id" : "cloud",
+         "id" : "clock",
          "type" : "ClutterTexture",
-         "x" : 7,
+         "x" : "1%",
          "y" : 0,
          "pixbuf" : "clock.png",
          "height" : "10%",
-         "width" : "10%",
+         "width" : "8%",
          "visible" : true
        }
       

@@ -114,8 +114,6 @@ bounds_check (ClutterActor *group, AstroSongs *songs)
     {
       y = ALBUM_SIZE/2;
     }
-  
-  g_print ("%d %d %d\n\n", y, height, ALBUM_SIZE/2);
       
   priv->timeline = clutter_effect_move (priv->temp, priv->group,
                                         clutter_actor_get_x (priv->group),
