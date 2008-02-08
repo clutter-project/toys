@@ -86,6 +86,8 @@ struct _ClutterDominatrixPrivate
   ClutterFixed    orig_scale_x;
   ClutterFixed    orig_scale_y;
   ClutterFixed    orig_zang;
+  gint            orig_rot_x;
+  gint            orig_rot_y;
 
   guint8          old_opacity;
 };
@@ -161,6 +163,8 @@ clutter_dominatrix_set_property (GObject      *object,
       break;
     case PROP_GRAVITY:
       priv->gravity = g_value_get_enum (value);
+      clutter_actor_move_anchor_point_from_gravity (priv->slave,
+                                                    priv->gravity);
       break;
       
     default:
@@ -246,13 +250,21 @@ clutter_dominatrix_finalize (GObject *object)
 static void
 clutter_dominatrix_store_original_settings (ClutterDominatrixPrivate *priv)
 {
+  clutter_actor_move_anchor_point_from_gravity (priv->slave,
+                                                CLUTTER_GRAVITY_NONE);
   clutter_actor_query_coords (priv->slave, &priv->orig_box);
   
   clutter_actor_get_scalex (priv->slave,
 			    &priv->orig_scale_x,
 			    &priv->orig_scale_y);
 
-  priv->orig_zang = clutter_actor_get_rzangx (priv->slave);
+  priv->orig_zang = clutter_actor_get_rotationx (priv->slave,
+                                                 CLUTTER_Z_AXIS,
+                                                 &priv->orig_rot_x,
+                                                 &priv->orig_rot_y,
+                                                 NULL);
+  clutter_actor_move_anchor_point_from_gravity (priv->slave,
+                                                priv->gravity);
 }
 
 static GObject *
@@ -489,12 +501,6 @@ clutter_dominatrix_handle_event (ClutterDominatrix        *dominatrix,
   
   switch (event->type)
     {
-    case CLUTTER_2BUTTON_PRESS:
-      {
-	clutter_dominatrix_restore (dominatrix);
-      }
-      break;
-      
     case CLUTTER_BUTTON_PRESS:
       {
 	gint x, y;
@@ -510,6 +516,12 @@ clutter_dominatrix_handle_event (ClutterDominatrix        *dominatrix,
 	gint mhandle_height = priv->mhandle_height;
 	gint rhandle_width  = priv->rhandle_width;
 	gint rhandle_height = priv->rhandle_height;
+	
+	if (((ClutterButtonEvent *)event)->click_count == 2)
+	  {
+	    clutter_dominatrix_restore (dominatrix);
+	    break;
+	  }
 	
         clutter_event_get_coords (event, &x, &y);
 
@@ -632,7 +644,8 @@ clutter_dominatrix_handle_event (ClutterDominatrix        *dominatrix,
 	     * If the object is rotated, we need to unrotate the screen
 	     * coords first.
 	     */
-	    zang = clutter_actor_get_rzangx (actor);
+	    zang = clutter_actor_get_rotationx (actor, CLUTTER_Z_AXIS,
+	                                        NULL, NULL, NULL);
 
 	    if (zang)
 	      {
@@ -695,7 +708,8 @@ clutter_dominatrix_handle_event (ClutterDominatrix        *dominatrix,
 	 */
 	clutter_actor_query_coords (priv->slave, &box);
 
-	zang = clutter_actor_get_rzangx (priv->slave);
+  zang = clutter_actor_get_rotationx (priv->slave, CLUTTER_Z_AXIS,
+                                      NULL, NULL, NULL);
 
 	if (priv->dragging == DRAG_MOVE)
 	  {
@@ -820,9 +834,8 @@ clutter_dominatrix_handle_event (ClutterDominatrix        *dominatrix,
 	    if (a >= 0xb333)
 	      a = CFX_MUL (a, 0x14000);
 
-	    clutter_actor_rotate_zx (priv->slave, zang + a,
-				     clutter_actor_get_width (priv->slave)>>1,
-				     clutter_actor_get_height(priv->slave)>>1);
+            clutter_actor_set_rotationx (priv->slave, CLUTTER_Z_AXIS, zang + a,
+                                         0, 0, 0);
 	  }
 	else if (priv->dragging == DRAG_SCALE)
 	  {
@@ -865,8 +878,7 @@ clutter_dominatrix_handle_event (ClutterDominatrix        *dominatrix,
 	    sx += SCALE_STEP * diff;
 	    sy += SCALE_STEP * diff;
 	    
-	    clutter_actor_set_scale_with_gravityx (priv->slave, sx, sy,
-						   priv->gravity);
+	    clutter_actor_set_scalex (priv->slave, sx, sy);
 #undef SCALE_STEP
 	  }
 
@@ -890,6 +902,8 @@ clutter_dominatrix_handle_event (ClutterDominatrix        *dominatrix,
     default:
       break;
     }
+  clutter_actor_move_anchor_point_from_gravity (priv->slave,
+                                                priv->gravity);
 }
 
 
@@ -944,6 +958,8 @@ clutter_dominatrix_set_slave (ClutterDominatrix *dmx, ClutterActor *slave)
   dmx->priv->slave = slave;
 
   clutter_dominatrix_store_original_settings (dmx->priv);
+  clutter_actor_move_anchor_point_from_gravity (slave,
+                                                dmx->priv->gravity);
 }
 
 /**
@@ -978,10 +994,15 @@ clutter_dominatrix_restore (ClutterDominatrix *dmx)
 
   priv = dmx->priv;
   
-  clutter_actor_rotate_zx (priv->slave, priv->orig_zang, 0, 0);
+  clutter_actor_move_anchor_point_from_gravity (priv->slave,
+                                                CLUTTER_GRAVITY_NONE);
+  clutter_actor_set_rotationx (priv->slave, CLUTTER_Z_AXIS, priv->orig_zang,
+                               priv->orig_rot_x, priv->orig_rot_y, 0);
   
   clutter_actor_set_scalex (priv->slave,
 			    priv->orig_scale_x, priv->orig_scale_y);
   
   clutter_actor_request_coords (priv->slave, &priv->orig_box);
+  clutter_actor_move_anchor_point_from_gravity (priv->slave,
+                                                priv->gravity);
 }

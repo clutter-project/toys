@@ -97,8 +97,8 @@ notify_cb (GObject           *object,
 
   player = CLUTTER_VIDEO_PLAYER (object);
   
-  gint w = clutter_actor_get_width  (player) + MARG;
-  gint h = clutter_actor_get_height (player) + MARG;
+  gint w = clutter_actor_get_width  (CLUTTER_ACTOR (player)) + MARG;
+  gint h = clutter_actor_get_height (CLUTTER_ACTOR (player)) + MARG;
 
   if (w == clutter_actor_get_width (d->bckg) &&
       h == clutter_actor_get_width (d->bckg))
@@ -165,7 +165,12 @@ make_item (ClutterActor * stage, ClutterActor *actor)
 			 shaddow, rect, actor, NULL);
 
   zang = CLUTTER_INT_TO_FIXED (rand()%360);
-  clutter_actor_rotate_zx (group, zang, (w + MARG)/2, (h + MARG)/2);
+  clutter_actor_set_rotationx (group,
+                               CLUTTER_Z_AXIS,
+                               zang,
+                               0,
+                               0,
+                               0);
   
   dmx = clutter_dominatrix_new (group);
 
@@ -316,7 +321,8 @@ timeout_cb (gpointer data)
   tmpl = clutter_effect_template_new (clutter_timeline_new (60, 60),
 				      CLUTTER_ALPHA_SINE_DEC);
   
-  tmln = clutter_effect_fade (tmpl, d->notice, 0, 0xff, tmln_completed_cb,
+  clutter_actor_set_opacity (d->notice, 0);
+  tmln = clutter_effect_fade (tmpl, d->notice, 0xff, tmln_completed_cb,
 			      d->stage);
 
   g_object_unref (tmpl);
@@ -355,7 +361,6 @@ on_event (ClutterStage *stage,
 	  }
       }
       break;
-    case CLUTTER_2BUTTON_PRESS:
     case CLUTTER_BUTTON_PRESS:
       clutter_event_get_coords (event, &x, &y);
 
