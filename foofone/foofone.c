@@ -262,7 +262,7 @@ button_activate (App *app, Button *b)
 					   b);
 }
 
-void 
+static gboolean 
 on_input (ClutterStage *stage,
 	  ClutterEvent *event,
 	  gpointer      user_data)
@@ -277,7 +277,7 @@ on_input (ClutterStage *stage,
       if (app->dialing_state == TRUE)
 	{
 	  call_deactivate(app);
-	  return;
+	  return TRUE;
 	}
 
       /* will be nice when actors themselves handle events... */
@@ -291,7 +291,7 @@ on_input (ClutterStage *stage,
 	     (actor = clutter_actor_get_parent (actor)));
 	
       if (!actor)
-	return;
+	return FALSE;
       
       for (i=0; i<12; i++)
 	if (app->buttons[i]->actor == actor)
@@ -300,9 +300,11 @@ on_input (ClutterStage *stage,
 	      call_activate (app);
 	    else
 	      button_activate (app, app->buttons[i]);
-	    return;
+	    return FALSE;
 	  }
     }
+
+  return FALSE;
 }
 
 void
