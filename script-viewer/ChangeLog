@@ -1,3 +1,8 @@
+2008-02-08  Chris Lord  <chris@openedhand.com>
+
+	* test-script.json:
+	Change 'angle-begin' to 'angle-start' on rotation behaviour
+
 2008-01-24  Øyvind Kolås  <pippin@gimp.org>
 
 	* alphas.json: changed duration.
