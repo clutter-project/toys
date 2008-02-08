@@ -129,8 +129,8 @@ static ClutterActor * beget_odo (ClutterTexture * tex,
 {
   ClutterActor * odo = clutter_texture_odo_new (tex);
   clutter_actor_set_position (odo, x, y);
-  clutter_actor_rotate_x (odo, rotate_x, 0, 0);
-  clutter_actor_rotate_y (odo, rotate_y, 0, 0);
+  clutter_actor_set_rotation (odo, CLUTTER_X_AXIS, rotate_x, 0, 0, 0);
+  clutter_actor_set_rotation (odo, CLUTTER_Y_AXIS, rotate_y, 0, 0, 0);
 
   g_object_set (G_OBJECT (odo), "tile-width", tile_width, NULL);
   g_object_set (G_OBJECT (odo), "tile-height", tile_height, NULL);
@@ -252,8 +252,8 @@ main (int argc, char *argv[])
   
   odo = clutter_texture_odo_new (CLUTTER_TEXTURE (hand));
   clutter_actor_set_position (odo, 290, 200);
-  clutter_actor_rotate_x (odo, 0.0, 0, 0);
-  clutter_actor_rotate_y (odo, 0.0, 0, 0);
+  clutter_actor_set_rotation (odo, CLUTTER_X_AXIS, 0.0, 0, 0, 0);
+  clutter_actor_set_rotation (odo, CLUTTER_Y_AXIS, 0.0, 0, 0, 0);
 
   g_object_set (G_OBJECT (odo), "mesh", &mesh, NULL);
   
