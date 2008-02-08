@@ -1,3 +1,13 @@
+2008-02-08  Chris Lord  <chris@openedhand.com>
+
+	* configure.ac:
+	* opt-menu.c: (opt_menu_new):
+	* opt-show.c: (transition_completed_cb):
+	* opt-transition.c: (yz_flip_transition_frame_cb),
+	(zoom_transition_frame_cb), (flip_transition_frame_cb),
+	(cube_transition_frame_cb), (page_transition_frame_cb):
+	Update to use 0.5
+
 2007-08-07  Matthew Allum  <mallum@openedhand.com>
 
 	* configure.ac:

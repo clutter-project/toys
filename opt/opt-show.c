@@ -394,9 +394,9 @@ transition_completed_cb (OptTransition   *trans,
 
 
   /* Reset any tranforms to be safe */
-  clutter_actor_rotate_x (CLUTTER_ACTOR(from), 0, 0, 0);
-  clutter_actor_rotate_y (CLUTTER_ACTOR(from), 0, 0, 0);
-  clutter_actor_rotate_z (CLUTTER_ACTOR(from), 0, 0, 0);
+  clutter_actor_set_rotation (CLUTTER_ACTOR(from), CLUTTER_X_AXIS, 0, 0, 0, 0);
+  clutter_actor_set_rotation (CLUTTER_ACTOR(from), CLUTTER_Y_AXIS, 0, 0, 0, 0);
+  clutter_actor_set_rotation (CLUTTER_ACTOR(from), CLUTTER_Z_AXIS, 0, 0, 0, 0);
 
   /* If needed, update the position */
   if (priv->position_label_visible)
