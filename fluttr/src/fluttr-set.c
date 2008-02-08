@@ -480,9 +480,9 @@ fluttr_set_init (FluttrSet *self)
 	clutter_actor_set_position (photo, 
 			        (width/2)-(clutter_actor_get_width(photo)/2),
 			        (height/2)-(clutter_actor_get_height(photo)/2));
-	clutter_actor_rotate_z (photo, 30, 
-				clutter_actor_get_width (photo) /2,
-				clutter_actor_get_height (photo)/2);
+	clutter_actor_set_rotation (photo, CLUTTER_Z_AXIS, 30,
+				    clutter_actor_get_width (photo) / 2,
+				    clutter_actor_get_height (photo) / 2, 0);
 	
 	
 	photo = fluttr_photo_new ();
@@ -493,9 +493,9 @@ fluttr_set_init (FluttrSet *self)
 	clutter_actor_set_position (photo, 
 			        (width/2)-(clutter_actor_get_width(photo)/2),
 			        (height/2)-(clutter_actor_get_height(photo)/2));
-	clutter_actor_rotate_z (photo, -20, 
-				clutter_actor_get_width (photo) /2,
-				clutter_actor_get_height (photo)/2);
+	clutter_actor_set_rotation (photo, CLUTTER_Z_AXIS, -20,
+				    clutter_actor_get_width (photo) / 2,
+				    clutter_actor_get_height (photo) / 2, 0);
 	
 	
 	photo = fluttr_photo_new ();
@@ -506,9 +506,9 @@ fluttr_set_init (FluttrSet *self)
 	clutter_actor_set_position (photo, 
 			        (width/2)-(clutter_actor_get_width(photo)/2),
 			        (height/2)-(clutter_actor_get_height(photo)/2));
-	clutter_actor_rotate_z (photo, 0, 
-				clutter_actor_get_width (photo) /2,
-				clutter_actor_get_height (photo)/2);
+	clutter_actor_set_rotation (photo, CLUTTER_Z_AXIS, 0,
+				    clutter_actor_get_width (photo) / 2,
+				    clutter_actor_get_height (photo) / 2, 0);
 	
 	
 	/* Setup the transformation */

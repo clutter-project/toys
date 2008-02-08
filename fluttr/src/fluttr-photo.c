@@ -924,7 +924,8 @@ fluttr_photo_init (FluttrPhoto *self)
 	clutter_group_add (CLUTTER_GROUP (self), priv->options);
 	clutter_actor_set_size (priv->options, width, height);
 	clutter_actor_set_position (priv->options, 0, 0);
-	clutter_actor_rotate_x (priv->options, 90, height, 0);		
+	clutter_actor_set_rotation (priv->options,
+				    CLUTTER_X_AXIS, 90, 0, height, 0);
 		
 	/* Setup the transformation */
 	priv->new_x = priv->new_y = priv->new_scale = 0;

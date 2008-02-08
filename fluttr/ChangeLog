@@ -1,3 +1,10 @@
+2008-02-08  Chris Lord  <chris@openedhand.com>
+
+	* src/fluttr-photo.c: (fluttr_photo_init):
+	* src/fluttr-set.c: (fluttr_set_init):
+	* src/fluttr-spinner.c: (fluttr_spinner_alpha_func):
+	Update to new 0.5 rotation API
+
 2007-09-07  Neil J. Patel  <njp@o-hand.com>
 
 	Patch by: Andre Magalhaes <andrunko@gmail.com>

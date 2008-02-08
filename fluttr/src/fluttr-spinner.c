@@ -66,9 +66,9 @@ fluttr_spinner_alpha_func (ClutterBehaviour *behave,
 	angle = factor * 360.0;
 	
 	/* Set the new angle */
-	clutter_actor_rotate_z (CLUTTER_ACTOR (data), angle, 
-			clutter_actor_get_width (CLUTTER_ACTOR (data)) /2,
-			clutter_actor_get_height (CLUTTER_ACTOR (data)) /2);
+	clutter_actor_set_rotation (CLUTTER_ACTOR (data), CLUTTER_Z_AXIS, angle,
+			clutter_actor_get_width (CLUTTER_ACTOR (data)) / 2,
+			clutter_actor_get_height (CLUTTER_ACTOR (data)) / 2, 0);
 	
 	if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(data)))
 		clutter_actor_queue_redraw (CLUTTER_ACTOR(data));	
