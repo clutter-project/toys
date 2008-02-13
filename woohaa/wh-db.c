@@ -25,7 +25,16 @@ typedef struct _WHDBPrivate WHDBPrivate;
 struct _WHDBPrivate
 {
   sqlite3 *db;
+  
+  GThreadPool *thread_pool;
 };
+
+typedef struct
+{
+  WHDB *db;
+  gchar *uri;
+  GnomeVFSFileInfo *vfs_info;
+} WHDBThreadData;
 
 enum
 {
@@ -80,6 +89,10 @@ on_vfs_monitor_event (GnomeVFSMonitorHandle   *handle,
 		      gpointer                 user_data);
 
 static void
+wh_db_import_uri_func (gchar                  *uri,
+                       WHDB                   *db);
+
+static void
 wh_db_get_property (GObject *object, guint property_id,
 			     GValue *value, GParamSpec *pspec)
 {
@@ -102,6 +115,14 @@ wh_db_set_property (GObject *object, guint property_id,
 static void
 wh_db_dispose (GObject *object)
 {
+  WHDBPrivate *priv = DB_PRIVATE (object);
+  
+  if (priv->thread_pool)
+    {
+      g_thread_pool_free (priv->thread_pool, TRUE, TRUE);
+      priv->thread_pool = NULL;
+    }
+
   if (G_OBJECT_CLASS (wh_db_parent_class)->dispose)
     G_OBJECT_CLASS (wh_db_parent_class)->dispose (object);
 }
@@ -176,6 +197,13 @@ wh_db_init (WHDB *self)
 			&SQLStatements[i], NULL) != SQLITE_OK)
       g_warning("Failed to prepare '%s' : %s", 
 		SQLStatementText[i], sqlite3_errmsg(priv->db));
+  
+  /* Create thread pool for indexing */
+  priv->thread_pool = g_thread_pool_new ((GFunc)wh_db_import_uri_func,
+                                         self,
+                                         -1,
+                                         FALSE,
+                                         NULL);
 }
 
 WHDB*
@@ -196,8 +224,38 @@ uri_is_media (const gchar *uri)
 	  || g_str_has_suffix(uri, ".mpg"));
 }
 
+static gboolean
+wh_db_monitor_add_idle (WHDBThreadData *data)
+{
+  GnomeVFSMonitorHandle   *monitor_handle;
+
+  gnome_vfs_monitor_add (&monitor_handle,
+                         data->uri,
+                         GNOME_VFS_MONITOR_DIRECTORY,
+                         on_vfs_monitor_event,
+                         data->db);
+  
+  g_free (data->uri);
+  g_slice_free (WHDBThreadData, data);
+  
+  return FALSE;
+}
+
+static gboolean
+wh_db_media_file_found_idle (WHDBThreadData *data)
+{
+  wh_db_media_file_found (data->db, data->uri, data->vfs_info); 
+
+ if (data->vfs_info)
+    gnome_vfs_file_info_unref (data->vfs_info);
+  g_free (data->uri);
+  g_slice_free (WHDBThreadData, data);
+  
+  return FALSE;
+}
+
 gboolean
-wh_db_import_uri (WHDB *db, const gchar *uri)
+wh_db_import_uri_private (WHDB *db, const gchar *uri)
 {
   GnomeVFSResult          vfs_result;
   GnomeVFSFileInfo       *vfs_info = NULL;
@@ -208,10 +266,6 @@ wh_db_import_uri (WHDB *db, const gchar *uri)
     GNOME_VFS_FILE_INFO_DEFAULT
     |GNOME_VFS_FILE_INFO_FOLLOW_LINKS
     |GNOME_VFS_FILE_INFO_GET_ACCESS_RIGHTS;
-
-  /* FIXME: hack - really I think importing needs to be in a thread */
-  while (g_main_context_pending (NULL))
-    g_main_context_iteration (NULL, FALSE);
 
   vfs_info   = gnome_vfs_file_info_new ();
   vfs_result = gnome_vfs_get_file_info (uri, vfs_info, vfs_options);
@@ -230,28 +284,41 @@ wh_db_import_uri (WHDB *db, const gchar *uri)
 
   if (vfs_info->type == GNOME_VFS_FILE_TYPE_DIRECTORY)
     {
-      GnomeVFSMonitorHandle   *monitor_handle;
+      WHDBThreadData *data;
+      
+      data = g_slice_new0 (WHDBThreadData);
+      data->uri = g_strdup (uri);
+      data->db = db;
+      
+      g_idle_add ((GSourceFunc)wh_db_monitor_add_idle, data);
 
       ret = wh_db_walk_directory (db, uri);
-
-      gnome_vfs_monitor_add (&monitor_handle,
-			     uri,
-			     GNOME_VFS_MONITOR_DIRECTORY,
-			     on_vfs_monitor_event,
-			     db);
     }
   else if (vfs_info->type == GNOME_VFS_FILE_TYPE_REGULAR)
     {
       if (uri_is_media(uri))
-	  wh_db_media_file_found (db, uri, vfs_info); 
+        {
+          WHDBThreadData *data;
+          
+          data = g_slice_new0 (WHDBThreadData);
+          data->uri = g_strdup (uri);
+          data->db = db;
+          data->vfs_info = vfs_info;
+          
+          g_idle_add ((GSourceFunc)wh_db_media_file_found_idle, data);
+          
+          goto skip_cleanup;
+        }
 
       ret = TRUE;
     }
 
- cleanup:
+  cleanup:
 
- if (vfs_info)
+  if (vfs_info)
     gnome_vfs_file_info_unref (vfs_info);
+  
+  skip_cleanup:
   
   return ret;
 }
@@ -269,10 +336,6 @@ wh_db_walk_directory (WHDB *db, const gchar *uri)
     GNOME_VFS_FILE_INFO_DEFAULT
     |GNOME_VFS_FILE_INFO_FOLLOW_LINKS
     |GNOME_VFS_FILE_INFO_GET_ACCESS_RIGHTS;
-
-  /* FIXME: hack - really I think importing needs to be in a thread */
-  while (g_main_context_pending (NULL))
-    g_main_context_iteration (NULL, FALSE);
 
   vfs_result = gnome_vfs_directory_open (&vfs_handle, uri, vfs_options);
 
@@ -293,14 +356,10 @@ wh_db_walk_directory (WHDB *db, const gchar *uri)
 
 	  if (entry_uri)
 	    {
-	      ret |= wh_db_import_uri (db, entry_uri); 
+	      ret |= wh_db_import_uri_private (db, entry_uri); 
 	      g_free(entry_uri);
 	    }
 	}
-
-      /* FIXME: hack - really I think importing needs to be in a thread */
-      while (g_main_context_pending (NULL))
-	g_main_context_iteration (NULL, FALSE);
     }
 
  cleanup:
@@ -311,6 +370,13 @@ wh_db_walk_directory (WHDB *db, const gchar *uri)
     gnome_vfs_directory_close (vfs_handle);
 
  return ret;
+}
+
+static void
+wh_db_import_uri_func (gchar *uri, WHDB *db)
+{
+  wh_db_import_uri_private (db, uri);
+  g_free (uri);
 }
 
 static gboolean 
@@ -555,7 +621,7 @@ on_vfs_monitor_event (GnomeVFSMonitorHandle   *handle,
 
   if (event_type == GNOME_VFS_MONITOR_EVENT_CREATED)
     {
-      wh_db_import_uri (db, info_uri);
+      wh_db_import_uri_private (db, info_uri);
       return;
     }
 
@@ -564,4 +630,15 @@ on_vfs_monitor_event (GnomeVFSMonitorHandle   *handle,
 
   if (event_type == GNOME_VFS_MONITOR_EVENT_CHANGED)
     printf("file '%s' changed\n", info_uri);
+}
+
+gboolean
+wh_db_import_uri (WHDB *db, const gchar *uri)
+{
+  WHDBPrivate *priv = DB_PRIVATE (db);
+  
+  if (priv->thread_pool)
+    g_thread_pool_push (priv->thread_pool, g_strdup (uri), NULL);
+  
+  return TRUE;
 }
