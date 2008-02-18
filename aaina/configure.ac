@@ -10,7 +10,7 @@ AC_PROG_CC
 AC_STDC_HEADERS
 AC_PROG_LIBTOOL
 
-PKG_CHECK_MODULES(DEPS, clutter-0.5 gdk-2.0 gtk+-2.0 neon >= 0.26 libxml-2.0)
+PKG_CHECK_MODULES(DEPS, clutter-0.6 gdk-2.0 gtk+-2.0 neon >= 0.26 libxml-2.0)
 AC_SUBST(DEPS_CFLAGS)
 AC_SUBST(DEPS_LIBS)
 

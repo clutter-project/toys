@@ -1,5 +1,5 @@
-LIBS=`pkg-config --libs clutter-0.5 gnome-vfs-2.0 clutter-gst-0.5`
-INCS=`pkg-config --cflags clutter-0.5 gnome-vfs-2.0 clutter-gst-0.5`
+LIBS=`pkg-config --libs clutter-0.6 gnome-vfs-2.0 clutter-gst-0.6`
+INCS=`pkg-config --cflags clutter-0.6 gnome-vfs-2.0 clutter-gst-0.6`
 
 .c.o:
 	$(CC) -g -Wall $(CFLAGS) $(INCS) -c $*.c

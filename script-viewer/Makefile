@@ -9,7 +9,7 @@
 # Øyvind Kolås (c) 2007 <pippin@gimp.org>  placed in the Public Domain.
 ##
 
-PKGMODULES = clutter-0.5 
+PKGMODULES = clutter-0.6 
 
 # you only need to change the following if you want to change where the
 # generated tarball gets scp'd to:

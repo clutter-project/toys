@@ -1,3 +1,8 @@
+2008-02-18  Chris Lord  <chris@openedhand.com>
+
+	* configure.ac:
+	Bump clutter version to 0.6
+
 2008-02-08  Chris Lord  <chris@openedhand.com>
 
 	* configure.ac:

@@ -1,3 +1,8 @@
+2008-02-18  Chris Lord  <chris@openedhand.com>
+
+	* configure.ac:
+	Bump clutter requirement to 0.6
+
 2008-02-13  Chris Lord  <chris@openedhand.com>
 
 	* wh-db.c: (wh_db_dispose), (wh_db_init), (wh_db_monitor_add_idle),

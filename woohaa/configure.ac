@@ -9,7 +9,7 @@ AC_ISC_POSIX
 AC_PROG_CC
 AC_STDC_HEADERS
 
-PKG_CHECK_MODULES(DEPS, clutter-0.5 gnome-vfs-2.0 clutter-gst-0.5 sqlite3 gdk-2.0 gconf-2.0)
+PKG_CHECK_MODULES(DEPS, clutter-0.6 gnome-vfs-2.0 clutter-gst-0.6 sqlite3 gdk-2.0 gconf-2.0)
 AC_SUBST(DEPS_CFLAGS)
 AC_SUBST(DEPS_LIBS)
 
