@@ -19,7 +19,7 @@ astro_application_factory_init ()
 
   app = astro_music_new ("Music Player", pixbuf);
 
-  g_debug ("Example applet loaded\n");
+  g_debug ("Music application loaded\n");
 
   return app;
 }

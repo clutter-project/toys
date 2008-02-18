@@ -20,7 +20,7 @@ astro_application_factory_init ()
 
   app = astro_contacts_new ("Contacts", pixbuf);
 
-  g_debug ("Example applet loaded\n");
+  g_debug ("Contacts application loaded\n");
 
   return app;
 }

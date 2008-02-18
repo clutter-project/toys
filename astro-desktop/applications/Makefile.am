@@ -1,1 +1,1 @@
-SUBDIRS = contacts example music
+SUBDIRS = contacts example images music

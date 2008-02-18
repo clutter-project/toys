@@ -1,3 +1,40 @@
+2008-02-18  Neil J. Patel  <njp@o-hand.com>
+
+	* applications/Makefile.am:
+	* applications/contacts/astro-contacts-window.c: (ensure_layout),
+	(ensure_layout_proper), (on_event), (astro_contacts_window_init),
+	(astro_contacts_window_new):
+	* applications/contacts/init.c: (astro_application_factory_init):
+	* applications/example/init.c: (astro_application_factory_init):
+	* applications/images/Makefile.am:
+	* applications/images/astro-images-window.c:
+	(astro_images_window_class_init), (astro_images_window_init),
+	(astro_images_window_new):
+	* applications/images/astro-images-window.h:
+	* applications/images/astro-images.c: (get_title), (set_title),
+	(get_icon), (set_icon), (get_window), (close),
+	(astro_images_class_init), (astro_images_init), (astro_images_new):
+	* applications/images/astro-images.h:
+	* applications/images/clutter-reflect-texture.c:
+	(reflect_texture_render_to_gl_quad),
+	(clutter_reflect_texture_paint),
+	(clutter_reflect_texture_set_property),
+	(clutter_reflect_texture_get_property),
+	(clutter_reflect_texture_class_init),
+	(clutter_reflect_texture_init), (clutter_reflect_texture_new):
+	* applications/images/clutter-reflect-texture.h:
+	* applications/images/init.c: (astro_application_factory_init):
+	* applications/music/init.c: (astro_application_factory_init):
+	* configure.ac:
+	* data/icons/Makefile.am:
+	Added in the starting of a new images application.	
+	
+	* libastro-desktop/astro-defines.h:
+	* src/astro-panel.c: (astro_panel_init):
+	* src/astro-systray.c: (astro_systray_init):
+	Increased the default panel size, and fixed the label-sizing issues
+	that went with it.
+
 2008-02-07  Neil J. Patel  <njp@o-hand.com>
 
 	* applets/cal.json:

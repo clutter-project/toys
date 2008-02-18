@@ -167,11 +167,10 @@ astro_panel_init (AstroPanel *panel)
     }
 
   /* Title label */
-  font = g_strdup_printf ("Sans %d", (int)(ASTRO_PANEL_HEIGHT () * 0.4));
+  font = g_strdup_printf ("Sans %d", (int)(ASTRO_PANEL_HEIGHT () * 0.3));
   priv->title = clutter_label_new_full (font, "Home", &white);
   clutter_label_set_line_wrap (CLUTTER_LABEL (priv->title), FALSE);
   clutter_container_add_actor (CLUTTER_CONTAINER (panel), priv->title);
-  clutter_actor_set_size (priv->title, CSW(), ASTRO_PANEL_HEIGHT ());
   clutter_actor_set_anchor_point_from_gravity (priv->title, 
                                                CLUTTER_GRAVITY_WEST);
   clutter_actor_set_position (priv->title, 

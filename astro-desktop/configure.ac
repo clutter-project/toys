@@ -32,6 +32,7 @@ applets/Makefile
 applications/Makefile
 applications/contacts/Makefile
 applications/example/Makefile
+applications/images/Makefile
 applications/music/Makefile
 src/Makefile
 ])

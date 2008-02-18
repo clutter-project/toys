@@ -48,6 +48,7 @@ struct _AstroContactsWindowPrivate
   GList *contacts_list;
 
   ClutterActor *contacts;
+  ClutterActor *contacts_eventbox;
   ClutterActor *label;
 
   ClutterActor *details;
@@ -58,6 +59,12 @@ struct _AstroContactsWindowPrivate
   ClutterTimeline  *timeline;
   ClutterAlpha     *alpha;
   ClutterBehaviour *behave;
+
+  gint     starty;
+  gint     endy;
+  gint     lasty;
+  guint32  start_time;
+  gboolean mousedown;
 };
 
 static AstroContact contacts[] = {
@@ -130,7 +137,7 @@ ensure_layout (AstroContactsWindow *window)
             trans->scale = 0.4;
           else
             trans->scale = 0.4 + (0.4 * (MAX_DIST-diff)/MAX_DIST);
-          //trans->scale = 1.0;
+
         }
       else
         {
@@ -142,7 +149,6 @@ ensure_layout (AstroContactsWindow *window)
             trans->scale = 0.4;
           else
             trans->scale = 0.4 + (0.4 * (MAX_DIST-diff)/MAX_DIST);        
-          //trans->scale = 1.0;
         }
 
       astro_contact_row_set_active (ASTRO_CONTACT_ROW (contact), active);
@@ -200,7 +206,6 @@ ensure_layout_proper (AstroContactsWindow *window)
             trans->scale = 0.4;
           else
             trans->scale = 0.4 + (0.4 * (MAX_DIST-diff)/MAX_DIST);        
-          //trans->scale = 1.0;
         }
 
       astro_contact_row_set_active (ASTRO_CONTACT_ROW (contact), active);
@@ -233,6 +238,62 @@ astro_contacts_list_window_advance (AstroContactsWindow *window, gint n)
 
   clutter_timeline_start (priv->timeline);
 
+}
+
+static gboolean
+on_event (ClutterActor        *contacts, 
+          ClutterEvent        *event,
+          AstroContactsWindow *window)
+{
+  AstroContactsWindowPrivate *priv;
+
+  g_return_val_if_fail (ASTRO_IS_CONTACTS_WINDOW (window), FALSE);
+  priv = window->priv;
+
+  if (event->type == CLUTTER_BUTTON_PRESS)
+    {   
+      priv->mousedown = TRUE;
+      priv->starty = priv->lasty = event->button.y;
+      priv->start_time = event->button.time;
+
+      priv->active = -1;
+      clutter_timeline_start (priv->timeline);
+
+      g_debug ("button-press\n");
+    }
+  else if (event->type == CLUTTER_MOTION)
+    {
+      gint offset;
+     
+      if (!priv->mousedown)
+        return FALSE;
+
+      if (event->motion.y > priv->lasty)
+        offset = event->motion.y - priv->lasty;
+      else
+        offset = -1 * (priv->lasty - event->motion.y);
+
+      priv->lasty = event->motion.y;
+
+      clutter_actor_set_y (priv->contacts, 
+                           clutter_actor_get_y (priv->contacts) + offset);
+
+      g_debug ("button-motion\n");
+      return TRUE;
+    }
+  else if (event->type == CLUTTER_BUTTON_RELEASE)
+    {
+      gint endy;
+
+      endy = event->button.y - priv->starty;
+     
+
+      g_print ("endy = %d\n", endy);
+
+      priv->mousedown = FALSE;
+      g_debug ("button-release\n");
+    } 
+  return FALSE;
 }
 
 static void
@@ -477,6 +538,14 @@ astro_contacts_window_init (AstroContactsWindow *window)
   clutter_actor_set_size (priv->contacts, CSW(), CSH());
   clutter_actor_set_position (priv->contacts, 0, 0);
 
+  priv->contacts_eventbox = clutter_rectangle_new ();
+  clutter_container_add_actor (CLUTTER_CONTAINER (window),
+                               priv->contacts_eventbox);
+  clutter_actor_set_position (priv->contacts_eventbox, 0, 0);
+  clutter_actor_set_size (priv->contacts_eventbox, CSW()/2, CSH());
+  clutter_actor_set_opacity (priv->contacts_eventbox, 0);
+  clutter_actor_set_reactive (priv->contacts_eventbox, TRUE);
+
   priv->details = astro_contact_details_new ();
   clutter_container_add_actor (CLUTTER_CONTAINER (window), priv->details);
   clutter_actor_set_position (priv->details, CSW()*0.54, 0);
@@ -505,6 +574,9 @@ astro_contacts_window_init (AstroContactsWindow *window)
   astro_utils_set_clip (CLUTTER_ACTOR (window), 0, ASTRO_PANEL_HEIGHT (),
                         CSW(), CSH());
 
+  g_signal_connect (priv->contacts_eventbox, "event",
+                    G_CALLBACK (on_event), window);
+
   clutter_actor_set_position (CLUTTER_ACTOR (window), 0, 0);
   clutter_actor_show_all (CLUTTER_ACTOR (window));
 }
@@ -517,4 +589,3 @@ astro_contacts_window_new (void)
 
   return contacts_window;
 }
-
