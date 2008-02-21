@@ -730,7 +730,7 @@ opt_config_load (OptShow     *show,
       NULL
     };
 
-  memset (&info, sizeof(OptParseInfo), 0);
+  memset (&info, 0, sizeof(OptParseInfo));
 
   info.state = INITIAL; 
   info.show  = show;
