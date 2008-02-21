@@ -22,6 +22,7 @@
 
 #include "astro-appicon.h"
 
+#include <clutter/clutter-shader.h>
 #include <libastro-desktop/astro-defines.h>
 
 G_DEFINE_TYPE (AstroAppicon, astro_appicon, CLUTTER_TYPE_GROUP);
