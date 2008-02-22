@@ -334,14 +334,14 @@ free_thumbs (YHYoutubeBrowser *self)
   
   if (priv->timeline_in)
     {
-      clutter_timeline_stop (priv->timeline_in);
+      clutter_timeline_pause (priv->timeline_in);
       g_object_unref (priv->timeline_in);
       priv->timeline_in = NULL;
     }
 
   if (priv->timeline_out)
     {
-      clutter_timeline_stop (priv->timeline_out);
+      clutter_timeline_pause (priv->timeline_out);
       g_object_unref (priv->timeline_out);
       priv->timeline_out = NULL;
     }
@@ -518,6 +518,33 @@ yh_youtube_browser_dispose (GObject *object)
     {
       g_object_unref (priv->model);
       priv->model = NULL;
+    }
+  
+  if (priv->template)
+    {
+      g_object_unref (priv->template);
+      priv->template = NULL;
+    }
+  
+  if (priv->group)
+    {
+      clutter_actor_unparent (priv->group);
+      priv->group = NULL;
+    }
+  
+  if (priv->youtube)
+    {
+      g_signal_handlers_disconnect_by_func (priv->youtube,
+                                            complete_cb,
+                                            browser);
+      g_signal_handlers_disconnect_by_func (priv->youtube,
+                                            thumbnail_cb,
+                                            browser);
+      g_signal_handlers_disconnect_by_func (priv->youtube,
+                                            link_cb,
+                                            browser);
+      g_object_unref (priv->youtube);
+      priv->youtube = NULL;
     }
   
   if (G_OBJECT_CLASS (yh_youtube_browser_parent_class)->dispose)

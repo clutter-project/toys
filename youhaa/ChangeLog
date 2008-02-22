@@ -1,5 +1,14 @@
 2008-02-22  Chris Lord  <chris@openedhand.com>
 
+	* src/yh-youtube-browser.c: (free_thumbs),
+	(yh_youtube_browser_dispose):
+	Disconnect signals from the Youtube object on dispose, also free
+	effects template and unparent internal group - the first of these
+	fixes crashes when doing a second successful query, the others stop
+	leaking memory
+
+2008-02-22  Chris Lord  <chris@openedhand.com>
+
 	* Makefile.am:
 	* autogen.sh:
 	* configure.ac:
