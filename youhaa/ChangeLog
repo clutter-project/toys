@@ -1,0 +1,17 @@
+2008-02-22  Chris Lord  <chris@openedhand.com>
+
+	* Makefile.am:
+	* autogen.sh:
+	* configure.ac:
+	* data/Makefile.am:
+	* data/go-next.svg:
+	* data/go-previous.svg:
+	* libcurl.m4:
+	* src/Makefile.am:
+	* src/glibcurl.[ch]:
+	* src/yh-main.c:
+	* src/yh-theme.[ch]:
+	* src/yh-youtube-browser.[ch]:
+	* src/yh-youtube.[ch]:
+	Initial check-in of YouTube browser/player app
+
