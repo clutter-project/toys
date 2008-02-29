@@ -3,6 +3,15 @@
 	* applications/contacts/clutter-reflect-texture.c:
 	* applications/images/clutter-reflect-texture.c:
 	* applications/music/clutter-reflect-texture.c:
+        No need to include GL header.
+	* configure.ac:
+        No need for -Werror
+
+2008-02-29  Matthew Allum  <mallum@openedhand.com>
+
+	* applications/contacts/clutter-reflect-texture.c:
+	* applications/images/clutter-reflect-texture.c:
+	* applications/music/clutter-reflect-texture.c:
         Quick hack to build with GLES.
 	* configure.ac:
         Stick with 0.6, dont pull in gst

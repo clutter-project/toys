@@ -17,7 +17,7 @@ AC_SUBST(DEPS_CFLAGS)
 AC_SUBST(DEPS_LIBS)
 
 if test "x$GCC" = "xyes"; then
-        GCC_CFLAGS="-g -Wall -Werror"
+        GCC_CFLAGS="-g -Wall"
 fi
 AC_SUBST(GCC_CFLAGS)
 

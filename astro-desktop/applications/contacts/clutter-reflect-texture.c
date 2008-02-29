@@ -36,7 +36,6 @@
  * a refelction like effect.
  */
 
-#include <GL/gl.h>
 #include <clutter/cogl.h>
 
 #include "clutter-reflect-texture.h"
