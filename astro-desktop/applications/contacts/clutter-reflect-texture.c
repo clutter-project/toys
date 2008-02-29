@@ -73,6 +73,8 @@ reflect_texture_render_to_gl_quad (ClutterReflectTexture *ctexture,
   gint   pwidth, pheight, rheight;
   float tx, ty, ty2 = 0.0;
 
+#ifdef CLUTTER_COGL_HAS_GL
+
   ClutterReflectTexturePrivate *priv = ctexture->priv;
   ClutterActor *parent_texture = CLUTTER_ACTOR(clutter_clone_texture_get_parent_texture(CLUTTER_CLONE_TEXTURE(ctexture)));
 
@@ -189,6 +191,8 @@ reflect_texture_render_to_gl_quad (ClutterReflectTexture *ctexture,
 	}
       lastx += qx2 - qx1;
     }
+#endif
+
 }
 
 static void
@@ -198,6 +202,8 @@ clutter_reflect_texture_paint (ClutterActor *self)
   ClutterActor                *parent_texture;
   gint                         x1, y1, x2, y2;
   GLenum                       target_type;
+
+#ifdef CLUTTER_COGL_HAS_GL
 
   priv = CLUTTER_REFLECT_TEXTURE (self)->priv;
 
@@ -239,6 +245,7 @@ clutter_reflect_texture_paint (ClutterActor *self)
 				   0, 0, x2 - x1, y2 - y1);
 
   cogl_pop_matrix ();
+#endif
 }
 
 
