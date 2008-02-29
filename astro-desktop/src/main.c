@@ -55,8 +55,7 @@ main (gint argc, gchar *argv[])
   GError *error = NULL;
 
   g_thread_init (NULL);
-  gdk_init (&argc, &argv);
-  
+
   clutter_init_with_args (&argc, &argv,
                           " - Astro Desktop", entries,
                           NULL, &error);
