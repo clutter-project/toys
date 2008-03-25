@@ -1,6 +1,7 @@
 
 #include "yh-youtube.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <clutter/clutter.h>
 #include "glibcurl.h"
@@ -271,10 +272,13 @@ yh_youtube_create_model (YHYoutube *youtube)
       if ((prop_node = json_object_get_member (object, "gd$rating")))
         if ((prop_object = json_node_get_object (prop_node)))
           if ((prop_node = json_object_get_member (prop_object, "average")))
-            clutter_model_iter_set (iter,
-                                    YH_YOUTUBE_COL_RATING,
-                                    json_node_get_double (prop_node),
-                                    -1);
+            {
+              /* FIXME: This is probably insecure? */
+              gdouble rating = atof (json_node_get_string (prop_node));
+              clutter_model_iter_set (iter,
+                                      YH_YOUTUBE_COL_RATING,
+                                      rating, -1);
+            }
       
       if ((prop_node = json_object_get_member (object, "media$group")))
         if ((prop_object = json_node_get_object (prop_node)))
