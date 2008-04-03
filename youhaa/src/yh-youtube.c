@@ -535,7 +535,6 @@ yh_youtube_curl_close (void *userp)
     
     g_signal_emit (youtube, signals[COMPLETE], 0, handle);
     glibcurl_remove (handle);
-    curl_easy_cleanup (handle);
   }
 }
 
