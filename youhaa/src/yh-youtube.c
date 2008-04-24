@@ -654,8 +654,10 @@ yh_youtube_header_cb (void *buffer, size_t size, size_t nmemb, void *userp)
       /* Hacky URL mangling */
       if (strstr (url, "/swf/l.swf?video_id="))
         {
+          /* NOTE: This URL subject to change */
           request->url = g_strconcat (
-            "http://www.youtube.com/get_video?video_id=",
+            /*"http://www.youtube.com/get_video?video_id="*/
+            "http://cache.googlevideo.com/get_video?video_id=",
             url + 20, NULL);
         }
       else if (url[0] == '/')
