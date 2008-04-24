@@ -521,7 +521,10 @@ yh_youtube_curl_close (void *userp)
               if ((error_code >= 300) && (error_code < 400))
                 yh_youtube_get_http_link (youtube, request->url);
               else
-                g_signal_emit (youtube, signals[LINK], 0, request->url);
+                {
+                  g_signal_emit (youtube, signals[LINK], 0, request->url);
+                  g_debug ("URL: %s", request->url);
+                }
             }
             break;
           }
@@ -649,16 +652,18 @@ yh_youtube_header_cb (void *buffer, size_t size, size_t nmemb, void *userp)
   
   if (header && strncmp (header, "Location: ", 10) == 0)
     {
+      const gchar *video_id;
       const gchar *url = header + 10;
       
       /* Hacky URL mangling */
-      if (strstr (url, "/swf/l.swf?video_id="))
+      if ((video_id = strstr (url, "/swf/l.swf?video_id=")))
         {
           /* NOTE: This URL subject to change */
           request->url = g_strconcat (
             /*"http://www.youtube.com/get_video?video_id="*/
             "http://cache.googlevideo.com/get_video?video_id=",
-            url + 20, NULL);
+            video_id + 20, "&origin=youtube.com", NULL);
+          g_debug ("request->url = %s", request->url);
         }
       else if (url[0] == '/')
         {

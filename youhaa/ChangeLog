@@ -1,5 +1,11 @@
 2008-04-24  Chris Lord  <chris@openedhand.com>
 
+	* src/yh-youtube.c (yh_youtube_curl_close), (yh_youtube_header_cb):
+	Actually fix flv downloading - This may not work on recent videos,
+	needs testing
+
+2008-04-24  Chris Lord  <chris@openedhand.com>
+
 	* src/yh-youtube.c (yh_youtube_header_cb):
 	Update mangling URL for YouTube flv download
 
