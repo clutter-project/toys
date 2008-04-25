@@ -521,10 +521,7 @@ yh_youtube_curl_close (void *userp)
               if ((error_code >= 300) && (error_code < 400))
                 yh_youtube_get_http_link (youtube, request->url);
               else
-                {
-                  g_signal_emit (youtube, signals[LINK], 0, request->url);
-                  g_debug ("URL: %s", request->url);
-                }
+                g_signal_emit (youtube, signals[LINK], 0, request->url);
             }
             break;
           }
@@ -663,7 +660,6 @@ yh_youtube_header_cb (void *buffer, size_t size, size_t nmemb, void *userp)
             /*"http://www.youtube.com/get_video?video_id="*/
             "http://cache.googlevideo.com/get_video?video_id=",
             video_id + 20, "&origin=youtube.com", NULL);
-          g_debug ("request->url = %s", request->url);
         }
       else if (url[0] == '/')
         {

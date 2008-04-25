@@ -1,3 +1,9 @@
+2008-04-25  Chris Lord  <chris@openedhand.com>
+
+	* src/yh-youtube.c (yh_youtube_curl_close), (yh_youtube_header_cb):
+	Remove accidentally committed debugging statements - Also, tested flv
+	downloading with recently added videos, seems to work correctly
+
 2008-04-24  Chris Lord  <chris@openedhand.com>
 
 	* src/yh-youtube.c (yh_youtube_curl_close), (yh_youtube_header_cb):
