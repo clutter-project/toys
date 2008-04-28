@@ -1,6 +1,7 @@
 
 #include "yh-youtube.h"
 
+#include <regex.h>
 #include <stdlib.h>
 #include <string.h>
 #include <clutter/clutter.h>
@@ -647,19 +648,34 @@ yh_youtube_header_cb (void *buffer, size_t size, size_t nmemb, void *userp)
   gint real_size = (gint)(size *nmemb);
   gchar *header = g_strstrip (g_strndup (buffer, real_size));
   
+#define YOUTUBE_REGEX "video_id=([^&]*)&.*t=([^&]*)"  
+
   if (header && strncmp (header, "Location: ", 10) == 0)
     {
-      const gchar *video_id;
       const gchar *url = header + 10;
       
       /* Hacky URL mangling */
-      if ((video_id = strstr (url, "/swf/l.swf?video_id=")))
+      if (strstr (url, "/swf/l.swf?video_id="))
         {
-          /* NOTE: This URL subject to change */
-          request->url = g_strconcat (
-            /*"http://www.youtube.com/get_video?video_id="*/
-            "http://cache.googlevideo.com/get_video?video_id=",
-            video_id + 20, "&origin=youtube.com", NULL);
+          /* NOTE: This URL/method subject to change. FREQUENTLY. */
+          regex_t regex;
+          regmatch_t pmatch[3];
+          
+          if ((regcomp (&regex, YOUTUBE_REGEX, REG_EXTENDED) == 0) &&
+              (regexec (&regex, url, 3, pmatch, 0) == 0))
+            {
+              gchar *video, *t;
+              video = g_strndup (url + pmatch[1].rm_so,
+                                 pmatch[1].rm_eo - pmatch[1].rm_so);
+              t = g_strndup (url + pmatch[2].rm_so,
+                             pmatch[2].rm_eo - pmatch[2].rm_so);
+              request->url =
+                g_strdup_printf (
+                  "http://cache.googlevideo.com/get_video?video_id=%s&"
+                  "t=%s&origin=youtube.com", video, t);
+            }
+          else
+            request->url = NULL;
         }
       else if (url[0] == '/')
         {
