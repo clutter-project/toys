@@ -671,8 +671,8 @@ yh_youtube_header_cb (void *buffer, size_t size, size_t nmemb, void *userp)
                              pmatch[2].rm_eo - pmatch[2].rm_so);
               request->url =
                 g_strdup_printf (
-                  "http://cache.googlevideo.com/get_video?video_id=%s&"
-                  "t=%s&origin=youtube.com", video, t);
+                  "http://www.youtube.com/get_video?video_id=%s&"
+                  "t=%s", video, t);
             }
           else
             request->url = NULL;

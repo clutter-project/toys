@@ -1,6 +1,11 @@
 2008-04-28  Chris Lord  <chris@openedhand.com>
 
 	* src/yh-youtube.c: (yh_youtube_header_cb):
+	Don't use Google cache for videos
+
+2008-04-28  Chris Lord  <chris@openedhand.com>
+
+	* src/yh-youtube.c: (yh_youtube_header_cb):
 	Again, fix video URL mangling
 
 2008-04-25  Chris Lord  <chris@openedhand.com>
