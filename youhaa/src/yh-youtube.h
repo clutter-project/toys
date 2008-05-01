@@ -37,6 +37,7 @@ enum {
   YH_YOUTUBE_COL_THUMBS,
   YH_YOUTUBE_COL_MIMES,
   YH_YOUTUBE_COL_URIS,
+  YH_YOUTUBE_COL_RELATED,
   
   YH_YOUTUBE_COL_LAST
 };
@@ -67,6 +68,7 @@ YHYoutube *
 yh_youtube_get_default ();
 
 void *yh_youtube_query         (YHYoutube *youtube, const gchar *search_string);
+void *yh_youtube_query_manual  (YHYoutube *youtube, const gchar *url);
 void *yh_youtube_get_thumb     (YHYoutube *youtube, const gchar *url);
 void  yh_youtube_cancel        (YHYoutube *youtube, void        *handle);
 void *yh_youtube_get_http_link (YHYoutube *youtube, const gchar *url);

@@ -210,7 +210,8 @@ yh_youtube_create_model (YHYoutube *youtube)
                                   G_TYPE_DOUBLE, "Rating",
                                   G_TYPE_STRV, "Thumbnails",
                                   G_TYPE_STRV, "MIME types",
-                                  G_TYPE_STRV, "URIs");
+                                  G_TYPE_STRV, "URIs",
+                                  G_TYPE_STRING, "Related videos");
   
   for (i = 0; i < json_array_get_length (array); i++)
     {
@@ -233,6 +234,7 @@ yh_youtube_create_model (YHYoutube *youtube)
                             YH_YOUTUBE_COL_THUMBS, NULL,
                             YH_YOUTUBE_COL_MIMES, NULL,
                             YH_YOUTUBE_COL_URIS, NULL,
+                            YH_YOUTUBE_COL_RELATED, NULL,
                             -1);
       iter = clutter_model_get_last_iter (model);
       
@@ -280,6 +282,54 @@ yh_youtube_create_model (YHYoutube *youtube)
                                       YH_YOUTUBE_COL_RATING,
                                       rating, -1);
             }
+      
+      /* Related content URL */
+      if ((prop_node = json_object_get_member (object, "link")))
+        if ((prop_array = json_node_get_array (prop_node)))
+        {
+          JsonObject *link_object;
+          JsonNode *link_node;
+          gint j;
+          
+          for (j = 0; j < json_array_get_length (prop_array); j++)
+            {
+              const gchar *rel, *url;
+              gchar *jurl;
+              
+              if (!(prop_node = json_array_get_element (prop_array, j)))
+                continue;
+              
+              if (!(link_object = json_node_get_object (prop_node)))
+                continue;
+              
+              if (!(link_node = json_object_get_member (link_object, "rel")))
+                continue;
+              
+              if (!(rel = json_node_get_string (link_node)))
+                continue;
+              
+              if (strcmp (rel,
+                          "http://gdata.youtube.com/schemas/2007#video.related")
+                          != 0)
+                continue;
+
+              if (!(link_node = json_object_get_member (link_object, "href")))
+                continue;
+              
+              if (!(url = json_node_get_string (link_node)))
+                continue;
+              
+              /* Note: should probably check that the URL doesn't already have 
+               * some parameters, and if it does, use "&alt=json" instead,
+               * but we know that it doesn't (for now).
+               */
+              jurl = g_strconcat (url, "?alt=json", NULL);
+              clutter_model_iter_set (iter, YH_YOUTUBE_COL_RELATED, jurl, -1);
+              g_free (jurl);
+              
+              break;
+            }
+        }
       
       if ((prop_node = json_object_get_member (object, "media$group")))
         if ((prop_object = json_node_get_object (prop_node)))
@@ -444,6 +494,7 @@ yh_youtube_curl_close (void *userp)
               /* Parse the data into the model */
               if (request->data)
                 {
+                  /*g_debug ("JSON:\n%.*s", request->size, request->data);*/
                   if (!json_parser_load_from_data (priv->parser,
                                                    request->data,
                                                    request->size,
@@ -586,6 +637,29 @@ yh_youtube_query (YHYoutube *youtube, const gchar *search_string)
     g_strconcat ("http://gdata.youtube.com/feeds/api/videos?alt=json&vq=",
                  search_string, NULL);
   curl_free ((char *)search_string);
+  
+  /* Don't free url, CURL doesn't make a copy */
+  handle = curl_easy_init ();
+  curl_easy_setopt (handle, CURLOPT_URL, request->url);
+  curl_easy_setopt (handle, CURLOPT_WRITEFUNCTION, yh_youtube_curl_read);
+  curl_easy_setopt (handle, CURLOPT_WRITEDATA, request);
+  curl_easy_setopt (handle, CURLOPT_PRIVATE, request);
+  
+  glibcurl_add (handle);
+  
+  return handle;
+}
+
+void *
+yh_youtube_query_manual (YHYoutube *youtube, const gchar *url)
+{
+  CURL *handle;
+  YHYoutubeRequest *request;
+
+  /* Make request to Youtube GData url */
+  request = g_slice_new0 (YHYoutubeRequest);
+  request->type = TYPE_QUERY;
+  request->url = g_strdup (url);
   
   /* Don't free url, CURL doesn't make a copy */
   handle = curl_easy_init ();

@@ -1,3 +1,26 @@
+2008-05-01  Chris Lord  <chris@openedhand.com>
+
+	Add support for related-videos query (tested, works)
+
+	* src/yh-main.c (model_cb), (animate_search), (button_pressed_cb),
+	(related_cb):
+	Hook onto YHYoutubeBrowser's 'related' signal
+
+	* src/yh-youtube-browser.c (yh_youtube_browser_request_coords),
+	(yh_youtube_browser_class_init), (related_pressed_cb),
+	(yh_youtube_browser_init):
+	Add a new button underneath the video preview image to search for
+	related videos, emit a signal, 'related', when its clicked
+
+	* src/yh-youtube-browser.h:
+	Add 'related' signal
+
+	* src/yh-youtube.c (yh_youtube_create_model),
+	(yh_youtube_curl_close), (yh_youtube_query_manual):
+	* src/yh-youtube.h:
+	Add related videos link to the model, add a new function to query an
+	abitrary link (assumed to be a well-formed youtube json query link)
+
 2008-04-28  Chris Lord  <chris@openedhand.com>
 
 	* src/yh-youtube.c: (yh_youtube_header_cb):

@@ -42,6 +42,9 @@ struct _YHYoutubeBrowser {
 
 struct _YHYoutubeBrowserClass {
   ClutterActorClass parent_class;
+
+  /* Signals */
+  void (* related)  (YHYoutubeBrowser *browser, ClutterModelIter *iter);
 };
 
 GType yh_youtube_browser_get_type (void);

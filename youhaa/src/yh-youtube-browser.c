@@ -27,6 +27,8 @@ struct _YHYoutubeBrowserPrivate {
   ClutterActor     *group;
   
   ClutterActor     *frame;
+  ClutterActor     *related;
+  ClutterActor     *related_label;
   ClutterActor     *prev;
   ClutterActor     *next;
   ClutterActor     *thumb;
@@ -51,6 +53,15 @@ G_DEFINE_TYPE (YHYoutubeBrowser, yh_youtube_browser, CLUTTER_TYPE_ACTOR)
         (G_TYPE_INSTANCE_GET_PRIVATE ((obj), \
         YH_TYPE_YOUTUBE_BROWSER, \
         YHYoutubeBrowserPrivate))
+
+enum
+{
+  RELATED,
+
+  LAST_SIGNAL
+};
+
+static guint signals[LAST_SIGNAL] = { 0, };
 
 static void
 video_out_complete_cb (ClutterActor *actor, YHYoutubeBrowser *browser)
@@ -587,16 +598,33 @@ yh_youtube_browser_request_coords (ClutterActor *actor, ClutterActorBox *box)
                            height - clutter_actor_get_yu (priv->description) -
                            UBORDER/2);
   
+  clutter_actor_set_positionu (priv->related,
+                               width/2 + UBORDER/2,
+                               (height*3)/4 - UBORDER/2);
+  clutter_actor_set_sizeu (priv->related, width/2 - (UBORDER*3)/2,
+                           height/10);
+  clutter_actor_set_anchor_point_from_gravity (priv->related_label,
+                                               CLUTTER_GRAVITY_CENTER);
+  clutter_actor_set_positionu (priv->related_label,
+                               clutter_actor_get_xu (priv->related) +
+                               clutter_actor_get_widthu (priv->related)/2,
+                               clutter_actor_get_yu (priv->related) +
+                               clutter_actor_get_heightu (priv->related)/2);
+  
   clutter_actor_set_positionu (priv->prev,
                                width/2 + UBORDER/2,
-                               (height*3)/4 + UBORDER/2);
-  clutter_actor_set_sizeu (priv->prev, width/4 - UBORDER, height/4 - UBORDER);
+                               (height*3)/4 +
+                               clutter_actor_get_heightu (priv->related));
+  clutter_actor_set_sizeu (priv->prev, width/4 - UBORDER, height/4 - UBORDER/2 -
+                           clutter_actor_get_heightu (priv->related));
 
   clutter_actor_set_positionu (priv->next,
                        clutter_actor_get_xu (priv->prev) +
                        clutter_actor_get_widthu (priv->prev) + UBORDER/2,
-                       (height*3)/4 + UBORDER/2);
-  clutter_actor_set_sizeu (priv->next, width/4 - UBORDER, height/4 - UBORDER);
+                       (height*3)/4 +
+                       clutter_actor_get_heightu (priv->related));
+  clutter_actor_set_sizeu (priv->next, width/4 - UBORDER, height/4 - UBORDER/2 -
+                           clutter_actor_get_heightu (priv->related));
 
   CLUTTER_ACTOR_CLASS (yh_youtube_browser_parent_class)->
     request_coords (actor, box);
@@ -635,6 +663,15 @@ yh_youtube_browser_class_init (YHYoutubeBrowserClass *klass)
                                                         YH_TYPE_YOUTUBE,
                                                         G_PARAM_READWRITE |
                                                         G_PARAM_CONSTRUCT_ONLY));
+
+  signals[RELATED] =
+    g_signal_new ("related",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  G_STRUCT_OFFSET (YHYoutubeBrowserClass, related),
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__OBJECT,
+                  G_TYPE_NONE, 1, CLUTTER_TYPE_MODEL_ITER);
 }
 
 static gboolean
@@ -657,6 +694,15 @@ next_pressed_cb (ClutterActor     *actor,
   return TRUE;
 }
 
+static gboolean
+related_pressed_cb (ClutterActor     *actor,
+                    ClutterEvent     *event,
+                    YHYoutubeBrowser *self)
+{
+  g_signal_emit (self, signals[RELATED], 0, self->priv->iter);
+  return TRUE;
+}
+
 static void
 yh_youtube_browser_init (YHYoutubeBrowser *self)
 {
@@ -673,6 +719,17 @@ yh_youtube_browser_init (YHYoutubeBrowser *self)
   clutter_rectangle_set_border_width (CLUTTER_RECTANGLE (priv->frame), 6);
   clutter_rectangle_set_border_color (CLUTTER_RECTANGLE (priv->frame),
                                       &frame_color);
+  
+  /* Related videos button */
+  priv->related = clutter_rectangle_new_with_color (&bg_color);
+  clutter_rectangle_set_border_width (CLUTTER_RECTANGLE (priv->related), FRAME);
+  clutter_rectangle_set_border_color (CLUTTER_RECTANGLE (priv->related),
+                                      &frame_color);
+  priv->related_label = clutter_label_new_full (font, "Related videos",
+                                                &entry_color);
+  clutter_actor_set_reactive (CLUTTER_ACTOR (priv->related), TRUE);
+  g_signal_connect (priv->related, "button-press-event",
+                    G_CALLBACK (related_pressed_cb), self);
   
   /* Previous arrow */
   pixbuf = gdk_pixbuf_new_from_file_at_size (PKGDATADIR "/go-previous.svg",
@@ -727,6 +784,8 @@ yh_youtube_browser_init (YHYoutubeBrowser *self)
   /* Add widgets to group, they'll be sized (mostly) by request-coords */
   clutter_container_add (CLUTTER_CONTAINER (priv->group),
                          priv->frame,
+                         priv->related,
+                         priv->related_label,
                          priv->prev,
                          priv->next,
                          priv->title,

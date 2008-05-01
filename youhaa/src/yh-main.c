@@ -24,6 +24,9 @@ typedef struct {
   YHYoutube *youtube;
 } YouhaaData;
 
+static void related_cb (YHYoutubeBrowser *browser, ClutterModelIter *iter,
+                        YouhaaData *data);
+
 static void
 button_in_complete (ClutterActor *actor, YouhaaData *data)
 {
@@ -109,6 +112,10 @@ model_cb (YHYoutube *youtube, ClutterModel *model, YouhaaData *data)
                            0xFF,
                            NULL,
                            NULL);
+      
+      /* Connected to related-videos button click */
+      g_signal_connect (view, "related",
+                        G_CALLBACK (related_cb), data);
     }
   else
     {
@@ -143,8 +150,8 @@ button_out_complete (ClutterActor *actor, YouhaaData *data)
                          data);
 }
 
-static gboolean
-button_pressed_cb (ClutterActor *button, ClutterEvent *event, YouhaaData *data)
+static void
+animate_search (YouhaaData *data)
 {
   static gboolean first_time = TRUE;
   
@@ -159,27 +166,46 @@ button_pressed_cb (ClutterActor *button, ClutterEvent *event, YouhaaData *data)
       first_time = FALSE;
     }
   
+  /* Animate the throbber in */
+  if (data->transition)
+    clutter_timeline_stop (data->transition);
+  data->transition = clutter_effect_rotate (data->template,
+                         data->button,
+                         CLUTTER_Y_AXIS,
+                         90,
+                         clutter_actor_get_width (data->button)/2,
+                         0,
+                         0,
+                         CLUTTER_ROTATE_CW,
+                         (ClutterEffectCompleteFunc)button_out_complete,
+                         data);
+}
+
+static gboolean
+button_pressed_cb (ClutterActor *button, ClutterEvent *event, YouhaaData *data)
+{
   if (data->query_changed)
     {
       yh_youtube_query (data->youtube,
                         clutter_entry_get_text (CLUTTER_ENTRY (data->entry)));
-      
-      /* Animate the throbber in */
-      if (data->transition)
-        clutter_timeline_stop (data->transition);
-      data->transition = clutter_effect_rotate (data->template,
-                             data->button,
-                             CLUTTER_Y_AXIS,
-                             90,
-                             clutter_actor_get_width (data->button)/2,
-                             0,
-                             0,
-                             CLUTTER_ROTATE_CW,
-                             (ClutterEffectCompleteFunc)button_out_complete,
-                             data);
+      animate_search (data);
     }
   
   return TRUE;
+}
+
+static void
+related_cb (YHYoutubeBrowser *browser, ClutterModelIter *iter, YouhaaData *data)
+{
+  gchar *url;
+  
+  clutter_model_iter_get (iter, YH_YOUTUBE_COL_RELATED, &url, -1);
+  if (url)
+    {
+      yh_youtube_query_manual (data->youtube, url);
+      g_free (url);
+      animate_search (data);
+    }
 }
 
 static gboolean
