@@ -1,5 +1,11 @@
 2008-05-02  Chris Lord  <chris@openedhand.com>
 
+	* src/yh-youtube.c: (yh_youtube_pause):
+	* src/yh-youtube.h:
+	Add a function to pause/resume transfers
+
+2008-05-02  Chris Lord  <chris@openedhand.com>
+
 	* src/yh-youtube.c: (yh_youtube_curl_close),
 	(yh_youtube_get_http_link_cb), (yh_youtube_get_http_link):
 	Reuse the same handle when handling redirects

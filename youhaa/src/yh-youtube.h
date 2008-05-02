@@ -72,6 +72,8 @@ void *yh_youtube_query_manual  (YHYoutube *youtube, const gchar *url);
 void *yh_youtube_get_thumb     (YHYoutube *youtube, const gchar *url);
 void  yh_youtube_cancel        (YHYoutube *youtube, void        *handle);
 void *yh_youtube_get_http_link (YHYoutube *youtube, const gchar *url);
+void  yh_youtube_pause         (YHYoutube *youtube, void        *handle,
+                                gboolean   resume);
 
 G_END_DECLS
 

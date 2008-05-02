@@ -826,3 +826,11 @@ yh_youtube_get_http_link  (YHYoutube *youtube, const gchar *url)
   return handle;
 }
 
+void
+yh_youtube_pause (YHYoutube *youtube, void *handle, gboolean resume)
+{
+  if (resume)
+    glibcurl_add ((CURL *)handle);
+  else
+    glibcurl_remove ((CURL *)handle);
+}
