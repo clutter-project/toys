@@ -42,6 +42,8 @@ static guint signals[LAST_SIGNAL] = { 0, };
 G_DEFINE_TYPE (YHYoutube, yh_youtube, G_TYPE_OBJECT)
 
 static void yh_youtube_curl_close (void *userp);
+static void yh_youtube_get_http_link_cb (YHYoutubeRequest *request,
+                                         CURL *handle);
 
 static void
 yh_youtube_get_property (GObject *object, guint property_id,
@@ -475,6 +477,7 @@ yh_youtube_curl_close (void *userp)
   YHYoutubePrivate *priv = youtube->priv;
   
   while ((msg = curl_multi_info_read (glibcurl_handle (), &in_queue))) {
+    gboolean remove_handle = TRUE;
     GError *error = NULL;
     
     if (msg->msg != CURLMSG_DONE)
@@ -571,22 +574,34 @@ yh_youtube_curl_close (void *userp)
               
               /* Recursively solve redirects */
               if ((error_code >= 300) && (error_code < 400))
-                yh_youtube_get_http_link (youtube, request->url);
+                {
+                  yh_youtube_get_http_link_cb (request, handle);
+                  glibcurl_remove (handle);
+                  glibcurl_add (handle);
+                  remove_handle = FALSE;
+                }
               else
                 g_signal_emit (youtube, signals[LINK], 0, request->url);
             }
             break;
           }
         
-        g_free (request->data);
-        g_free (request->url);
-        g_slice_free (YHYoutubeRequest, request);
+        if (remove_handle)
+          {
+            g_free (request->data);
+            g_free (request->url);
+            g_slice_free (YHYoutubeRequest, request);
+          }
       }
     else
       g_warning ("Error retrieving user data, something has gone wrong...");
     
-    g_signal_emit (youtube, signals[COMPLETE], 0, handle);
-    glibcurl_remove (handle);
+    if (remove_handle)
+      {
+        g_signal_emit (youtube, signals[COMPLETE], 0, handle);
+        glibcurl_remove (handle);
+        curl_easy_cleanup (handle);
+      }
   }
 }
 
@@ -711,8 +726,8 @@ yh_youtube_cancel (YHYoutube *youtube, void *handle)
       g_slice_free (YHYoutubeRequest, request);
     }
   
-	glibcurl_remove(curl_handle);
-	curl_easy_cleanup (curl_handle);
+  glibcurl_remove(curl_handle);
+  curl_easy_cleanup (curl_handle);
 }
 
 static size_t
@@ -778,6 +793,17 @@ yh_youtube_minus_one ()
   return -1;
 }
 
+static void
+yh_youtube_get_http_link_cb (YHYoutubeRequest *request, CURL *handle)
+{
+  curl_easy_setopt (handle, CURLOPT_URL, request->url);
+  curl_easy_setopt (handle, CURLOPT_WRITEFUNCTION, yh_youtube_minus_one);
+  curl_easy_setopt (handle, CURLOPT_WRITEDATA, request);
+  curl_easy_setopt (handle, CURLOPT_PRIVATE, request);
+  curl_easy_setopt (handle, CURLOPT_HEADERFUNCTION, yh_youtube_header_cb);
+  curl_easy_setopt (handle, CURLOPT_HEADERDATA, request);
+}
+
 /* This is a nasty function required because YouTube uses HTTP 303's
  * to 'redirect' :( (but even then, the location needs mangling)
  */
@@ -793,13 +819,7 @@ yh_youtube_get_http_link  (YHYoutube *youtube, const gchar *url)
   request->url = g_strdup (url);
   
   handle = curl_easy_init ();
-  curl_easy_setopt (handle, CURLOPT_URL, request->url);
-  curl_easy_setopt (handle, CURLOPT_WRITEFUNCTION, yh_youtube_minus_one);
-  curl_easy_setopt (handle, CURLOPT_WRITEDATA, request);
-  curl_easy_setopt (handle, CURLOPT_PRIVATE, request);
-	curl_easy_setopt (handle, CURLOPT_HEADERFUNCTION,
-                    yh_youtube_header_cb);
-  curl_easy_setopt (handle, CURLOPT_HEADERDATA, request);
+  yh_youtube_get_http_link_cb (request, handle);
   
   glibcurl_add (handle);
   
