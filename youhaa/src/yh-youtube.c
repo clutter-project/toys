@@ -553,16 +553,7 @@ yh_youtube_curl_close (void *userp)
             }
             break;
           case TYPE_LINK : {
-              gchar *url;
               long error_code;
-              
-              if (curl_easy_getinfo (handle,
-                                     CURLINFO_EFFECTIVE_URL,
-                                     &url) == CURLE_OK)
-                {
-                  if (url && (strcmp (request->url, url) != 0))
-                    g_free (url);
-                }
               
               /* If we can't get the error code for whatever reason, just 
                * assume success.
@@ -653,7 +644,6 @@ yh_youtube_query (YHYoutube *youtube, const gchar *search_string)
                  search_string, NULL);
   curl_free ((char *)search_string);
   
-  /* Don't free url, CURL doesn't make a copy */
   handle = curl_easy_init ();
   curl_easy_setopt (handle, CURLOPT_URL, request->url);
   curl_easy_setopt (handle, CURLOPT_WRITEFUNCTION, yh_youtube_curl_read);
@@ -743,6 +733,8 @@ yh_youtube_header_cb (void *buffer, size_t size, size_t nmemb, void *userp)
     {
       const gchar *url = header + 10;
       
+      g_free (request->url);
+      
       /* Hacky URL mangling */
       if (strstr (url, "/swf/l.swf?video_id="))
         {
@@ -768,9 +760,7 @@ yh_youtube_header_cb (void *buffer, size_t size, size_t nmemb, void *userp)
         }
       else if (url[0] == '/')
         {
-          request->url = g_strconcat (
-            "http://www.youtube.com",
-            url, NULL);
+          request->url = g_strconcat ("http://www.youtube.com", url, NULL);
         }
       else
         {

@@ -1,3 +1,10 @@
+2008-05-03  Chris Lord  <chris@openedhand.com>
+
+	* src/yh-youtube.c (yh_youtube_curl_close), (yh_youtube_query),
+	(yh_youtube_header_cb):
+	Stop freeing cURL's internal URL - what the hell was I doing this
+	for?! Fixes crash on ia64 (why this didn't crash on ia32, no idea)
+
 2008-05-02  Chris Lord  <chris@openedhand.com>
 
 	* src/yh-youtube.c: (yh_youtube_pause):
