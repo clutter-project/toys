@@ -324,15 +324,17 @@ create_popup_factory (MmBrowser     *browser,
                     G_CALLBACK (popup_button_release_cb), browser);
   webkit_web_view_set_popup_factory (page->view, WEBKIT_POPUP_FACTORY (page->factory));
   clutter_actor_set_size (CLUTTER_ACTOR (page->factory), WEBKIT_WIDTH, 125);
-  clutter_actor_show (page->factory);
+  clutter_actor_show (CLUTTER_ACTOR (page->factory));
 
   scroll = tidy_finger_scroll_new (TIDY_FINGER_SCROLL_MODE_KINETIC);
   clutter_container_add_actor (CLUTTER_CONTAINER (page->popup_menu), scroll);
-  clutter_container_add_actor (CLUTTER_CONTAINER (scroll), page->factory);
+  clutter_container_add_actor (CLUTTER_CONTAINER (scroll),
+                               CLUTTER_ACTOR (page->factory));
   clutter_actor_set_size (scroll, WEBKIT_WIDTH, 125);
 
   clutter_actor_set_position (page->popup_menu, 0, WEBKIT_HEIGHT - 125);
-  clutter_container_add_actor (clutter_stage_get_default (), page->popup_menu);
+  clutter_container_add_actor (CLUTTER_CONTAINER (clutter_stage_get_default ()),
+                               page->popup_menu);
 
   clutter_actor_show_all (scroll);
 }
@@ -712,7 +714,7 @@ mm_browser_init (MmBrowser *self)
   behave = clutter_behaviour_path_new (alpha, progress_knots, 2);
 
   priv->pages = NULL;
-  priv->showing_tabs = NULL;
+  priv->showing_tabs = FALSE;
 
   priv->page_group = clutter_group_new ();
   clutter_container_add_actor (CLUTTER_CONTAINER (self), priv->page_group);

@@ -19,7 +19,7 @@ enum {
 G_DEFINE_TYPE_WITH_CODE (PopupFactory, popup_factory, TIDY_TYPE_LIST_VIEW,
 			 G_IMPLEMENT_INTERFACE (WEBKIT_TYPE_POPUP_FACTORY,
 						popup_factory_iface_init));
-#define GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), POPUP_TYPE_FACTORY, PopupFactory))
+#define GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), POPUP_TYPE_FACTORY, PopupFactoryPrivate))
 
 struct _PopupFactoryPrivate
 {
@@ -57,9 +57,8 @@ popup_factory_class_init (PopupFactoryClass *klass)
 static void
 popup_factory_init (PopupFactory *factory)
 {
-  PopupFactoryPrivate *priv;
-
-  priv = factory->priv = GET_PRIVATE (factory);  
+  PopupFactoryPrivate *priv = factory->priv;
+  
   priv->model = clutter_list_model_new (LAST_COLUMN, G_TYPE_STRING, "name");
   g_object_set (G_OBJECT (factory),
 		"model", priv->model,
@@ -69,7 +68,7 @@ popup_factory_init (PopupFactory *factory)
 static void
 factory_clear (WebKitPopupFactory *factory)
 {
-  PopupFactoryPrivate *priv = GET_PRIVATE (factory);
+  PopupFactoryPrivate *priv = POPUP_FACTORY (factory)->priv;
 
   if (priv->model) {
     g_object_unref (priv->model);
@@ -87,15 +86,15 @@ static void
 factory_append_item (WebKitPopupFactory *factory,
 		     const char         *text)
 {
-  PopupFactoryPrivate *priv = GET_PRIVATE (factory);
+  PopupFactoryPrivate *priv = POPUP_FACTORY (factory)->priv;
 
   clutter_model_append (priv->model, NAME_COLUMN, text, -1);
 }
 
 static void
-factory_show (WebKitPopupFactory *factory)
+factory_show (WebKitPopupFactory *factory, int index)
 {
-  PopupFactoryPrivate *priv = GET_PRIVATE (factory);
+  PopupFactoryPrivate *priv = POPUP_FACTORY (factory)->priv;
   
   tidy_list_view_set_model (TIDY_LIST_VIEW (factory), priv->model);
   g_signal_emit (factory, signals[SHOW_MENU], 0);

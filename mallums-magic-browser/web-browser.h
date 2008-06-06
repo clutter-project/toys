@@ -24,6 +24,8 @@ typedef struct {
 GType mm_browser_get_type (void);
 
 MmBrowser *mm_browser_new (void);
+void       mm_browser_open (MmBrowser  *browser,
+                            const char *address);
 
 G_END_DECLS
 
