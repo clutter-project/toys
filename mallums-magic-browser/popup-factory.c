@@ -57,7 +57,7 @@ popup_factory_class_init (PopupFactoryClass *klass)
 static void
 popup_factory_init (PopupFactory *factory)
 {
-  PopupFactoryPrivate *priv = factory->priv;
+  PopupFactoryPrivate *priv = factory->priv = GET_PRIVATE (factory);
   
   priv->model = clutter_list_model_new (LAST_COLUMN, G_TYPE_STRING, "name");
   g_object_set (G_OBJECT (factory),
