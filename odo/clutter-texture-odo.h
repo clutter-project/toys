@@ -81,22 +81,26 @@ struct _ClutterTextureOdoClass
 }; 
 
 typedef void (*ClutterTextureDistortFunc) (ClutterTexture * tex,
-					   gint x, gint y, gint z,
-					   gint *x2, gint *y2, gint *z2,
-					   gpointer user_data);
+                                           ClutterFixed x,
+                                           ClutterFixed y,
+                                           ClutterFixed z,
+                                           ClutterFixed *x2,
+                                           ClutterFixed *y2,
+                                           ClutterFixed *z2,
+                                           gpointer user_data);
 
 struct _ClutterMeshPoint
 {
-  gint x;
-  gint y;
-  gint z;
+  ClutterFixed x;
+  ClutterFixed y;
+  ClutterFixed z;
 };
 
 struct _ClutterMesh
 {
   ClutterMeshPoint * points;
-  gint               dimension_x;
-  gint               dimension_y;
+  ClutterFixed       dimension_x;
+  ClutterFixed       dimension_y;
 };
 
 
@@ -107,7 +111,7 @@ GType           clutter_texture_odo_get_type           (void) G_GNUC_CONST;
 ClutterActor *  clutter_texture_odo_new                (ClutterTexture      *texture);
 ClutterTexture *clutter_texture_odo_get_parent_texture (ClutterTextureOdo   *otex);
 void            clutter_texture_odo_set_parent_texture (ClutterTextureOdo   *otex,
-							ClutterTexture      *tex);
+                                                        ClutterTexture      *tex);
 
 G_END_DECLS
 

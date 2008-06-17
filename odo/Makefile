@@ -1,5 +1,5 @@
-LIBS=`pkg-config --libs clutter-0.6`
-INCS=`pkg-config --cflags clutter-0.6`
+LIBS=`pkg-config --libs clutter-0.7`
+INCS=`pkg-config --cflags clutter-0.7`
 
 .c.o:
 	$(CC) -g -Wall $(CFLAGS) $(INCS) -c $*.c
