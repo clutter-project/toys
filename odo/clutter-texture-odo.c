@@ -62,11 +62,14 @@ struct _ClutterTextureOdoPrivate
   guint tile_height;
 
   ClutterMesh   mesh;
+  
+  ClutterTextureOdoCullMode    cull_mode;
 };
 
 static void
 texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
 {
+  const ClutterColor white = { 0xff, 0xff, 0xff, 0xff };
   gint   pwidth, pheight;
   gboolean first;
   CoglHandle handle;
@@ -82,6 +85,11 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
 
   clutter_texture_get_base_size (priv->parent_texture, &pwidth, &pheight); 
   handle = clutter_texture_get_cogl_texture (priv->parent_texture);
+  
+  vertices[0].color = white;
+  vertices[1].color = white;
+  vertices[2].color = white;
+  vertices[3].color = white;
 
   if (priv->mesh.points)
     {
@@ -166,6 +174,7 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
               skip3 = !priv->distort_func (priv->parent_texture,
                                   CLUTTER_INT_TO_FIXED (i),
                                   CLUTTER_INT_TO_FIXED (j), 0, &x2, &y2, &z2,
+                                  &vertices[2].color,
                                   priv->distort_func_data);
               
               vertices[2].x = x2;
@@ -179,6 +188,7 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
                                   CLUTTER_INT_TO_FIXED (j) +
                                     CLUTTER_INT_TO_FIXED (priv->tile_height),
                                   0, &x2, &y2, &z2,
+                                  &vertices[3].color,
                                   priv->distort_func_data);
               
               vertices[3].x = x2;
@@ -190,7 +200,28 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
               if (!first)
                 {
                   if (!skip1 || !skip2 || !skip3 || !skip4)
-                    cogl_texture_polygon (handle, 4, vertices, FALSE);
+                    {
+                      if (priv->cull_mode == ODO_CULL_NONE)
+                        cogl_texture_polygon (handle, 4, vertices, FALSE);
+                      else
+                        {
+                          /* Do back/front-face culling */
+                          ClutterFixed dot;
+                          
+                          /* Calculate the dot product of the normal and the
+                           * z unit vector. */
+                          dot = clutter_qmulx (vertices[1].x - vertices[0].x,
+                                               vertices[2].y - vertices[0].y) -
+                              clutter_qmulx (vertices[1].y - vertices[0].y,
+                                             vertices[2].x - vertices[0].x);
+                          
+                          if (((dot < 0) &&
+                               (priv->cull_mode == ODO_CULL_FRONT)) ||
+                              ((dot >= 0) &&
+                               (priv->cull_mode == ODO_CULL_BACK)))
+                            cogl_texture_polygon (handle, 4, vertices, TRUE);
+	                      }
+                    }
                 }
               else
                 first = FALSE;
@@ -566,3 +597,20 @@ clutter_mesh_point_get_type (void)
 
   return our_type;
 }
+
+void
+clutter_texture_odo_set_cull_mode (ClutterTextureOdo   *otex,
+                                   ClutterTextureOdoCullMode mode)
+{
+  g_return_if_fail (CLUTTER_IS_TEXTURE_ODO (otex));
+  otex->priv->cull_mode = mode;
+  clutter_actor_queue_redraw (CLUTTER_ACTOR (otex));
+}
+
+ClutterTextureOdoCullMode
+clutter_texture_odo_get_cull_mode (ClutterTextureOdo   *otex)
+{
+  g_return_val_if_fail (CLUTTER_IS_TEXTURE_ODO (otex), ODO_CULL_NONE);
+  return otex->priv->cull_mode;
+}
+

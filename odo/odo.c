@@ -36,7 +36,7 @@ static gboolean
 distort_func1 (ClutterTexture * texture,
                ClutterFixed x, ClutterFixed y, ClutterFixed z,
                ClutterFixed *x2, ClutterFixed *y2, ClutterFixed *z2,
-               gpointer data)
+               ClutterColor *color, gpointer data)
 {
     struct distort_data * d = data;
     gint w, h;
@@ -56,7 +56,7 @@ static gboolean
 distort_func2 (ClutterTexture * texture,
                ClutterFixed x, ClutterFixed y, ClutterFixed z,
                ClutterFixed *x2, ClutterFixed *y2, ClutterFixed *z2,
-               gpointer data)
+               ClutterColor *color, gpointer data)
 {
   struct distort_data * d = data;
   gint w, h, xi, yi, zi;
@@ -81,7 +81,7 @@ static gboolean
 distort_func3 (ClutterTexture * texture,
                ClutterFixed x, ClutterFixed y, ClutterFixed z,
                ClutterFixed *x2, ClutterFixed *y2, ClutterFixed *z2,
-               gpointer data)
+               ClutterColor *color, gpointer data)
 {
   struct distort_data * d = data;
   gint w, h, xi, yi;
@@ -105,7 +105,7 @@ static gboolean
 distort_func4 (ClutterTexture * texture,
                ClutterFixed x, ClutterFixed y, ClutterFixed z,
                ClutterFixed *x2, ClutterFixed *y2, ClutterFixed *z2,
-               gpointer data)
+               ClutterColor *color, gpointer data)
 {
   struct distort_data * d = data;
   gdouble cx, cy, rx, ry;

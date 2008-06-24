@@ -24,16 +24,15 @@ static gboolean
 distort_func (ClutterTexture * texture,
               ClutterFixed x, ClutterFixed y, ClutterFixed z,
               ClutterFixed *x2, ClutterFixed *y2, ClutterFixed *z2,
-              gpointer data)
+               ClutterColor *color, gpointer data)
 {
-  ClutterColor color = { 0xff, 0xff, 0xff, 0xff };
   struct distort_data * d = data;
   gdouble cx, cy, rx, ry;
-  gint w, h;
-  gdouble width, height;
+  gint w, h, shade;
+  gdouble width, height, turn_angle;
   
   const gdouble radius = 25.0;
-  const gdouble angle = 30.0;
+  const gdouble angle = 10.0;
   const gdouble turn = CLUTTER_FIXED_TO_FLOAT (d->t);
 
   clutter_texture_get_base_size (texture, &w, &h);
@@ -58,13 +57,7 @@ distort_func (ClutterTexture * texture,
       /* Calculate a point on a cylinder (maybe make this a cone at some point)
        * and rotate it by the specified angle. This isn't *quite* right yet.
        */
-      gdouble turn_angle = rx/radius * M_PI;
-      gint shade = (gint)(sin (turn_angle) * 255.0);
-      
-      color.red = shade;
-      color.green = shade;
-      color.blue = shade;
-      cogl_color (&color);
+      turn_angle = rx/radius * M_PI;
       
       rx = radius * cos (turn_angle);
       *x2 = CLUTTER_FLOAT_TO_FIXED ((rx * cos (angle * (M_PI/180))) -
@@ -73,21 +66,19 @@ distort_func (ClutterTexture * texture,
                                     (ry * cos (angle * (M_PI/180))) + cy);
       *z2 = CLUTTER_FLOAT_TO_FIXED ((radius * sin (turn_angle)) + radius);
       
-      if (turn_angle > 2*M_PI)
-        return FALSE;
+      shade = (gint)(sin (turn_angle) * 255.0);
+      color->red = shade;
+      color->green = shade;
+      color->blue = shade;
 
-      if (turn_angle < M_PI)
-        {
-          if (texture != d->back_face)
-            return FALSE;
-        }
-      else if (texture == d->back_face)
+      /* If we've wrapped in on ourself, don't draw (avoids z-fighting) */
+      if (turn_angle > 2*M_PI)
         return FALSE;
     }
   else
     {
-      cogl_color (&color);
-
+      *color = (ClutterColor){ 0xff, 0xff, 0xff, 0xff };
+      
       *x2 = x;
       *y2 = y;
       *z2 = z;
@@ -171,7 +162,7 @@ main (int argc, char *argv[])
   ClutterColor      stage_color = { 0xcc, 0xcc, 0xcc, 0xff };
   struct distort_data data;
   ClutterTimeline  *timeline;
-  gint              i, width, height;
+  gint              i;
   
   for (i = 1; i < argc; ++i)
     {
@@ -224,6 +215,7 @@ main (int argc, char *argv[])
                    0.0, 0.0,
                    distort_func,
                    &data);
+  clutter_texture_odo_set_cull_mode (CLUTTER_TEXTURE_ODO (odo), ODO_CULL_BACK);
                    
   clutter_container_add (CLUTTER_CONTAINER (stage), odo, NULL);
 
@@ -232,12 +224,11 @@ main (int argc, char *argv[])
                    0.0, 0.0,
                    distort_func,
                    &data);
-  clutter_texture_get_base_size (CLUTTER_TEXTURE (tex1), &width, &height);
-  clutter_actor_set_size (odo, width, height);
+  clutter_texture_odo_set_cull_mode (CLUTTER_TEXTURE_ODO (odo), ODO_CULL_FRONT);
 
   clutter_container_add (CLUTTER_CONTAINER (stage), odo, NULL);
 
-  timeline = clutter_timeline_new_for_duration (5000);
+  timeline = clutter_timeline_new_for_duration (15000);
   clutter_timeline_set_loop (timeline, TRUE);
   
   g_signal_connect (timeline, "new-frame", G_CALLBACK (new_frame_cb), &data);

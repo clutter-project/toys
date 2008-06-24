@@ -80,6 +80,12 @@ struct _ClutterTextureOdoClass
   void (*_clutter_clone_4) (void);
 }; 
 
+typedef enum {
+  ODO_CULL_NONE,
+  ODO_CULL_FRONT,
+  ODO_CULL_BACK
+} ClutterTextureOdoCullMode;
+
 typedef gboolean (*ClutterTextureDistortFunc) (ClutterTexture * tex,
                                                ClutterFixed x,
                                                ClutterFixed y,
@@ -87,6 +93,7 @@ typedef gboolean (*ClutterTextureDistortFunc) (ClutterTexture * tex,
                                                ClutterFixed *x2,
                                                ClutterFixed *y2,
                                                ClutterFixed *z2,
+                                               ClutterColor *color,
                                                gpointer user_data);
 
 struct _ClutterMeshPoint
@@ -112,6 +119,10 @@ ClutterActor *  clutter_texture_odo_new                (ClutterTexture      *tex
 ClutterTexture *clutter_texture_odo_get_parent_texture (ClutterTextureOdo   *otex);
 void            clutter_texture_odo_set_parent_texture (ClutterTextureOdo   *otex,
                                                         ClutterTexture      *tex);
+void            clutter_texture_odo_set_cull_mode      (ClutterTextureOdo   *otex,
+                                                        ClutterTextureOdoCullMode mode);
+ClutterTextureOdoCullMode
+                clutter_texture_odo_get_cull_mode      (ClutterTextureOdo   *otex);
 
 G_END_DECLS
 
