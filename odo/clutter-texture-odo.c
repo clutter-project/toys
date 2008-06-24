@@ -24,7 +24,6 @@
  */
 
 #include <clutter/clutter.h>
-#include <clutter/cogl.h>
 
 #include "clutter-texture-odo.h"
 
