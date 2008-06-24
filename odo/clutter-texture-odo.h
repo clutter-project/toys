@@ -80,14 +80,14 @@ struct _ClutterTextureOdoClass
   void (*_clutter_clone_4) (void);
 }; 
 
-typedef void (*ClutterTextureDistortFunc) (ClutterTexture * tex,
-                                           ClutterFixed x,
-                                           ClutterFixed y,
-                                           ClutterFixed z,
-                                           ClutterFixed *x2,
-                                           ClutterFixed *y2,
-                                           ClutterFixed *z2,
-                                           gpointer user_data);
+typedef gboolean (*ClutterTextureDistortFunc) (ClutterTexture * tex,
+                                               ClutterFixed x,
+                                               ClutterFixed y,
+                                               ClutterFixed z,
+                                               ClutterFixed *x2,
+                                               ClutterFixed *y2,
+                                               ClutterFixed *z2,
+                                               gpointer user_data);
 
 struct _ClutterMeshPoint
 {

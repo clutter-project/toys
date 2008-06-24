@@ -32,7 +32,7 @@ void new_frame_cb (ClutterTimeline *timeline,
 }
 
 /* skew paramter t <0, 0.7>, the greater t, the greater distortion */
-static void
+static gboolean
 distort_func1 (ClutterTexture * texture,
                ClutterFixed x, ClutterFixed y, ClutterFixed z,
                ClutterFixed *x2, ClutterFixed *y2, ClutterFixed *z2,
@@ -47,10 +47,12 @@ distort_func1 (ClutterTexture * texture,
     *y2 = y;
     *z2 =  z + CFX_MUL (d->t,
                         w * clutter_sini (CLUTTER_FIXED_TO_INT (x)*1024/w));
+    
+    return TRUE;
 }
 
 /* skew paramter t <0, 0.7>, the greater t, the greater distortion */
-static void
+static gboolean
 distort_func2 (ClutterTexture * texture,
                ClutterFixed x, ClutterFixed y, ClutterFixed z,
                ClutterFixed *x2, ClutterFixed *y2, ClutterFixed *z2,
@@ -70,10 +72,12 @@ distort_func2 (ClutterTexture * texture,
   *y2 = y + CFX_MUL(d->t * h/2, clutter_cosi(yi*512/h)) - (d->t * h/2);
 
   *z2 = z - CFX_MUL (d->t, w * clutter_sini (xi*512/w));
+  
+  return TRUE;
 }
 
 /* skew paramter t <0, 0.7>, the greater t, the greater distortion */
-static void
+static gboolean
 distort_func3 (ClutterTexture * texture,
                ClutterFixed x, ClutterFixed y, ClutterFixed z,
                ClutterFixed *x2, ClutterFixed *y2, ClutterFixed *z2,
@@ -92,10 +96,12 @@ distort_func3 (ClutterTexture * texture,
   *y2 = y + CFX_MUL(d->t * h/2, clutter_cosi(yi*512/h)) - (d->t * h/2);
 
   *z2 =  z;
+  
+  return TRUE;
 }
 
 /* skew paramter t <0, 0.7>, the greater t, the greater distortion */
-static void
+static gboolean
 distort_func4 (ClutterTexture * texture,
                ClutterFixed x, ClutterFixed y, ClutterFixed z,
                ClutterFixed *x2, ClutterFixed *y2, ClutterFixed *z2,
@@ -146,6 +152,8 @@ distort_func4 (ClutterTexture * texture,
       *y2 = y;
       *z2 = z;
     }
+  
+  return TRUE;
 }
 
 static void 

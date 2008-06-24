@@ -1,11 +1,11 @@
 /*
- * Clutter.
+ * ClutterTextureOdo.
  *
- * An OpenGL based 'interactive canvas' library.
+ * A deformable texture actor.
  *
  * Authored By Tomas Frydrych  <tf@openedhand.com>
  *
- * Copyright (C) 2007 OpenedHand
+ * Copyright (C) 2007,2008 OpenedHand
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,15 +21,6 @@
  * License along with this library; if not, write to the
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 02111-1307, USA.
- */
-
-/**
- * SECTION:clutter-clone-texture
- * @short_description: Actor for cloning existing textures in an 
- * efficient way.
- *
- * #ClutterTextureOdo allows the cloning of existing #ClutterTexture based
- * actors whilst saving underlying graphics resources.
  */
 
 #include <clutter/clutter.h>
@@ -149,6 +140,9 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
     {
       guint i, j;
       gfloat txf, tyf1, tyf2;
+      gboolean skip1, skip2, skip3, skip4;
+      
+      skip1 = skip2 = skip3 = skip4 = FALSE;
       
       for (j = 0; j < pheight - 1; )
         {
@@ -163,10 +157,13 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
 
               txf  = (float) i;
               
+              skip1 = skip4;
+              skip2 = skip3;
+              
               vertices[0] = vertices[3];
               vertices[1] = vertices[2];
               
-              priv->distort_func (priv->parent_texture,
+              skip3 = !priv->distort_func (priv->parent_texture,
                                   CLUTTER_INT_TO_FIXED (i),
                                   CLUTTER_INT_TO_FIXED (j), 0, &x2, &y2, &z2,
                                   priv->distort_func_data);
@@ -177,7 +174,7 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
               vertices[2].tx = CLUTTER_FLOAT_TO_FIXED (txf/(float)pwidth);
               vertices[2].ty = CLUTTER_FLOAT_TO_FIXED (tyf1/(float)pheight);
               
-              priv->distort_func (priv->parent_texture,
+              skip4 = !priv->distort_func (priv->parent_texture,
                                   CLUTTER_INT_TO_FIXED (i),
                                   CLUTTER_INT_TO_FIXED (j) +
                                     CLUTTER_INT_TO_FIXED (priv->tile_height),
@@ -191,7 +188,10 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
               vertices[3].ty = CLUTTER_FLOAT_TO_FIXED (tyf2/(float)pheight);
 
               if (!first)
-                cogl_texture_polygon (handle, 4, vertices, FALSE);
+                {
+                  if (!skip1 || !skip2 || !skip3 || !skip4)
+                    cogl_texture_polygon (handle, 4, vertices, FALSE);
+                }
               else
                 first = FALSE;
 
