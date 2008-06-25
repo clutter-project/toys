@@ -27,42 +27,45 @@ distort_func (ClutterTexture * texture,
                ClutterColor *color, gpointer data)
 {
   struct distort_data * d = data;
-  gdouble cx, cy, rx, ry;
+  ClutterFixed cx, cy, rx, ry;
   gint w, h, shade;
-  gdouble width, height, turn_angle;
+  ClutterFixed width, height, turn_angle;
   
-  const gdouble radius = 25.0;
-  const gdouble angle = 15.0;
-  const gdouble turn = CLUTTER_FIXED_TO_FLOAT (d->t);
+  const ClutterFixed radius = CLUTTER_INT_TO_FIXED (15);
+  const ClutterFixed angle = clutter_qdivx (CFX_PI, CLUTTER_INT_TO_FIXED (6));
+  const ClutterFixed turn = d->t;
 
   clutter_texture_get_base_size (texture, &w, &h);
 
-  width = w;
-  height = h;
+  width = CLUTTER_INT_TO_FIXED (w);
+  height = CLUTTER_INT_TO_FIXED (h);
   
   /* Rotate the point around the centre of the page-curl ray to align it with
    * the y-axis.
    */
   
-  cx = (1.0 - turn) * width;
-  cy = height/2.0;
+  cx = clutter_qmulx (CFX_ONE - turn, width);
+  cy = clutter_qdivx (height, CLUTTER_INT_TO_FIXED (2));
   
-  rx = ((CLUTTER_FIXED_TO_FLOAT (x) - cx) * cos (-angle * (M_PI/180))) -
-       ((CLUTTER_FIXED_TO_FLOAT (y) - cy) * sin (-angle * (M_PI/180))) - radius;
-  ry = ((CLUTTER_FIXED_TO_FLOAT (x) - cx) * sin (-angle * (M_PI/180))) +
-       ((CLUTTER_FIXED_TO_FLOAT (y) - cy) * cos (-angle * (M_PI/180)));
+  rx = clutter_qmulx (x - cx, clutter_cosx (-angle)) -
+       clutter_qmulx (y - cy, clutter_sinx (-angle)) - radius;
+  ry = clutter_qmulx (x - cx, clutter_sinx (-angle)) +
+       clutter_qmulx (y - cy, clutter_cosx (-angle));
   
   if (rx > -radius)
     {
       /* Calculate a point on a cylinder (maybe make this a cone at some point)
        * and rotate it by the specified angle. This isn't *quite* right yet.
        */
-      turn_angle = ((rx/radius * M_PI/2) - M_PI/2);
+      turn_angle = (clutter_qmulx (clutter_qdivx (rx, radius),
+                                   CFX_PI_2) - CFX_PI_2);
 
       /* Add a gradient that makes it look like lighting and hides the switch
        * between textures.
        */
-      shade = (gint)((sin (turn_angle) * 96.0) + 159.0);
+      shade = CLUTTER_FIXED_TO_INT (
+        clutter_qmulx (clutter_sinx (turn_angle), CLUTTER_INT_TO_FIXED (96))) +
+        159;
       color->red = shade;
       color->green = shade;
       color->blue = shade;
@@ -75,15 +78,16 @@ distort_func (ClutterTexture * texture,
       /* Make the curl radius smaller as more circles are formed (stops
        * z-fighting and looks cool)
        */
-      gdouble small_radius = radius - ((turn_angle/M_PI) * 2.0);
+      ClutterFixed small_radius = radius -
+              clutter_qdivx (clutter_qmulx (turn_angle,
+                                            CLUTTER_INT_TO_FIXED (2)), CFX_PI);
       
-      rx = (small_radius * cos (turn_angle)) + radius;
-      *x2 = CLUTTER_FLOAT_TO_FIXED ((rx * cos (angle * (M_PI/180))) -
-                                    (ry * sin (angle * (M_PI/180))) + cx);
-      *y2 = CLUTTER_FLOAT_TO_FIXED ((rx * sin (angle * (M_PI/180))) +
-                                    (ry * cos (angle * (M_PI/180))) + cy);
-      *z2 = CLUTTER_FLOAT_TO_FIXED ((small_radius * sin (turn_angle)) + radius);
-      
+      rx = clutter_qmulx (small_radius, clutter_cosx (turn_angle)) + radius;
+      *x2 = clutter_qmulx (rx, clutter_cosx (angle)) -
+            clutter_qmulx (ry, clutter_sinx (angle)) + cx;
+      *y2 = clutter_qmulx (rx, clutter_sinx (angle)) +
+            clutter_qmulx (ry, clutter_cosx (angle)) + cy;
+      *z2 = clutter_qmulx (small_radius, clutter_sinx (turn_angle)) + radius;
     }
   else
     {
@@ -203,9 +207,7 @@ main (int argc, char *argv[])
                            &stage_color);
 
   clutter_actor_set_size (stage, 800, 600);
-  clutter_actor_set_rotation (stage, CLUTTER_X_AXIS, 15, 400, 300, 0);
-  clutter_actor_set_rotation (stage, CLUTTER_Y_AXIS, -15, 400, 300, 0);
-
+  
   /* Make textures */
   tex1 = clutter_texture_new_from_file (image1, NULL);
   clutter_actor_show (tex1);
@@ -233,7 +235,7 @@ main (int argc, char *argv[])
 
   clutter_container_add (CLUTTER_CONTAINER (stage), odo, NULL);
 
-  timeline = clutter_timeline_new_for_duration (5000);
+  timeline = clutter_timeline_new_for_duration (3000);
   clutter_timeline_set_loop (timeline, TRUE);
   
   g_signal_connect (timeline, "new-frame", G_CALLBACK (new_frame_cb), &data);
