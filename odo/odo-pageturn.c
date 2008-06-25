@@ -45,7 +45,7 @@ distort_func (ClutterTexture * texture,
    */
   
   cx = clutter_qmulx (CFX_ONE - turn, width);
-  cy = clutter_qdivx (height, CLUTTER_INT_TO_FIXED (2));
+  cy = clutter_qmulx (CFX_ONE - turn, height);
   
   rx = clutter_qmulx (x - cx, clutter_cosx (-angle)) -
        clutter_qmulx (y - cy, clutter_sinx (-angle)) - radius;
