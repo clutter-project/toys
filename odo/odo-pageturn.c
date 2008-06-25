@@ -32,7 +32,7 @@ distort_func (ClutterTexture * texture,
   gdouble width, height, turn_angle;
   
   const gdouble radius = 25.0;
-  const gdouble angle = 10.0;
+  const gdouble angle = 15.0;
   const gdouble turn = CLUTTER_FIXED_TO_FLOAT (d->t);
 
   clutter_texture_get_base_size (texture, &w, &h);
@@ -52,39 +52,44 @@ distort_func (ClutterTexture * texture,
   ry = ((CLUTTER_FIXED_TO_FLOAT (x) - cx) * sin (-angle * (M_PI/180))) +
        ((CLUTTER_FIXED_TO_FLOAT (y) - cy) * cos (-angle * (M_PI/180)));
   
-  if (rx > 0)
+  if (rx > -radius)
     {
       /* Calculate a point on a cylinder (maybe make this a cone at some point)
        * and rotate it by the specified angle. This isn't *quite* right yet.
        */
-      turn_angle = rx/radius * M_PI;
+      turn_angle = ((rx/radius * M_PI/2) - M_PI/2);
+
+      /* Add a gradient that makes it look like lighting and hides the switch
+       * between textures.
+       */
+      shade = (gint)((sin (turn_angle) * 96.0) + 159.0);
+      color->red = shade;
+      color->green = shade;
+      color->blue = shade;
+    }
+  else
+    *color = (ClutterColor){ 0xff, 0xff, 0xff, 0xff };
+  
+  if (rx > 0)
+    {
+      /* Make the curl radius smaller as more circles are formed (stops
+       * z-fighting and looks cool)
+       */
+      gdouble small_radius = radius - ((turn_angle/M_PI) * 2.0);
       
-      rx = radius * cos (turn_angle);
+      rx = (small_radius * cos (turn_angle)) + radius;
       *x2 = CLUTTER_FLOAT_TO_FIXED ((rx * cos (angle * (M_PI/180))) -
                                     (ry * sin (angle * (M_PI/180))) + cx);
       *y2 = CLUTTER_FLOAT_TO_FIXED ((rx * sin (angle * (M_PI/180))) +
                                     (ry * cos (angle * (M_PI/180))) + cy);
-      *z2 = CLUTTER_FLOAT_TO_FIXED ((radius * sin (turn_angle)) + radius);
+      *z2 = CLUTTER_FLOAT_TO_FIXED ((small_radius * sin (turn_angle)) + radius);
       
-      shade = (gint)(sin (turn_angle) * 255.0);
-      color->red = shade;
-      color->green = shade;
-      color->blue = shade;
-
-      /* If we've wrapped in on ourself, don't draw (avoids z-fighting) */
-      if (turn_angle > 2*M_PI)
-        return FALSE;
     }
   else
     {
-      *color = (ClutterColor){ 0xff, 0xff, 0xff, 0xff };
-      
       *x2 = x;
       *y2 = y;
       *z2 = z;
-
-      if (texture == d->back_face)
-        return FALSE;
     }
   
   return TRUE;
@@ -198,8 +203,8 @@ main (int argc, char *argv[])
                            &stage_color);
 
   clutter_actor_set_size (stage, 800, 600);
-  clutter_actor_set_rotation (stage, CLUTTER_X_AXIS, 30, 400, 300, 0);
-  clutter_actor_set_rotation (stage, CLUTTER_Y_AXIS, 30, 400, 300, 0);
+  clutter_actor_set_rotation (stage, CLUTTER_X_AXIS, 15, 400, 300, 0);
+  clutter_actor_set_rotation (stage, CLUTTER_Y_AXIS, -15, 400, 300, 0);
 
   /* Make textures */
   tex1 = clutter_texture_new_from_file (image1, NULL);
@@ -228,7 +233,7 @@ main (int argc, char *argv[])
 
   clutter_container_add (CLUTTER_CONTAINER (stage), odo, NULL);
 
-  timeline = clutter_timeline_new_for_duration (15000);
+  timeline = clutter_timeline_new_for_duration (5000);
   clutter_timeline_set_loop (timeline, TRUE);
   
   g_signal_connect (timeline, "new-frame", G_CALLBACK (new_frame_cb), &data);

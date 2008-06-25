@@ -147,8 +147,11 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
     {
       guint i, j;
       gfloat txf, tyf1, tyf2;
+      ClutterActor *actor, *stage;
       gboolean skip1, skip2, skip3, skip4;
       
+      actor = CLUTTER_ACTOR (otex);
+      stage = clutter_actor_get_stage (actor);
       skip1 = skip2 = skip3 = skip4 = FALSE;
       
       for (j = 0; j < pheight - 1; )
@@ -204,21 +207,101 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
                         cogl_texture_polygon (handle, 4, vertices, FALSE);
                       else
                         {
+#if 0
+                          /* I think it's ok to assume that all GL/GLES
+                           * hardware can perform culling? Just in case though,
+                           * here's the code to do it in software.
+                           * FIXME: Seems I'm not using
+                           *        clutter_actor_apply_relative_transform_blah
+                           *        correctly?
+                           * FIXME: This doesn't work if you transform the
+                           *        stage either...
+                           */
                           /* Do back/front-face culling */
-                          ClutterFixed dot;
+                          ClutterVertex p1, p2, p3, p4, tp1, tp2, tp3, tp4;
+                          ClutterFixed dot1, dot2;
+                          
+                          p1.x = CLUTTER_UNITS_FROM_FIXED (vertices[0].x);
+                          p1.y = CLUTTER_UNITS_FROM_FIXED (vertices[0].y);
+                          p1.z = CLUTTER_UNITS_FROM_FIXED (vertices[0].z);
+
+                          p2.x = CLUTTER_UNITS_FROM_FIXED (vertices[1].x);
+                          p2.y = CLUTTER_UNITS_FROM_FIXED (vertices[1].y);
+                          p2.z = CLUTTER_UNITS_FROM_FIXED (vertices[1].z);
+
+                          p3.x = CLUTTER_UNITS_FROM_FIXED (vertices[2].x);
+                          p3.y = CLUTTER_UNITS_FROM_FIXED (vertices[2].y);
+                          p3.z = CLUTTER_UNITS_FROM_FIXED (vertices[2].z);
+                          
+                          p4.x = CLUTTER_UNITS_FROM_FIXED (vertices[3].x);
+                          p4.y = CLUTTER_UNITS_FROM_FIXED (vertices[3].y);
+                          p4.z = CLUTTER_UNITS_FROM_FIXED (vertices[3].z);
+
+                          clutter_actor_apply_relative_transform_to_point (
+                            stage, actor, &p1, &tp1);
+                          clutter_actor_apply_relative_transform_to_point (
+                            stage, actor, &p2, &tp2);
+                          clutter_actor_apply_relative_transform_to_point (
+                            stage, actor, &p3, &tp3);
+                          clutter_actor_apply_relative_transform_to_point (
+                            stage, actor, &p4, &tp4);
                           
                           /* Calculate the dot product of the normal and the
                            * z unit vector. */
-                          dot = clutter_qmulx (vertices[1].x - vertices[0].x,
-                                               vertices[2].y - vertices[0].y) -
-                              clutter_qmulx (vertices[1].y - vertices[0].y,
-                                             vertices[2].x - vertices[0].x);
+                          dot1 = clutter_qmulx (tp2.x - tp1.x, tp3.y - tp1.y) -
+                               clutter_qmulx (tp2.y - tp1.y, tp3.x - tp1.x);
+                          dot2 = clutter_qmulx (tp3.x - tp1.x, tp4.y - tp1.y) -
+                               clutter_qmulx (tp3.y - tp1.y, tp4.x - tp1.x);
                           
-                          if (((dot < 0) &&
-                               (priv->cull_mode == ODO_CULL_FRONT)) ||
-                              ((dot >= 0) &&
-                               (priv->cull_mode == ODO_CULL_BACK)))
-                            cogl_texture_polygon (handle, 4, vertices, TRUE);
+                          /* Simple case (quad) */
+                          if (((dot1 < 0) && (dot2 < 0)) ||
+                              ((dot1 >= 0) && (dot2 >= 0)))
+                            {
+                              if (((dot1 < 0) &&
+                                   (priv->cull_mode == ODO_CULL_FRONT)) ||
+                                  ((dot1 >= 0) &&
+                                   (priv->cull_mode == ODO_CULL_BACK)))
+                                cogl_texture_polygon (handle, 4,
+                                                      vertices, TRUE);
+                            }
+                          else
+                            {
+                              /* Complex case (triangles) */
+                              if (((dot1 < 0) &&
+                                   (priv->cull_mode == ODO_CULL_FRONT)) ||
+                                  ((dot1 >= 0) &&
+                                   (priv->cull_mode == ODO_CULL_BACK)))
+                                cogl_texture_polygon (handle, 3,
+                                                      vertices, TRUE);
+                              
+                              if (((dot2 < 0) &&
+                                   (priv->cull_mode == ODO_CULL_FRONT)) ||
+                                  ((dot2 >= 0) &&
+                                   (priv->cull_mode == ODO_CULL_BACK)))
+                                {
+                                  CoglTextureVertex triangle[3];
+                                  
+                                  triangle[0] = vertices[2];
+                                  triangle[1] = vertices[3];
+                                  triangle[2] = vertices[0];
+                                  
+                                  cogl_texture_polygon (handle, 3,
+                                                        triangle, TRUE);
+                                }
+                            }
+#else
+                          /* Same as above, using hardware (much faster) */
+                          glEnable (GL_CULL_FACE);
+
+                          if (priv->cull_mode == ODO_CULL_FRONT)
+                            glCullFace (GL_BACK);
+                          else
+                            glCullFace (GL_FRONT);
+
+                          cogl_texture_polygon (handle, 4, vertices, TRUE);
+                          
+                          glDisable (GL_CULL_FACE);
+#endif
 	                      }
                     }
                 }
