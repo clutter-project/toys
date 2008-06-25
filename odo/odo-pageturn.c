@@ -8,8 +8,8 @@
 #include <clutter/clutter.h>
 #include "clutter-texture-odo.h"
 
-static int tile_width  = 4;
-static int tile_height = 4;
+static int tile_width  = 8;
+static int tile_height = 8;
 static char * image1 = "redhand.png";
 static char * image2 = "neghand.png";
 

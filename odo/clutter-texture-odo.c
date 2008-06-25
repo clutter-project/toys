@@ -69,6 +69,7 @@ static void
 texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
 {
   const ClutterColor white = { 0xff, 0xff, 0xff, 0xff };
+  ClutterFixed pwidthx, pheightx;
   gint   pwidth, pheight;
   gboolean first;
   CoglHandle handle;
@@ -82,7 +83,10 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
   if (!CLUTTER_ACTOR_IS_REALIZED (parent_actor))
       clutter_actor_realize (parent_actor);
 
-  clutter_texture_get_base_size (priv->parent_texture, &pwidth, &pheight); 
+  clutter_texture_get_base_size (priv->parent_texture, &pwidth, &pheight);
+  pwidthx = CLUTTER_INT_TO_FIXED (pwidth);
+  pheightx = CLUTTER_INT_TO_FIXED (pheight);
+  
   handle = clutter_texture_get_cogl_texture (priv->parent_texture);
   
   vertices[0].color = white;
@@ -93,7 +97,7 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
   if (priv->mesh.points)
     {
       guint i, j, im, jm;
-      gfloat txf, tyf1, tyf2;
+      ClutterFixed txf, tyf1, tyf2;
       guint tile_width, tile_height;
 
       tile_width  = pwidth  / (priv->mesh.dimension_x - 1);
@@ -101,14 +105,14 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
 
       for (j = 0, jm = 0; j < pheight - 1; ++jm)
         {
-          tyf1 = (float) j;
-          tyf2 = (float) (j + tile_height);
+          tyf1 = CLUTTER_INT_TO_FIXED (j);
+          tyf2 = CLUTTER_INT_TO_FIXED (j + tile_height);
           
           first = TRUE;
           
           for (i = 0, im = 0; i < pwidth; ++im)
             {
-              txf  = (float) i;
+              txf  = CLUTTER_INT_TO_FIXED (i);
 
 #define P(a,b) priv->mesh.points[a*priv->mesh.dimension_x + b]
               vertices[0] = vertices[3];
@@ -116,13 +120,13 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
               vertices[2].x = P (im, jm).x;
               vertices[2].y = P (im, jm).y;
               vertices[2].z = P (im, jm).z;
-              vertices[2].tx = CLUTTER_FLOAT_TO_FIXED (txf/(float)pwidth);
-              vertices[2].ty = CLUTTER_FLOAT_TO_FIXED (tyf1/(float)pheight);
+              vertices[2].tx = clutter_qdivx (txf, pwidthx);
+              vertices[2].ty = clutter_qdivx (tyf1, pheightx);
               vertices[3].x = P (im, jm+1).x;
               vertices[3].y = P (im, jm+1).y;
               vertices[3].z = P (im, jm+1).z;
-              vertices[3].tx = CLUTTER_FLOAT_TO_FIXED (txf/(float)pwidth);
-              vertices[3].ty = CLUTTER_FLOAT_TO_FIXED (tyf2/(float)pheight);
+              vertices[3].tx = clutter_qdivx (txf, pwidthx);
+              vertices[3].ty = clutter_qdivx (tyf2, pheightx);
               
               if (!first)
                 cogl_texture_polygon (handle, 4, vertices, FALSE);
@@ -146,7 +150,7 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
   else if (priv->distort_func)
     {
       guint i, j;
-      gfloat txf, tyf1, tyf2;
+      ClutterFixed txf, tyf1, tyf2;
       ClutterActor *actor, *stage;
       gboolean skip1, skip2, skip3, skip4;
       
@@ -156,8 +160,8 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
       
       for (j = 0; j < pheight - 1; )
         {
-          tyf1 = (float) j;
-          tyf2 = (float) (j + priv->tile_height);
+          tyf1 = CLUTTER_INT_TO_FIXED (j);
+          tyf2 = CLUTTER_INT_TO_FIXED (j + priv->tile_height);
           
           first = TRUE;
           
@@ -165,7 +169,7 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
             {
               ClutterFixed x2, y2, z2;
 
-              txf  = (float) i;
+              txf  = CLUTTER_INT_TO_FIXED (i);
               
               skip1 = skip4;
               skip2 = skip3;
@@ -174,40 +178,38 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
               vertices[1] = vertices[2];
               
               skip3 = !priv->distort_func (priv->parent_texture,
-                                  CLUTTER_INT_TO_FIXED (i),
-                                  CLUTTER_INT_TO_FIXED (j), 0, &x2, &y2, &z2,
+                                  txf, tyf1, 0, &x2, &y2, &z2,
                                   &vertices[2].color,
                                   priv->distort_func_data);
               
               vertices[2].x = x2;
               vertices[2].y = y2;
               vertices[2].z = z2;
-              vertices[2].tx = CLUTTER_FLOAT_TO_FIXED (txf/(float)pwidth);
-              vertices[2].ty = CLUTTER_FLOAT_TO_FIXED (tyf1/(float)pheight);
+              vertices[2].tx = clutter_qdivx (txf, pwidthx);
+              vertices[2].ty = clutter_qdivx (tyf1, pheightx);
               
               skip4 = !priv->distort_func (priv->parent_texture,
-                                  CLUTTER_INT_TO_FIXED (i),
-                                  CLUTTER_INT_TO_FIXED (j) +
-                                    CLUTTER_INT_TO_FIXED (priv->tile_height),
-                                  0, &x2, &y2, &z2,
+                                  txf, tyf2, 0, &x2, &y2, &z2,
                                   &vertices[3].color,
                                   priv->distort_func_data);
               
               vertices[3].x = x2;
               vertices[3].y = y2;
               vertices[3].z = z2;
-              vertices[3].tx = CLUTTER_FLOAT_TO_FIXED (txf/(float)pwidth);
-              vertices[3].ty = CLUTTER_FLOAT_TO_FIXED (tyf2/(float)pheight);
+              vertices[3].tx = clutter_qdivx (txf, pwidthx);
+              vertices[3].ty = clutter_qdivx (tyf2, pheightx);
 
               if (!first)
                 {
                   if (!skip1 || !skip2 || !skip3 || !skip4)
                     {
+#ifndef USE_SOFT_CULL
+                      cogl_texture_polygon (handle, 4, vertices, TRUE);
+#else
                       if (priv->cull_mode == ODO_CULL_NONE)
                         cogl_texture_polygon (handle, 4, vertices, FALSE);
                       else
                         {
-#if 0
                           /* I think it's ok to assume that all GL/GLES
                            * hardware can perform culling? Just in case though,
                            * here's the code to do it in software.
@@ -289,20 +291,8 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
                                                         triangle, TRUE);
                                 }
                             }
-#else
-                          /* Same as above, using hardware (much faster) */
-                          glEnable (GL_CULL_FACE);
-
-                          if (priv->cull_mode == ODO_CULL_FRONT)
-                            glCullFace (GL_BACK);
-                          else
-                            glCullFace (GL_FRONT);
-
-                          cogl_texture_polygon (handle, 4, vertices, TRUE);
-                          
-                          glDisable (GL_CULL_FACE);
-#endif
 	                      }
+#endif
                     }
                 }
               else
@@ -361,8 +351,23 @@ clutter_texture_odo_paint (ClutterActor *self)
   col.alpha = clutter_actor_get_opacity (self);
   cogl_color (&col);
 
+#ifndef USE_SOFT_CULL
+  if (priv->cull_mode != ODO_CULL_NONE);
+    glEnable (GL_CULL_FACE);
+
+  if (priv->cull_mode == ODO_CULL_FRONT)
+    glCullFace (GL_BACK);
+  else
+    glCullFace (GL_FRONT);
+#endif
+
   /* Parent paint translated us into position */
   texture_odo_render_to_gl_quad (CLUTTER_TEXTURE_ODO (self));
+
+#ifndef USE_SOFT_CULL
+  if (priv->cull_mode != ODO_CULL_NONE);
+    glDisable (GL_CULL_FACE);
+#endif
 
   cogl_pop_matrix ();
 }

@@ -100,62 +100,6 @@ distort_func3 (ClutterTexture * texture,
   return TRUE;
 }
 
-/* skew paramter t <0, 0.7>, the greater t, the greater distortion */
-static gboolean
-distort_func4 (ClutterTexture * texture,
-               ClutterFixed x, ClutterFixed y, ClutterFixed z,
-               ClutterFixed *x2, ClutterFixed *y2, ClutterFixed *z2,
-               ClutterColor *color, gpointer data)
-{
-  struct distort_data * d = data;
-  gdouble cx, cy, rx, ry;
-  gint w, h;
-  gdouble width, height;
-  
-  const gdouble radius = 25.0;
-  const gdouble angle = 30.0;
-  const gdouble turn = CLUTTER_FIXED_TO_FLOAT (d->t);
-
-  clutter_texture_get_base_size (CLUTTER_TEXTURE (d->tex), &w, &h);
-
-  width = w;
-  height = h;
-  
-  /* Rotate the point around the centre of the page-curl ray to align it with
-   * the y-axis.
-   */
-  
-  cx = (1.0 - turn) * width;
-  cy = height/2.0;
-  
-  rx = ((CLUTTER_FIXED_TO_FLOAT (x) - cx) * cos (-angle * (M_PI/180))) -
-       ((CLUTTER_FIXED_TO_FLOAT (y) - cy) * sin (-angle * (M_PI/180))) - radius;
-  ry = ((CLUTTER_FIXED_TO_FLOAT (x) - cx) * sin (-angle * (M_PI/180))) +
-       ((CLUTTER_FIXED_TO_FLOAT (y) - cy) * cos (-angle * (M_PI/180)));
-  
-  if (rx > 0)
-    {
-      /* Calculate a point on a cylinder (maybe make this a cone at some point)
-       * and rotate it by the specified angle.
-       */
-      gdouble turn_angle = (fmod (rx, radius * 2) /radius) * M_PI;
-      rx = radius * cos (turn_angle);
-      *x2 = CLUTTER_FLOAT_TO_FIXED ((rx * cos (angle * (M_PI/180))) -
-                                    (ry * sin (angle * (M_PI/180))) + cx);
-      *y2 = CLUTTER_FLOAT_TO_FIXED ((rx * sin (angle * (M_PI/180))) +
-                                    (ry * cos (angle * (M_PI/180))) + cy);
-      *z2 = CLUTTER_FLOAT_TO_FIXED ((radius * sin (turn_angle)) + radius);
-    }
-  else
-    {
-      *x2 = x;
-      *y2 = y;
-      *z2 = z;
-    }
-  
-  return TRUE;
-}
-
 static void 
 on_event (ClutterStage *stage,
           ClutterEvent *event,
@@ -277,14 +221,6 @@ main (int argc, char *argv[])
                    600, 20,
                    0.0, 0.0,
                    distort_func3,
-                   &data);
-                   
-  clutter_container_add (CLUTTER_CONTAINER (stage), odo, NULL);
-
-  odo = beget_odo (CLUTTER_TEXTURE (hand),
-                   20, 400,
-                   30.0, 15.0,
-                   distort_func4,
                    &data);
                    
   clutter_container_add (CLUTTER_CONTAINER (stage), odo, NULL);
