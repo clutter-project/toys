@@ -16,26 +16,26 @@ static char * image2 = "neghand.png";
 struct distort_data
 {
     ClutterFixed t;
-    ClutterTexture * back_face;
+    ClutterTextureOdo * back_face;
 };
 
 /* skew paramter t <0, 0.7>, the greater t, the greater distortion */
 static gboolean
-distort_func (ClutterTexture * texture,
+distort_func (ClutterTextureOdo * otex,
               ClutterFixed x, ClutterFixed y, ClutterFixed z,
               ClutterFixed *x2, ClutterFixed *y2, ClutterFixed *z2,
-               ClutterColor *color, gpointer data)
+              ClutterColor *color, gpointer data)
 {
   struct distort_data * d = data;
   ClutterFixed cx, cy, rx, ry;
-  gint w, h, shade;
+  guint w, h, shade;
   ClutterFixed width, height, turn_angle;
   
-  const ClutterFixed radius = CLUTTER_INT_TO_FIXED (15);
+  const ClutterFixed radius = CLUTTER_INT_TO_FIXED (20);
   const ClutterFixed angle = clutter_qdivx (CFX_PI, CLUTTER_INT_TO_FIXED (6));
   const ClutterFixed turn = d->t;
 
-  clutter_texture_get_base_size (texture, &w, &h);
+  clutter_actor_get_size (CLUTTER_ACTOR (otex), &w, &h);
 
   width = CLUTTER_INT_TO_FIXED (w);
   height = CLUTTER_INT_TO_FIXED (h);
@@ -209,13 +209,18 @@ main (int argc, char *argv[])
   clutter_actor_set_size (stage, 800, 600);
   
   /* Make textures */
-  tex1 = clutter_texture_new_from_file (image1, NULL);
+  tex1 = g_object_new (CLUTTER_TYPE_TEXTURE,
+                       "disable-slicing", TRUE,
+                       "filename", image1,
+                       NULL);
   clutter_actor_show (tex1);
-  tex2 = clutter_texture_new_from_file (image2, NULL);
+  tex2 = g_object_new (CLUTTER_TYPE_TEXTURE,
+                       "disable-slicing", TRUE,
+                       "filename", image2,
+                       NULL);
   clutter_actor_show (tex2);
 
   data.t = CLUTTER_FLOAT_TO_FIXED (0.7);
-  data.back_face = CLUTTER_TEXTURE (tex2);
   
   odo = beget_odo (CLUTTER_TEXTURE (tex1),
                    240, 120,
@@ -223,6 +228,7 @@ main (int argc, char *argv[])
                    distort_func,
                    &data);
   clutter_texture_odo_set_cull_mode (CLUTTER_TEXTURE_ODO (odo), ODO_CULL_BACK);
+  data.back_face = CLUTTER_TEXTURE_ODO (odo);
                    
   clutter_container_add (CLUTTER_CONTAINER (stage), odo, NULL);
 
@@ -232,6 +238,9 @@ main (int argc, char *argv[])
                    distort_func,
                    &data);
   clutter_texture_odo_set_cull_mode (CLUTTER_TEXTURE_ODO (odo), ODO_CULL_FRONT);
+  clutter_actor_set_size (odo,
+                          clutter_actor_get_width (tex1),
+                          clutter_actor_get_height (tex1));
 
   clutter_container_add (CLUTTER_CONTAINER (stage), odo, NULL);
 

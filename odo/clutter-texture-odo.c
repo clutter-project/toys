@@ -70,9 +70,10 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
 {
   const ClutterColor white = { 0xff, 0xff, 0xff, 0xff };
   ClutterFixed pwidthx, pheightx;
-  gint   pwidth, pheight;
+  guint   pwidth, pheight;
   gboolean first;
   CoglHandle handle;
+  ClutterActor *actor, *stage;
   CoglTextureVertex vertices[4];
 
   ClutterTextureOdoPrivate *priv = otex->priv;
@@ -83,7 +84,10 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
   if (!CLUTTER_ACTOR_IS_REALIZED (parent_actor))
       clutter_actor_realize (parent_actor);
 
-  clutter_texture_get_base_size (priv->parent_texture, &pwidth, &pheight);
+  actor = CLUTTER_ACTOR (otex);
+  stage = clutter_actor_get_stage (actor);
+
+  clutter_actor_get_size (actor, &pwidth, &pheight);
   pwidthx = CLUTTER_INT_TO_FIXED (pwidth);
   pheightx = CLUTTER_INT_TO_FIXED (pheight);
   
@@ -151,11 +155,8 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
     {
       guint i, j;
       ClutterFixed txf, tyf1, tyf2;
-      ClutterActor *actor, *stage;
       gboolean skip1, skip2, skip3, skip4;
       
-      actor = CLUTTER_ACTOR (otex);
-      stage = clutter_actor_get_stage (actor);
       skip1 = skip2 = skip3 = skip4 = FALSE;
       
       for (j = 0; j < pheight - 1; )
@@ -177,7 +178,7 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
               vertices[0] = vertices[3];
               vertices[1] = vertices[2];
               
-              skip3 = !priv->distort_func (priv->parent_texture,
+              skip3 = !priv->distort_func (otex,
                                   txf, tyf1, 0, &x2, &y2, &z2,
                                   &vertices[2].color,
                                   priv->distort_func_data);
@@ -188,7 +189,7 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
               vertices[2].tx = clutter_qdivx (txf, pwidthx);
               vertices[2].ty = clutter_qdivx (tyf1, pheightx);
               
-              skip4 = !priv->distort_func (priv->parent_texture,
+              skip4 = !priv->distort_func (otex,
                                   txf, tyf2, 0, &x2, &y2, &z2,
                                   &vertices[3].color,
                                   priv->distort_func_data);

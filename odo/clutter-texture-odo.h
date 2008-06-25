@@ -86,7 +86,7 @@ typedef enum {
   ODO_CULL_BACK
 } ClutterTextureOdoCullMode;
 
-typedef gboolean (*ClutterTextureDistortFunc) (ClutterTexture * tex,
+typedef gboolean (*ClutterTextureDistortFunc) (ClutterTextureOdo * otex,
                                                ClutterFixed x,
                                                ClutterFixed y,
                                                ClutterFixed z,

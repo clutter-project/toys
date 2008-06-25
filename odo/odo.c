@@ -33,7 +33,7 @@ void new_frame_cb (ClutterTimeline *timeline,
 
 /* skew paramter t <0, 0.7>, the greater t, the greater distortion */
 static gboolean
-distort_func1 (ClutterTexture * texture,
+distort_func1 (ClutterTextureOdo * texture,
                ClutterFixed x, ClutterFixed y, ClutterFixed z,
                ClutterFixed *x2, ClutterFixed *y2, ClutterFixed *z2,
                ClutterColor *color, gpointer data)
@@ -53,7 +53,7 @@ distort_func1 (ClutterTexture * texture,
 
 /* skew paramter t <0, 0.7>, the greater t, the greater distortion */
 static gboolean
-distort_func2 (ClutterTexture * texture,
+distort_func2 (ClutterTextureOdo * texture,
                ClutterFixed x, ClutterFixed y, ClutterFixed z,
                ClutterFixed *x2, ClutterFixed *y2, ClutterFixed *z2,
                ClutterColor *color, gpointer data)
@@ -78,7 +78,7 @@ distort_func2 (ClutterTexture * texture,
 
 /* skew paramter t <0, 0.7>, the greater t, the greater distortion */
 static gboolean
-distort_func3 (ClutterTexture * texture,
+distort_func3 (ClutterTextureOdo * texture,
                ClutterFixed x, ClutterFixed y, ClutterFixed z,
                ClutterFixed *x2, ClutterFixed *y2, ClutterFixed *z2,
                ClutterColor *color, gpointer data)
