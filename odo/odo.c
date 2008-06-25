@@ -271,9 +271,6 @@ main (int argc, char *argv[])
 
   clutter_timeline_start (timeline);
   
-  /* Enable depth test for distort_func4 */
-  cogl_enable_depth_test (TRUE);
-  
   clutter_main();
 
   return 0;
