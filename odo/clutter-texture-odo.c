@@ -353,12 +353,14 @@ clutter_texture_odo_paint (ClutterActor *self)
 
 #ifndef USE_SOFT_CULL
   if (priv->cull_mode != ODO_CULL_NONE);
-    glEnable (GL_CULL_FACE);
+    {
+      glEnable (GL_CULL_FACE);
 
-  if (priv->cull_mode == ODO_CULL_FRONT)
-    glCullFace (GL_BACK);
-  else
-    glCullFace (GL_FRONT);
+      if (priv->cull_mode == ODO_CULL_FRONT)
+        glCullFace (GL_BACK);
+      else
+        glCullFace (GL_FRONT);
+    }
 #endif
 
   /* Parent paint translated us into position */
