@@ -15,11 +15,11 @@ static char * image2 = "neghand.png";
 
 struct distort_data
 {
-    ClutterFixed t;
-    ClutterTextureOdo * back_face;
+    ClutterFixed radius;
+    ClutterFixed angle;
+    ClutterFixed turn;
 };
 
-/* skew paramter t <0, 0.7>, the greater t, the greater distortion */
 static gboolean
 distort_func (ClutterTextureOdo * otex,
               ClutterFixed x, ClutterFixed y, ClutterFixed z,
@@ -31,10 +31,6 @@ distort_func (ClutterTextureOdo * otex,
   guint w, h, shade;
   ClutterFixed width, height, turn_angle;
   
-  const ClutterFixed radius = CLUTTER_INT_TO_FIXED (20);
-  const ClutterFixed angle = clutter_qdivx (CFX_PI, CLUTTER_INT_TO_FIXED (6));
-  const ClutterFixed turn = d->t;
-
   clutter_actor_get_size (CLUTTER_ACTOR (otex), &w, &h);
 
   width = CLUTTER_INT_TO_FIXED (w);
@@ -44,20 +40,20 @@ distort_func (ClutterTextureOdo * otex,
    * the y-axis.
    */
   
-  cx = clutter_qmulx (CFX_ONE - turn, width);
-  cy = clutter_qmulx (CFX_ONE - turn, height);
+  cx = clutter_qmulx (CFX_ONE - d->turn, width);
+  cy = clutter_qmulx (CFX_ONE - d->turn, height);
   
-  rx = clutter_qmulx (x - cx, clutter_cosx (-angle)) -
-       clutter_qmulx (y - cy, clutter_sinx (-angle)) - radius;
-  ry = clutter_qmulx (x - cx, clutter_sinx (-angle)) +
-       clutter_qmulx (y - cy, clutter_cosx (-angle));
+  rx = clutter_qmulx (x - cx, clutter_cosx (-d->angle)) -
+       clutter_qmulx (y - cy, clutter_sinx (-d->angle)) - d->radius;
+  ry = clutter_qmulx (x - cx, clutter_sinx (-d->angle)) +
+       clutter_qmulx (y - cy, clutter_cosx (-d->angle));
   
-  if (rx > -radius)
+  if (rx > -d->radius)
     {
       /* Calculate a point on a cylinder (maybe make this a cone at some point)
        * and rotate it by the specified angle. This isn't *quite* right yet.
        */
-      turn_angle = (clutter_qmulx (clutter_qdivx (rx, radius),
+      turn_angle = (clutter_qmulx (clutter_qdivx (rx, d->radius),
                                    CFX_PI_2) - CFX_PI_2);
 
       /* Add a gradient that makes it look like lighting and hides the switch
@@ -78,16 +74,16 @@ distort_func (ClutterTextureOdo * otex,
       /* Make the curl radius smaller as more circles are formed (stops
        * z-fighting and looks cool)
        */
-      ClutterFixed small_radius = radius -
+      ClutterFixed small_radius = d->radius -
               clutter_qdivx (clutter_qmulx (turn_angle,
                                             CLUTTER_INT_TO_FIXED (2)), CFX_PI);
       
-      rx = clutter_qmulx (small_radius, clutter_cosx (turn_angle)) + radius;
-      *x2 = clutter_qmulx (rx, clutter_cosx (angle)) -
-            clutter_qmulx (ry, clutter_sinx (angle)) + cx;
-      *y2 = clutter_qmulx (rx, clutter_sinx (angle)) +
-            clutter_qmulx (ry, clutter_cosx (angle)) + cy;
-      *z2 = clutter_qmulx (small_radius, clutter_sinx (turn_angle)) + radius;
+      rx = clutter_qmulx (small_radius, clutter_cosx (turn_angle)) + d->radius;
+      *x2 = clutter_qmulx (rx, clutter_cosx (d->angle)) -
+            clutter_qmulx (ry, clutter_sinx (d->angle)) + cx;
+      *y2 = clutter_qmulx (rx, clutter_sinx (d->angle)) +
+            clutter_qmulx (ry, clutter_cosx (d->angle)) + cy;
+      *z2 = clutter_qmulx (small_radius, clutter_sinx (turn_angle)) + d->radius;
     }
   else
     {
@@ -108,7 +104,7 @@ new_frame_cb (ClutterTimeline *timeline,
     guint frames = clutter_timeline_get_n_frames (timeline);
     gdouble t = 1.0 - ((gdouble)abs(frames/2-frame_num))*2.0 / (gdouble)frames;
 
-    d->t = CLUTTER_FLOAT_TO_FIXED (t);
+    d->turn = CLUTTER_FLOAT_TO_FIXED (t);
 
     clutter_actor_queue_redraw (clutter_stage_get_default ());
 }
@@ -220,7 +216,9 @@ main (int argc, char *argv[])
                        NULL);
   clutter_actor_show (tex2);
 
-  data.t = CLUTTER_FLOAT_TO_FIXED (0.7);
+  data.turn = 0;
+  data.radius = CLUTTER_INT_TO_FIXED (20);
+  data.angle = clutter_qdivx (CFX_PI, CLUTTER_INT_TO_FIXED (6));
   
   odo = beget_odo (CLUTTER_TEXTURE (tex1),
                    240, 120,
@@ -228,7 +226,6 @@ main (int argc, char *argv[])
                    distort_func,
                    &data);
   clutter_texture_odo_set_cull_mode (CLUTTER_TEXTURE_ODO (odo), ODO_CULL_BACK);
-  data.back_face = CLUTTER_TEXTURE_ODO (odo);
                    
   clutter_container_add (CLUTTER_CONTAINER (stage), odo, NULL);
 
