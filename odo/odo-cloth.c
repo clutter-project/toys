@@ -29,14 +29,14 @@ distort_func (ClutterTextureOdo * otex,
   struct distort_data * d = data;
   ClutterFixed cx, cy, rx, ry;
   guint w, h, shade;
-  ClutterFixed width, height, turn_angle;
+  ClutterFixed width, height, turn_angle, height_radius;
   
   clutter_actor_get_size (CLUTTER_ACTOR (otex), &w, &h);
 
   width = CLUTTER_INT_TO_FIXED (w);
   height = CLUTTER_INT_TO_FIXED (h);
   
-  /* Rotate the point around the centre of the page-curl ray to align it with
+  /* Rotate the point around the centre of the curl ray to align it with
    * the y-axis.
    */
   
@@ -48,52 +48,31 @@ distort_func (ClutterTextureOdo * otex,
   ry = clutter_qmulx (x - cx, clutter_sinx (-d->angle)) +
        clutter_qmulx (y - cy, clutter_cosx (-d->angle));
   
-  if (rx > -d->radius)
-    {
-      /* Calculate the curl angle as a function from the distance of the curl
-       * ray (i.e. the page crease)
-       */
-      turn_angle = (clutter_qmulx (clutter_qdivx (rx, d->radius),
-                                   CFX_PI_2) - CFX_PI_2);
+  /* Calculate the angle as a function of the distance from the curl ray */
+  turn_angle = (clutter_qmulx (clutter_qdivx (rx, d->radius),
+                               CFX_PI_2) - CFX_PI_2);
 
-      /* Add a gradient that makes it look like lighting and hides the switch
-       * between textures.
-       */
-      shade = CLUTTER_FIXED_TO_INT (
-        clutter_qmulx (clutter_sinx (turn_angle), CLUTTER_INT_TO_FIXED (96))) +
-        159;
-      color->red = shade;
-      color->green = shade;
-      color->blue = shade;
-    }
-  else
-    *color = (ClutterColor){ 0xff, 0xff, 0xff, 0xff };
+  /* Add a gradient that makes it look like lighting and hides the switch
+   * between textures.
+   */
+  shade = CLUTTER_FIXED_TO_INT (
+    clutter_qmulx (clutter_sinx (turn_angle), CLUTTER_INT_TO_FIXED (96))) +
+    159;
+  color->red = shade;
+  color->green = shade;
+  color->blue = shade;
   
-  if (rx > 0)
-    {
-      /* Make the curl radius smaller as more circles are formed (stops
-       * z-fighting and looks cool)
-       */
-      ClutterFixed small_radius = d->radius -
-              clutter_qdivx (clutter_qmulx (turn_angle,
-                                            CLUTTER_INT_TO_FIXED (2)), CFX_PI);
-      
-      /* Calculate a point on a cylinder (maybe make this a cone at some point)
-       * and rotate it by the specified angle.
-       */
-      rx = clutter_qmulx (small_radius, clutter_cosx (turn_angle)) + d->radius;
-      *x2 = clutter_qmulx (rx, clutter_cosx (d->angle)) -
-            clutter_qmulx (ry, clutter_sinx (d->angle)) + cx;
-      *y2 = clutter_qmulx (rx, clutter_sinx (d->angle)) +
-            clutter_qmulx (ry, clutter_cosx (d->angle)) + cy;
-      *z2 = clutter_qmulx (small_radius, clutter_sinx (turn_angle)) + d->radius;
-    }
-  else
-    {
-      *x2 = x;
-      *y2 = y;
-      *z2 = z;
-    }
+  /* Make the wave amplitude lower as its distance from the curl ray increases.
+   * Not really necessary, but looks a little nicer I think.
+   */
+  height_radius = clutter_qmulx (CFX_ONE - clutter_qdivx (rx, width),
+                                 d->radius);
+  
+  *x2 = clutter_qmulx (rx, clutter_cosx (d->angle)) -
+        clutter_qmulx (ry, clutter_sinx (d->angle)) + cx;
+  *y2 = clutter_qmulx (rx, clutter_sinx (d->angle)) +
+        clutter_qmulx (ry, clutter_cosx (d->angle)) + cy;
+  *z2 = clutter_qmulx (height_radius, clutter_sinx (turn_angle));
   
   return TRUE;
 }
