@@ -1,0 +1,27 @@
+gcr - gegl clutter recorder
+===========================
+
+A setup to use interface Clutter with a worker thread using ffmpeg to
+encode a Clutter program to video in realtime using GEGL.
+
+This screen recorder has not been written for casual recordings, it requires
+you to modify the source of the program you want to record.
+
+The easiest way to integrate gcr in your project is to add a call to:
+
+gcr ("/tmp/videofile.mpg"); 
+
+just before clutter_main(), this will install a callback after the stage has
+repainted that would push captured frames to the encoder thread. I've been
+including gcr.c directly in the file containing main to avoid changing build
+systems. Make sure your resulting program links against GEGL as well as
+clutter.
+
+The workflow I've been using is to encode to mpeg with high bitrate (hardcoded
+in the .c file), and then afterwards transcode this to Theora or some other
+codec suitable for distribution.
+
+The code does not record the cursor thus it probably is beneficial to draw
+your own cursor using clutter when using this screen recorder.
+
+/Øyvind K.
