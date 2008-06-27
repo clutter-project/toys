@@ -119,6 +119,11 @@ ClutterActor *  clutter_texture_odo_new                (ClutterTexture      *tex
 ClutterTexture *clutter_texture_odo_get_parent_texture (ClutterTextureOdo   *otex);
 void            clutter_texture_odo_set_parent_texture (ClutterTextureOdo   *otex,
                                                         ClutterTexture      *tex);
+ClutterTexture *clutter_texture_odo_get_backface_texture
+                                                       (ClutterTextureOdo *clone);
+void            clutter_texture_odo_set_backface_texture
+                                                       (ClutterTextureOdo *clone,
+                                                        ClutterTexture    *texture);
 void            clutter_texture_odo_set_cull_mode      (ClutterTextureOdo   *otex,
                                                         ClutterTextureOdoCullMode mode);
 ClutterTextureOdoCullMode

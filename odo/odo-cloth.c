@@ -207,20 +207,10 @@ main (int argc, char *argv[])
                    0.0, 0.0,
                    distort_func,
                    &data);
+  clutter_texture_odo_set_backface_texture (CLUTTER_TEXTURE_ODO (odo),
+                                            CLUTTER_TEXTURE (tex2));
   clutter_texture_odo_set_cull_mode (CLUTTER_TEXTURE_ODO (odo), ODO_CULL_BACK);
                    
-  clutter_container_add (CLUTTER_CONTAINER (stage), odo, NULL);
-
-  odo = beget_odo (CLUTTER_TEXTURE (tex2),
-                   240, 120,
-                   0.0, 0.0,
-                   distort_func,
-                   &data);
-  clutter_texture_odo_set_cull_mode (CLUTTER_TEXTURE_ODO (odo), ODO_CULL_FRONT);
-  clutter_actor_set_size (odo,
-                          clutter_actor_get_width (tex1),
-                          clutter_actor_get_height (tex1));
-
   clutter_container_add (CLUTTER_CONTAINER (stage), odo, NULL);
 
   timeline = clutter_timeline_new_for_duration (3000);

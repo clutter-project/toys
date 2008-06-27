@@ -31,6 +31,7 @@ enum
 {
   PROP_0,
   PROP_PARENT_TEXTURE,
+  PROP_BACKFACE_TEXTURE,
   PROP_DISTORT_FUNC,
   PROP_DISTORT_FUNC_DATA,
   PROP_TILE_WIDTH,
@@ -53,6 +54,7 @@ G_DEFINE_TYPE (ClutterTextureOdo,
 struct _ClutterTextureOdoPrivate
 {
   ClutterTexture      *parent_texture;
+  ClutterTexture      *backface_texture;
 
   ClutterTextureDistortFunc    distort_func;
   gpointer                     distort_func_data;
@@ -65,6 +67,22 @@ struct _ClutterTextureOdoPrivate
   ClutterTextureOdoCullMode    cull_mode;
 };
 
+static inline void
+texture_polygon (CoglHandle handle, guint n_vertices,
+                 CoglTextureVertex *vertices, gboolean use_color,
+                 CoglHandle bhandle)
+{
+  cogl_texture_polygon (handle, n_vertices, vertices, use_color);
+  if (bhandle)
+    {
+      gint i;
+      CoglTextureVertex ccw_vertices[n_vertices];
+      for (i = 0; i < n_vertices; i++)
+        ccw_vertices[i] = vertices[n_vertices-i-1];
+      cogl_texture_polygon (bhandle, n_vertices, ccw_vertices, use_color);
+    }
+}
+
 static void
 texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
 {
@@ -72,7 +90,7 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
   ClutterFixed pwidthx, pheightx;
   guint   pwidth, pheight;
   gboolean first;
-  CoglHandle handle;
+  CoglHandle handle, bhandle;
   ClutterActor *actor, *stage;
   CoglTextureVertex vertices[4];
 
@@ -88,10 +106,18 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
   stage = clutter_actor_get_stage (actor);
 
   clutter_actor_get_size (actor, &pwidth, &pheight);
+
+  if ((pwidth == 0) || (pheight == 0))
+    return;
+  
   pwidthx = CLUTTER_INT_TO_FIXED (pwidth);
   pheightx = CLUTTER_INT_TO_FIXED (pheight);
   
   handle = clutter_texture_get_cogl_texture (priv->parent_texture);
+  if (priv->backface_texture)
+    bhandle = clutter_texture_get_cogl_texture (priv->backface_texture);
+  else
+    bhandle = NULL;
   
   vertices[0].color = white;
   vertices[1].color = white;
@@ -132,8 +158,9 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
               vertices[3].tx = clutter_qdivx (txf, pwidthx);
               vertices[3].ty = clutter_qdivx (tyf2, pheightx);
               
+              /* FIXME: Need software face culling here */
               if (!first)
-                cogl_texture_polygon (handle, 4, vertices, FALSE);
+                texture_polygon (handle, 4, vertices, FALSE, bhandle);
               else
                 first = FALSE;
 #undef P
@@ -205,20 +232,17 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
                   if (!skip1 || !skip2 || !skip3 || !skip4)
                     {
 #ifndef USE_SOFT_CULL
-                      cogl_texture_polygon (handle, 4, vertices, TRUE);
+                      texture_polygon (handle, 4, vertices, TRUE, bhandle);
 #else
                       if (priv->cull_mode == ODO_CULL_NONE)
-                        cogl_texture_polygon (handle, 4, vertices, FALSE);
+                        texture_polygon (handle, 4, vertices, FALSE, bhandle);
                       else
                         {
                           /* I think it's ok to assume that all GL/GLES
                            * hardware can perform culling? Just in case though,
                            * here's the code to do it in software.
-                           * FIXME: Seems I'm not using
-                           *        clutter_actor_apply_relative_transform_blah
-                           *        correctly?
                            * FIXME: This doesn't work if you transform the
-                           *        stage either...
+                           *        stage...
                            */
                           /* Do back/front-face culling */
                           ClutterVertex p1, p2, p3, p4, tp1, tp2, tp3, tp4;
@@ -260,36 +284,70 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
                           if (((dot1 < 0) && (dot2 < 0)) ||
                               ((dot1 >= 0) && (dot2 >= 0)))
                             {
-                              if (((dot1 < 0) &&
-                                   (priv->cull_mode == ODO_CULL_FRONT)) ||
-                                  ((dot1 >= 0) &&
-                                   (priv->cull_mode == ODO_CULL_BACK)))
-                                cogl_texture_polygon (handle, 4,
-                                                      vertices, TRUE);
+                              if (dot1 < 0)
+                                {
+                                  if (priv->cull_mode == ODO_CULL_FRONT)
+                                    cogl_texture_polygon (handle, 4,
+                                                          vertices, TRUE);
+                                  else if (bhandle)
+                                    cogl_texture_polygon (bhandle, 4,
+                                                          vertices, TRUE);
+                                }
+                              else
+                                {
+                                  if (priv->cull_mode == ODO_CULL_BACK)
+                                    cogl_texture_polygon (handle, 4,
+                                                          vertices, TRUE);
+                                  else if (bhandle)
+                                    cogl_texture_polygon (bhandle, 4,
+                                                          vertices, TRUE);
+                                }
                             }
                           else
                             {
                               /* Complex case (triangles) */
-                              if (((dot1 < 0) &&
-                                   (priv->cull_mode == ODO_CULL_FRONT)) ||
-                                  ((dot1 >= 0) &&
-                                   (priv->cull_mode == ODO_CULL_BACK)))
-                                cogl_texture_polygon (handle, 3,
-                                                      vertices, TRUE);
+                              CoglTextureVertex triangle[3];
                               
-                              if (((dot2 < 0) &&
-                                   (priv->cull_mode == ODO_CULL_FRONT)) ||
-                                  ((dot2 >= 0) &&
-                                   (priv->cull_mode == ODO_CULL_BACK)))
+                              triangle[0] = vertices[2];
+                              triangle[1] = vertices[3];
+                              triangle[2] = vertices[0];
+
+                              if (dot1 < 0)
                                 {
-                                  CoglTextureVertex triangle[3];
-                                  
-                                  triangle[0] = vertices[2];
-                                  triangle[1] = vertices[3];
-                                  triangle[2] = vertices[0];
-                                  
-                                  cogl_texture_polygon (handle, 3,
-                                                        triangle, TRUE);
+                                  if (priv->cull_mode == ODO_CULL_FRONT)
+                                    cogl_texture_polygon (handle, 3,
+                                                          vertices, TRUE);
+                                  else if (bhandle)
+                                    cogl_texture_polygon (bhandle, 3,
+                                                          vertices, TRUE);
+                                }
+                              else
+                                {
+                                  if (priv->cull_mode == ODO_CULL_BACK)
+                                    cogl_texture_polygon (handle, 3,
+                                                          vertices, TRUE);
+                                  else if (bhandle)
+                                    cogl_texture_polygon (bhandle, 3,
+                                                          vertices, TRUE);
+                                }
+
+                              if (dot2 < 0)
+                                {
+                                  if (priv->cull_mode == ODO_CULL_FRONT)
+                                    cogl_texture_polygon (handle, 3,
+                                                          triangle, TRUE);
+                                  else if (bhandle)
+                                    cogl_texture_polygon (bhandle, 3,
+                                                          triangle, TRUE);
+                                }
+                              else
+                                {
+                                  if (priv->cull_mode == ODO_CULL_BACK)
+                                    cogl_texture_polygon (handle, 3,
+                                                          triangle, TRUE);
+                                  else if (bhandle)
+                                    cogl_texture_polygon (bhandle, 3,
+                                                          triangle, TRUE);
                                 }
                             }
 	                      }
@@ -318,12 +376,22 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
       cogl_texture_rectangle (handle,
                               0,
                               0,
-                              CLUTTER_INT_TO_FIXED (pwidth),
-                              CLUTTER_INT_TO_FIXED (pheight),
+                              pwidthx,
+                              pheightx,
                               0,
                               0,
                               CFX_ONE,
                               CFX_ONE);
+      if (bhandle)
+        cogl_texture_rectangle (bhandle,
+                                pwidthx,
+                                pheightx,
+                                -pwidthx,
+                                -pheightx,
+                                CFX_ONE,
+                                CFX_ONE,
+                                0,
+                                0);
     }
 }
 
@@ -376,8 +444,28 @@ clutter_texture_odo_paint (ClutterActor *self)
 }
 
 static void
+set_backface_texture (ClutterTextureOdo *otex,
+                      ClutterTexture    *texture)
+{
+  ClutterTextureOdoPrivate *priv = otex->priv;
+  ClutterActor *actor = CLUTTER_ACTOR (otex);
+
+  if (priv->backface_texture)
+    {
+      g_object_unref (priv->backface_texture);
+      priv->backface_texture = NULL;
+    }
+
+  if (texture) 
+    {
+      priv->backface_texture = g_object_ref (texture);
+      clutter_actor_queue_redraw (actor);
+    }
+}
+
+static void
 set_parent_texture (ClutterTextureOdo *otex,
-                    ClutterTexture      *texture)
+                    ClutterTexture    *texture)
 {
   ClutterTextureOdoPrivate *priv = otex->priv;
   ClutterActor *actor = CLUTTER_ACTOR (otex);
@@ -405,7 +493,6 @@ set_parent_texture (ClutterTextureOdo *otex,
           CLUTTER_ACTOR_IS_VISIBLE (actor))
         clutter_actor_queue_redraw (actor);
     }
-      
 }
 
 static void 
@@ -441,6 +528,9 @@ clutter_texture_odo_set_property (GObject      *object,
     {
     case PROP_PARENT_TEXTURE:
       set_parent_texture (otex, g_value_get_object (value));
+      break;
+    case PROP_BACKFACE_TEXTURE:
+      set_backface_texture (otex, g_value_get_object (value));
       break;
     case PROP_DISTORT_FUNC:
       priv->distort_func = g_value_get_pointer(value);
@@ -484,6 +574,9 @@ clutter_texture_odo_get_property (GObject    *object,
     case PROP_PARENT_TEXTURE:
       g_value_set_object (value, otex->priv->parent_texture);
       break;
+    case PROP_BACKFACE_TEXTURE:
+      g_value_set_object (value, otex->priv->backface_texture);
+      break;
     case PROP_DISTORT_FUNC:
       g_value_set_pointer (value, priv->distort_func);
       break;
@@ -521,8 +614,16 @@ clutter_texture_odo_class_init (ClutterTextureOdoClass *klass)
   g_object_class_install_property (gobject_class,
                                      PROP_PARENT_TEXTURE,
                                    g_param_spec_object ("parent-texture",
-                                                           "Parent Texture",
+                                                        "Parent Texture",
                                                         "The parent texture to clone",
+                                                        CLUTTER_TYPE_TEXTURE,
+                                                        (G_PARAM_CONSTRUCT | CLUTTER_PARAM_READWRITE)));
+
+  g_object_class_install_property (gobject_class,
+                                     PROP_BACKFACE_TEXTURE,
+                                   g_param_spec_object ("backface-texture",
+                                                        "Back-face Texture",
+                                                        "The texture to use for the back face",
                                                         CLUTTER_TYPE_TEXTURE,
                                                         (G_PARAM_CONSTRUCT | CLUTTER_PARAM_READWRITE)));
 
@@ -639,6 +740,29 @@ clutter_texture_odo_set_parent_texture (ClutterTextureOdo *clone,
   set_parent_texture (clone, texture);
 
   g_object_notify (G_OBJECT (clone), "parent-texture");
+  g_object_unref (clone);
+}
+
+ClutterTexture *
+clutter_texture_odo_get_backface_texture (ClutterTextureOdo *clone)
+{
+  g_return_val_if_fail (CLUTTER_IS_TEXTURE_ODO (clone), NULL);
+
+  return clone->priv->backface_texture;
+}
+
+void
+clutter_texture_odo_set_backface_texture (ClutterTextureOdo *clone,
+                                          ClutterTexture    *texture)
+{
+  g_return_if_fail (CLUTTER_IS_TEXTURE_ODO (clone));
+  g_return_if_fail (texture == NULL || CLUTTER_IS_TEXTURE (texture));
+
+  g_object_ref (clone);
+
+  set_backface_texture (clone, texture);
+
+  g_object_notify (G_OBJECT (clone), "backface-texture");
   g_object_unref (clone);
 }
 
