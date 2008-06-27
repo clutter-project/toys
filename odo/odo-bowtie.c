@@ -16,7 +16,6 @@ static char * image2 = "neghand.png";
 struct distort_data
 {
     ClutterFixed turn;
-    ClutterTextureOdo *primary;
 };
 
 static gboolean
@@ -199,7 +198,6 @@ main (int argc, char *argv[])
                    0.0, 0.0,
                    distort_func,
                    &data);
-  data.primary = CLUTTER_TEXTURE_ODO (odo);
   clutter_texture_odo_set_backface_texture (CLUTTER_TEXTURE_ODO (odo),
                                             CLUTTER_TEXTURE (tex2));
   clutter_texture_odo_set_cull_mode (CLUTTER_TEXTURE_ODO (odo), ODO_CULL_BACK);

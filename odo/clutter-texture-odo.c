@@ -37,6 +37,9 @@ enum
   PROP_TILE_WIDTH,
   PROP_TILE_HEIGHT,
   PROP_MESH,
+  
+  PROP_HFLIP,
+  PROP_VFLIP,
 };
 
 G_DEFINE_TYPE (ClutterTextureOdo,
@@ -54,7 +57,10 @@ G_DEFINE_TYPE (ClutterTextureOdo,
 struct _ClutterTextureOdoPrivate
 {
   ClutterTexture      *parent_texture;
+
   ClutterTexture      *backface_texture;
+  gboolean             hflip;
+  gboolean             vflip;
 
   ClutterTextureDistortFunc    distort_func;
   gpointer                     distort_func_data;
@@ -70,7 +76,7 @@ struct _ClutterTextureOdoPrivate
 static inline void
 texture_polygon (CoglHandle handle, guint n_vertices,
                  CoglTextureVertex *vertices, gboolean use_color,
-                 CoglHandle bhandle)
+                 CoglHandle bhandle, gboolean hflip, gboolean vflip)
 {
   cogl_texture_polygon (handle, n_vertices, vertices, use_color);
   if (bhandle)
@@ -78,7 +84,13 @@ texture_polygon (CoglHandle handle, guint n_vertices,
       gint i;
       CoglTextureVertex ccw_vertices[n_vertices];
       for (i = 0; i < n_vertices; i++)
-        ccw_vertices[i] = vertices[n_vertices-i-1];
+        {
+          ccw_vertices[i] = vertices[n_vertices-i-1];
+          if (hflip)
+            ccw_vertices[i].tx = CFX_ONE - ccw_vertices[i].tx;
+          if (vflip)
+            ccw_vertices[i].ty = CFX_ONE - ccw_vertices[i].ty;
+        }
       cogl_texture_polygon (bhandle, n_vertices, ccw_vertices, use_color);
     }
 }
@@ -160,7 +172,8 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
               
               /* FIXME: Need software face culling here */
               if (!first)
-                texture_polygon (handle, 4, vertices, FALSE, bhandle);
+                texture_polygon (handle, 4, vertices, FALSE, bhandle,
+                                 priv->hflip, priv->vflip);
               else
                 first = FALSE;
 #undef P
@@ -232,7 +245,8 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
                   if (!skip1 || !skip2 || !skip3 || !skip4)
                     {
 #ifndef USE_SOFT_CULL
-                      texture_polygon (handle, 4, vertices, TRUE, bhandle);
+                      texture_polygon (handle, 4, vertices, TRUE, bhandle,
+                                       priv->hflip, priv->vflip);
 #else
                       if (priv->cull_mode == ODO_CULL_NONE)
                         texture_polygon (handle, 4, vertices, FALSE, bhandle);
@@ -287,20 +301,24 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
                               if (dot1 < 0)
                                 {
                                   if (priv->cull_mode == ODO_CULL_FRONT)
-                                    cogl_texture_polygon (handle, 4,
-                                                          vertices, TRUE);
+                                    texture_polygon (handle, 4,
+                                                     vertices, TRUE, NULL,
+                                                     priv->hflip, priv->vflip);
                                   else if (bhandle)
-                                    cogl_texture_polygon (bhandle, 4,
-                                                          vertices, TRUE);
+                                    texture_polygon (bhandle, 4,
+                                                     vertices, TRUE, NULL,
+                                                     priv->hflip, priv->vflip);
                                 }
                               else
                                 {
                                   if (priv->cull_mode == ODO_CULL_BACK)
-                                    cogl_texture_polygon (handle, 4,
-                                                          vertices, TRUE);
+                                    texture_polygon (handle, 4,
+                                                     vertices, TRUE, NULL,
+                                                     priv->hflip, priv->vflip);
                                   else if (bhandle)
-                                    cogl_texture_polygon (bhandle, 4,
-                                                          vertices, TRUE);
+                                    texture_polygon (bhandle, 4,
+                                                     vertices, TRUE, NULL,
+                                                     priv->hflip, priv->vflip);
                                 }
                             }
                           else
@@ -315,39 +333,47 @@ texture_odo_render_to_gl_quad (ClutterTextureOdo *otex)
                               if (dot1 < 0)
                                 {
                                   if (priv->cull_mode == ODO_CULL_FRONT)
-                                    cogl_texture_polygon (handle, 3,
-                                                          vertices, TRUE);
+                                    texture_polygon (handle, 3,
+                                                     vertices, TRUE, NULL,
+                                                     priv->hflip, priv->vflip);
                                   else if (bhandle)
-                                    cogl_texture_polygon (bhandle, 3,
-                                                          vertices, TRUE);
+                                    texture_polygon (bhandle, 3,
+                                                     vertices, TRUE, NULL,
+                                                     priv->hflip, priv->vflip);
                                 }
                               else
                                 {
                                   if (priv->cull_mode == ODO_CULL_BACK)
-                                    cogl_texture_polygon (handle, 3,
-                                                          vertices, TRUE);
+                                    texture_polygon (handle, 3,
+                                                     vertices, TRUE, NULL,
+                                                     priv->hflip, priv->vflip);
                                   else if (bhandle)
-                                    cogl_texture_polygon (bhandle, 3,
-                                                          vertices, TRUE);
+                                    texture_polygon (bhandle, 3,
+                                                     vertices, TRUE, NULL,
+                                                     priv->hflip, priv->vflip);
                                 }
 
                               if (dot2 < 0)
                                 {
                                   if (priv->cull_mode == ODO_CULL_FRONT)
-                                    cogl_texture_polygon (handle, 3,
-                                                          triangle, TRUE);
+                                    texture_polygon (handle, 3,
+                                                     triangle, TRUE, NULL,
+                                                     priv->hflip, priv->vflip);
                                   else if (bhandle)
-                                    cogl_texture_polygon (bhandle, 3,
-                                                          triangle, TRUE);
+                                    texture_polygon (bhandle, 3,
+                                                     triangle, TRUE, NULL,
+                                                     priv->hflip, priv->vflip);
                                 }
                               else
                                 {
                                   if (priv->cull_mode == ODO_CULL_BACK)
-                                    cogl_texture_polygon (handle, 3,
-                                                          triangle, TRUE);
+                                    texture_polygon (handle, 3,
+                                                     triangle, TRUE, NULL,
+                                                     priv->hflip, priv->vflip);
                                   else if (bhandle)
-                                    cogl_texture_polygon (bhandle, 3,
-                                                          triangle, TRUE);
+                                    texture_polygon (bhandle, 3,
+                                                     triangle, TRUE, NULL,
+                                                     priv->hflip, priv->vflip);
                                 }
                             }
 	                      }
@@ -554,6 +580,12 @@ clutter_texture_odo_set_property (GObject      *object,
           priv->mesh.points = NULL;
       }
       break;
+    case PROP_HFLIP:
+      priv->hflip = g_value_get_boolean (value);
+      break;
+    case PROP_VFLIP:
+      priv->vflip = g_value_get_boolean (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -591,6 +623,12 @@ clutter_texture_odo_get_property (GObject    *object,
       break;
     case PROP_MESH:
       g_value_set_boxed (value, &priv->mesh);
+    case PROP_HFLIP:
+      g_value_set_boolean (value, priv->hflip);
+      break;
+    case PROP_VFLIP:
+      g_value_set_boolean (value, priv->vflip);
+      break;
 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -617,7 +655,8 @@ clutter_texture_odo_class_init (ClutterTextureOdoClass *klass)
                                                         "Parent Texture",
                                                         "The parent texture to clone",
                                                         CLUTTER_TYPE_TEXTURE,
-                                                        (G_PARAM_CONSTRUCT | CLUTTER_PARAM_READWRITE)));
+                                                        (G_PARAM_CONSTRUCT |
+                                                        CLUTTER_PARAM_READWRITE)));
 
   g_object_class_install_property (gobject_class,
                                      PROP_BACKFACE_TEXTURE,
@@ -625,19 +664,22 @@ clutter_texture_odo_class_init (ClutterTextureOdoClass *klass)
                                                         "Back-face Texture",
                                                         "The texture to use for the back face",
                                                         CLUTTER_TYPE_TEXTURE,
-                                                        (G_PARAM_CONSTRUCT | CLUTTER_PARAM_READWRITE)));
+                                                        (G_PARAM_CONSTRUCT |
+                                                        CLUTTER_PARAM_READWRITE)));
 
   g_object_class_install_property (gobject_class, PROP_DISTORT_FUNC,
                                    g_param_spec_pointer ("distort-func",
                                                          "distortion function",
                                                          "distortion function",
-                                                         G_PARAM_CONSTRUCT | CLUTTER_PARAM_READWRITE));
+                                                         G_PARAM_CONSTRUCT |
+                                                         CLUTTER_PARAM_READWRITE));
 
   g_object_class_install_property (gobject_class, PROP_DISTORT_FUNC_DATA,
                                    g_param_spec_pointer ("distort-func-data",
                                                          "Data for distortion function",
                                                          "Data for distortion function",
-                                                         G_PARAM_CONSTRUCT | CLUTTER_PARAM_READWRITE));
+                                                         G_PARAM_CONSTRUCT |
+                                                         CLUTTER_PARAM_READWRITE));
   
 
   g_object_class_install_property (gobject_class,
@@ -647,7 +689,8 @@ clutter_texture_odo_class_init (ClutterTextureOdoClass *klass)
                                                 "width of the tile to use",
                                                 0, G_MAXINT,
                                                 0,
-                                                G_PARAM_CONSTRUCT | CLUTTER_PARAM_READWRITE));
+                                                G_PARAM_CONSTRUCT |
+                                                CLUTTER_PARAM_READWRITE));
 
   g_object_class_install_property (gobject_class,
                                    PROP_TILE_HEIGHT,
@@ -656,7 +699,8 @@ clutter_texture_odo_class_init (ClutterTextureOdoClass *klass)
                                                 "height of the tile to use",
                                                 0, G_MAXINT,
                                                 0,
-                                                G_PARAM_CONSTRUCT | CLUTTER_PARAM_READWRITE));
+                                                G_PARAM_CONSTRUCT |
+                                                CLUTTER_PARAM_READWRITE));
 
   g_object_class_install_property (gobject_class,
                                    PROP_MESH,
@@ -664,7 +708,28 @@ clutter_texture_odo_class_init (ClutterTextureOdoClass *klass)
                                                        "Mesh",
                                                        "Mesh to lay texture over",
                                                        CLUTTER_TYPE_MESH,
-                                                       G_PARAM_CONSTRUCT | CLUTTER_PARAM_READWRITE));
+                                                       G_PARAM_CONSTRUCT |
+                                                       CLUTTER_PARAM_READWRITE));
+
+  g_object_class_install_property (gobject_class,
+                                   PROP_HFLIP,
+                                   g_param_spec_boolean ("hflip",
+                                                         "Horizontal flip",
+                                                         "Whether to horizontally "
+                                                         "flip the back-face texture",
+                                                         FALSE,
+                                                         G_PARAM_CONSTRUCT |
+                                                         CLUTTER_PARAM_READWRITE));
+
+  g_object_class_install_property (gobject_class,
+                                   PROP_VFLIP,
+                                   g_param_spec_boolean ("vflip",
+                                                         "Vertical flip",
+                                                         "Whether to vertically "
+                                                         "flip the back-face texture",
+                                                         FALSE,
+                                                         G_PARAM_CONSTRUCT |
+                                                         CLUTTER_PARAM_READWRITE));
   
   g_type_class_add_private (gobject_class, sizeof (ClutterTextureOdoPrivate));
 }

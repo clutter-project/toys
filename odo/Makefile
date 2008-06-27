@@ -4,7 +4,7 @@ INCS=`pkg-config --cflags clutter-0.7`
 .c.o:
 	$(CC) -g -Wall $(CFLAGS) $(INCS) -c $*.c
 
-all: odo odo-pageturn odo-cloth odo-bowtie
+all: odo odo-pageturn odo-cloth odo-bowtie odo-slideshow
 
 
 odo: odo.o clutter-texture-odo.o
@@ -19,5 +19,8 @@ odo-cloth: odo-cloth.o clutter-texture-odo.o
 odo-bowtie: odo-bowtie.o clutter-texture-odo.o
 	$(CC) -g -Wall $(CFLAGS) -o $@ odo-bowtie.o clutter-texture-odo.o $(LIBS)
 
+odo-slideshow: odo-slideshow.o clutter-texture-odo.o
+	$(CC) -g -Wall $(CFLAGS) -o $@ odo-slideshow.o clutter-texture-odo.o $(LIBS)
+
 clean:
-	rm -fr *.o odo odo-pageturn odo-cloth odo-bowtie
+	rm -fr *.o odo odo-pageturn odo-cloth odo-bowtie odo-slideshow
