@@ -9,19 +9,20 @@ you to modify the source of the program you want to record.
 
 The easiest way to integrate gcr in your project is to add a call to:
 
-gcr ("/tmp/videofile.mpg"); 
+gcr_prepare ("/tmp/path_to_output.mpg");  /* to prepare for recording */
 
-just before clutter_main(), this will install a callback after the stage has
-repainted that would push captured frames to the encoder thread. I've been
-including gcr.c directly in the file containing main to avoid changing build
-systems. Make sure your resulting program links against GEGL as well as
-clutter.
+gcr_start (); /* to start recording */
+
+
+gcr_stop ();  /* to stop recording (currently not implemented, just quit your
+                 application instead) */
 
 The workflow I've been using is to encode to mpeg with high bitrate (hardcoded
 in the .c file), and then afterwards transcode this to Theora or some other
 codec suitable for distribution.
 
-The code does not record the cursor thus it probably is beneficial to draw
-your own cursor using clutter when using this screen recorder.
+The includes test example links with clutter-gegl, and also includes a custom
+cursor code.
+
 
 /Øyvind K.

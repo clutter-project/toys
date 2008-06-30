@@ -28,10 +28,6 @@
 #define FPS 25
 #define KBITRATE (7000*8)  
 
-/* this needs to be called before clutter_main()  */
-void gcr (const gchar *path);
-
-
 /* TODO: Move away from pixbufs, the original code used a pixbuf but
  * with newer GEGL it should be better to use a linear buffer directly
  */
@@ -55,15 +51,9 @@ static void save_frame  (gpointer data);
 
 long babl_ticks (void);
 
-void gcr (const gchar *path)
+void gcr_prepare (const gchar *path)
 {
-  ClutterActor *stage = clutter_stage_get_default ();
-
   if (!g_thread_supported ()) g_thread_init (NULL);
-
-  g_signal_connect_after (stage, "paint", G_CALLBACK (save_frame), NULL);
-
-  encode_thread = g_thread_create (encoder, NULL, FALSE, NULL);
 
   gegl_init (NULL, NULL);
   gegl = gegl_node_new ();
@@ -77,7 +67,22 @@ void gcr (const gchar *path)
     );
   load_pixbuf = gegl_node_create_child (gegl, "pixbuf");
   gegl_node_link (load_pixbuf, ff_save);
+}
+
+void gcr_start (void)
+{
+  ClutterActor *stage = clutter_stage_get_default ();
+
+  g_signal_connect_after (stage, "paint", G_CALLBACK (save_frame), NULL);
+
+  encode_thread = g_thread_create (encoder, NULL, FALSE, NULL);
+
   prev_stored = babl_ticks ();
+}
+
+void gcr_stop (void)
+{
+  /* FIXME: NYI */
 }
 
 /* this is called by clutter each time a stage has been rendered */
