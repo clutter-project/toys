@@ -521,7 +521,16 @@ opt_parse_on_start_actor (GMarkupParseContext *context,
 		  }
 		else
 		  {
-		    pic = clutter_texture_new_from_pixbuf(pix);
+		    pic = clutter_texture_new ();
+                    clutter_texture_set_from_rgb_data (CLUTTER_TEXTURE (pic),
+                                     gdk_pixbuf_get_pixels (pix),
+                                     gdk_pixbuf_get_has_alpha (pix),
+                                     gdk_pixbuf_get_width (pix),
+                                     gdk_pixbuf_get_height (pix),
+                                     gdk_pixbuf_get_rowstride (pix),
+                                     4, 0,
+                                     NULL);
+
 		    opt_slide_add_bullet (info->slide, pic);
 		  }
 	      }

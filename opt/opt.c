@@ -1,12 +1,14 @@
 #include "opt.h"
 #include <stdlib.h> 		/* for exit() */
 
-static void
+static OptShow *opt_show = NULL;
+
+static gboolean 
 key_release_cb (ClutterStage           *stage,
                 ClutterKeyEvent        *kev,
                 gpointer                user_data)
 {
-  OptShow  *show = OPT_SHOW (user_data);
+  OptShow *show = OPT_SHOW (user_data);
 
   switch (clutter_key_event_symbol (kev))
     {
@@ -41,9 +43,11 @@ key_release_cb (ClutterStage           *stage,
           opt_show_advance (show);
           break;
     }
+
+  return FALSE;
 }
 
-static void
+static gboolean
 button_release_cb (ClutterStage        *stage,
                    ClutterButtonEvent  *bev,
                    gpointer             user_data)
@@ -54,25 +58,56 @@ button_release_cb (ClutterStage        *stage,
     opt_show_advance (show);
   else if (bev->button == 3)
     opt_show_retreat (show);
+
+  return FALSE;
 }
 
 static void
+on_fullscreen (ClutterStage *stage,
+               const gchar  *filename)
+{
+  GError *error = NULL;
+
+  if (opt_show)
+    return;
+
+  opt_show = opt_show_new ();
+
+  if (!opt_config_load (opt_show, filename, &error))
+    {
+      /* Cleanup */
+      g_printerr ("Could not load presentation:\n\t%s\n", error->message);
+      g_error_free (error);
+      exit (EXIT_FAILURE);
+    }
+
+  opt_show_run (opt_show);
+
+  /* Connect up for input event */
+  g_signal_connect (stage,
+                    "key-release-event", G_CALLBACK (key_release_cb),
+                    opt_show);
+  g_signal_connect (stage,
+                    "button-release-event", G_CALLBACK (button_release_cb),
+                    opt_show);
+}
+
+static int
 usage (const char *msg)
 {
-  g_print("\nUsage: %s [OPTIONS..] <FILE>\n\n", msg);
-  exit(-1);
+  g_printerr ("Usage: %s [OPTIONS..] <FILE>\n", msg);
+
+  return EXIT_FAILURE;
 }
 
 int 
 main(int argc, char **argv)
 {
-  GError         *error = NULL; 
-  ClutterActor *stage;
-  OptShow        *show;
-  gchar         **opt_filename = NULL;
-  gchar          *opt_export = NULL;
-  gchar          *opt_size = NULL;
-  GOptionContext *ctx;
+  GError        *error = NULL; 
+  ClutterActor  *stage;
+  gchar        **opt_filename = NULL;
+  gchar         *opt_export = NULL;
+  gchar         *opt_size = NULL;
 
   GOptionEntry options[] = {
     { "export", 
@@ -89,7 +124,7 @@ main(int argc, char **argv)
       G_OPTION_ARG_STRING, 
       &opt_size, 
       "Presentation display dimentions.", 
-      "<WxH>" },
+      "WxH" },
 
     { G_OPTION_REMAINING, 
       0, 
@@ -97,27 +132,17 @@ main(int argc, char **argv)
       G_OPTION_ARG_FILENAME_ARRAY, 
       &opt_filename, 
       "Presentation XML filename to load", 
-      "<PRESENTATION FILE>" },
+      "FILE" },
 
     { NULL }
   };
 
   if (argc == 1)
-    usage(argv[0]);
+    return usage (argv[0]);
 
-  ctx = g_option_context_new("- OH Presentation Tool");
-  g_option_context_add_main_entries(ctx, options, "OPT");
-
-  if (!g_option_context_parse(ctx, &argc, &argv, NULL))
-    usage(argv[0]);
-
-  if (opt_filename  == NULL)
-    usage(argv[0]);
-
-  g_option_context_free(ctx);
-
-  /* FIXME: Need clutter_init_with_args() */
-  clutter_init(&argc, &argv);
+  clutter_init_with_args (&argc, &argv, "- OH Presentation tool",
+                          options, NULL,
+                          NULL);
 
   stage = clutter_stage_get_default();
 
@@ -136,65 +161,65 @@ main(int argc, char **argv)
 	{
 	  g_print ("Could not export presentation:\n"
 		   "\tOffscreen rendering not supported by Clutter backend\n");
-	  exit(-1);
+	  return EXIT_FAILURE;
 	}
     }
 
   if (opt_size != NULL)
     {
       gint w, h;
-      if (!sscanf(opt_size, "%dx%d", &w, &h) || w <= 0 || h <= 0)
-	usage(argv[0]);
 
-      g_object_set (stage, "fullscreen", FALSE, NULL);
+      if (!sscanf (opt_size, "%dx%d", &w, &h) || w <= 0 || h <= 0)
+	return usage (argv[0]);
+
+      opt_show = opt_show_new ();
 
       clutter_actor_set_size (stage, w, h);
+
+      if (!opt_config_load (opt_show, opt_filename[0], &error))
+        {
+          /* Cleanup */
+          g_printerr ("Could not load presentation:\n\t%s\n", error->message);
+          g_error_free (error);
+          return EXIT_FAILURE;
+        }
+
+      /* Connect up for input event */
+      g_signal_connect (stage,
+                        "key-release-event", G_CALLBACK (key_release_cb),
+                        opt_show);
+      g_signal_connect (stage,
+                        "button-release-event", G_CALLBACK (button_release_cb),
+                        opt_show);
+
+      opt_show_run (opt_show);
     }
   else
     {
-      g_object_set (stage,
-		    "fullscreen",  TRUE, 
-		    "cursor-visible", FALSE,
-		    NULL);
-    }
+      g_signal_connect (stage,
+                        "fullscreen", G_CALLBACK (on_fullscreen),
+                        opt_filename[0]);
 
-  show = opt_show_new();
-
-  if (!opt_config_load (show, opt_filename[0], &error))
-    {
-      /* Cleanup */
-      g_print ("Could not load presentation:\n\t%s\n", error->message);
-      g_error_free (error);
-      exit(-1);
+      clutter_stage_fullscreen (CLUTTER_STAGE (stage));
+      clutter_stage_hide_cursor (CLUTTER_STAGE (stage));
+      clutter_actor_show (stage);
     }
 
   if (opt_export)
     {
-      if (!opt_show_export (show, opt_export, &error))
-	{
-	  /* Cleanup */
-	  g_print ("Could not export presentation:\n\t%s\n", error->message);
-	  g_error_free (error);
-	  exit(-1);
+      if (!opt_show_export (opt_show, opt_export, &error))
+        {
+          /* Cleanup */
+          g_printerr ("Could not export presentation:\n\t%s\n",
+                      error->message);
+          g_error_free (error);
+	  return EXIT_FAILURE;
 	}
-      return 0;
+
+      return EXIT_SUCCESS;
     }
   else
-    {
-      /* Connect up for input event */
-      g_signal_connect (stage, 
-			"key-release-event",
-			G_CALLBACK (key_release_cb),
-			show);
+    clutter_main ();
 
-      g_signal_connect (stage, 
-			"button-release-event",
-			G_CALLBACK (button_release_cb),
-			show);
-
-      opt_show_run (show);
-    }
-
-
-  return 0;
+  return EXIT_SUCCESS;
 }

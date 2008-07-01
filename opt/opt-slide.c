@@ -92,6 +92,7 @@ opt_slide_set_title (OptSlide     *slide,
   OptSlidePrivate *priv;
   gint             avail_w, border;
   gint             title_border_size;
+  ClutterActor    *stage;
 
   g_return_if_fail(OPT_IS_SLIDE(slide));
 
@@ -119,11 +120,13 @@ opt_slide_set_title (OptSlide     *slide,
 		"title-border-size", &title_border_size,
 		NULL);
 
+  stage = clutter_stage_get_default ();
+
   border = PERCENT_TO_PIXELS (title_border_size);
 
-  avail_w = CLUTTER_STAGE_WIDTH() - (2 * border) ; 
+  avail_w = clutter_actor_get_width (stage) - (2 * border) ; 
 
-  clutter_actor_set_size (CLUTTER_ACTOR(priv->title), avail_w, 0);
+  clutter_actor_set_size (CLUTTER_ACTOR(priv->title), avail_w, -1);
 
   clutter_label_set_color (CLUTTER_LABEL(priv->title), col);
 
@@ -136,7 +139,7 @@ void
 get_next_bullet_offsets (OptSlide *slide,
 			 gint     *x,
 			 gint     *y,
-			 gint    *max_width)
+			 gint     *max_width)
 {
   OptSlidePrivate *priv;
   GList           *last_bullet_item;
@@ -153,7 +156,7 @@ get_next_bullet_offsets (OptSlide *slide,
   if ((last_bullet_item = g_list_last (priv->bullets)) == NULL)
     {
       *y = clutter_actor_get_y (priv->title)
-	+ clutter_actor_get_height (priv->title);
+	 + clutter_actor_get_height (priv->title);
 
       *y += PERCENT_TO_PIXELS (title_bullet_pad);
     }
@@ -162,7 +165,7 @@ get_next_bullet_offsets (OptSlide *slide,
       ClutterActor *last_bullet = CLUTTER_ACTOR(last_bullet_item->data);
 
       *y = clutter_actor_get_y (last_bullet)
-	+ clutter_actor_get_height (last_bullet);
+	 + clutter_actor_get_height (last_bullet);
 
       *y += PERCENT_TO_PIXELS (bullet_pad);
     }
@@ -198,11 +201,12 @@ opt_slide_add_bullet_text_item (OptSlide            *slide,
     bullet = clutter_label_new_with_text (font, title);
 
   clutter_label_set_color (CLUTTER_LABEL(bullet), col);
+  clutter_label_set_line_wrap (CLUTTER_LABEL (bullet), TRUE);
 
   get_next_bullet_offsets (slide, &x, &y, &width);
 
   symbol       = opt_show_bullet_clone (priv->show);
-  symbol_width = 2 * clutter_actor_get_width(symbol);
+  symbol_width = 2 * clutter_actor_get_width (symbol);
 
   if (sym != OPT_BULLET_NONE)
     {
@@ -213,7 +217,7 @@ opt_slide_add_bullet_text_item (OptSlide            *slide,
 
   x += symbol_width;
 
-  clutter_actor_set_size (CLUTTER_ACTOR(bullet), width - symbol_width, 0);
+  clutter_actor_set_size (CLUTTER_ACTOR(bullet), width - symbol_width, -1);
 
   clutter_actor_set_position (bullet, x, y);
   clutter_group_add (CLUTTER_GROUP(slide), bullet);
@@ -294,12 +298,20 @@ opt_slide_set_background_pixbuf (OptSlide *slide, GdkPixbuf *background)
   priv = slide->priv;
 
   if (priv->background != NULL)
-    g_object_unref(priv->background);
+    clutter_actor_destroy (priv->background);
 
-  priv->background = clutter_texture_new_from_pixbuf (background);
+  priv->background = clutter_texture_new ();
+  clutter_texture_set_from_rgb_data (CLUTTER_TEXTURE (priv->background),
+                                     gdk_pixbuf_get_pixels (background),
+                                     gdk_pixbuf_get_has_alpha (background),
+                                     gdk_pixbuf_get_width (background),
+                                     gdk_pixbuf_get_height (background),
+                                     gdk_pixbuf_get_rowstride (background),
+                                     4, 0,
+                                     NULL);
 }
 
-ClutterActor*
+ClutterActor *
 opt_slide_get_background_texture (OptSlide *slide)
 {
   return slide->priv->background;

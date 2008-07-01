@@ -1,3 +1,11 @@
+2008-07-01  Emmanuele Bassi  <ebassi@openedhand.com>
+
+	* configure.ac:
+	* opt-config.c:
+	* opt-show.c:
+	* opt-slide.c:
+	* opt.c: Update to clutter-0.7 to test out the code base.
+
 2008-02-21  Øyvind Kolås  <pippin@o-hand.com>
 
 	* opt-config.c: (opt_config_load): permuted arguments of memset

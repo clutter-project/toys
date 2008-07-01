@@ -115,10 +115,14 @@ opt_show_set_property (GObject      *object,
       break;
     case PROP_BACKGROUND:
       priv->background = g_value_get_object (value);
-      /* refs */
-      clutter_texture_set_pixbuf (CLUTTER_TEXTURE(priv->bg),
-                                  priv->background,
-                                  NULL);
+      clutter_texture_set_from_rgb_data (CLUTTER_TEXTURE (priv->bg),
+                                         gdk_pixbuf_get_pixels (priv->background),
+                                         gdk_pixbuf_get_has_alpha (priv->background),
+                                         gdk_pixbuf_get_width (priv->background),
+                                         gdk_pixbuf_get_height (priv->background),
+                                         gdk_pixbuf_get_rowstride (priv->background),
+                                         4, 0,
+                                         NULL);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -330,8 +334,6 @@ opt_show_run (OptShow *self)
   clutter_stage_set_color (CLUTTER_STAGE(stage), &col);
   clutter_group_add (CLUTTER_GROUP(stage), CLUTTER_ACTOR(slide));
   clutter_actor_show_all (stage);
-
-  clutter_main();
 }
 
 static void
@@ -504,6 +506,13 @@ opt_show_skip (OptShow *self, gint n_slides)
   opt_show_step (self, n_slides);
 }
 
+static void
+free_data (guchar *pixels,
+           gpointer data)
+{
+  g_free (pixels);
+}
+
 gboolean
 opt_show_export (OptShow *self, const char *path, GError **error)
 {
@@ -530,10 +539,11 @@ opt_show_export (OptShow *self, const char *path, GError **error)
   while (slide)
     {
       ClutterActor *e;
-      GdkPixbuf      *pixb = NULL;
-      gchar           name[32];
-      gchar          *filename = NULL;
-      gchar           html[2048], html_next[512], html_prev[512];
+      guchar       *data;
+      GdkPixbuf    *pixb = NULL;
+      gchar         name[32];
+      gchar        *filename = NULL;
+      gchar         html[2048], html_next[512], html_prev[512];
 
       e = CLUTTER_ACTOR(slide->data);
 
@@ -541,21 +551,27 @@ opt_show_export (OptShow *self, const char *path, GError **error)
       clutter_actor_show_all (stage);
       clutter_actor_show_all (e);
 
-      clutter_redraw();
+      clutter_redraw (CLUTTER_STAGE (stage));
       
-      pixb = clutter_stage_snapshot (CLUTTER_STAGE(stage),
-				     0,
-				     0,
-				     clutter_actor_get_width (stage),
-				     clutter_actor_get_height (stage));
-
-      if (pixb == NULL)
+      data = clutter_stage_read_pixels (CLUTTER_STAGE(stage),
+				        0,
+				        0,
+				        clutter_actor_get_width (stage),
+				        clutter_actor_get_height (stage));
+      if (!data)
 	{
 	  g_warning("Failed to grab pixels from stage");
 	  return FALSE;
 	}
 
-      g_snprintf(name, 32, "slide-%02i.png", i);
+      pixb = gdk_pixbuf_new_from_data (data, GDK_COLORSPACE_RGB, TRUE, 8,
+                                       clutter_actor_get_width (stage),
+                                       clutter_actor_get_height (stage),
+                                       clutter_actor_get_width (stage) * 4,
+                                       free_data,
+                                       NULL);
+
+      g_snprintf (name, 32, "slide-%02i.png", i);
 
       filename = g_build_filename(path, name, NULL);
 
@@ -564,6 +580,7 @@ opt_show_export (OptShow *self, const char *path, GError **error)
 			    NULL))
 	{
 	  if (filename) g_free (filename);
+          g_object_unref (pixb);
 	  return FALSE;
 	}
 
@@ -593,6 +610,8 @@ opt_show_export (OptShow *self, const char *path, GError **error)
       if (filename) g_free (filename);
       slide = slide->next;
       i++;
+
+      g_object_unref (pixb);
     }
 
   return TRUE;
