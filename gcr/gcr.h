@@ -1,5 +1,5 @@
 #ifndef __GCR_H__
-#define  __GCR_H__
+#define __GCR_H__
 #include <clutter/clutter.h>
 
 /* this needs to be called before clutter_main()  */

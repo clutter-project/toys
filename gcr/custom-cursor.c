@@ -301,20 +301,42 @@ static gboolean soft_cursor_capture (ClutterActor *stage,
       case CLUTTER_BUTTON_RELEASE:
         {
           gint x, y;
-          gint id = 0;/*clutter_event_get_device_id (event);*/
-          gint no = 0;/*get_device_no (priv, id);*/
+          gint id = clutter_event_get_device_id (event);
+          gint no = get_device_no (priv, id);
           clutter_event_get_coords (event, &x, &y);
+
+#if 0
+          gchar c;
+
+          switch (clutter_event_type (event))
+            {
+              case CLUTTER_MOTION:
+                c = 'm';
+                break;
+              case CLUTTER_BUTTON_PRESS:
+                c = 'p';
+                break;
+              case CLUTTER_BUTTON_RELEASE:
+                c = 'r';
+                break;
+              default:
+                c = '?';
+            }
   
-          g_print ("device id:%i x:%i y:%i\n", no, x, y);
+          g_print ("%c%c%c%c %i,%i\n", 
+              id!=0?' ':c,
+              id!=1?' ':c,
+              id!=2?' ':c,
+              id!=3?' ':c, 
+              id!=4?' ':c, 
+              x, y);
+#endif
           
-          if (clutter_event_get_state (event) & CLUTTER_BUTTON1_MASK ||
-              clutter_event_get_state (event) & CLUTTER_BUTTON2_MASK ||
-              clutter_event_get_state (event) & CLUTTER_BUTTON3_MASK ||
-              clutter_event_type (event) == CLUTTER_BUTTON_PRESS)
+          if (clutter_event_type (event) == CLUTTER_BUTTON_PRESS)
             {
               priv->device[no].state = CUSTOM_CURSOR_PRESSED;
             }
-          else
+          else if (clutter_event_type (event) == CLUTTER_BUTTON_RELEASE)
             {
               priv->device[no].state = CUSTOM_CURSOR_NORMAL;
             }
@@ -339,6 +361,8 @@ custom_cursor (gint x,
     {
       ClutterActor *stage = clutter_stage_get_default ();
       cursor = g_object_new (CUSTOM_TYPE_CURSOR, NULL);
+
+/*if(0)      clutter_x11_enable_xinput ();*/
       priv = CUSTOM_CURSOR (cursor)->priv;
       priv->device_count = 0;
 
