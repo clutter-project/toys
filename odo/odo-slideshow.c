@@ -438,8 +438,7 @@ skip_file:
   clutter_init (&argc, &argv);
   stage = clutter_stage_get_default ();
   clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
-  clutter_actor_set_size (stage, 640, 480);
-  //clutter_stage_fullscreen (CLUTTER_STAGE (stage));
+  clutter_stage_fullscreen (CLUTTER_STAGE (stage));
   
   /* Initialise appdata variables */
   memset (&data, 0, sizeof (data));
