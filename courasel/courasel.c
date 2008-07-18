@@ -165,19 +165,19 @@ rotate_items (App *app, int step)
   app->off = CLAMP_ANG(app->off);
 }
 
-void 
-on_input (ClutterStage *stage,
+static gboolean 
+on_input (ClutterActor *stage,
 	  ClutterEvent *event,
 	  gpointer      user_data)
 {
-  App *app = (App*)user_data;
+  App *app = user_data;
 
   if (event->type == CLUTTER_KEY_RELEASE)
     {
       ClutterKeyEvent* kev = (ClutterKeyEvent *) event;
 
       if (clutter_timeline_is_playing(app->timeline))
-	return;
+	return FALSE;
 
       switch (clutter_key_event_symbol (kev))
 	{
@@ -196,6 +196,8 @@ on_input (ClutterStage *stage,
 	  break;
 	}
     }
+
+  return FALSE;
 }
 
 void                
@@ -240,13 +242,12 @@ main (int argc, char *argv[])
 
   for (i=0; i<N_ITEMS; i++)
     {
-      GdkPixbuf *pixb;
-      item = g_new0(Item, 1);
+      item = g_new0 (Item, 1);
 
-      if ((pixb = gdk_pixbuf_new_from_file (ItemDetails[i].img, NULL)) == NULL)
+      item->actor = clutter_texture_new_from_file (ItemDetails[i].img, NULL);
+      if (!item->actor)
 	g_error ("Unable to load '%s'", ItemDetails[i].img);
 
-      item->actor = clutter_texture_new_from_pixbuf (pixb);
       clutter_group_add (CLUTTER_GROUP(stage), item->actor);
 
       item->ellipse_behave 
