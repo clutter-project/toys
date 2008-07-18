@@ -312,7 +312,6 @@ make_ui (App *app)
 {
   gint          i, xpad, ypad, x ,y, xinit, xdpy, ydpy;
   ClutterActor *button_texture, *a;
-  GdkPixbuf    *pixb;
   ClutterColor  text_color = { 0xff, 0xff, 0xff, 0xff },
                 rect_color = { 0, 0, 0, 0x99 },
 		black_color = { 0, 0, 0, 0xff };
@@ -321,19 +320,11 @@ make_ui (App *app)
   clutter_actor_move_anchor_point_from_gravity (app->screen_dialpad,
                                                 CLUTTER_GRAVITY_CENTER);
 
-  if ((pixb = gdk_pixbuf_new_from_file ("display.png", NULL)) == NULL)
-    g_error ("Unable to load '%s'", "display.png");
-
   app->dpy = clutter_group_new();
-  a = clutter_texture_new_from_pixbuf (pixb);
+  a = clutter_texture_new_from_file ("display.png", NULL);
   clutter_group_add (CLUTTER_GROUP(app->dpy), a);
-  g_object_unref (pixb);
 
-  if ((pixb = gdk_pixbuf_new_from_file ("button.png", NULL)) == NULL)
-    g_error ("Unable to load '%s'", "button.png");
-
-  button_texture =  clutter_texture_new_from_pixbuf (pixb);
-  g_object_unref (pixb);
+  button_texture =  clutter_texture_new_from_file ("button.png", NULL);
 
   xpad = (CSW-(3*clutter_actor_get_width(button_texture)))/4;
   app->dpyx = xdpy = x = xinit = xpad;
@@ -433,11 +424,7 @@ make_ui (App *app)
   clutter_actor_set_size (a, CSW, CSH);
   clutter_group_add (CLUTTER_GROUP(app->screen_dial), a);
 
-  if ((pixb = gdk_pixbuf_new_from_file ("call-background.png", NULL)) == NULL)
-    g_error ("Unable to load '%s'", "call-background.png");
-
-  a = clutter_texture_new_from_pixbuf (pixb);
-  g_object_unref (pixb);
+  a = clutter_texture_new_from_file ("call-background.png", NULL);
 
   clutter_group_add (CLUTTER_GROUP(app->screen_dial), a);
 
