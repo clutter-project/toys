@@ -8,6 +8,8 @@
 
 /* gcc -o test-sqlite-model *.c `pkg-config --cflags --libs clutter-0.8 sqlite3` -Wall -g */
 
+#define N_ROWS 1000
+
 enum
 {
   COLUMN_FOO,
@@ -143,7 +145,7 @@ populate_model (ClutterModel *model)
 {
   gint i;
 
-  for (i = 0; i < 10; i++)
+  for (i = 0; i < N_ROWS; i++)
     {
       gchar *string = g_strdup_printf ("String %d", i);
 

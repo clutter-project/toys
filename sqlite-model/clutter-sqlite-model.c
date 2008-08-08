@@ -57,6 +57,7 @@ struct _ClutterSqliteModelIter
   guint             is_parent;
   gboolean          is_last;
   gint              row;
+  gint              rowid;
 };
 
 struct _ClutterSqliteModelIterClass
@@ -326,7 +327,10 @@ sqlite3_step_retry (sqlite3_stmt *stmt)
 }
 
 static gboolean
-statement_next (ClutterSqliteModel *model, gboolean complete)
+statement_next (ClutterSqliteModel *model,
+                gboolean            complete,
+                gint                find_rowid,
+                gint                stop_on_row)
 {
   ClutterSqliteModelPrivate *priv = model->priv;
   gboolean                   last = FALSE;
@@ -350,6 +354,9 @@ statement_next (ClutterSqliteModel *model, gboolean complete)
                                GINT_TO_POINTER (rowid),
                                GINT_TO_POINTER (priv->rowids->len) + 1);
           g_ptr_array_add (priv->rowids, GINT_TO_POINTER (rowid));
+          
+          if (rowid == find_rowid)
+            break;
         }
       else if ((result == SQLITE_DONE) || (result == SQLITE_OK))
         {
@@ -364,6 +371,9 @@ statement_next (ClutterSqliteModel *model, gboolean complete)
                      sqlite3_errmsg (priv->db));
           break;
         }
+      
+      if ((priv->rowids->len - 1) == stop_on_row)
+        break;
     } while (complete);
   
   return last;
@@ -437,7 +447,7 @@ clutter_sqlite_model_get_n_rows (ClutterModel *model)
   ClutterSqliteModelPrivate *priv         = sqlite_model->priv;
   
   if (!priv->complete)
-    statement_next (sqlite_model, TRUE);
+    statement_next (sqlite_model, TRUE, -1, -1);
   
   return priv->rowids->len;
 }
@@ -484,9 +494,12 @@ clutter_sqlite_model_insert_row (ClutterModel *model, gint index)
   ClutterSqliteModel        *sqlite_model = CLUTTER_SQLITE_MODEL (model);
   ClutterSqliteModelPrivate *priv         = sqlite_model->priv;
 
+  /* Cancel the current iteration through the db,
+   * we'll be reset on add anyway */
   if (!priv->complete && priv->rowids->len)
-    statement_next (sqlite_model, TRUE);
+    sqlite3_reset (priv->statement);
 
+  /* Skip the add hook, ClutterModel generates the row-added signal */
   priv->skip_add = TRUE;
   result = sqlite3_step_retry (priv->statements[SQL_ADD_ROW]);
   sqlite3_reset (priv->statements[SQL_ADD_ROW]);
@@ -528,7 +541,7 @@ clutter_sqlite_model_remove_row (ClutterModel *model, guint row)
     }
 
   if (!priv->complete && priv->rowids->len)
-    statement_next (sqlite_model, TRUE);
+    sqlite3_reset (priv->statement);
 
   sqlite3_bind_int (priv->statements[SQL_DELETE_ROW],
                     1,
@@ -771,9 +784,9 @@ clutter_sqlite_model_iter_get_value (ClutterModelIter *iter,
     statement = priv->statement;
   else
     {
-      sqlite3_bind_int (priv->statements[SQL_GET_ROW],
-                        1,
-                        GPOINTER_TO_INT (priv->rowids->pdata[sqliter->row]));
+      gint rowid = (sqliter->row == -1) ?
+        sqliter->rowid : GPOINTER_TO_INT (priv->rowids->pdata[sqliter->row]);
+      sqlite3_bind_int (priv->statements[SQL_GET_ROW], 1, rowid);
       if (sqlite3_step_retry (priv->statements[SQL_GET_ROW]) != SQLITE_ROW)
         {
           g_warning ("Error getting row: %s", sqlite3_errmsg (priv->db));
@@ -850,7 +863,7 @@ clutter_sqlite_model_iter_set_value (ClutterModelIter *iter,
                                      guint             column,
                                      const GValue     *value)
 {
-  gint         res;
+  gint         res, rowid;
   GType        column_type;
   gboolean     converted  = FALSE;
   GValue       real_value = { 0, };
@@ -896,8 +909,8 @@ clutter_sqlite_model_iter_set_value (ClutterModelIter *iter,
   if (!converted)
     g_value_copy (value, &real_value);
   
-  if (!priv->complete)
-    statement_next (sqlite_model, TRUE);
+  if (!priv->complete && priv->rowids->len)
+    statement_next (sqlite_model, TRUE, -1, -1);
   
   switch (column_type)
     {
@@ -924,9 +937,9 @@ clutter_sqlite_model_iter_set_value (ClutterModelIter *iter,
         goto _iter_set_value_skip_write;
     }
   
-  sqlite3_bind_int (priv->update_statements[column],
-                    2,
-                    GPOINTER_TO_INT (priv->rowids->pdata[sqliter->row]));
+  rowid = (sqliter->row == -1) ?
+    sqliter->rowid : GPOINTER_TO_INT (priv->rowids->pdata[sqliter->row]);
+  sqlite3_bind_int (priv->update_statements[column], 2, rowid);
   priv->skip_change = TRUE;
   sqlite3_step_retry (priv->update_statements[column]);
   res = sqlite3_reset (priv->update_statements[column]);
@@ -965,10 +978,10 @@ clutter_sqlite_model_iter_new (ClutterSqliteModel *model,
   if (!priv->statement)
     return NULL;
   
-  if (row && (row > priv->rowids->len))
+  if (row && (row > (gint)priv->rowids->len))
     {
       if (!priv->complete)
-        statement_next (model, TRUE);
+        statement_next (model, TRUE, -1, row);
       
       if (row > priv->rowids->len)
         return NULL;
@@ -983,7 +996,7 @@ clutter_sqlite_model_iter_new (ClutterSqliteModel *model,
   
   if ((row == priv->rowids->len) && (!priv->complete))
     {
-      iter->is_last = statement_next (model, FALSE);
+      iter->is_last = statement_next (model, FALSE, -1, -1);
       iter->is_parent = priv->version;
     }
   
@@ -994,26 +1007,18 @@ static ClutterModelIter *
 clutter_sqlite_model_iter_new_from_rowid (ClutterSqliteModel *model,
                                           gint                rowid)
 {
-  gint                       row;
   ClutterSqliteModelPrivate *priv = model->priv;
+  ClutterModelIter          *iter;
+  ClutterSqliteModelIter    *sqlite_iter;
   
   if (!priv->statement)
     return NULL;
   
-  row = GPOINTER_TO_INT (g_hash_table_lookup (priv->rowid_to_row,
-                                              GINT_TO_POINTER (rowid)));
-
-  if (!priv->complete && !row)
-    {
-      statement_next (model, TRUE);
-      row = GPOINTER_TO_INT (g_hash_table_lookup (priv->rowid_to_row,
-                                                  GINT_TO_POINTER (rowid)));
-    }
+  iter = clutter_sqlite_model_iter_new (model, -1);
+  sqlite_iter = CLUTTER_SQLITE_MODEL_ITER (iter);
+  sqlite_iter->rowid = rowid;
   
-  if (!row)
-    return NULL;
-  
-  return clutter_sqlite_model_iter_new (model, row - 1);
+  return iter;
 }
 
 static ClutterModelIter *
@@ -1029,6 +1034,28 @@ clutter_sqlite_model_iter_next (ClutterModelIter *iter)
   
   model = CLUTTER_SQLITE_MODEL (clutter_model_iter_get_model (iter));
   priv = model->priv;
+
+  /* If we don't yet have a row set, try to get one */
+  if (sqliter->row < 0)
+    {
+      sqliter->row = GPOINTER_TO_INT (
+        g_hash_table_lookup (priv->rowid_to_row,
+                             GINT_TO_POINTER (sqliter->rowid)));
+
+      if (!priv->complete && !sqliter->row)
+        {
+          statement_next (model, TRUE, sqliter->rowid, -1);
+          sqliter->row = GPOINTER_TO_INT (
+            g_hash_table_lookup (priv->rowid_to_row,
+                                 GINT_TO_POINTER (sqliter->rowid)));
+        }
+      
+      if (!sqliter->row)
+        {
+          sqliter->row = -1;
+          return NULL;
+        }
+    }
   
   new_iter = clutter_sqlite_model_iter_new (model, sqliter->row + 1);
   
@@ -1036,7 +1063,7 @@ clutter_sqlite_model_iter_next (ClutterModelIter *iter)
     {
       ClutterSqliteModelIter *sqlite_iter =
         CLUTTER_SQLITE_MODEL_ITER (new_iter);
-      statement_next (model, FALSE);
+      statement_next (model, FALSE, -1, -1);
       sqlite_iter->is_parent = priv->version;
     }
 
