@@ -14,7 +14,7 @@
     "children" : [
       {
         "type": "ClutterTexture",
-        "pixbuf" :"redhand.png",
+        "filename" :"redhand.png",
         "visible":true
         "x": 200,
         "y": 200,
@@ -37,15 +37,16 @@
         "behaviours" : [
             {
               "type"          : "ClutterBehaviourScale",
-              "scale-begin"   : 1.0,
-              "scale-end"     : 0.5,
-              "scale-gravity" : "center",
+              "x-scale-start" : 1.0,
+              "y-scale-start" : 1.0,
+              "x-scale-end"   : 0.5,
+              "y-scale-end"   : 0.5,
               "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
             },
             {
               "type"          : "ClutterBehaviourOpacity",
-              "opacity-start"   : 100,
-              "opacity-end"     : 255,
+              "opacity-start" : 100,
+              "opacity-end"   : 255,
               "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
             }
 
@@ -63,15 +64,16 @@
         "behaviours" : [
             {
               "type"          : "ClutterBehaviourScale",
-              "scale-begin"   : 0.5,
-              "scale-end"     : 1.0,
-              "scale-gravity" : "center",
+              "x-scale-start" : 0.5,
+              "y-scale-start" : 0.5,
+              "x-scale-end"   : 1.0,
+              "y-scale-end"   : 1.0,
               "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
             },
             {
               "type"          : "ClutterBehaviourOpacity",
-              "opacity-start"   : 100,
-              "opacity-end"     : 255,
+              "opacity-start" : 100,
+              "opacity-end"   : 255,
               "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
             }
 
@@ -87,15 +89,16 @@
         "behaviours" : [
             {
               "type"          : "ClutterBehaviourScale",
-              "scale-begin"   : 1.0,
-              "scale-end"     : 0.5,
-              "scale-gravity" : "center",
+              "x-scale-start" : 1.0,
+              "y-scale-start" : 1.0,
+              "x-scale-end"   : 0.5,
+              "y-scale-end"   : 0.5,
               "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
             },
             {
               "type"          : "ClutterBehaviourOpacity",
-              "opacity-start"   : 100,
-              "opacity-end"     : 255,
+              "opacity-start" : 100,
+              "opacity-end"   : 255,
               "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
             }
 

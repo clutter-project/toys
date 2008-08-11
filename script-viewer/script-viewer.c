@@ -174,6 +174,7 @@ load_script (const gchar *path)
       clutter_group_add (CLUTTER_GROUP (stage), actor);
       clutter_actor_show_all (stage);
 
+#if 0
       if (args.png != NULL)
         { 
           /* write a screenshot to file */
@@ -194,7 +195,8 @@ load_script (const gchar *path)
           gdk_pixbuf_save (snapshot, args.png, "png", NULL, NULL);
           clutter_main_quit ();
         }
-      else if (args.timeline != NULL)
+#endif
+      if (args.timeline != NULL)
         {
           timeline = CLUTTER_TIMELINE (clutter_script_get_object (
                                        script, args.timeline));

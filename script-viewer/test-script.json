@@ -58,7 +58,7 @@
       {
         "id" : "red-hand",
         "type" : "ClutterTexture",
-        "pixbuf" : "redhand.png",
+        "filename" : "redhand.png",
         "x" : 50,
         "y" : 50,
         "opacity" : 100,
