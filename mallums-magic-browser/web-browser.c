@@ -403,16 +403,7 @@ add_new_page (MmBrowser *browser)
 static ClutterActor *
 make_button (const char *image)
 {
-  ClutterActor *button;
-  GdkPixbuf *pixbuf;
-
-  pixbuf = gdk_pixbuf_new_from_file (image, NULL);
-  if (pixbuf == NULL) {
-    g_error ("unable to load %s", image);
-  }
-
-  button = clutter_texture_new_from_pixbuf (pixbuf);
-  return button;
+  return clutter_texture_new_from_file (image, NULL);
 }
 
 static void
@@ -682,7 +673,6 @@ create_new_tab (ClutterActor *button,
 static void
 mm_browser_init (MmBrowser *self)
 {
-  GdkPixbuf *pixbuf;
   MmBrowserPrivate *priv;
   ClutterColor white = {0x33, 0x33, 0x33, 0xff};
   ClutterColor progress_color = {0x00, 0x55, 0xdd, 0xff};
@@ -769,11 +759,7 @@ mm_browser_init (MmBrowser *self)
   clutter_container_add_actor (CLUTTER_CONTAINER (self), priv->toolbar);
   clutter_actor_set_position (priv->toolbar, 0, 430);
 
-  pixbuf = gdk_pixbuf_new_from_file ("assets/toolbar-bg.png", NULL);
-  if (pixbuf == NULL) {
-    g_error ("unable to load assets/toolbar-bg.png");
-  }
-  priv->toolbar_bg = clutter_texture_new_from_pixbuf (pixbuf);
+  priv->toolbar_bg = clutter_texture_new_from_file ("assets/toolbar-bg.png", NULL);
   clutter_group_add (CLUTTER_GROUP (priv->toolbar), priv->toolbar_bg);
 
   priv->progress = clutter_rectangle_new_with_color (&progress_color);

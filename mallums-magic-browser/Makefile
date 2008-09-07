@@ -9,7 +9,7 @@
 # Øyvind Kolås (c) 2007 <pippin@gimp.org>  placed in the Public Domain.
 ##
 
-PKGMODULES = tidy-1.0 clutter-0.6 webkit-clutter-1.0
+PKGMODULES = tidy-1.0 clutter-0.8 webkit-clutter-1.0
 
 # you only need to change the following if you want to change where the
 # generated tarball gets scp'd to:
