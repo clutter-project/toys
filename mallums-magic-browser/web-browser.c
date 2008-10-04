@@ -22,7 +22,7 @@ typedef struct _MmBrowserPage
   ClutterActor *overlay;
   ClutterActor *scroll;
   ClutterActor *popup_menu;
-  
+
   PopupFactory *factory;
 
   WebKitWebView *view;
@@ -42,7 +42,7 @@ struct _MmBrowserPrivate
   ClutterTimeline *scale_timeline;
   ClutterTimeline *scroll_timeline;
   ClutterTimeline *move_timeline;
-  
+
   ClutterEffectTemplate *fade_template;
   ClutterEffectTemplate *scale_template;
   ClutterEffectTemplate *scroll_template;
@@ -52,6 +52,8 @@ struct _MmBrowserPrivate
   ClutterActor *new_tab;
   ClutterActor *prev_tab;
   ClutterActor *next_tab;
+
+  ClutterActor *next_prev_group;
 
   ClutterActor *back;
   ClutterActor *forward;
@@ -108,7 +110,7 @@ set_back_and_forward (MmBrowser *browser)
 
   /* Get top page */
   page = priv->current_page->data;
-  
+
   if (webkit_web_view_can_go_back (page->view)) {
     clutter_effect_fade (priv->fade_template, priv->back, 0xff, NULL, NULL);
   } else {
@@ -147,7 +149,7 @@ load_finished_cb (WebKitWebView  *web_view,
   clutter_timeline_stop (priv->move_timeline);
   clutter_timeline_rewind (priv->move_timeline);
 
-  clutter_entry_set_text (CLUTTER_ENTRY (priv->entry), 
+  clutter_entry_set_text (CLUTTER_ENTRY (priv->entry),
                           webkit_web_frame_get_uri (frame));
   page = priv->current_page->data;
 
@@ -164,7 +166,7 @@ webkit_event_capture_cb (ClutterActor  *actor,
 {
   MmBrowser *browser = page->browser;
   MmBrowserPrivate *priv = browser->priv;
-  
+
   switch (event->type) {
   case CLUTTER_BUTTON_PRESS:
     if (priv->showing_tabs == TRUE)
@@ -172,12 +174,12 @@ webkit_event_capture_cb (ClutterActor  *actor,
 	tabs_cb (NULL, NULL, browser);
 	return TRUE;
       }
-    
+
     return FALSE;
-    
+
   case CLUTTER_BUTTON_RELEASE:
     return FALSE;
-    
+
   case CLUTTER_MOTION:
 #if 0
     if (priv->maybe_scroll == TRUE) {
@@ -185,11 +187,11 @@ webkit_event_capture_cb (ClutterActor  *actor,
       int dx = mev->x - page->start_x;
       int dy = mev->y - page->start_y;
 
-      gtk_adjustment_set_value (page->hscroll, 
+      gtk_adjustment_set_value (page->hscroll,
                                 MIN (page->hscroll->value - dx,
                                      page->hscroll->upper - WEBKIT_WIDTH));
-      gtk_adjustment_set_value (page->vscroll, 
-                                MIN (page->vscroll->value - dy, 
+      gtk_adjustment_set_value (page->vscroll,
+                                MIN (page->vscroll->value - dy,
                                      page->vscroll->upper - WEBKIT_HEIGHT));
 
       page->start_x = mev->x;
@@ -199,7 +201,7 @@ webkit_event_capture_cb (ClutterActor  *actor,
     }
 #endif
     return FALSE;
-    
+
   case CLUTTER_ENTER:
   case CLUTTER_LEAVE:
   default:
@@ -306,8 +308,8 @@ create_popup_factory (MmBrowser     *browser,
   clutter_actor_set_size (bground, WEBKIT_WIDTH, 125);
   clutter_actor_show (bground);
 
-  page->factory = g_object_new (POPUP_TYPE_FACTORY, 
-				"rules-hint", FALSE, 
+  page->factory = g_object_new (POPUP_TYPE_FACTORY,
+				"rules-hint", FALSE,
 				"show-headers", FALSE,
 				NULL);
   tidy_stylable_set_style (TIDY_STYLABLE (page->factory), tidy_style_new ());
@@ -340,6 +342,32 @@ create_popup_factory (MmBrowser     *browser,
 }
 
 static void
+page_start_editing_cb (WebkitActor *actor,
+		       MmBrowser   *browser)
+{
+  MmBrowserPrivate *priv = browser->priv;
+  MmBrowserPage *page;
+
+  /* Get top page */
+  page = priv->current_page->data;
+
+  webkit_web_view_zoom_to_selected_node (page->view);
+}
+
+static void
+page_stop_editing_cb (WebkitActor *actor,
+		      MmBrowser   *browser)
+{
+  MmBrowserPrivate *priv = browser->priv;
+  MmBrowserPage *page;
+
+  /* Get top page */
+  page = priv->current_page->data;
+
+  webkit_web_view_zoom_to_default (page->view);
+}
+
+static void
 add_new_page (MmBrowser *browser)
 {
   MmBrowserPrivate *priv = browser->priv;
@@ -354,7 +382,7 @@ add_new_page (MmBrowser *browser)
   page->vadj = webkit_adjustment_new (0,0,0,0,0,0);
 
   page->webkit = webkit_web_view_new (WEBKIT_WIDTH, WEBKIT_HEIGHT);
-  webkit_web_view_set_scroll_adjustments (WEBKIT_WEB_VIEW (page->webkit), 
+  webkit_web_view_set_scroll_adjustments (WEBKIT_WEB_VIEW (page->webkit),
 					  page->hadj, page->vadj);
 
   clutter_actor_set_reactive (page->webkit, TRUE);
@@ -384,13 +412,17 @@ add_new_page (MmBrowser *browser)
                     G_CALLBACK (load_finished_cb), browser);
   g_signal_connect (page->view, "hovering-over-link",
                     G_CALLBACK (hovering_over_link_cb), page);
+  g_signal_connect (page->view, "start-editing",
+		    G_CALLBACK (page_start_editing_cb), browser);
+  g_signal_connect (page->view, "stop-editing",
+		    G_CALLBACK (page_stop_editing_cb), browser);
 
-  clutter_actor_set_anchor_point_from_gravity (page->scroll, 
+  clutter_actor_set_anchor_point_from_gravity (page->scroll,
                                                CLUTTER_GRAVITY_CENTER);
-  clutter_actor_set_position (page->scroll, WEBKIT_WIDTH / 2, 
+  clutter_actor_set_position (page->scroll, WEBKIT_WIDTH / 2,
                               WEBKIT_HEIGHT / 2);
 
-  clutter_container_add_actor (CLUTTER_CONTAINER (priv->page_group), 
+  clutter_container_add_actor (CLUTTER_CONTAINER (priv->page_group),
                                page->scroll);
   priv->pages = g_list_append (priv->pages, page);
 
@@ -399,13 +431,14 @@ add_new_page (MmBrowser *browser)
   /* Fixme...obviously */
   priv->current_page = g_list_last (priv->pages);
 }
-  
+
 static ClutterActor *
 make_button (const char *image)
 {
   return clutter_texture_new_from_file (image, NULL);
 }
 
+#if 0
 static void
 key_release_cb (ClutterEntry *entry,
                 ClutterEvent *event,
@@ -417,7 +450,7 @@ key_release_cb (ClutterEntry *entry,
     clutter_entry_handle_key_event (CLUTTER_ENTRY (browser->priv->entry), kev);
   }
 }
-
+#endif
 static void
 entry_activated_cb (ClutterEntry *entry,
                     MmBrowser    *browser)
@@ -798,8 +831,10 @@ mm_browser_init (MmBrowser *self)
   clutter_actor_set_reactive (priv->entry, TRUE);
   clutter_actor_set_position (priv->entry, 265, 11);
   clutter_actor_set_size (priv->entry, 515, 50);
+#if 0
   g_signal_connect (priv->entry, "key-release-event",
                     G_CALLBACK (key_release_cb), self);
+#endif
   g_signal_connect (priv->entry, "activate",
                     G_CALLBACK (entry_activated_cb), self);
   g_signal_connect (priv->entry, "button-release-event",
@@ -849,16 +884,6 @@ main (int    argc,
         stage = clutter_stage_get_default ();
         clutter_actor_set_size (stage, 800, 480);
         clutter_stage_set_color (CLUTTER_STAGE(stage), &col);
-
-        /*
-        pixbuf = gdk_pixbuf_new_from_file ("assets/bground.png", NULL);
-        if (pixbuf == NULL) {
-          g_error ("unable to load assets/bground.png");
-        }
-        background = clutter_texture_new_from_pixbuf (pixbuf);
-        clutter_actor_show (background);
-        clutter_group_add (CLUTTER_GROUP (stage), background);
-        */
 
         browser = mm_browser_new ();
         clutter_actor_set_position (CLUTTER_ACTOR (browser), 0, 0);
