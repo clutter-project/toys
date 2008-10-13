@@ -307,7 +307,8 @@ opt_slide_set_background_pixbuf (OptSlide *slide, GdkPixbuf *background)
                                      gdk_pixbuf_get_width (background),
                                      gdk_pixbuf_get_height (background),
                                      gdk_pixbuf_get_rowstride (background),
-                                     4, 0,
+                                     gdk_pixbuf_get_n_channels (background), 
+                                     0,
                                      NULL);
 }
 

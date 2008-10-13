@@ -257,7 +257,7 @@ fade_transition_frame_cb (OptTransition   *trans,
   from = opt_transition_get_from (trans);
   to   = opt_transition_get_to (trans);
 
-  if (frame_num == 0)
+  if (frame_num == 1)
     {
       clutter_actor_show_all (CLUTTER_ACTOR(to));
       clutter_actor_raise_top (CLUTTER_ACTOR(to));

@@ -1,3 +1,4 @@
+
 #include "opt.h"
 
 G_DEFINE_TYPE (OptShow, opt_show, G_TYPE_OBJECT);
@@ -115,13 +116,15 @@ opt_show_set_property (GObject      *object,
       break;
     case PROP_BACKGROUND:
       priv->background = g_value_get_object (value);
+
       clutter_texture_set_from_rgb_data (CLUTTER_TEXTURE (priv->bg),
                                          gdk_pixbuf_get_pixels (priv->background),
                                          gdk_pixbuf_get_has_alpha (priv->background),
                                          gdk_pixbuf_get_width (priv->background),
                                          gdk_pixbuf_get_height (priv->background),
                                          gdk_pixbuf_get_rowstride (priv->background),
-                                         4, 0,
+                                         gdk_pixbuf_get_n_channels (priv->background), 
+                                         0,
                                          NULL);
       break;
     default:
@@ -309,8 +312,9 @@ opt_show_add_slide (OptShow *self, OptSlide *slide)
                           clutter_actor_get_width (stage),
                           clutter_actor_get_height (stage));
   
+
   clutter_group_add (CLUTTER_GROUP(slide), bg);
-  
+
   clutter_actor_lower_bottom(bg);
   clutter_actor_show(bg);
 
@@ -551,7 +555,7 @@ opt_show_export (OptShow *self, const char *path, GError **error)
       clutter_actor_show_all (stage);
       clutter_actor_show_all (e);
 
-      clutter_redraw (CLUTTER_STAGE (stage));
+      // clutter_redraw (CLUTTER_STAGE (stage));
       
       data = clutter_stage_read_pixels (CLUTTER_STAGE(stage),
 				        0,

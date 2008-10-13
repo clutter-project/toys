@@ -1,3 +1,14 @@
+2008-10-13  Matthew Allum  <mallum@openedhand.com>
+
+	* configure.ac:
+        Use clutter 0.8
+	* opt-show.c:
+	* opt-slide.c:
+        Dont hardcode number of channels when setting texture data,
+        use gdk_pixbuf_get_n_channels ()
+	* opt-transition.c: (fade_transition_frame_cb):
+        Fix fade. Timelines start from frame #1 now.
+
 2008-07-01  Emmanuele Bassi  <ebassi@openedhand.com>
 
 	* configure.ac:
