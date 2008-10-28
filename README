@@ -1,0 +1,26 @@
+The best way to find out about these toys is to try them out; they're
+all small demos that have few/no dependencies beyond the clutter
+libraries. The following is a summary of each;
+
+aaina         - A Flickr picture browser
+astro-desktop - A mock-up desktop/palmtop application environment
+courasel      - A carousel-style menu demo
+foofone       - A mock-up mobile phone interface
+mallums-magic-browser - A webkit-clutter based web browser
+opt           - A slide-show application
+ripples       - A small 'ripples' effect demo (using the cogl
+vector-drawing API)
+sqlite-model  - an sqlite-backed ClutterModel implementation
+widgets       - A texture-reflecting actor demo
+youhaa        - A (currently broken) YouTube video browser
+circles       - A small spinning circles demo (using the cogl
+vector-drawing API)
+fluttr        - Another Flickr picture browser
+gcr           - A Gegl-based clutter video recorder
+odo           - A mesh deformation demo set
+pong          - An unfinished pong game
+script-viewer - A ClutterScript viewer
+table         - A multi-touch table style picture/video viewer (not
+actually multi-touch)
+woohaa        - A video browser/player
+
