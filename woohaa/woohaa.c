@@ -8,8 +8,11 @@
 #include <sys/wait.h>
 #include <glib/gstdio.h>
 
+#ifdef USE_HELIX
+#include <clutter-helix/clutter-helix.h>
+#endif
+
 #include "wh-slider-menu.h"
-#include "clutter-simple-layout.h"
 #include "wh-video-model.h"
 #include "wh-video-model-row.h"
 #include "wh-video-view.h"
@@ -40,7 +43,7 @@ typedef struct WooHaa
 }
 WooHaa;
 
-void 
+gboolean
 browse_input_cb (ClutterStage *stage,
 		 ClutterEvent *event,
 		 gpointer      user_data);
@@ -52,19 +55,6 @@ video_input_cb (ClutterStage *stage,
 
 static void
 thumbnail_find_empty (WooHaa *wh);
-
-void
-foo_effect_cb (ClutterTimeline *timeline, 
-	       gint             frame_num, 
-	       WooHaa          *wh)
-{
-  /*
-  clutter_actor_rotate_y (wh->video,
-			  frame_num * 12,
-			  CLUTTER_STAGE_WIDTH()/2,
-			  0);
-  */
-}
 
 static gboolean
 check_thumbnailer_child(gpointer data)
@@ -221,24 +211,10 @@ on_video_playback_start (WHScreenVideo *video,
 		       NULL,
 		       NULL);
 
-  /*
-  clutter_effect_fade (wh->video_effect_tmpl,
-		       wh->screen_video,
-		       0,
-		       0xff,
-		       NULL,
-		       NULL);
-  */
-
   wh_video_view_enable_animation (WH_VIDEO_VIEW(wh->view), FALSE);
 
   /* Stop the busy 'cursor' */
-  clutter_effect_fade (wh->video_effect_tmpl,
-		       wh->busy,
-		       0,
-		       (ClutterEffectCompleteFunc)clutter_actor_hide,
-		       NULL);
-
+  woohaa_busy_fade_out (WOOHAA_BUSY (wh->busy), 500);
 }
 
 void
@@ -248,7 +224,7 @@ on_video_playback_finish (WHScreenVideo *video,
   WHVideoModelRow *row;
 
   g_signal_connect (clutter_stage_get_default(),
-		    "event",
+		    "key-release-event",
 		    G_CALLBACK (browse_input_cb),
 		    wh);
 
@@ -281,7 +257,7 @@ on_video_playback_finish (WHScreenVideo *video,
 		       wh);
 }
 
-void 
+gboolean
 browse_input_cb (ClutterStage *stage,
 		 ClutterEvent *event,
 		 gpointer      user_data)
@@ -295,11 +271,11 @@ browse_input_cb (ClutterStage *stage,
       switch (clutter_key_event_symbol (kev))
 	{
 	case CLUTTER_Left:
-	  wh_slider_menu_advance (WH_SLIDER_MENU(wh->menu), -1);
+	  woohaa_slider_menu_advance (WOOHAA_SLIDER_MENU(wh->menu), -1);
 	  thumbnail_find_empty (wh);
 	  break;
 	case CLUTTER_Right:
-	  wh_slider_menu_advance (WH_SLIDER_MENU(wh->menu), 1);
+	  woohaa_slider_menu_advance (WOOHAA_SLIDER_MENU(wh->menu), 1);
 	  thumbnail_find_empty (wh);
 	  break;
 	case CLUTTER_Up:
@@ -314,7 +290,7 @@ browse_input_cb (ClutterStage *stage,
 					       wh);
 
 	  wh_screen_video_activate (WH_SCREEN_VIDEO(wh->screen_video), 
-				    WH_VIDEO_VIEW(wh->view));
+	  			    WH_VIDEO_VIEW(wh->view));
 
 	  clutter_effect_scale (wh->video_effect_tmpl,
 				wh->screen_browse,
@@ -323,15 +299,7 @@ browse_input_cb (ClutterStage *stage,
 				NULL,
 				NULL);
 
-	  clutter_effect_fade (wh->video_effect_tmpl,
-			       wh->busy,
-			       0xff,
-			       NULL,
-			       NULL);
-
-	  clutter_actor_set_opacity (wh->busy, 0);
-	  clutter_actor_show (wh->busy);
-
+	  woohaa_busy_fade_in (WOOHAA_BUSY (wh->busy), 500);
 	  break;
 	case CLUTTER_Escape:
 	case CLUTTER_q:
@@ -339,18 +307,10 @@ browse_input_cb (ClutterStage *stage,
 	  break;
 	default:
 	  break;
-;	}
+	}
     }
-}
 
-void
-screen_fadeout_complete (ClutterActor *actor, WooHaa *wh)
-{
-  g_object_ref (wh->busy);
-  clutter_group_remove (CLUTTER_GROUP(actor), wh->busy);
-  clutter_group_add (CLUTTER_GROUP(clutter_stage_get_default()), wh->busy);
-  clutter_actor_hide (wh->busy);
-  g_object_unref (wh->busy);
+  return TRUE;
 }
 
 static gint
@@ -375,7 +335,7 @@ model_recently_added_filter (WHVideoModel    *model,
 }
 
 static void
-view_recently_added_selected (WHSliderMenu *menu,
+view_recently_added_selected (WoohaaSliderMenu *menu,
 			      ClutterActor      *actor,
 			      gpointer           userdata)
 {
@@ -438,19 +398,19 @@ model_alpha_filter (WHVideoModel    *model,
 }
 
 static void
-view_af_selected (WHSliderMenu *menu,
+view_af_selected (WoohaaSliderMenu *menu,
 		  ClutterActor      *actor,
 		  gpointer           userdata)
 {
   WooHaa *wh = (WooHaa*)userdata;
-
+  
   wh_video_model_set_filter (wh->model, model_alpha_filter, 
 			     GINT_TO_POINTER(FILTER_AF));
   wh_video_model_set_sort_func (wh->model, model_sort_alpha, NULL);
 }
 
 static void
-view_gl_selected (WHSliderMenu *menu,
+view_gl_selected (WoohaaSliderMenu *menu,
 		  ClutterActor      *actor,
 		  gpointer           userdata)
 {
@@ -462,7 +422,7 @@ view_gl_selected (WHSliderMenu *menu,
 }
 
 static void
-view_mr_selected (WHSliderMenu *menu,
+view_mr_selected (WoohaaSliderMenu *menu,
 		  ClutterActor      *actor,
 		  gpointer           userdata)
 {
@@ -474,7 +434,7 @@ view_mr_selected (WHSliderMenu *menu,
 }
 
 static void
-view_sz_selected (WHSliderMenu *menu,
+view_sz_selected (WoohaaSliderMenu *menu,
 		  ClutterActor      *actor,
 		  gpointer           userdata)
 {
@@ -510,7 +470,7 @@ model_recently_viewed_filter (WHVideoModel    *model,
 }
 
 void
-view_recently_viewed_selected (WHSliderMenu  *menu,
+view_recently_viewed_selected (WoohaaSliderMenu  *menu,
 			       ClutterActor  *actor,
 			       gpointer       userdata)
 {
@@ -532,7 +492,7 @@ model_not_viewed_filter (WHVideoModel    *model,
 }
 
 void
-view_not_viewed_selected (WHSliderMenu *menu,
+view_not_viewed_selected (WoohaaSliderMenu *menu,
 			  ClutterActor      *actor,
 			  gpointer           userdata)
 {
@@ -559,7 +519,7 @@ model_sort_popular (WHVideoModelRow *rowa,
 
 
 void
-view_popular_selected (WHSliderMenu *menu,
+view_popular_selected (WoohaaSliderMenu *menu,
 		       ClutterActor *actor,
 		       gpointer      userdata)
 {
@@ -578,23 +538,36 @@ on_db_row_created (WHDB *db, WHVideoModelRow *row, gpointer data)
   wh_video_model_append_row (wh->model, row);
 }
 
+static void 
+on_desktop_fade_complete (ClutterActor *actor, gpointer user_data)
+{
+
+  WooHaa *wh = (WooHaa *) user_data;
+  WoohaaSliderMenu *menu = WOOHAA_SLIDER_MENU (wh->menu);
+
+  /* Sort the model to correspond to insitial menu option */
+  view_not_viewed_selected (menu, NULL, (gpointer)wh);
+}
 
 int
 main (int argc, char *argv[])
 {
   WooHaa        *wh;
-  ClutterActor  *stage, *bg, *screen_start, *desktop, *label;
+  ClutterActor  *stage, *bg, *desktop;
   GConfClient   *client;
   GSList         *gconf_paths, *path;
   gchar         *font_str;
   gint           menu_h, browse_h;
   GError        *error = NULL;
   ClutterEffectTemplate *effect_template;
-  ClutterColor   stage_color = { 0xff, 0xff, 0xf7, 0xff },
-		  grey_col   = { 0x72, 0x9f, 0xcf, 0xff};
+  ClutterColor   stage_color = { 0xff, 0xff, 0xf7, 0xff };
 
   gnome_vfs_init ();
+#ifdef USE_HELIX
+  clutter_helix_init (&argc, &argv);
+#else
   gst_init (&argc, &argv);
+#endif
   clutter_init (&argc, &argv);
 
   client = gconf_client_get_default ();
@@ -624,17 +597,21 @@ main (int argc, char *argv[])
   wh->model = wh_video_model_new ();
   wh->db    = wh_db_new ();
 
+  effect_template
+    = clutter_effect_template_new (clutter_timeline_new_for_duration (1000),
+				   CLUTTER_ALPHA_SINE_INC);
+
   stage = clutter_stage_get_default ();
-  //clutter_actor_set_size (stage, 800, 600); 
+  clutter_actor_set_size (stage, 800, 600); 
   g_object_set (stage, "fullscreen", TRUE, "cursor-visible", FALSE, NULL);
   clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
 
   bg = util_actor_from_file (PKGDATADIR"/bg.png", CSW(), CSH());
 
-  /* XXX Dont size but really we need to tile here  */
-  /* clutter_actor_set_size (bg, CSW(), CSH()); */
   clutter_group_add (CLUTTER_GROUP(stage), bg);
   clutter_actor_show (bg);
+
+  clutter_actor_show (stage);
 
   /* General setup */
 
@@ -645,56 +622,56 @@ main (int argc, char *argv[])
   browse_h   = CSH() - 2 * menu_h;
   font_str   = g_strdup_printf("Sans %ipx", menu_h/2);
   
-  wh->menu = wh_slider_menu_new (font_str);
+  wh->menu = woohaa_slider_menu_new (font_str);
   clutter_actor_set_size (wh->menu, CSW(), menu_h);
-  clutter_actor_set_position (wh->menu, 0, menu_h/2);
+  clutter_actor_set_position (wh->menu, 0, menu_h/10);
 
-  wh_slider_menu_add_option (WH_SLIDER_MENU (wh->menu), 
-			     "Not Viewed",
-			     view_not_viewed_selected, 
-			     wh);
+  woohaa_slider_menu_add_option (WOOHAA_SLIDER_MENU (wh->menu), 
+				 "Not Viewed",
+				 view_not_viewed_selected, 
+				 wh);
 
-  wh_slider_menu_add_option (WH_SLIDER_MENU (wh->menu), 
-			     "Recently Added",
-			     view_recently_added_selected, 
-			     wh);
+  woohaa_slider_menu_add_option (WOOHAA_SLIDER_MENU (wh->menu), 
+				 "Recently Added",
+				 view_recently_added_selected, 
+				 wh);
 
-  wh_slider_menu_add_option (WH_SLIDER_MENU (wh->menu), 
-			     "A-F",
-			     view_af_selected,
-			     wh);
+  woohaa_slider_menu_add_option (WOOHAA_SLIDER_MENU (wh->menu), 
+				 "A-F",
+				 view_af_selected,
+				 wh);
 
-  wh_slider_menu_add_option (WH_SLIDER_MENU (wh->menu), 
-			     "G-L",
-			     view_gl_selected,
-			     wh);
+  woohaa_slider_menu_add_option (WOOHAA_SLIDER_MENU (wh->menu), 
+				 "G-L",
+				 view_gl_selected,
+				 wh);
 
-  wh_slider_menu_add_option (WH_SLIDER_MENU (wh->menu), 
-			     "M-R",
-			     view_mr_selected,
-			     wh);
+  woohaa_slider_menu_add_option (WOOHAA_SLIDER_MENU (wh->menu), 
+				 "M-R",
+				 view_mr_selected,
+				 wh);
 
-  wh_slider_menu_add_option (WH_SLIDER_MENU (wh->menu), 
-			     "S-Z",
-			     view_sz_selected,
-			     wh);
+  woohaa_slider_menu_add_option (WOOHAA_SLIDER_MENU (wh->menu), 
+				 "S-Z",
+				 view_sz_selected,
+				 wh);
 
-  wh_slider_menu_add_option (WH_SLIDER_MENU (wh->menu), 
-			     "Popular",
-			     view_popular_selected,
-			     wh);
+  woohaa_slider_menu_add_option (WOOHAA_SLIDER_MENU (wh->menu), 
+				 "Popular",
+				 view_popular_selected,
+				 wh);
 
-  wh_slider_menu_add_option (WH_SLIDER_MENU (wh->menu), 
-			     "Recently Viewed",
-			     view_recently_viewed_selected, 
-			     wh);
+  woohaa_slider_menu_add_option (WOOHAA_SLIDER_MENU (wh->menu), 
+				 "Recently Viewed",
+				 view_recently_viewed_selected, 
+				 wh);
 
-  /* Sort the model to correspond to insitial menu option */
-  view_not_viewed_selected (WH_SLIDER_MENU (wh->menu), NULL, (gpointer)wh);
+  woohaa_slider_menu_advance (WOOHAA_SLIDER_MENU (wh->menu), 0);
 
   clutter_group_add (CLUTTER_GROUP(wh->screen_browse), wh->menu);
 
   /* Video screen */
+
 
   wh->screen_video = wh_screen_video_new ();
 
@@ -712,64 +689,31 @@ main (int argc, char *argv[])
 
   /* Startup screen */
 
-  screen_start = clutter_group_new();
-
   desktop = util_texture_from_root_window ();
   clutter_group_add (CLUTTER_GROUP(stage), desktop);
   clutter_actor_show (desktop);
 
-  wh->busy = wh_busy_new();
-  clutter_group_add (CLUTTER_GROUP(screen_start), wh->busy);
+  wh->busy = woohaa_busy_new();
+  clutter_group_add (CLUTTER_GROUP(stage), wh->busy);
+  clutter_actor_hide (wh->busy);
   
-  label = clutter_label_new_full (font_str, "One moment please..", 
-				  &grey_col);
-  
-  clutter_group_add (CLUTTER_GROUP(screen_start), label);
-  clutter_actor_set_position (label,
-			      (CSW() - clutter_actor_get_width (label))/2,
-			      CSH() - (3*clutter_actor_get_height (label)));
-
-  clutter_group_add (CLUTTER_GROUP(stage), screen_start);
-
-  clutter_actor_move_anchor_point_from_gravity (screen_start,
-                                                CLUTTER_GRAVITY_CENTER);
-  clutter_actor_move_anchor_point_from_gravity (desktop,
-                                                CLUTTER_GRAVITY_CENTER);
-  clutter_actor_move_anchor_point_from_gravity (wh->screen_browse,
-                                                CLUTTER_GRAVITY_CENTER);
-  
-  effect_template 
-    = clutter_effect_template_new (clutter_timeline_new (60, 60),
-				   CLUTTER_ALPHA_SINE_INC);
-
   wh->video_effect_tmpl
-    = clutter_effect_template_new (clutter_timeline_new (15, 60),
+    = clutter_effect_template_new (clutter_timeline_new_for_duration (500),
 				   CLUTTER_ALPHA_SINE_INC);
 
-  clutter_actor_show_all (screen_start);
-
-  clutter_actor_set_opacity (screen_start, 0);
-  clutter_effect_fade (effect_template,
-		       screen_start,
-		       0xff,
-		       NULL,
-		       NULL);
-
-  clutter_actor_set_scale (screen_start, 0.2, 0.2);
+  clutter_actor_set_scale (wh->busy, 0.2, 0.2);
   clutter_effect_scale (effect_template,
-			screen_start,
+			wh->busy,
 			1.0,
 			1.0,
 			NULL,
 			NULL);
 
-  clutter_actor_set_opacity (screen_start, 0xFF);
   clutter_effect_fade (effect_template,
 		       desktop,
 		       0,
-		       NULL,
-		       NULL);
-
+		       on_desktop_fade_complete,
+		       wh);
   clutter_effect_scale (effect_template,
 			desktop,
 			0.1,
@@ -810,37 +754,19 @@ main (int argc, char *argv[])
   clutter_actor_set_position (wh->view, 
 			      (CSW() - clutter_actor_get_width(wh->view)) / 2, 
 			      menu_h + (menu_h/2) + (menu_h/6));
+
   clutter_group_add (CLUTTER_GROUP(wh->screen_browse), wh->view);
 
   clutter_group_add (CLUTTER_GROUP (stage), wh->screen_browse);
 
-  clutter_actor_raise_top (wh->menu);
-
   /* Zoom to browse screen */
 
-  effect_template 
-    = clutter_effect_template_new (clutter_timeline_new (20, 60),
-				   CLUTTER_ALPHA_SINE_INC);
-
-  clutter_actor_raise_top (screen_start);
-
-  clutter_effect_fade (effect_template,
-		       screen_start,
-		       0,
-		       (ClutterEffectCompleteFunc)clutter_actor_hide,
-		       screen_start);
-
-  clutter_effect_scale (effect_template,
-			screen_start,
-			0.2,
-			0.2,
-			(ClutterEffectCompleteFunc)screen_fadeout_complete,
-			wh);
+  clutter_actor_raise_top (wh->busy);
 
   clutter_actor_show_all (wh->screen_browse);
 
   g_signal_connect (stage, 
-		    "event",
+		    "key-release-event",
 		    G_CALLBACK (browse_input_cb),
 		    wh);
 

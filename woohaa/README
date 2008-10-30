@@ -17,8 +17,9 @@ Keys:
   p          - pause
   Enter      - toggle on screen display
   Esc        - exit back to list
-  e          - bonus useless feature.
+  r          - rotate the screen 180 degrees
 
 Remember its a prototype.
 
   -- Matthew Allum
+

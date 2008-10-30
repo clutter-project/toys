@@ -35,24 +35,6 @@ wh_theme_init()
 
   g_hash_table_insert (_theme->fonts, "default", FONT_DEFAULT);
 
-#if 0
-  col = g_new(ClutterColor, 1);
-  clutter_color_from_pixel (col, COLOR_SLIDER);
-  g_hash_table_insert (_theme->colors, "slider", col);
-
-  col = g_new(ClutterColor, 1);
-  clutter_color_from_pixel (col, COLOR_SELECTOR);
-  g_hash_table_insert (_theme->colors, "selector", col);
-
-  col = g_new(ClutterColor, 1);
-  clutter_color_from_pixel (col, COLOR_TITLE_ACTIVE);
-  g_hash_table_insert (_theme->colors, "title-active", col);
-
-  col = g_new(ClutterColor, 1);
-  clutter_color_from_pixel (col, COLOR_TITLE_INACTIVE);
-  g_hash_table_insert (_theme->colors, "title-inactive", col);
-#endif
-
   pixbuf = gdk_pixbuf_new_from_file (PKGDATADIR "/busy.png", NULL);
   if (pixbuf == NULL)
     g_error ("Failed to load" PKGDATADIR "/busy.png");
@@ -67,17 +49,6 @@ wh_theme_init()
   if (pixbuf == NULL)
     g_error ("Failed to load " PKGDATADIR "/default-thumb.png");
   g_hash_table_insert (_theme->pixbufs, "default-thumbnail", pixbuf);
-
-#if 0
-  ClutterGstAudio *audio;
-
-  audio = clutter_gst_audio_new ();
-  clutter_media_set_filename(CLUTTER_MEDIA(audio), "fanfare.wav");
-
-  clutter_media_set_playing (CLUTTER_MEDIA(audio), TRUE);
-#endif
-
-
 }
 
 const char*

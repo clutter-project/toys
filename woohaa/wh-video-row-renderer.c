@@ -45,10 +45,20 @@ sync_thumbnail (WHVideoRowRenderer *renderer)
       if (priv->thumbnail_image)
 	g_object_unref (priv->thumbnail_image);
 
-      priv->thumbnail_image = clutter_texture_new_from_pixbuf (pixbuf);
-
+      
+      priv->thumbnail_image = clutter_texture_new ();
       if (priv->thumbnail_image == NULL)
 	return;
+
+      clutter_texture_set_from_rgb_data (CLUTTER_TEXTURE (priv->thumbnail_image),
+					 gdk_pixbuf_get_pixels (pixbuf),
+					 gdk_pixbuf_get_has_alpha (pixbuf),
+					 gdk_pixbuf_get_width (pixbuf),
+					 gdk_pixbuf_get_height (pixbuf),
+					 gdk_pixbuf_get_rowstride (pixbuf),
+					 gdk_pixbuf_get_n_channels (pixbuf), 
+					 0,
+					 NULL);
 
       clutter_actor_set_position (priv->thumbnail_image, PAD + 2, PAD + 2);
       clutter_actor_set_size (priv->thumbnail_image, 
@@ -139,11 +149,14 @@ wh_video_row_renderer_finalize (GObject *object)
 }
 
 static void
-wh_video_row_renderer_request_coords (ClutterActor    *self,
-				      ClutterActorBox *box)
+wh_video_row_renderer_allocate (ClutterActor    *self,
+				const ClutterActorBox *box,
+				gboolean absolute_origin_changed)
 {
   WHVideoRowRenderer        *row = WH_VIDEO_ROW_RENDERER(self);
   WHVideoRowRendererPrivate *priv;  
+  ClutterActorBox            child_box;
+  ClutterUnit                container_width, container_height;
   
   priv = VIDEO_ROW_RENDERER_PRIVATE(row);
 
@@ -225,8 +238,19 @@ wh_video_row_renderer_request_coords (ClutterActor    *self,
       wh_video_row_renderer_set_active (row, ~priv->active); 
     }
   
+  clutter_actor_get_sizeu (priv->container, 
+			   &container_width,
+			   &container_height);
+  child_box.x1 = 0;
+  child_box.y1 = 0;
+  child_box.x2 = container_width;
+  child_box.y2 = container_height;
+  clutter_actor_allocate (priv->container, 
+			  &child_box, 
+			  absolute_origin_changed);
+
   CLUTTER_ACTOR_CLASS (wh_video_row_renderer_parent_class)->
-    request_coords (self, box);
+    allocate (self, box, absolute_origin_changed);
 }
 
 static void
@@ -257,7 +281,7 @@ wh_video_row_renderer_class_init (WHVideoRowRendererClass *klass)
   object_class->finalize     = wh_video_row_renderer_finalize;
 
   actor_class->paint          = wh_video_row_renderer_paint;
-  actor_class->request_coords = wh_video_row_renderer_request_coords;
+  actor_class->allocate = wh_video_row_renderer_allocate;
   /* 
    *  actor_class->realize    = wh_video_row_renderer__realize;
    *  actor_class->unrealize  = parent_class->unrealize;

@@ -1,45 +1,62 @@
-#ifndef _WH_BUSY
-#define _WH_BUSY
+#ifndef _HAVE_WOOHAA_BUSY_H
+#define _HAVE_WOOHAA_BUSY_H
 
-#include <glib-object.h>
 #include <clutter/clutter.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
+#define WOOHAA_TYPE_BUSY woohaa_busy_get_type()
 
-#define WH_TYPE_BUSY wh_busy_get_type()
-
-#define WH_BUSY(obj) \
+#define WOOHAA_BUSY(obj) \
   (G_TYPE_CHECK_INSTANCE_CAST ((obj), \
-  WH_TYPE_BUSY, WHBusy))
+  WOOHAA_TYPE_BUSY, WoohaaBusy))
 
-#define WH_BUSY_CLASS(klass) \
+#define WOOHAA_BUSY_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_CAST ((klass), \
-  WH_TYPE_BUSY, WHBusyClass))
+  WOOHAA_TYPE_BUSY, WoohaaBusyClass))
 
-#define WH_IS_BUSY(obj) \
+#define WOOHAA_IS_BUSY(obj) \
   (G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
-  WH_TYPE_BUSY))
+  WOOHAA_TYPE_BUSY))
 
-#define WH_IS_BUSY_CLASS(klass) \
+#define WOOHAA_IS_BUSY_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_TYPE ((klass), \
-  WH_TYPE_BUSY))
+  WOOHAA_TYPE_BUSY))
 
-#define WH_BUSY_GET_CLASS(obj) \
+#define WOOHAA_BUSY_GET_CLASS(obj) \
   (G_TYPE_INSTANCE_GET_CLASS ((obj), \
-  WH_TYPE_BUSY, WHBusyClass))
+  WOOHAA_TYPE_BUSY, WoohaaBusyClass))
 
-typedef struct {
-  ClutterActor parent;
-} WHBusy;
+typedef struct _WoohaaBusy        WoohaaBusy;
+typedef struct _WoohaaBusyClass   WoohaaBusyClass;
+typedef struct _WoohaaBusyPrivate WoohaaBusyPrivate;
 
-typedef struct {
-  ClutterActorClass parent_class;
-} WHBusyClass;
+struct _WoohaaBusy
+{
+  /*< private >*/
+  ClutterActor       parent;
+  WoohaaBusyPrivate *priv;
+}; 
 
-GType wh_busy_get_type (void);
+struct _WoohaaBusyClass 
+{
+  /*< private >*/
+  ClutterGroupClass parent_class;
 
-ClutterActor* wh_busy_new (void);
+  /* Future padding */
+  void (* __reserved1) (void);
+  void (* __reserved2) (void);
+  void (* __reserved3) (void);
+  void (* __reserved4) (void);
+  void (* __reserved5) (void);
+  void (* __reserved6) (void);
+}; 
 
+GType         woohaa_busy_get_type  (void) G_GNUC_CONST;
+ClutterActor *woohaa_busy_new       (void);
+void          woohaa_busy_fade_out (WoohaaBusy *busy, gint timeout);
+void          woohaa_busy_fade_in  (WoohaaBusy *busy, gint timeout);
+void          woohaa_busy_bounce   (WoohaaBusy *busy);
 G_END_DECLS
 
-#endif /* _WH_BUSY */
+#endif

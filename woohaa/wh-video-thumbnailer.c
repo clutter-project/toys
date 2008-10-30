@@ -1,17 +1,26 @@
 #include <clutter/clutter.h>
 #include <clutter-gst/clutter-gst.h>
+#include <cogl/cogl.h>
 #include <gst/gst.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 
 #include "totem-resources.h"
 
 int
 main (int argc, char *argv[])
 {
-  ClutterActor *video;
-  GdkPixbuf    *shot;
-  gint          duration;
+  ClutterActor   *video;
+  GdkPixbuf      *shot = NULL;
+  gint            duration;
+  CoglHandle      tex_id;
+  CoglPixelFormat format;
+  gint            size;
+  gint            width;
+  gint            height; 
+  gint            rowstride;
+  guchar         *data = NULL;
 
   gst_init (&argc, &argv);
   clutter_init (&argc, &argv);
@@ -53,7 +62,28 @@ main (int argc, char *argv[])
 
   } while (clutter_media_get_position (CLUTTER_MEDIA(video)) <= duration/3);
 
-  shot = clutter_texture_get_pixbuf (CLUTTER_TEXTURE(video));
+  tex_id = clutter_texture_get_cogl_texture (CLUTTER_TEXTURE (video));
+  if (tex_id)
+    {
+      format = cogl_texture_get_format (tex_id);
+      size = cogl_texture_get_data (tex_id, format, 0, NULL);
+      width = cogl_texture_get_width (tex_id);
+      height = cogl_texture_get_height (tex_id);
+      rowstride = cogl_texture_get_rowstride (tex_id);
+      
+      data = (guchar*) g_malloc (sizeof(guchar) * size);
+      if (data)
+	shot = gdk_pixbuf_new_from_data (data, 
+					 GDK_COLORSPACE_RGB, 
+					 TRUE, 
+					 8,
+					 width, 
+					 height, 
+					 rowstride, 
+					 NULL, 
+					 NULL);
+	    
+    }
 
   totem_resources_monitor_stop ();
 

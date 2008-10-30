@@ -7,18 +7,12 @@ ClutterActor*
 util_actor_from_file (const gchar *path, int width, int height)
 {
   ClutterActor  *actor;
-  GdkPixbuf     *pixbuf;
 
-  pixbuf = gdk_pixbuf_new_from_file_at_size (path, width, height, NULL); 
+  actor = clutter_texture_new_from_file (path, NULL);
+  if (actor)
+    clutter_actor_set_size (actor, width, height);
 
-  if (pixbuf)
-    {
-      actor = clutter_texture_new_from_pixbuf (pixbuf);
-      g_object_unref (pixbuf);
-      return actor;
-    }
-  
-  return NULL;
+  return actor;
 }
 
 ClutterActor*
@@ -44,12 +38,20 @@ util_texture_from_root_window (void)
 
   if (pixbuf)
     {
-      texture = clutter_texture_new_from_pixbuf (pixbuf);
-      g_object_unref (pixbuf);
-      return texture;
+
+      texture = clutter_texture_new ();
+      clutter_texture_set_from_rgb_data (CLUTTER_TEXTURE (texture),
+					 gdk_pixbuf_get_pixels (pixbuf),
+					 gdk_pixbuf_get_has_alpha (pixbuf),
+					 gdk_pixbuf_get_width (pixbuf),
+					 gdk_pixbuf_get_height (pixbuf),
+					 gdk_pixbuf_get_rowstride (pixbuf),
+					 gdk_pixbuf_get_n_channels (pixbuf), 
+					 0,
+					 NULL);
     }
 
-  return NULL;
+  return texture;
 }
 
 guint32 

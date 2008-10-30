@@ -1,6 +1,11 @@
 #include <clutter/clutter.h>
+
+#ifdef USE_HELIX
+#include <clutter-helix/clutter-helix.h>
+#else
 #include <clutter-gst/clutter-gst.h>
 #include <gst/gst.h>
+#endif
 
 #include "wh-screen-video.h"
 #include "util.h"
@@ -21,7 +26,6 @@ struct _WHScreenVideoPrivate
   ClutterActor      *video_seekbar;
   ClutterActor      *video_seekbar_bg;
   ClutterActor      *duration, *title, *position, *vol_label;
-  ClutterTimeline   *foo_effect;
   gboolean           video_playing;
   gboolean           video_controls_visible;
   
@@ -29,7 +33,6 @@ struct _WHScreenVideoPrivate
   WHVideoModelRow   *video_row;
 
   /* Effects */
-  ClutterTimeline   *cheese_timeline;
   ClutterEffectTemplate *controls_effect_tmpl, *fadein_effect_tmpl;
 };
 
@@ -41,21 +44,6 @@ enum
 };
 
 static guint _screen_signals[LAST_SIGNAL] = { 0 };
-
-void
-cheese_cb (ClutterTimeline *timeline, 
-	   gint             frame_num, 
-	   WHScreenVideo   *screen)
-{
-  WHScreenVideoPrivate *priv  = SCREEN_VIDEO_PRIVATE(screen);
-
-  clutter_actor_set_rotation (priv->video,
-                              CLUTTER_Y_AXIS,
-                              frame_num * 12,
-                              CLUTTER_STAGE_WIDTH()/2,
-                              0,
-                              0);
-}
 
 static void
 video_size_change (ClutterTexture *texture, 
@@ -92,8 +80,6 @@ video_pixbuf_change (ClutterTexture *texture, WHScreenVideo  *screen)
   WHScreenVideoPrivate *priv  = SCREEN_VIDEO_PRIVATE(screen);
 
   g_signal_emit (screen, _screen_signals[PLAYBACK_STARTED], 0);
-
-  // util_actor_fade_in (CLUTTER_ACTOR(screen), NULL, NULL);
 
   clutter_effect_fade (priv->fadein_effect_tmpl,
 		       CLUTTER_ACTOR(screen),
@@ -132,10 +118,10 @@ video_tick (GObject        *object,
 	    WHScreenVideo  *screen)
 {
   WHScreenVideoPrivate *priv  = SCREEN_VIDEO_PRIVATE(screen);
-  ClutterGstVideoTexture *vtex;
+  ClutterMedia *vtex;
   gint                    position, duration, seek_width;
 
-  vtex = CLUTTER_GST_VIDEO_TEXTURE(object);
+  vtex = CLUTTER_MEDIA(object);
 
   position = clutter_media_get_position (CLUTTER_MEDIA(vtex));
   duration = clutter_media_get_duration (CLUTTER_MEDIA(vtex));
@@ -151,19 +137,6 @@ video_tick (GObject        *object,
       g_free(duration_txt);
 
       priv->video_playing = TRUE;
-#if 0
-      char *duration_txt;
-
-      g_signal_emit (screen, _screen_signals[PLAYBACK_STARTED], 0);
-
-      util_actor_fade_in (CLUTTER_ACTOR(screen), NULL, NULL);
-
-      priv->video_playing = TRUE;
-
-      duration_txt = nice_time (duration);
-      clutter_label_set_text (CLUTTER_LABEL(priv->duration), duration_txt);
-      g_free(duration_txt);
-#endif
     }
 
   seek_width = clutter_actor_get_width(priv->video_seekbar_bg);
@@ -222,8 +195,6 @@ video_show_controls (WHScreenVideo *screen)
       clutter_actor_show_all (CLUTTER_ACTOR(priv->video_controls));
       clutter_actor_set_opacity (CLUTTER_ACTOR(priv->video_controls), 0);
 
-      printf("showing video controls\n");
-
       clutter_effect_fade (priv->controls_effect_tmpl,
 			   priv->video_controls,
 			   0xff,
@@ -247,73 +218,90 @@ video_show_controls (WHScreenVideo *screen)
     
 }
 
-static void 
+static gboolean
 video_input_cb (ClutterStage *stage,
 		ClutterEvent *event,
 		gpointer      user_data)
 {
   WHScreenVideo        *screen = (WHScreenVideo*)user_data;
   WHScreenVideoPrivate *priv  = SCREEN_VIDEO_PRIVATE(screen);
+  gchar buf[16];
+  ClutterKeyEvent* kev = (ClutterKeyEvent *) event;
+  static ClutterTimeline *timeline = NULL;
 
-  if (event->type == CLUTTER_KEY_RELEASE)
+  switch (clutter_key_event_symbol (kev))
     {
-      gchar buf[16];
-      ClutterKeyEvent* kev = (ClutterKeyEvent *) event;
+    case CLUTTER_Return:
+    case CLUTTER_p:
+      if (clutter_media_get_playing (CLUTTER_MEDIA(priv->video)))
+	video_show_controls (screen);	    
+      clutter_media_set_playing 
+	(CLUTTER_MEDIA(priv->video),
+	 !clutter_media_get_playing (CLUTTER_MEDIA(priv->video)));
+      break;
+    case CLUTTER_Left:
+      video_show_controls (screen);
+      clutter_media_set_position 
+	(CLUTTER_MEDIA(priv->video),
+	 clutter_media_get_position (CLUTTER_MEDIA(priv->video)) - 25);
+      break;
+    case CLUTTER_Right:
+      video_show_controls (screen);
+      clutter_media_set_position 
+	(CLUTTER_MEDIA(priv->video),
+	 clutter_media_get_position (CLUTTER_MEDIA(priv->video)) + 25);
+      break;
+    case CLUTTER_Up:
+      clutter_media_set_volume 
+	(CLUTTER_MEDIA(priv->video),
+	 clutter_media_get_volume (CLUTTER_MEDIA(priv->video)) + 0.02);
+      g_snprintf (buf, sizeof(buf), "Vol:%.2i", 
+		  (gint)(clutter_media_get_volume (CLUTTER_MEDIA(priv->video))/0.01));
+      clutter_label_set_text (CLUTTER_LABEL(priv->vol_label), buf);
+      video_show_controls (screen);
+      break;
+    case CLUTTER_Down:
+      clutter_media_set_volume 
+	(CLUTTER_MEDIA(priv->video),
+	 clutter_media_get_volume (CLUTTER_MEDIA(priv->video)) - 0.02);
+      g_snprintf (buf, sizeof(buf), "Vol:%.2i", 
+		  (gint)(clutter_media_get_volume (CLUTTER_MEDIA(priv->video))/0.01));
+      clutter_label_set_text (CLUTTER_LABEL(priv->vol_label), buf);
+      video_show_controls (screen);
+      break;
+    case CLUTTER_r:
+      if (!timeline || !clutter_timeline_is_playing (timeline))
+        {
+	  ClutterEffectTemplate *template;
+	  static gint rotation;
 
-      switch (clutter_key_event_symbol (kev))
-	{
-	case CLUTTER_Return:
-	case CLUTTER_p:
-	  if (clutter_media_get_playing (CLUTTER_MEDIA(priv->video)))
-	    video_show_controls (screen);	    
-	  clutter_media_set_playing 
-	    (CLUTTER_MEDIA(priv->video),
-		  !clutter_media_get_playing (CLUTTER_MEDIA(priv->video)));
-	  break;
-	case CLUTTER_Left:
-	  video_show_controls (screen);
-	  clutter_media_set_position 
-	    (CLUTTER_MEDIA(priv->video),
-	      clutter_media_get_position (CLUTTER_MEDIA(priv->video)) - 25);
-	  break;
-	case CLUTTER_Right:
-	  video_show_controls (screen);
-	  clutter_media_set_position 
-	    (CLUTTER_MEDIA(priv->video),
-	      clutter_media_get_position (CLUTTER_MEDIA(priv->video)) + 25);
-	  break;
-	case CLUTTER_Up:
-	  clutter_media_set_volume 
-	    (CLUTTER_MEDIA(priv->video),
-	     clutter_media_get_volume (CLUTTER_MEDIA(priv->video)) + 0.1);
-	  g_snprintf (buf, sizeof(buf), "Vol:%.2i", 
-		      (gint)(clutter_media_get_volume (CLUTTER_MEDIA(priv->video))/0.1));
-	  clutter_label_set_text (CLUTTER_LABEL(priv->vol_label), buf);
-	  video_show_controls (screen);
-	  break;
-	case CLUTTER_Down:
-	  clutter_media_set_volume 
-	    (CLUTTER_MEDIA(priv->video),
-	     clutter_media_get_volume (CLUTTER_MEDIA(priv->video)) - 0.1);
-	  g_snprintf (buf, sizeof(buf), "Vol:%.2i", 
-		      (gint)(clutter_media_get_volume (CLUTTER_MEDIA(priv->video))/0.1));
-	  clutter_label_set_text (CLUTTER_LABEL(priv->vol_label), buf);
-	  video_show_controls (screen);
-	  break;
-	case CLUTTER_e:
-	  if (!clutter_timeline_is_playing (priv->cheese_timeline))
-	    clutter_timeline_start (priv->cheese_timeline);
-	  break;
-	case CLUTTER_Escape:
-	case CLUTTER_q:
-	  wh_screen_video_deactivate (screen);
-	  break;
-	default:
-	  break;
+	  if (clutter_actor_is_rotated (CLUTTER_ACTOR (priv->video)))
+	    rotation = 0;
+	  else
+	    rotation = 180;
+	  
+	  template = clutter_effect_template_new_for_duration 
+	    (1000, CLUTTER_ALPHA_SINE_INC);
+	  timeline = clutter_effect_rotate (template,
+					    CLUTTER_ACTOR (priv->video),
+					    CLUTTER_Y_AXIS,
+					    rotation,
+					    CSW()/2, CSH()/2, 0,
+					    rotation ? CLUTTER_ROTATE_CW : CLUTTER_ROTATE_CCW,
+					    NULL,
+					    NULL);
 	}
+      break;
+    case CLUTTER_Escape:
+    case CLUTTER_q:
+      wh_screen_video_deactivate (screen);
+      break;
+    default:
+      break;
     }
-}
 
+  return FALSE;
+}
 
 static void
 wh_screen_video_paint (ClutterActor *actor)
@@ -328,13 +316,60 @@ wh_screen_video_paint (ClutterActor *actor)
 }
 
 static void
-wh_screen_video_query_coords (ClutterActor    *self,
-			      ClutterActorBox *box)
+wh_screen_video_get_preferred_width (ClutterActor *self,
+				     ClutterUnit   for_height,
+				     ClutterUnit  *min_width_p,
+				     ClutterUnit  *natural_width_p)
 {
-  box->x1 = 0;
-  box->y1 = 0;
-  box->x2 = CSW();
-  box->y2 = CSH();
+  *min_width_p = CLUTTER_UNITS_FROM_INT (1); 
+  *natural_width_p = CLUTTER_UNITS_FROM_INT (CSW ());
+}
+
+static void
+wh_screen_video_get_preferred_height (ClutterActor *self,
+				      ClutterUnit   for_width,
+				      ClutterUnit  *min_height_p,
+				      ClutterUnit  *natural_height_p)
+{
+  *min_height_p = CLUTTER_UNITS_FROM_INT (1); 
+  *natural_height_p = CLUTTER_UNITS_FROM_INT (CSH ());
+}
+
+static void
+wh_screen_video_allocate (ClutterActor *actor, 
+			  const ClutterActorBox *box,
+			  gboolean absolute_origin_changed)
+{
+  WHScreenVideo        *screen = WH_SCREEN_VIDEO (actor);
+  WHScreenVideoPrivate *priv   = SCREEN_VIDEO_PRIVATE (screen);
+  ClutterActorBox child_box;
+  ClutterUnit controls_x, controls_y;
+
+  child_box.x1 = 0;
+  child_box.y1 = 0;
+  child_box.x2 = CLUTTER_UNITS_FROM_INT (CSW ());
+  child_box.y2 = CLUTTER_UNITS_FROM_INT (CSH ());
+  clutter_actor_allocate (priv->bg, &child_box, absolute_origin_changed);
+  clutter_actor_allocate (priv->video, &child_box, absolute_origin_changed);
+
+  controls_x = CLUTTER_UNITS_FROM_INT (CSW()/8);
+  controls_y = CLUTTER_UNITS_FROM_INT ((CSH()/4)/3);
+
+  clutter_actor_get_preferred_size (priv->video_controls,
+				    NULL,
+				    NULL,
+				    &child_box.x2,
+				    &child_box.y2);
+  child_box.x1 = controls_x;
+  child_box.y1 = controls_y;
+  child_box.x2 += controls_x;
+  child_box.y2 += controls_y;
+  clutter_actor_allocate (priv->video_controls, 
+			  &child_box, 
+			  absolute_origin_changed);
+
+  CLUTTER_ACTOR_CLASS (wh_screen_video_parent_class)->
+  	  allocate (actor, box, absolute_origin_changed);
 }
 
 static void
@@ -370,6 +405,8 @@ wh_screen_video_finalize (GObject *object)
   G_OBJECT_CLASS (wh_screen_video_parent_class)->finalize (object);
 }
 
+
+
 static void
 wh_screen_video_class_init (WHScreenVideoClass *klass)
 {
@@ -383,8 +420,10 @@ wh_screen_video_class_init (WHScreenVideoClass *klass)
   object_class->dispose = wh_screen_video_dispose;
   object_class->finalize = wh_screen_video_finalize;
 
-  actor_class->paint           = wh_screen_video_paint;
-  actor_class->query_coords    = wh_screen_video_query_coords;
+  actor_class->paint                = wh_screen_video_paint;
+  actor_class->get_preferred_width  = wh_screen_video_get_preferred_width;
+  actor_class->get_preferred_height = wh_screen_video_get_preferred_height;
+  actor_class->allocate             = wh_screen_video_allocate;
 
   _screen_signals[PLAYBACK_STARTED] =
     g_signal_new ("playback-started",
@@ -435,7 +474,7 @@ video_make_controls (WHScreenVideo *screen)
 
   g_snprintf(font_desc, 32, "Sans Bold %ipx", h/6); 
 
-  priv->title = clutter_label_new_with_text (font_desc, "");
+  priv->title = clutter_label_new_with_text (font_desc, " ");
   clutter_label_set_color (CLUTTER_LABEL(priv->title), &txtcol);
   clutter_label_set_line_wrap (CLUTTER_LABEL(priv->title), FALSE);
   clutter_label_set_ellipsize  (CLUTTER_LABEL(priv->title), 
@@ -480,6 +519,8 @@ video_make_controls (WHScreenVideo *screen)
   clutter_actor_set_parent (CLUTTER_ACTOR(priv->video_controls), 
 			    CLUTTER_ACTOR(screen)); 
 
+  clutter_actor_set_opacity (CLUTTER_ACTOR(priv->video_controls), 0);
+
   priv->controls_effect_tmpl 
     = clutter_effect_template_new (clutter_timeline_new (30, 60),
 				   CLUTTER_ALPHA_SINE_INC);
@@ -487,7 +528,6 @@ video_make_controls (WHScreenVideo *screen)
   priv->fadein_effect_tmpl 
     = clutter_effect_template_new (clutter_timeline_new (30, 60),
 				   CLUTTER_ALPHA_SINE_INC);
-
 }
 
 static void
@@ -497,7 +537,11 @@ wh_screen_video_init (WHScreenVideo *self)
   ClutterColor          black = { 0,0,0,255 };
 
   /* Create child video texture */
+#ifdef USE_HELIX
+  priv->video = clutter_helix_video_texture_new ();
+#else
   priv->video = clutter_gst_video_texture_new ();
+#endif
 
   /* Dont let the underlying pixbuf dictate size */
   g_object_set (G_OBJECT(priv->video), "sync-size", FALSE, NULL);
@@ -510,6 +554,7 @@ wh_screen_video_init (WHScreenVideo *self)
   priv->bg = clutter_rectangle_new_with_color (&black);
   clutter_actor_set_size (priv->bg, 
 			  CLUTTER_STAGE_WIDTH(), CLUTTER_STAGE_HEIGHT());
+  clutter_actor_set_opacity (priv->bg, 0);
 
   clutter_actor_set_parent (priv->bg, CLUTTER_ACTOR(self)); 
   clutter_actor_set_parent (priv->video, CLUTTER_ACTOR(self)); 
@@ -518,12 +563,6 @@ wh_screen_video_init (WHScreenVideo *self)
 
   /* Make  */
   video_make_controls (self);
-
-  /* Cheap effect */
-  priv->cheese_timeline = clutter_timeline_new (30, 90);
-  g_signal_connect (priv->cheese_timeline, "new-frame", 
-		    G_CALLBACK (cheese_cb), self);
-
 }
 
 ClutterActor*
@@ -568,8 +607,6 @@ wh_screen_video_deactivate (WHScreenVideo *screen)
 
   priv->video_playing = FALSE;
 
-  //util_actor_fade_out (CLUTTER_ACTOR(screen), NULL, NULL);
-
   video_hide_controls (screen);
 
   g_signal_handlers_disconnect_by_func(clutter_stage_get_default(),
@@ -600,7 +637,7 @@ wh_screen_video_activate (WHScreenVideo *screen, WHVideoView *view)
     return;
 
   g_signal_connect (clutter_stage_get_default(), 
-		    "event",
+		    "key-release-event",
 		    G_CALLBACK (video_input_cb),
 		    screen);
 

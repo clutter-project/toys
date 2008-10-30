@@ -2,7 +2,7 @@
 #include "wh-video-model.h"
 #include "util.h"
 
-#include <clutter/cogl.h>
+#include <cogl/cogl.h>
 
 G_DEFINE_TYPE (WHVideoView, wh_video_view, CLUTTER_TYPE_ACTOR);
 
@@ -15,7 +15,7 @@ struct _WHVideoViewPrivate
 {
   WHVideoModel      *model;
   ClutterActor      *rows; 
-  ClutterActor      *selector, *up, *down, *play; 
+  ClutterActor      *selector, *up, *down; 
   gint               row_height;
   gint               n_rows_visible;
   gboolean           enable_model_change_anim;
@@ -260,13 +260,15 @@ ensure_layout (WHVideoView *view,
 
   clutter_actor_show_all (priv->rows);
 
-  if (size_change)
+  if (1 /*size_change*/)
     {
       /* Selector and buttons - */
       if (!priv->selector)
 	{
 	  priv->selector = util_actor_from_file (PKGDATADIR "/selected.svg", 
 						 width, priv->row_height);
+	  if (!priv->selector)
+	    g_warning ("Unable to load %s\n", PKGDATADIR "/selected.svg");
 	  clutter_actor_set_parent (priv->selector, CLUTTER_ACTOR(view));
 
 	  priv->up = util_actor_from_file (PKGDATADIR "/arrow-up.svg", priv->row_height/4, priv->row_height/8);
@@ -274,10 +276,6 @@ ensure_layout (WHVideoView *view,
 
 	  priv->down = util_actor_from_file (PKGDATADIR "/arrow-down.svg", priv->row_height/4, priv->row_height/8);
 	  clutter_actor_set_parent (priv->down, CLUTTER_ACTOR (view));
-
-	  priv->play = util_actor_from_file (PKGDATADIR "/play.svg", -1, -1);
-	  clutter_actor_set_parent (priv->play, CLUTTER_ACTOR (view));
-
 	}
 
       clutter_actor_set_size (priv->selector, width, priv->row_height);
@@ -298,11 +296,6 @@ ensure_layout (WHVideoView *view,
 				  width - priv->row_height/2, 
 				  priv->row_height - priv->row_height/4);  
 
-      clutter_actor_set_size (priv->play, 
-			      (priv->row_height*2)/3, 
-			      (priv->row_height*2)/3);
-      clutter_actor_set_position (priv->play, 0, 0);  
-
       priv->path_up[0].x = 0;   priv->path_up[0].y = 0; 
       priv->path_up[1].x = 0;   priv->path_up[1].y = -1 * priv->row_height; 
       
@@ -321,12 +314,34 @@ ensure_layout (WHVideoView *view,
 }
 
 static void
-wh_video_view_request_coords (ClutterActor    *actor,
-			      ClutterActorBox *box)
+wh_video_view_get_preferred_width  (ClutterActor          *actor,
+				    ClutterUnit            for_height,
+				    ClutterUnit           *min_width_p,
+				    ClutterUnit           *natural_width_p)
+{
+  *min_width_p = CLUTTER_UNITS_FROM_INT (1);
+  *natural_width_p = CLUTTER_UNITS_FROM_INT (CSW ());
+}
+
+static void
+wh_video_view_get_preferred_height (ClutterActor          *actor,
+				    ClutterUnit            for_width,
+				    ClutterUnit           *min_height_p,
+				    ClutterUnit           *natural_height_p)
+{
+  *min_height_p = CLUTTER_UNITS_FROM_INT (1);
+  *natural_height_p = CLUTTER_UNITS_FROM_INT (CSH ());
+}
+
+static void
+wh_video_view_allocate (ClutterActor    *actor,
+			const ClutterActorBox *box,
+			gboolean absolute_origin_changed)
 {
   WHVideoView        *view;
   WHVideoViewPrivate *priv;
   gint                w,h;
+  ClutterActorBox    child_box;
 
   w = CLUTTER_UNITS_TO_INT(box->x2 - box->x1);
   h = CLUTTER_UNITS_TO_INT(box->y2 - box->y1);
@@ -341,7 +356,28 @@ wh_video_view_request_coords (ClutterActor    *actor,
       // clutter_actor_set_clip (actor, 0, -priv->row_height, w, h+priv->row_height);
     }
   
-  CLUTTER_ACTOR_CLASS (wh_video_view_parent_class)->request_coords (actor, box);
+  child_box.x1 = 0;
+  child_box.y1 = 0;
+  child_box.x2 = CLUTTER_UNITS_FROM_INT (w);
+  child_box.y2 = CLUTTER_UNITS_FROM_INT (h/priv->n_rows_visible);
+  clutter_actor_allocate (priv->rows, &child_box, absolute_origin_changed);
+  clutter_actor_allocate (priv->selector, &child_box, absolute_origin_changed);
+
+
+  child_box.x1 = CLUTTER_UNITS_FROM_INT (w - priv->row_height/2);
+  child_box.y1 = CLUTTER_UNITS_FROM_INT (priv->row_height/8);
+  child_box.x2 = child_box.x1 + CLUTTER_UNITS_FROM_INT (priv->row_height/4);
+  child_box.y2 = child_box.y1 + CLUTTER_UNITS_FROM_INT (priv->row_height/8);
+  clutter_actor_allocate (priv->up, &child_box, absolute_origin_changed);
+
+  child_box.x1 = CLUTTER_UNITS_FROM_INT (w - priv->row_height/2);
+  child_box.y1 = CLUTTER_UNITS_FROM_INT (priv->row_height - priv->row_height/4);
+  child_box.x2 = child_box.x1 + CLUTTER_UNITS_FROM_INT (priv->row_height/4);
+  child_box.y2 = child_box.y1 + CLUTTER_UNITS_FROM_INT (priv->row_height/8);
+  clutter_actor_allocate (priv->down, &child_box, absolute_origin_changed);
+
+  CLUTTER_ACTOR_CLASS (wh_video_view_parent_class)->
+	  allocate (actor, box, absolute_origin_changed);
 }
 
 static void
@@ -393,8 +429,6 @@ wh_video_view_paint (ClutterActor *actor)
     }
 
   cogl_pop_matrix();
-
-  // clutter_actor_paint (priv->play);
 }
 
 static void
@@ -438,7 +472,10 @@ wh_video_view_class_init (WHVideoViewClass *klass)
   actor_class->paint           = wh_video_view_paint;
   actor_class->show            = wh_video_view_show;
   actor_class->realize         = wh_video_view_realize;
-  actor_class->request_coords  = wh_video_view_request_coords;
+  actor_class->allocate        = wh_video_view_allocate;
+
+  actor_class->get_preferred_width  = wh_video_view_get_preferred_width;
+  actor_class->get_preferred_height = wh_video_view_get_preferred_height;
 
   gobject_class->finalize     = wh_video_view_finalize;
   gobject_class->dispose      = wh_video_view_dispose;
@@ -657,30 +694,6 @@ wh_video_view_add_rows (WHVideoView *view)
 
   priv->n_items = wh_video_model_row_count (priv->model); /* cache */
 }
-
-#if 0
-static void
-on_model_row_added (WHVideoModel    *model, 
-		    WHVideoModelRow *row,
-		    gpointer         *userdata)
-{
-  WHVideoView        *view = WH_VIDEO_VIEW(userdata);
-  WHVideoViewPrivate *priv;
-  WHVideoRowRenderer *renderer;
-
-  priv = WH_VIDEO_VIEW_GET_PRIVATE (view);
-
-  renderer = wh_video_model_row_get_renderer (row);
-  wh_video_row_renderer_set_active (renderer, FALSE); 
-
-  clutter_group_add (CLUTTER_GROUP(priv->rows), CLUTTER_ACTOR(renderer));
-
-  ensure_layout (view,
-		 clutter_actor_get_width(CLUTTER_ACTOR(view)),
-		 clutter_actor_get_height(CLUTTER_ACTOR(view)),
-		 priv->n_rows_visible);
-}
-#endif
 
 static void
 on_model_rows_change (WHVideoModel *model, gpointer *userdata)

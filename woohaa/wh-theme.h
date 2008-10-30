@@ -3,6 +3,7 @@
 
 #include <glib.h>
 #include <clutter/clutter.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 
 G_BEGIN_DECLS
 

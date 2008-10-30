@@ -4,12 +4,10 @@ bin_PROGRAMS=woohaa wh-video-thumbnailer
 
 PKGDATADIR = $(datadir)/woohaa
 
-AM_CFLAGS = $(DEPS_CFLAGS) $(GCC_FLAGS) -D_GNU_SOURCE -DPKGDATADIR=\"$(PKGDATADIR)\"
+AM_CFLAGS = $(DEPS_CFLAGS) $(CLUTTER_HELIX_CFLAGS) $(GCC_FLAGS) -D_GNU_SOURCE -DPKGDATADIR=\"$(PKGDATADIR)\"
 
-woohaa_LDADD  = $(DEPS_LIBS)
+woohaa_LDADD  = $(DEPS_LIBS) $(CLUTTER_HELIX_LIBS)
 woohaa_SOURCES = woohaa.c               \
-		clutter-simple-layout.c \
-		clutter-simple-layout.h \
 		wh-busy.c               \
 		wh-busy.h               \
 		wh-slider-menu.c        \

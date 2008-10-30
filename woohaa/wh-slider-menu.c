@@ -1,80 +1,68 @@
+#include <glib.h>
 #include "wh-slider-menu.h"
-#include "util.h"
 
-#include <clutter/cogl.h>
+#define CSW() CLUTTER_STAGE_WIDTH()
+#define CSH() CLUTTER_STAGE_HEIGHT()
 
-#define FONT "Sans 75px"
 #define SELECTED_OFFSET (CLUTTER_STAGE_WIDTH()/5)
 
-typedef struct WHSliderMenuEntry
+typedef struct WoohaaSliderMenuEntry
 {
   ClutterActor                   *actor;
-  WHSliderMenuSelectedFunc        selected_func;
+  WoohaaSliderMenuSelectedFunc    selected_func;
   gpointer                        userdata;
   gint                            offset;
 }
-WHSliderMenuEntry;
+WoohaaSliderMenuEntry;
 
-#define WH_TYPE_BEHAVIOUR_SLIDER (clutter_behaviour_slider_get_type ())
+#define WOOHAA_TYPE_BEHAVIOUR_SLIDER (clutter_behaviour_slider_get_type ())
 
-#define WH_BEHAVIOUR_SLIDER(obj) \
+#define WOOHAA_BEHAVIOUR_SLIDER(obj) \
   (G_TYPE_CHECK_INSTANCE_CAST ((obj), \
-  WH_TYPE_BEHAVIOUR_SLIDER, WHBehaviourSlider))
+  WOOHAA_TYPE_BEHAVIOUR_SLIDER, WoohaaBehaviourSlider))
 
-#define WH_BEHAVIOUR_SLIDER_CLASS(klass) \
+#define WOOHAA_BEHAVIOUR_SLIDER_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_CAST ((klass), \
-  WH_TYPE_BEHAVIOUR_SLIDER, WHBehaviourSliderClass))
+  WOOHAA_TYPE_BEHAVIOUR_SLIDER, WoohaaBehaviourSliderClass))
 
 #define CLUTTER_IS_BEHAVIOUR_SLIDER(obj) \
   (G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
-  WH_TYPE_BEHAVIOUR_SLIDER))
+  WOOHAA_TYPE_BEHAVIOUR_SLIDER))
 
 #define CLUTTER_IS_BEHAVIOUR_SLIDER_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_TYPE ((klass), \
-  WH_TYPE_BEHAVIOUR_SLIDER))
+  WOOHAA_TYPE_BEHAVIOUR_SLIDER))
 
-#define WH_BEHAVIOUR_SLIDER_GET_CLASS(obj) \
+#define WOOHAA_BEHAVIOUR_SLIDER_GET_CLASS(obj) \
   (G_TYPE_INSTANCE_GET_CLASS ((obj), \
-  WH_TYPE_BEHAVIOUR_SLIDER, WHBehaviourSliderClass))
+  WOOHAA_TYPE_BEHAVIOUR_SLIDER, WoohaaBehaviourSliderClass))
 
-typedef struct _WHBehaviourSlider        WHBehaviourSlider;
-typedef struct _WHBehaviourSliderClass   WHBehaviourSliderClass;
+typedef struct _WoohaaBehaviourSlider        WoohaaBehaviourSlider;
+typedef struct _WoohaaBehaviourSliderClass   WoohaaBehaviourSliderClass;
  
-struct _WHBehaviourSlider
+struct _WoohaaBehaviourSlider
 {
   ClutterBehaviour        parent;
-  WHSliderMenuEntry      *old;
-  WHSliderMenuEntry      *new;
-  WHSliderMenu           *menu;
+  WoohaaSliderMenuEntry  *old;
+  WoohaaSliderMenuEntry  *new;
+  WoohaaSliderMenu       *menu;
 };
 
-struct _WHBehaviourSliderClass
+struct _WoohaaBehaviourSliderClass
 {
   ClutterBehaviourClass   parent_class;
 };
 
 GType clutter_behaviour_slider_get_type (void) G_GNUC_CONST;
 
-G_DEFINE_TYPE (WHBehaviourSlider, clutter_behaviour_slider, CLUTTER_TYPE_BEHAVIOUR);
+G_DEFINE_TYPE (WoohaaBehaviourSlider, clutter_behaviour_slider, CLUTTER_TYPE_BEHAVIOUR);
 
 static ClutterBehaviour*
-clutter_behaviour_slider_new (WHSliderMenu *menu,
-			      WHSliderMenuEntry *start,
-			      WHSliderMenuEntry *end);
+clutter_behaviour_slider_new (WoohaaSliderMenu *menu,
+			      WoohaaSliderMenuEntry *start,
+			      WoohaaSliderMenuEntry *end);
 
-
-G_DEFINE_TYPE (WHSliderMenu, wh_slider_menu, CLUTTER_TYPE_ACTOR);
-
-enum
-{
-  PROP_0,
-};
-
-#define WH_SLIDER_MENU_GET_PRIVATE(obj) \
-    (G_TYPE_INSTANCE_GET_PRIVATE ((obj), WH_TYPE_SLIDER_MENU, WHSliderMenuPrivate))
-
-
-struct _WHSliderMenuPrivate
+struct _WoohaaSliderMenuPrivate
 {
   GList           *entrys;
   gint             entry_height;
@@ -84,6 +72,9 @@ struct _WHSliderMenuPrivate
   gint             offset; 	    /* current offset */
   gint             unclipped_width;
   ClutterActor    *bg;
+  ClutterActor    *entry_group;
+
+  guint            alpha_value;
 
   ClutterTimeline        *timeline;
   ClutterAlpha           *alpha;
@@ -95,378 +86,354 @@ struct _WHSliderMenuPrivate
   ClutterActor     *next, *prev;
 };
 
-static void
-show_handler (ClutterActor *actor)
-{
-  WHSliderMenu        *disk;
-  WHSliderMenuPrivate *priv;
-  gint                 x;
-  gint                 y;
+G_DEFINE_TYPE (WoohaaSliderMenu, woohaa_slider_menu, CLUTTER_TYPE_ACTOR);
 
-  disk = WH_SLIDER_MENU(actor);
-  priv = disk->priv;
-
-  x = clutter_actor_get_x (actor);
-  y = clutter_actor_get_y (actor);
-
-  clutter_actor_set_position (actor,
-			      clutter_actor_get_x (actor),
-			      -clutter_actor_get_height (actor));
-
-  clutter_effect_move (priv->effect_template,
-		       actor,
-		       x,
-		       y,
-		       NULL,
-		       NULL);
-}
+#define WOOHAA_SLIDER_MENU_GET_PRIVATE(obj) \
+    (G_TYPE_INSTANCE_GET_PRIVATE ((obj), WOOHAA_TYPE_SLIDER_MENU, WoohaaSliderMenuPrivate))
 
 static void
-wh_slider_menu_set_property (GObject      *object, 
-			     guint         prop_id,
-			     const GValue *value, 
-			     GParamSpec   *pspec)
+woohaa_slider_menu_dispose (GObject *object)
 {
-  WHSliderMenu        *disk;
-  WHSliderMenuPrivate *priv;
+  WoohaaSliderMenu        *self;
+  WoohaaSliderMenuPrivate *priv; 
 
-  disk = WH_SLIDER_MENU(object);
-  priv = disk->priv;
-
-  switch (prop_id) 
-    {
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-      break;
-  }
-}
-
-static void
-wh_slider_menu_get_property (GObject    *object, 
-				  guint       prop_id,
-				  GValue     *value, 
-				  GParamSpec *pspec)
-{
-  WHSliderMenu        *disk;
-  WHSliderMenuPrivate *priv;
-
-  disk = WH_SLIDER_MENU(object);
-  priv = disk->priv;
-
-  switch (prop_id) 
-    {
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-      break;
-    } 
-}
-
-static void
-wh_slider_menu_request_coords (ClutterActor    *self,
-			       ClutterActorBox *box)
-{
-  WHSliderMenuPrivate *priv;
-  ClutterActorBox     cbox;
-
-  priv = WH_SLIDER_MENU(self)->priv;
-
-  /* Only positioning + width works.*/
-  priv->menu_width = CLUTTER_UNITS_TO_INT(box->x2 - box->x1);
-
-  if (!priv->bg)
-    {  
-      gint w, h;
-
-      w = priv->menu_width - (priv->menu_width/10);
-      h = CLUTTER_UNITS_TO_INT(box->y2 - box->y1);
-
-      priv->bg = util_actor_from_file (PKGDATADIR "/header.svg", w, h);
-
-      if (priv->bg == NULL)
-	g_warning ("Unable to load " PKGDATADIR "/header.svg");
-
-      clutter_actor_set_size (priv->bg, w, h);
-      clutter_actor_set_position (priv->bg, w/20, 0);
-      clutter_actor_set_parent (priv->bg, self);
-      clutter_actor_show (priv->bg);
-
-      priv->next = util_actor_from_file (PKGDATADIR "/arrow-next.svg", h/8, h/4);
-      // clutter_actor_set_size (priv->next, h/8, h/4);
-      clutter_actor_set_parent (priv->next, CLUTTER_ACTOR (self));
-      clutter_actor_show (priv->next);
-
-      priv->prev = util_actor_from_file (PKGDATADIR "/arrow-prev.svg", h/8, h/4);
-      // clutter_actor_set_size (priv->prev, h/8, h/4);
-      clutter_actor_set_parent (priv->prev, CLUTTER_ACTOR (self));
-      clutter_actor_show (priv->prev);
-    }
-
-  clutter_actor_query_coords (self, &cbox);
-
-  box->x2 = box->x1 + (cbox.x2 - cbox.x1);
-  box->y2 = box->y1 + (cbox.y2 - cbox.y1);
-}
-
-static void
-wh_slider_menu_query_coords (ClutterActor    *self,
-			     ClutterActorBox *box)
-{
-  WHSliderMenuPrivate *priv;
-
-  priv = WH_SLIDER_MENU(self)->priv;
-
-  box->x2 = box->x1 + CLUTTER_UNITS_FROM_INT(priv->menu_width);
-  box->y2 = box->y1 + CLUTTER_UNITS_FROM_INT(priv->entry_height);
-}
-
-static void
-wh_slider_menu_paint (ClutterActor *actor)
-{
-  WHSliderMenu      *menu = WH_SLIDER_MENU(actor);
-  GList             *entry;
-
-  cogl_push_matrix();
-
-  clutter_actor_paint (menu->priv->bg);
-
-  cogl_clip_set (CLUTTER_INT_TO_FIXED (menu->priv->menu_width / 16),
-                 0,
-                 CLUTTER_INT_TO_FIXED (menu->priv->menu_width -
-                                       ( menu->priv->menu_width / 8 )),
-                 CLUTTER_UNITS_TO_FIXED (clutter_actor_get_heightu (actor)));
-
-  cogl_translate (SELECTED_OFFSET, 0, 0);
-
-  if (menu->priv->active_entry_num > 0)
-      clutter_actor_paint (menu->priv->prev);
-
-  if (menu->priv->active_entry_num < menu->priv->n_entrys-1)
-      clutter_actor_paint (menu->priv->next);
-
-  cogl_translate (-1  * menu->priv->offset 
-		  + clutter_actor_get_width(menu->priv->prev), 0, 0);
-
-  for (entry = menu->priv->entrys;
-       entry != NULL;
-       entry = entry->next)
-    {
-      WHSliderMenuEntry *data = (WHSliderMenuEntry*)entry->data;
-      ClutterActor *child = data->actor;
-
-      g_assert (child != NULL);
-
-      if (CLUTTER_ACTOR_IS_MAPPED (child))
-	  clutter_actor_paint (child);
-    }
-
-  cogl_clip_unset();
-
-  cogl_pop_matrix();
-}
-
-static void
-wh_slider_menu_realize (ClutterActor *self)
-{
-  WHSliderMenu        *menu;
-
-  menu = WH_SLIDER_MENU(self);
-}
-
-static void 
-wh_slider_menu_dispose (GObject *object)
-{
-  WHSliderMenu         *self = WH_SLIDER_MENU(object);
-  WHSliderMenuPrivate  *priv;  
-
+  self = WOOHAA_SLIDER_MENU(object); 
   priv = self->priv;
+
+  G_OBJECT_CLASS (woohaa_slider_menu_parent_class)->dispose (object);
+}
+
+static void
+woohaa_slider_menu_finalize (GObject *object)
+{
+  WoohaaSliderMenu        *self;
+  WoohaaSliderMenuPrivate *priv; 
+
+  self = WOOHAA_SLIDER_MENU(object); 
+  priv = self->priv;
+
+  G_OBJECT_CLASS (woohaa_slider_menu_parent_class)->finalize (object);
+}
+
+static void
+woohaa_slider_menu_paint (ClutterActor *actor)
+{
+  WoohaaSliderMenuPrivate *priv = (WOOHAA_SLIDER_MENU (actor))->priv;
   
-  G_OBJECT_CLASS (wh_slider_menu_parent_class)->dispose (object);
-}
-
-static void 
-wh_slider_menu_finalize (GObject *object)
-{
-  G_OBJECT_CLASS (wh_slider_menu_parent_class)->finalize (object);
+  clutter_actor_paint (priv->bg);
+  clutter_actor_paint (priv->next);
+  clutter_actor_paint (priv->prev);
+  clutter_actor_paint (priv->entry_group);
 }
 
 static void
-wh_slider_menu_class_init (WHSliderMenuClass *klass)
+woohaa_slider_menu_get_preferred_width  (ClutterActor *actor,
+					 ClutterUnit   for_height,
+					 ClutterUnit  *min_width_p,
+					 ClutterUnit  *natural_width_p)
 {
-  GObjectClass        *gobject_class = G_OBJECT_CLASS (klass);
-  ClutterActorClass   *actor_class = CLUTTER_ACTOR_CLASS (klass);
-  ClutterActorClass   *parent_class; 
-
-  parent_class = CLUTTER_ACTOR_CLASS (wh_slider_menu_parent_class);
-
-  actor_class->paint      = wh_slider_menu_paint;
-  actor_class->realize    = wh_slider_menu_realize;
-  actor_class->request_coords  = wh_slider_menu_request_coords;
-  actor_class->query_coords = wh_slider_menu_query_coords;
-
-  actor_class->unrealize  = parent_class->unrealize;
-  actor_class->show       = parent_class->show;
-  actor_class->hide       = parent_class->hide;
-
-  gobject_class->finalize     = wh_slider_menu_finalize;
-  gobject_class->dispose      = wh_slider_menu_dispose;
-  gobject_class->set_property = wh_slider_menu_set_property;
-  gobject_class->get_property = wh_slider_menu_get_property;
-
-  g_type_class_add_private (gobject_class, sizeof (WHSliderMenuPrivate));
+  *min_width_p = CLUTTER_UNITS_FROM_INT (100);
+  *natural_width_p = CLUTTER_UNITS_FROM_INT (CSW());
 }
 
 static void
-wh_slider_menu_init (WHSliderMenu *self)
+woohaa_slider_menu_get_preferred_height (ClutterActor *actor,
+					 ClutterUnit   for_width,
+					 ClutterUnit  *min_height_p,
+					 ClutterUnit  *natural_height_p)
 {
-  WHSliderMenuPrivate *priv;
+  WoohaaSliderMenuPrivate *priv = (WOOHAA_SLIDER_MENU (actor))->priv;
 
-  self->priv = priv = WH_SLIDER_MENU_GET_PRIVATE (self);
+  *min_height_p = CLUTTER_UNITS_FROM_INT (1);
+  if (priv->entry_height)
+	  *natural_height_p = CLUTTER_UNITS_FROM_INT (priv->entry_height * 2);
+  else
+	  *natural_height_p = CLUTTER_UNITS_FROM_INT (200);
+}
 
-  priv->timeline = clutter_timeline_new (10, 60);
+static void
+woohaa_slider_menu_allocate (ClutterActor *actor, 
+			     const ClutterActorBox *box,
+			     gboolean absolute_origin_changed)
+{
+  WoohaaSliderMenuPrivate *priv = (WOOHAA_SLIDER_MENU (actor))->priv;
+  ClutterUnit natural_width, natural_height;
+  ClutterActorBox child_box;
+  ClutterUnit focal_x, focal_y;
+  ClutterUnit entry_offset = 0, entry_width = 0;
+  WoohaaSliderMenuEntry *current, *old;
+  
+  clutter_actor_get_preferred_size (priv->bg, NULL, NULL, 
+				    &natural_width, &natural_height);
+  child_box.x1 = 0;
+  child_box.y1 = 0;
+  child_box.x2 = natural_width;
+  child_box.y2 = natural_height;
+  clutter_actor_allocate (priv->bg, &child_box, absolute_origin_changed);
+
+  focal_x = CLUTTER_UNITS_FROM_INT(CSW()/4);
+  focal_y = 0;
+
+  if (priv->entrys)
+  {
+    current = (WOOHAA_BEHAVIOUR_SLIDER (priv->behave))->new;
+    old = (WOOHAA_BEHAVIOUR_SLIDER (priv->behave))->old;
+    
+    if (current && old)
+      {
+	entry_offset = (clutter_actor_get_xu (current->actor) - clutter_actor_get_xu (old->actor)) * 
+	  ((gdouble)(priv->alpha_value) / (gdouble)CLUTTER_ALPHA_MAX_ALPHA) +
+	  clutter_actor_get_xu (old->actor);
+
+	entry_width = (clutter_actor_get_widthu (current->actor) - clutter_actor_get_widthu (old->actor)) * 
+	  ((gdouble)(priv->alpha_value) / (gdouble)CLUTTER_ALPHA_MAX_ALPHA) +
+	  clutter_actor_get_widthu (old->actor);
+      }
+
+  }
+
+  child_box.x1 = focal_x - entry_offset;
+  child_box.y1 = focal_y;
+  child_box.x2 = natural_height/2 + child_box.x1 - entry_offset;
+  child_box.y2 = natural_height/2 + child_box.y1;
+  clutter_actor_allocate (priv->entry_group, 
+			  &child_box, 
+			  absolute_origin_changed);
+
+  if (priv->active_entry_num > 0)
+    {
+      clutter_actor_set_opacity (priv->prev, 0xAA);
+
+      child_box.x1 = focal_x - natural_height/2;
+      child_box.y1 = focal_y + natural_height/10;
+      child_box.x2 = natural_height/2 + child_box.x1;
+      child_box.y2 = natural_height/2 + child_box.y1;
+      clutter_actor_allocate (priv->prev, &child_box, absolute_origin_changed);
+    }
+  else
+    {
+      clutter_actor_set_opacity (priv->prev, 
+				 0xff + (priv->alpha_value * (-0xff)
+					 / CLUTTER_ALPHA_MAX_ALPHA));
+    }
+
+  if (priv->active_entry_num < priv->n_entrys - 1)
+    {
+      clutter_actor_set_opacity (priv->next, 0xAA);
+
+      child_box.x1 = focal_x + entry_width;
+      child_box.y1 = focal_y + natural_height/10;
+      child_box.x2 = natural_height/2 + child_box.x1;
+      child_box.y2 = natural_height/2 + child_box.y1;
+      clutter_actor_allocate (priv->next, &child_box, absolute_origin_changed);
+    }
+  else
+    {
+      clutter_actor_set_opacity (priv->next, 
+				 0xff + (priv->alpha_value * (-0xff)
+					 / CLUTTER_ALPHA_MAX_ALPHA));
+    }
+
+  CLUTTER_ACTOR_CLASS (woohaa_slider_menu_parent_class)->
+  	  allocate (actor, box, absolute_origin_changed);
+}
+
+static void
+woohaa_slider_menu_class_init (WoohaaSliderMenuClass *klass)
+{
+  GObjectClass *object_class     = G_OBJECT_CLASS (klass);
+  ClutterActorClass *actor_class = CLUTTER_ACTOR_CLASS (klass);
+
+  g_type_class_add_private (klass, sizeof (WoohaaSliderMenuPrivate));
+
+  object_class->dispose      = woohaa_slider_menu_dispose;
+  object_class->finalize     = woohaa_slider_menu_finalize;
+
+  actor_class->get_preferred_width  = woohaa_slider_menu_get_preferred_width;
+  actor_class->get_preferred_height = woohaa_slider_menu_get_preferred_height;
+  actor_class->allocate             = woohaa_slider_menu_allocate;
+  actor_class->paint                = woohaa_slider_menu_paint;
+}
+
+static void
+woohaa_slider_menu_init (WoohaaSliderMenu *woohaa_slider_menu)
+{
+  WoohaaSliderMenuPrivate   *priv;
+
+  woohaa_slider_menu->priv = priv =
+    G_TYPE_INSTANCE_GET_PRIVATE (woohaa_slider_menu,
+                                 WOOHAA_TYPE_SLIDER_MENU,
+                                 WoohaaSliderMenuPrivate);
+
+  priv->menu_width = CSW();
+
+  priv->timeline = clutter_timeline_new (30, 60);
 
   priv->alpha = clutter_alpha_new_full (priv->timeline,
-					alpha_sine_inc_func,
+					CLUTTER_ALPHA_SINE_INC,
 					NULL, NULL);
 
-  priv->behave = clutter_behaviour_slider_new (self, 0, 0);
+  priv->behave = clutter_behaviour_slider_new (woohaa_slider_menu, 0, 0);
 
   priv->effect_template 
     = clutter_effect_template_new (clutter_timeline_new (20, 60),
 				   CLUTTER_ALPHA_SINE_INC);
 
-  g_signal_connect (self,
-		    "show",
-		    G_CALLBACK (show_handler),
-		    NULL);
-
-  /* FIXME: should be props */
-
   priv->font_color = g_new0(ClutterColor, 1);
   clutter_color_parse ("#ccccccff", priv->font_color);
+
+  priv->bg = clutter_texture_new_from_file (PKGDATADIR "/header.svg", NULL);
+  if (!priv->bg) g_warning ("Unable to load heaer.svg");
+
+  clutter_actor_set_parent (priv->bg, CLUTTER_ACTOR (woohaa_slider_menu));
+
+  clutter_actor_set_width (priv->bg, CSW());
+  
+  clutter_actor_show (priv->bg);
+
+  priv->next = clutter_texture_new_from_file (PKGDATADIR "/arrow-next.svg", 
+					      NULL);
+  if (!priv->next) g_warning ("Unable to load arror-next.svg");
+
+  clutter_actor_hide (priv->next);
+  clutter_actor_set_parent (priv->next, CLUTTER_ACTOR (woohaa_slider_menu));
+
+  priv->prev = clutter_texture_new_from_file (PKGDATADIR "/arrow-prev.svg", 
+					      NULL);
+  if (!priv->prev) g_warning ("Unable to load arror-prev.svg");
+
+  clutter_actor_hide (priv->prev);
+  clutter_actor_set_parent (priv->prev, CLUTTER_ACTOR (woohaa_slider_menu));
+
+  priv->entry_group = clutter_group_new ();
+  clutter_actor_set_parent (priv->entry_group, 
+			    CLUTTER_ACTOR (woohaa_slider_menu));
+  clutter_actor_show (priv->entry_group);
 }
 
 ClutterActor*
-wh_slider_menu_new (const gchar *font)
+woohaa_slider_menu_new (const gchar *font)
 {
   ClutterActor         *menu;
-  WHSliderMenuPrivate  *priv;
+  WoohaaSliderMenuPrivate  *priv;
 
-  menu = g_object_new (WH_TYPE_SLIDER_MENU, NULL);
-  priv = WH_SLIDER_MENU_GET_PRIVATE (menu);
+  menu = g_object_new (WOOHAA_TYPE_SLIDER_MENU, NULL);
+  priv = WOOHAA_SLIDER_MENU_GET_PRIVATE (menu);
   priv->font = g_strdup(font);
 
   return menu;
 }
 
 void
-wh_slider_menu_add_option (WHSliderMenu            *menu, 
-			   const gchar             *text,
-			   WHSliderMenuSelectedFunc selected,
-			   gpointer                 userdata)
+woohaa_slider_menu_add_option (WoohaaSliderMenu            *menu, 
+			       const gchar                 *text,
+			       WoohaaSliderMenuSelectedFunc selected,
+			       gpointer                     userdata)
 {
-  WHSliderMenuPrivate  *priv = WH_SLIDER_MENU_GET_PRIVATE (menu);
-  WHSliderMenuEntry    *entry;
-  ClutterActor         *actor;
-  gint                  pad;
+  WoohaaSliderMenuPrivate  *priv = WOOHAA_SLIDER_MENU_GET_PRIVATE (menu);
+  WoohaaSliderMenuEntry    *entry;
+  ClutterActor             *actor;
+  gint                      pad = 0;
 
   actor = clutter_label_new_with_text (priv->font, text);
   clutter_label_set_color (CLUTTER_LABEL(actor), priv->font_color);
   clutter_label_set_line_wrap (CLUTTER_LABEL(actor), FALSE);
 
-  entry = g_new0(WHSliderMenuEntry, 1);
+  entry = g_new0(WoohaaSliderMenuEntry, 1);
   entry->actor = actor;
   entry->selected_func = selected;
   entry->userdata = userdata;
 
-  if (clutter_actor_get_height(actor) > menu->priv->entry_height)
-      menu->priv->entry_height = clutter_actor_get_height(actor);
+  if (clutter_actor_get_height(actor) > priv->entry_height)
+    {
+      priv->entry_height = clutter_actor_get_height(actor);
+
+      clutter_actor_set_width (priv->bg, CSW());
+      clutter_actor_set_height (priv->bg, priv->entry_height
+	+ (priv->entry_height/2));
+    }
+
+  if (clutter_actor_get_height(priv->next) > priv->entry_height)
+    {
+      gint w, h;
+
+      w = priv->entry_height/8;
+      h = priv->entry_height/4;
+      
+      clutter_actor_set_size (priv->next, w, h);
+      clutter_actor_set_size (priv->prev, w, h);
+    }
 
   pad = clutter_actor_get_width (priv->next) * 2;
 
   entry->offset = priv->unclipped_width + pad;
 
-  if (menu->priv->entrys == NULL)
+  if (priv->entrys == NULL)
     priv->unclipped_width += pad;
 
   priv->unclipped_width += clutter_actor_get_width(actor) + pad;
 
-  if (menu->priv->entrys == 0)
+  if (priv->entrys == 0)
     {
+      /* First Entry */
       clutter_actor_set_opacity (actor, 0xff);
-      g_object_set (menu->priv->next, 
-		    "x", clutter_actor_get_width(actor) + pad +
-		            clutter_actor_get_width(menu->priv->prev)
-		         + clutter_actor_get_width(menu->priv->prev)/2,
-		    "y", clutter_actor_get_height(menu->priv->next),
-		    NULL);
     }
   else
     {
       clutter_actor_set_opacity (actor, 0x33);
-      clutter_actor_set_scale (actor, 0.7, 0.7); 
+      clutter_actor_set_scale (actor, 0.7, 0.7);
     }
 
-  clutter_actor_set_parent (actor, CLUTTER_ACTOR (menu));
+  clutter_group_add (CLUTTER_GROUP (priv->entry_group), actor);
 
-  menu->priv->entrys = g_list_append (menu->priv->entrys, entry);
+  priv->entrys = g_list_append (priv->entrys, entry);
 
   clutter_actor_set_position (actor, 
 			      entry->offset, 
-			      menu->priv->entry_height/12);
+			      priv->entry_height/12);
 
-  menu->priv->n_entrys++;
-
-  clutter_actor_show (actor);
+  priv->n_entrys++;
 }
 
 void
-wh_slider_menu_activate (WHSliderMenu *menu,
-			 gint               entry_num)
+woohaa_slider_menu_activate (WoohaaSliderMenu *menu,
+			     gint              entry_num)
 {
-  WHSliderMenuEntry *selected, *current;
-  
-  if (entry_num < 0 || entry_num >= menu->priv->n_entrys)
-    return;
+  WoohaaSliderMenuPrivate  *priv = WOOHAA_SLIDER_MENU_GET_PRIVATE (menu);
+  WoohaaSliderMenuEntry *selected, *current;
 
-  if (clutter_timeline_is_playing(menu->priv->timeline))
+  if (entry_num < 0 || entry_num >= priv->n_entrys)
+      return;
+
+  if (clutter_timeline_is_playing(priv->timeline))
     return;
 
   current 
-    = (WHSliderMenuEntry *)g_list_nth_data(menu->priv->entrys, 
-					   menu->priv->active_entry_num);
+    = (WoohaaSliderMenuEntry *)g_list_nth_data(priv->entrys, 
+					       priv->active_entry_num);
 
-  selected = (WHSliderMenuEntry *)g_list_nth_data(menu->priv->entrys, 
-						  entry_num);
+  selected = (WoohaaSliderMenuEntry *)g_list_nth_data(priv->entrys, 
+						      entry_num);
 
-  menu->priv->active_entry_num = entry_num;
+  priv->active_entry_num = entry_num;
 
-  WH_BEHAVIOUR_SLIDER(menu->priv->behave)->old = current;
-  WH_BEHAVIOUR_SLIDER(menu->priv->behave)->new = selected;
+  WOOHAA_BEHAVIOUR_SLIDER(priv->behave)->old = current;
+  WOOHAA_BEHAVIOUR_SLIDER(priv->behave)->new = selected;
 
-  g_object_set (menu->priv->next, 
-		"x", clutter_actor_get_width(selected->actor) +
-		         clutter_actor_get_width(menu->priv->prev) +
-		         clutter_actor_get_width(menu->priv->prev) / 2,
-		"y", clutter_actor_get_height(menu->priv->next),
-		NULL);
-
-  g_object_set (menu->priv->prev, 
-		"x", - clutter_actor_get_width(menu->priv->prev)/2,
-		"y", clutter_actor_get_height(menu->priv->next),
-		NULL);
-
+  clutter_actor_queue_relayout (CLUTTER_ACTOR (menu));
 
   /* FIXME: Should be a signal */
   if (selected->selected_func)
     selected->selected_func(menu, selected->actor, selected->userdata);
 
-  clutter_timeline_start (menu->priv->timeline);    
+  clutter_timeline_start (priv->timeline);    
 }
 
 void
-wh_slider_menu_advance (WHSliderMenu *menu, gint n)
+woohaa_slider_menu_advance (WoohaaSliderMenu *menu, gint n)
 {
-  wh_slider_menu_activate (menu, menu->priv->active_entry_num + n);
+  WoohaaSliderMenuPrivate  *priv = WOOHAA_SLIDER_MENU_GET_PRIVATE (menu);
+  woohaa_slider_menu_activate (menu, priv->active_entry_num + n);
 }
 
 /* Custom behaviour */
@@ -475,13 +442,18 @@ static void
 clutter_behaviour_alpha_notify (ClutterBehaviour *behave,
                                 guint32           alpha_value)
 {
-  WHBehaviourSlider *slide = WH_BEHAVIOUR_SLIDER(behave);
-  WHSliderMenu      *menu;
-  gdouble            scale;
+  WoohaaBehaviourSlider *slide = WOOHAA_BEHAVIOUR_SLIDER(behave);
+  WoohaaSliderMenu      *menu;
+  gdouble                scale;
+  WoohaaSliderMenuPrivate  *priv;
+
+  if (!(slide->old) || !(slide->new))
+    return;
 
   menu = slide->menu;
+  priv = WOOHAA_SLIDER_MENU_GET_PRIVATE (menu);
 
-  menu->priv->offset = slide->old->offset + 
+  priv->offset = slide->old->offset + 
                       (((gint)alpha_value * 
                           (slide->new->offset - slide->old->offset))
 			       / CLUTTER_ALPHA_MAX_ALPHA);
@@ -502,17 +474,19 @@ clutter_behaviour_alpha_notify (ClutterBehaviour *behave,
 			   0.7 + scale,
 			   0.7 + scale);
 
-  clutter_actor_set_scale (slide->old->actor,
-			   1.0 - scale,
-			   1.0 - scale);
+  if (slide->new->actor != slide->old->actor)
+    clutter_actor_set_scale (slide->old->actor,
+			     1.0 - scale,
+			     1.0 - scale);
 
+  priv->alpha_value = alpha_value;
 
   if (CLUTTER_ACTOR_IS_VISIBLE (CLUTTER_ACTOR(menu)))
-    clutter_actor_queue_redraw (CLUTTER_ACTOR(menu));
+    clutter_actor_queue_relayout (CLUTTER_ACTOR (menu));
 }
 
 static void
-clutter_behaviour_slider_class_init (WHBehaviourSliderClass *klass)
+clutter_behaviour_slider_class_init (WoohaaBehaviourSliderClass *klass)
 {
   ClutterBehaviourClass *behave_class = CLUTTER_BEHAVIOUR_CLASS (klass);
 
@@ -520,20 +494,20 @@ clutter_behaviour_slider_class_init (WHBehaviourSliderClass *klass)
 }
 
 static void
-clutter_behaviour_slider_init (WHBehaviourSlider *self)
+clutter_behaviour_slider_init (WoohaaBehaviourSlider *self)
 {
-  ;
 }
 
 static ClutterBehaviour*
-clutter_behaviour_slider_new (WHSliderMenu      *menu,
-			      WHSliderMenuEntry *old,
-			      WHSliderMenuEntry *new)
+clutter_behaviour_slider_new (WoohaaSliderMenu      *menu,
+			      WoohaaSliderMenuEntry *old,
+			      WoohaaSliderMenuEntry *new)
 {
-  WHBehaviourSlider *slide_behave;
+  WoohaaSliderMenuPrivate  *priv = WOOHAA_SLIDER_MENU_GET_PRIVATE (menu);
+  WoohaaBehaviourSlider *slide_behave;
 
-  slide_behave = g_object_new (WH_TYPE_BEHAVIOUR_SLIDER, 
-			       "alpha", menu->priv->alpha,
+  slide_behave = g_object_new (WOOHAA_TYPE_BEHAVIOUR_SLIDER, 
+			       "alpha", priv->alpha,
 			       NULL);
 
   slide_behave->old   = old;

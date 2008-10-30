@@ -170,7 +170,7 @@ wh_db_init (WHDB *self)
   db_filename = g_build_filename (data_dir, "woohaa", "db", NULL);
   path = g_path_get_dirname (db_filename);
   g_mkdir_with_parents (path, 0755);
-
+  
   res = sqlite3_open(db_filename, &priv->db);
 
   g_free(path); 
@@ -220,7 +220,11 @@ uri_is_media (const gchar *uri)
   return (g_str_has_suffix(uri, ".avi")
 	  || g_str_has_suffix(uri, ".mpeg")
 	  || g_str_has_suffix(uri, ".wmv")
-	  || g_str_has_suffix(uri, ".mov")
+#ifdef USE_HELIX
+	  || g_str_has_suffix(uri, ".rmvb")
+#endif
+	  || g_str_has_suffix(uri, ".ogg")
+	  || g_str_has_suffix(uri, ".mp4")
 	  || g_str_has_suffix(uri, ".mpg"));
 }
 
