@@ -624,7 +624,7 @@ wh_screen_video_get_playing (WHScreenVideo *screen)
   return priv->video_playing;
 }
 
-void
+gboolean
 wh_screen_video_activate (WHScreenVideo *screen, WHVideoView *view)
 {
   WHScreenVideoPrivate *priv  = SCREEN_VIDEO_PRIVATE(screen);
@@ -634,7 +634,7 @@ wh_screen_video_activate (WHScreenVideo *screen, WHVideoView *view)
 
   if (priv->video_row == NULL 
       || wh_video_model_row_get_path(priv->video_row) == NULL)
-    return;
+    return FALSE;
 
   g_signal_connect (clutter_stage_get_default(), 
 		    "key-release-event",
@@ -685,4 +685,6 @@ wh_screen_video_activate (WHScreenVideo *screen, WHVideoView *view)
   clutter_media_set_uri(CLUTTER_MEDIA(priv->video), 
 			wh_video_model_row_get_path(priv->video_row));
   clutter_media_set_playing (CLUTTER_MEDIA(priv->video), TRUE);
+
+  return TRUE;
 }

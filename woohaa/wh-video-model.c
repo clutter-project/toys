@@ -1,4 +1,4 @@
- #include "wh-video-model.h"
+#include "wh-video-model.h"
 #include <string.h>
 
 G_DEFINE_TYPE (WHVideoModel, wh_video_model, G_TYPE_OBJECT);

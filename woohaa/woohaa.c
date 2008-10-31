@@ -234,7 +234,7 @@ on_video_playback_finish (WHScreenVideo *video,
 				  wh_video_model_row_get_n_views(row)+1);
   wh_video_model_row_set_vtime (row, time(NULL));
   wh_db_sync_row (row);
-  
+
   clutter_actor_show (wh->screen_browse);
 
   clutter_effect_fade (wh->video_effect_tmpl,
@@ -285,17 +285,18 @@ browse_input_cb (ClutterStage *stage,
 	  wh_video_view_advance (WH_VIDEO_VIEW(wh->view), 1);
 	  break;
 	case CLUTTER_Return:
+	  if (!wh_screen_video_activate (WH_SCREEN_VIDEO(wh->screen_video), 
+					 WH_VIDEO_VIEW(wh->view)))
+		  break;
+
 	  g_signal_handlers_disconnect_by_func(clutter_stage_get_default(),
 					       browse_input_cb,
 					       wh);
 
-	  wh_screen_video_activate (WH_SCREEN_VIDEO(wh->screen_video), 
-	  			    WH_VIDEO_VIEW(wh->view));
-
 	  clutter_effect_scale (wh->video_effect_tmpl,
 				wh->screen_browse,
-				0.7,
-				0.7,
+				0.0,
+				0.0,
 				NULL,
 				NULL);
 

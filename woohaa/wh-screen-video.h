@@ -44,7 +44,7 @@ GType wh_screen_video_get_type (void);
 
 ClutterActor* wh_screen_video_new (void);
 
-void
+gboolean
 wh_screen_video_activate (WHScreenVideo *screen, WHVideoView *view);
 
 void
