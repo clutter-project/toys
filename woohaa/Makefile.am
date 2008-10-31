@@ -31,7 +31,7 @@ woohaa_SOURCES = woohaa.c               \
 		util.c                  \
 		util.h
 
-wh_video_thumbnailer_LDADD = $(DEPS_LIBS) 
+wh_video_thumbnailer_LDADD = $(DEPS_LIBS) $(CLUTTER_HELIX_LIBS)
 wh_video_thumbnailer_SOURCES = wh-video-thumbnailer.c totem-resources.c totem-resources.h
 
 MAINTAINERCLEANFILES = aclocal.m4 compile config.guess config.sub configure depcomp install-sh ltmain.sh Makefile.in missing

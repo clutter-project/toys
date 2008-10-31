@@ -1,10 +1,16 @@
 #include <clutter/clutter.h>
-#include <clutter-gst/clutter-gst.h>
 #include <cogl/cogl.h>
-#include <gst/gst.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
+
+#ifdef USE_HELIX
+#include <clutter-helix/clutter-helix.h>
+#else
+#include <clutter-gst/clutter-gst.h>
+#include <gst/gst.h>
+#endif
+
 
 #include "totem-resources.h"
 
@@ -22,7 +28,11 @@ main (int argc, char *argv[])
   gint            rowstride;
   guchar         *data = NULL;
 
+#ifdef USE_HELIX
+  clutter_helix_init (&argc, &argv);
+#else
   gst_init (&argc, &argv);
+#endif
   clutter_init (&argc, &argv);
 
   if (argc < 3)
@@ -33,7 +43,11 @@ main (int argc, char *argv[])
 
   totem_resources_monitor_start (argv[1], 60 * G_USEC_PER_SEC);
 
+#ifdef USE_HELIX
+  video = clutter_helix_video_texture_new ();
+#else
   video = clutter_gst_video_texture_new ();
+#endif
 
   if (argv[1][0] == '/')
     clutter_media_set_filename(CLUTTER_MEDIA(video), argv[1]);
@@ -72,17 +86,22 @@ main (int argc, char *argv[])
       rowstride = cogl_texture_get_rowstride (tex_id);
       
       data = (guchar*) g_malloc (sizeof(guchar) * size);
-      if (data)
-	shot = gdk_pixbuf_new_from_data (data, 
-					 GDK_COLORSPACE_RGB, 
-					 TRUE, 
-					 8,
-					 width, 
-					 height, 
-					 rowstride, 
-					 NULL, 
-					 NULL);
-	    
+      if (!data)
+	g_error ("malloc");;
+
+      cogl_texture_get_data (tex_id, format, rowstride, data);
+
+
+      shot = gdk_pixbuf_new_from_data (data, 
+				       GDK_COLORSPACE_RGB, 
+				       FALSE, 
+				       8,
+				       width, 
+				       height, 
+				       rowstride, 
+				       NULL, 
+				       NULL);
+      
     }
 
   totem_resources_monitor_stop ();
