@@ -18,7 +18,12 @@ struct _WHVideoViewPrivate
   gint               active_item_num;
   gint               n_rows;
 
-  ClutterActor      *container;
+  ClutterActor      *rows;
+
+  ClutterActor      *selection_indicator;
+  ClutterActor      *selection;
+  ClutterActor      *up_arrow; 
+  ClutterActor      *down_arrow;
 };
 
 enum
@@ -28,17 +33,18 @@ enum
   PROP_N_ROWS
 };
 
+void wh_video_view_activate (WHVideoView *view, gint entry_num);
+
 static gboolean 
-populate_container (WHVideoModel    *model,
-		    WHVideoModelRow *row,
-		    gpointer         data)
+populate_rows (WHVideoModel    *model,
+	       WHVideoModelRow *row,
+	       gpointer         data)
 {
   WHVideoView          *view;
   WHVideoViewPrivate    *priv;
   WHVideoRowRenderer    *renderer;
-  gint                   r_height, position;
+  gint                   r_width, r_height, position;
   ClutterEffectTemplate *template;
-  ClutterActor          *selector;
 
   view = WH_VIDEO_VIEW (data);
   priv = WH_VIDEO_VIEW_GET_PRIVATE (view);
@@ -48,24 +54,40 @@ populate_container (WHVideoModel    *model,
 
   r_height = clutter_actor_get_height (CLUTTER_ACTOR (view)) /
     priv->n_rows_visible;
+  r_width = clutter_actor_get_width (CLUTTER_ACTOR (view));
+
+  if (priv->n_rows == 0)
+    {
+      ClutterUnit width, height;
+      double scale;
+
+      /* 
+       * Scale the up and down indication arrows 
+       */
+      clutter_actor_get_preferred_size (priv->up_arrow,
+					NULL,
+					NULL,
+					&width,
+					&height);	
+      scale = (double)CLUTTER_UNITS_FROM_INT (r_height/4) / (double) height;
+      height = CLUTTER_UNITS_FROM_INT (r_height/4);
+      width = width * scale;
+      clutter_actor_set_sizeu (priv->up_arrow, width, height);
+      clutter_actor_set_sizeu (priv->down_arrow, width, height);
+
+      clutter_actor_set_size (priv->selection, r_width, r_height);
+
+      width = CLUTTER_UNITS_FROM_INT (r_width - r_width/100) - width;
+      clutter_actor_set_positionu (priv->up_arrow, width, 
+				   CLUTTER_UNITS_FROM_INT (r_height/10));
+
+      height = CLUTTER_UNITS_FROM_INT (r_height - r_height/10) - height;
+      clutter_actor_set_positionu (priv->down_arrow, width, height);
+
+      clutter_actor_set_opacity (priv->selection_indicator, 0);
+    }
 
   position = priv->n_rows++ + priv->active_item_num;
-
-  if (position == 0)
-    {
-      selector = clutter_texture_new_from_file (PKGDATADIR "/selected.svg",
-						NULL);
-      if (!selector)
-	g_warning ("Unable to load texture from %s\n", 
-		   PKGDATADIR "/selected.svg");
-
-      clutter_actor_set_size (selector,
-			      clutter_actor_get_width (CLUTTER_ACTOR (view)),
-			      r_height);
-
-      clutter_actor_show (selector);
-      clutter_group_add (CLUTTER_GROUP (priv->container), selector);
-    }
 
   renderer = wh_video_model_row_get_renderer (row);
 
@@ -92,7 +114,7 @@ populate_container (WHVideoModel    *model,
   else
     wh_video_row_renderer_set_active (renderer, FALSE);
 
-  clutter_group_add (priv->container, CLUTTER_ACTOR (renderer));
+  clutter_group_add (priv->rows, CLUTTER_ACTOR (renderer));
 
   return TRUE;
 }
@@ -106,13 +128,16 @@ on_model_rows_change (WHVideoModel *model, gpointer *userdata)
   view = WH_VIDEO_VIEW(userdata);
   priv = WH_VIDEO_VIEW_GET_PRIVATE(view);
 
-  clutter_group_remove_all (CLUTTER_GROUP (priv->container));
+  clutter_actor_set_opacity (priv->selection_indicator, 0);
+  clutter_group_remove_all (CLUTTER_GROUP (priv->rows));
   priv->n_rows = 0;
   priv->active_item_num = 0;
 
   wh_video_model_foreach (model, 
-			  populate_container,
+			  populate_rows,
 			  view);
+
+  wh_video_view_activate(view, 0);
 }
 
 static void
@@ -132,14 +157,14 @@ wh_video_view_set_property (GObject      *object,
     case PROP_MODEL:
       if (priv->model)
         {
-	  clutter_group_remove_all (CLUTTER_GROUP (priv->container));
+	  clutter_group_remove_all (CLUTTER_GROUP (priv->rows));
 	  g_object_unref (priv->model);
 	}
       priv->model = g_value_get_object (value);
 
       wh_video_model_foreach (priv->model, 
-			      populate_container,
-			      priv->container);
+			      populate_rows,
+			      priv->rows);
 
       g_signal_connect(priv->model, 
 		       "rows-reordered",
@@ -192,7 +217,7 @@ wh_video_view_get_preferred_width  (ClutterActor          *actor,
   
   priv = self->priv;
   
-  clutter_actor_get_preferred_height (priv->container, 
+  clutter_actor_get_preferred_height (priv->rows, 
 				      for_height,
 				      min_width_p,
 				      natural_width_p);
@@ -209,7 +234,7 @@ wh_video_view_get_preferred_height (ClutterActor          *actor,
   
   priv = self->priv;
 
-  clutter_actor_get_preferred_height (priv->container, 
+  clutter_actor_get_preferred_height (priv->rows, 
 				      for_width,
 				      min_height_p,
 				      natural_height_p);
@@ -230,7 +255,7 @@ wh_video_view_allocate (ClutterActor    *actor,
   CLUTTER_ACTOR_CLASS (wh_video_view_parent_class)->
 	  allocate (actor, box, absolute_origin_changed);
 
-  clutter_actor_get_preferred_size (priv->container,
+  clutter_actor_get_preferred_size (priv->rows,
 				    NULL,
 				    NULL,
 				    &width,
@@ -240,7 +265,21 @@ wh_video_view_allocate (ClutterActor    *actor,
   child_box.y1 = 0;
   child_box.x2 = box->x1 + width;
   child_box.y2 = box->y1 + height;
-  clutter_actor_allocate (priv->container, 
+  clutter_actor_allocate (priv->rows, 
+			  &child_box,
+			  absolute_origin_changed);
+
+  clutter_actor_get_preferred_size (priv->selection_indicator,
+				    NULL,
+				    NULL,
+				    &width,
+				    &height);
+  
+  child_box.x1 = 0;
+  child_box.y1 = 0;
+  child_box.x2 = box->x1 + width;
+  child_box.y2 = box->y1 + height;
+  clutter_actor_allocate (priv->selection_indicator, 
 			  &child_box,
 			  absolute_origin_changed);
 }
@@ -253,7 +292,8 @@ wh_video_view_paint (ClutterActor *actor)
 
   priv = self->priv;
 
-  clutter_actor_paint (priv->container);
+  clutter_actor_paint (priv->selection_indicator);
+  clutter_actor_paint (priv->rows);
 }
 
 static void 
@@ -323,7 +363,6 @@ wh_video_view_activate (WHVideoView  *view,
   gint                   i, r_height, position;
   ClutterEffectTemplate *template;
   guint8                 opacity;
-  gint                   found_selector = 0;
 
   r_height = clutter_actor_get_height (CLUTTER_ACTOR (view)) /
     priv->n_rows_visible;
@@ -333,21 +372,11 @@ wh_video_view_activate (WHVideoView  *view,
 
   for ( i = 0; i < priv->n_rows + 1; i++ )
     {
-      child = clutter_group_get_nth_child (CLUTTER_GROUP (priv->container), i);
+      child = clutter_group_get_nth_child (CLUTTER_GROUP (priv->rows), i);
       if (!child)
 	return;
 
-      if (CLUTTER_IS_TEXTURE (child))
-        {
-	  /*
-	   * Skip over the selector, but keep in mind that the
-	   * index is now off by one
-	   */
-	  found_selector = 1;
-	  continue; 
-	}
-
-      position = i - priv->active_item_num - found_selector;
+      position = i - priv->active_item_num;
 
       if (position < -1 || position >= priv->n_rows_visible)
 	opacity = 0;
@@ -366,13 +395,40 @@ wh_video_view_activate (WHVideoView  *view,
 			   NULL,
 			   NULL);
 
-      if (priv->active_item_num == i - found_selector)
-	wh_video_row_renderer_set_active (WH_VIDEO_ROW_RENDERER (child), 
-					  TRUE);
+      if (priv->active_item_num == i)
+        {
+	  wh_video_row_renderer_set_active (WH_VIDEO_ROW_RENDERER (child), 
+					    TRUE);
+
+	  if (i > 0)
+	    {
+	      if (clutter_actor_get_opacity (priv->up_arrow) != 0xff)
+		clutter_effect_fade (template, 
+				     priv->up_arrow, 
+				     0xff, 
+				     NULL, 
+				     NULL);
+	    }
+	  else if (clutter_actor_get_opacity (priv->up_arrow) != 0)
+	    clutter_effect_fade (template, priv->up_arrow, 0, NULL, NULL);
+
+	  if (i < priv->n_rows - 1)
+	    {
+	      if (clutter_actor_get_opacity (priv->down_arrow) != 0xff)
+		clutter_effect_fade (template, 
+				     priv->down_arrow, 
+				     0xff, 
+				     NULL, 
+				     NULL);
+	    }
+	  else if (clutter_actor_get_opacity (priv->down_arrow) != 0)
+	    clutter_effect_fade (template, priv->down_arrow, 0, NULL, NULL);
+
+	  clutter_actor_set_opacity (priv->selection_indicator, 0xff);
+	}
       else
 	wh_video_row_renderer_set_active (WH_VIDEO_ROW_RENDERER (child), 
 					  FALSE);
-
     }
 }
 
@@ -417,9 +473,48 @@ wh_video_view_init (WHVideoView *self)
 
   self->priv = priv = WH_VIDEO_VIEW_GET_PRIVATE (self);
 
-  priv->container = clutter_group_new ();
+  priv->rows = clutter_group_new ();
 
-  clutter_actor_set_parent (priv->container, CLUTTER_ACTOR (self));
+  priv->selection_indicator = clutter_group_new ();
+  clutter_actor_set_opacity (priv->selection_indicator, 0);
+  clutter_actor_set_parent (priv->rows, CLUTTER_ACTOR (self));
+
+#if 0
+  clutter_actor_set_size (selector,
+			  clutter_actor_get_width (CLUTTER_ACTOR (self)),
+			  r_height);
+#endif
+ 
+  /* Load the position backgroud image */
+  priv->selection = clutter_texture_new_from_file (PKGDATADIR "/selected.svg",
+						   NULL);
+  if (!priv->selection)
+    g_warning ("Unable to load %s\n",  PKGDATADIR "/selected.svg");
+
+  clutter_actor_show (priv->selection);
+  clutter_group_add (CLUTTER_GROUP (priv->selection_indicator), 
+		     priv->selection);
+
+  /* Load the up arrow image */
+  priv->up_arrow = clutter_texture_new_from_file (PKGDATADIR "/arrow-up.svg",
+						  NULL);
+  if (!priv->up_arrow)
+    g_warning ("Unable to load %s\n",  PKGDATADIR "/arrow-up.svg");
+
+  clutter_actor_show (priv->up_arrow);
+  clutter_group_add (CLUTTER_GROUP (priv->selection_indicator), 
+		     priv->up_arrow);
+  
+  /* Load the down arrow image */
+  priv->down_arrow = clutter_texture_new_from_file (PKGDATADIR "/arrow-down.svg",
+						    NULL);
+  if (!priv->down_arrow)
+    g_warning ("Unable to load %s\n",  PKGDATADIR "/arrow-down.svg");
+
+  clutter_actor_show (priv->down_arrow);
+  clutter_group_add (CLUTTER_GROUP (priv->selection_indicator), 
+		     priv->down_arrow);
+
 }
 
 ClutterActor*
