@@ -599,6 +599,22 @@ wh_screen_video_deactivate (WHScreenVideo *screen)
 {
   WHScreenVideoPrivate *priv  = SCREEN_VIDEO_PRIVATE(screen);
 
+  if (clutter_actor_is_rotated (priv->video))
+    {
+      ClutterEffectTemplate *template;
+	  
+      template = clutter_effect_template_new_for_duration 
+	(1000, CLUTTER_ALPHA_SINE_INC);
+      clutter_effect_rotate (template,
+			     CLUTTER_ACTOR (priv->video),
+			     CLUTTER_Y_AXIS,
+			     0,
+			     CSW()/2, CSH()/2, 0,
+			     CLUTTER_ROTATE_CCW,
+			     NULL,
+			     NULL);
+    }
+
   g_signal_handlers_disconnect_by_func (priv->video, 
 					G_CALLBACK (video_tick),
 					screen);

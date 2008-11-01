@@ -200,8 +200,8 @@ on_video_playback_start (WHScreenVideo *video,
   clutter_actor_set_scale (wh->screen_browse, 0.7, 0.7);
   clutter_effect_scale (wh->video_effect_tmpl,
 			wh->screen_browse,
-			0.1,
-			0.1,
+			0.0,
+			0.0,
 			NULL,
 			NULL);
 
