@@ -24,6 +24,8 @@ struct _WHVideoViewPrivate
   ClutterActor      *selection;
   ClutterActor      *up_arrow; 
   ClutterActor      *down_arrow;
+
+  gboolean           animation_running;
 };
 
 enum
@@ -354,6 +356,15 @@ wh_video_view_class_init (WHVideoViewClass *klass)
 		       G_PARAM_READWRITE));
 }
 
+static void
+row_move_complete (ClutterActor *actor, gpointer data)
+{
+  WHVideoView        *view = WH_VIDEO_VIEW (data);   
+  WHVideoViewPrivate *priv = WH_VIDEO_VIEW_GET_PRIVATE(view);
+
+  priv->animation_running = FALSE;
+}
+
 void
 wh_video_view_activate (WHVideoView  *view,
 			gint          entry_num)
@@ -364,10 +375,12 @@ wh_video_view_activate (WHVideoView  *view,
   ClutterEffectTemplate *template;
   guint8                 opacity;
 
+  priv->animation_running = TRUE;
+
   r_height = clutter_actor_get_height (CLUTTER_ACTOR (view)) /
     priv->n_rows_visible;
 
-  template = clutter_effect_template_new_for_duration (500, 
+  template = clutter_effect_template_new_for_duration (250, 
 						       CLUTTER_ALPHA_SINE_INC);
 
   for ( i = 0; i < priv->n_rows + 1; i++ )
@@ -387,8 +400,8 @@ wh_video_view_activate (WHVideoView  *view,
 			   child, 
 			   0, 
 			   position * r_height,
-			   NULL,
-			   NULL);
+			   row_move_complete,
+			   view);
       clutter_effect_fade (template,
 			   child,
 			   opacity,
@@ -438,6 +451,9 @@ wh_video_view_advance (WHVideoView *view, gint n)
   WHVideoViewPrivate *priv = WH_VIDEO_VIEW_GET_PRIVATE(view);
   gint new_index;
 
+  if (priv->animation_running)
+    return;
+
   new_index = priv->active_item_num + n;
   
   if (new_index > priv->n_rows - 1)
@@ -479,12 +495,6 @@ wh_video_view_init (WHVideoView *self)
   clutter_actor_set_opacity (priv->selection_indicator, 0);
   clutter_actor_set_parent (priv->rows, CLUTTER_ACTOR (self));
 
-#if 0
-  clutter_actor_set_size (selector,
-			  clutter_actor_get_width (CLUTTER_ACTOR (self)),
-			  r_height);
-#endif
- 
   /* Load the position backgroud image */
   priv->selection = clutter_texture_new_from_file (PKGDATADIR "/selected.svg",
 						   NULL);
