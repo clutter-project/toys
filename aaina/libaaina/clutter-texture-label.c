@@ -165,7 +165,16 @@ clutter_texture_label_make_pixbuf (ClutterTextureLabel *label)
 	  priv->fgcol.blue,
 	  priv->fgcol.alpha);
   */
-  clutter_texture_set_pixbuf (CLUTTER_TEXTURE (label), pixbuf, NULL);
+  clutter_texture_set_from_rgb_data (CLUTTER_TEXTURE (label),
+                                       gdk_pixbuf_get_pixels (pixbuf),
+                                       gdk_pixbuf_get_has_alpha (pixbuf),
+                                       gdk_pixbuf_get_width (pixbuf),
+                                       gdk_pixbuf_get_height (pixbuf),
+                                       gdk_pixbuf_get_rowstride (pixbuf),
+                                       4, 0,
+                                       NULL);
+
+
   g_object_set (G_OBJECT (label), "sync-size", TRUE, NULL);
   
   /* Texture has the ref now */

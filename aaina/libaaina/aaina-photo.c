@@ -301,8 +301,16 @@ aaina_photo_set_pixbuf (AainaPhoto *photo, GdkPixbuf *pixbuf)
   
   clutter_actor_set_size (priv->bg, width+20, height+20);
   clutter_actor_set_position (priv->bg, 0, 0);
-  
-  clutter_texture_set_pixbuf (CLUTTER_TEXTURE (priv->texture), pixbuf, &err);
+
+  clutter_texture_set_from_rgb_data (CLUTTER_TEXTURE (priv->texture),
+                                       gdk_pixbuf_get_pixels (pixbuf),
+                                       gdk_pixbuf_get_has_alpha (pixbuf),
+                                       gdk_pixbuf_get_width (pixbuf),
+                                       gdk_pixbuf_get_height (pixbuf),
+                                       gdk_pixbuf_get_rowstride (pixbuf),
+                                       4, 0,
+                                       &err);
+
   clutter_actor_set_size (priv->texture, width, height);
   if (err)
     g_warning ("%s\n", err->message);

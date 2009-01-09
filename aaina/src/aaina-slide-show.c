@@ -149,7 +149,7 @@ zoom_photo (AainaSlideShow *slide_show)
       continue;
 
     x = clutter_actor_get_x (actor);
-    clutter_actor_get_abs_size (actor, &w, &h);
+    clutter_actor_get_transformed_size (actor, &w, &h);
     x += w;
 
     if (x > 0 && x < stage_width 

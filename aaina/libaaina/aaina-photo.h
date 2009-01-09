@@ -22,6 +22,7 @@
 
 #include <config.h>
 #include <glib.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <clutter/clutter.h>
 
 #ifndef _HAVE_AAINA_PHOTO_H
