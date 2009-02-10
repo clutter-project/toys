@@ -1,0 +1,16 @@
+Notes on building the mozilla version:
+
+The mozilla version of mallums-magic-browser requires mozilla built with the
+headless backend and ClutterMozEmbed;
+
+git://git.o-hand.com/mozilla-headless.git
+git://git.clutter-project.org/clutter-mozembed.git
+
+It also builds against clutter 0.9 instead of 0.8.
+
+To build, you'll want a line something along the lines of;
+
+gcc -o web-browser-mallum web-browser-mallum.c -Wall -g `pkg-config --cflags --libs cluttermozembed` -DWITH_MOZILLA
+
+Which should then produce a binary 'web-browser-mallum'. Note that the  port
+to Clutter 0.9 was mmade in a rush, so some animations may not be correct.
