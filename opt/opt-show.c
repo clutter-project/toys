@@ -580,7 +580,7 @@ opt_show_export (OptShow *self, const char *path, GError **error)
       filename = g_build_filename(path, name, NULL);
 
       if (!gdk_pixbuf_save (pixb, filename, "png", error, 
-			    "compression", 9, /* Really compress */
+			    "compression", "9", /* Really compress */
 			    NULL))
 	{
 	  if (filename) g_free (filename);
