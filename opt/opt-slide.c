@@ -108,11 +108,11 @@ opt_slide_set_title (OptSlide     *slide,
     {
       gchar *default_font = NULL;
       g_object_get (priv->show, "title-font", &default_font, NULL);
-      priv->title = clutter_label_new_with_text (default_font, title);
+      priv->title = clutter_text_new_with_text (default_font, title);
       g_free (default_font);
     }
   else
-    priv->title = clutter_label_new_with_text (font, title);
+    priv->title = clutter_text_new_with_text (font, title);
 
   clutter_group_add (CLUTTER_GROUP(slide), priv->title);
 
@@ -128,7 +128,7 @@ opt_slide_set_title (OptSlide     *slide,
 
   clutter_actor_set_size (CLUTTER_ACTOR(priv->title), avail_w, -1);
 
-  clutter_label_set_color (CLUTTER_LABEL(priv->title), col);
+  clutter_text_set_color (CLUTTER_TEXT(priv->title), col);
 
   clutter_actor_set_position (priv->title, border, border);
 
@@ -194,14 +194,14 @@ opt_slide_add_bullet_text_item (OptSlide            *slide,
       gchar *default_font = NULL;
 
       g_object_get (priv->show, "bullet-font", &default_font, NULL);
-      bullet = clutter_label_new_with_text (default_font, title);
+      bullet = clutter_text_new_with_text (default_font, title);
       g_free (default_font);
     }
   else
-    bullet = clutter_label_new_with_text (font, title);
+    bullet = clutter_text_new_with_text (font, title);
 
-  clutter_label_set_color (CLUTTER_LABEL(bullet), col);
-  clutter_label_set_line_wrap (CLUTTER_LABEL (bullet), TRUE);
+  clutter_text_set_color (CLUTTER_TEXT(bullet), col);
+  clutter_text_set_line_wrap (CLUTTER_TEXT (bullet), TRUE);
 
   get_next_bullet_offsets (slide, &x, &y, &width);
 

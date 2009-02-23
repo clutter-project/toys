@@ -222,8 +222,7 @@ opt_menu_new (OptShow * show)
                     G_CALLBACK (opt_menu_hide_cb), menu);
   
   menu->priv->alpha = clutter_alpha_new_full (menu->priv->timeline,
-                                              CLUTTER_ALPHA_RAMP_INC,
-                                              NULL, NULL);
+                                              CLUTTER_LINEAR);
 
   menu->priv->behaviour_s =
     clutter_behaviour_scale_new (menu->priv->alpha,
@@ -302,13 +301,13 @@ opt_menu_select_item (OptMenu * menu, gint slide_no)
         clutter_group_get_nth_child (CLUTTER_GROUP (menu),
                                      menu->priv->active_item + 2);
   
-      clutter_label_set_color (CLUTTER_LABEL (active),
-                               &menu->priv->color_normal);
+      clutter_text_set_color (CLUTTER_TEXT (active),
+                              &menu->priv->color_normal);
 
       active = clutter_group_get_nth_child (CLUTTER_GROUP (menu),
                                             slide_no + 2);
   
-      clutter_label_set_color (CLUTTER_LABEL (active), &menu->priv->color_sel);
+      clutter_text_set_color (CLUTTER_TEXT (active), &menu->priv->color_sel);
 
       clutter_actor_set_position (CLUTTER_ACTOR (menu->priv->selection),
                                   MENU_BORDER, slide_no * ITEM_HEIGHT);
@@ -395,19 +394,19 @@ opt_menu_add_slide (OptMenu * menu, OptSlide * slide)
   
   gchar              * text = NULL;
   const gchar        * font = DEFAULT_FONT;
-  const ClutterLabel * title = CLUTTER_LABEL (opt_slide_get_title (slide));
+  const ClutterText  * title = CLUTTER_TEXT (opt_slide_get_title (slide));
   ClutterActor       * label;
   
   if (title)
     text = g_strdup_printf ("Slide %d: %s", menu->priv->item_count + 1,
-                            clutter_label_get_text ((ClutterLabel*)title));
+                            clutter_text_get_text ((ClutterText*)title));
   else
     text = g_strdup_printf ("Slide %d", menu->priv->item_count + 1);
 
   if (!menu->priv->item_count)
-    label = clutter_label_new_full (font, text, &menu->priv->color_sel);
+    label = clutter_text_new_full (font, text, &menu->priv->color_sel);
   else
-    label = clutter_label_new_full (font, text, &menu->priv->color_normal);
+    label = clutter_text_new_full (font, text, &menu->priv->color_normal);
   
   g_free (text);
   
@@ -436,8 +435,8 @@ opt_menu_pop (OptMenu * menu)
       clutter_actor_get_size (CLUTTER_ACTOR (menu), &width, &height);
 
       clutter_actor_set_scale (CLUTTER_ACTOR (menu), 0.0, 0.0);
-      clutter_alpha_set_func (menu->priv->alpha, CLUTTER_ALPHA_RAMP_INC,
-                              NULL, NULL);
+      clutter_timeline_set_direction (menu->priv->timeline,
+                                      CLUTTER_TIMELINE_FORWARD);
       
       clutter_group_add (CLUTTER_GROUP(stage), CLUTTER_ACTOR(menu));
 
@@ -456,6 +455,7 @@ opt_menu_pop (OptMenu * menu)
 
       menu->priv->timeout_id = g_timeout_add (5000, opt_menu_timeout_cb, menu);
       menu->priv->hiding = FALSE;
+      clutter_timeline_rewind (menu->priv->timeline);
       clutter_timeline_start (menu->priv->timeline);
     }
 }
@@ -485,10 +485,11 @@ opt_menu_popdown (OptMenu * menu)
       }
   
     clutter_actor_set_scale (CLUTTER_ACTOR (menu), 1.0, 1.0);
-    clutter_alpha_set_func (menu->priv->alpha, CLUTTER_ALPHA_RAMP_DEC,
-                            NULL, NULL);
+    clutter_timeline_set_direction (menu->priv->timeline,
+                                    CLUTTER_TIMELINE_BACKWARD);
     
     menu->priv->hiding = TRUE;
+    clutter_timeline_rewind (menu->priv->timeline);
     clutter_timeline_start (menu->priv->timeline);
   }
 }

@@ -269,8 +269,8 @@ opt_show_new (void)
   show = g_object_new (OPT_TYPE_SHOW, NULL);
 
   show->priv->bullet_texture 
-    = clutter_label_new_with_text (show->priv->bullet_font, "•");
-  clutter_label_set_color (CLUTTER_LABEL(show->priv->bullet_texture), &col);
+    = clutter_text_new_with_text (show->priv->bullet_font, "•");
+  clutter_text_set_color (CLUTTER_TEXT(show->priv->bullet_texture), &col);
 
   show->priv->bg = g_object_new (CLUTTER_TYPE_TEXTURE, NULL);
 
@@ -284,13 +284,13 @@ opt_show_new (void)
 ClutterActor*
 opt_show_bullet_clone (OptShow *show)
 {
-  return clutter_label_new_with_text (show->priv->bullet_font, "•");
+  return clutter_text_new_with_text (show->priv->bullet_font, "•");
 }
 
 void
 opt_show_set_bullet_color (OptShow *show, ClutterColor *col)
 {
-  clutter_label_set_color (CLUTTER_LABEL(show->priv->bullet_texture), col);
+  clutter_text_set_color (CLUTTER_TEXT(show->priv->bullet_texture), col);
 }
 
 void
@@ -306,7 +306,7 @@ opt_show_add_slide (OptShow *self, OptSlide *slide)
   bg = CLUTTER_ACTOR(opt_slide_get_background_texture (slide));
 
   if (bg == NULL)
-    bg = clutter_clone_texture_new(CLUTTER_TEXTURE(self->priv->bg));
+    bg = clutter_clone_new(self->priv->bg);
 
   clutter_actor_set_size (bg, 
                           clutter_actor_get_width (stage),
@@ -360,7 +360,7 @@ opt_show_update_position_label (OptShow *show)
 		         priv->current_slide_num + 1,
 			 priv->num_slides);
 
-  clutter_label_set_text (CLUTTER_LABEL (priv->position_label), pos);
+  clutter_text_set_text (CLUTTER_TEXT (priv->position_label), pos);
   clutter_texture_get_base_size (CLUTTER_TEXTURE (priv->position_label),
 		                 &label_width,
 				 &label_height);
@@ -654,9 +654,9 @@ opt_show_toggle_position (OptShow *show)
 
       clutter_actor_set_geometry (rect, &rect_geom);
 
-      label = clutter_label_new_with_text ("Sans Bold 20", "0/0");
-      clutter_label_set_color (CLUTTER_LABEL (label),
-		               &label_color);
+      label = clutter_text_new_with_text ("Sans Bold 20", "0/0");
+      clutter_text_set_color (CLUTTER_TEXT (label),
+                              &label_color);
       clutter_actor_set_position (label, rect_geom.x + 10, rect_geom.y + 10);
 
       clutter_group_add_many (CLUTTER_GROUP (stage),
