@@ -4,45 +4,37 @@
 
 #define N_CIRCLES 3     /* number of circles */
 #define CIRCLE_W 128    /* width */
-#define CIRCLE_WX CLUTTER_INT_TO_FIXED(CIRCLE_W)
 #define CIRCLE_G 32     /* gap */
 #define CIRCLE_S 3      /* segments */
 #define SCREEN_W 640
 #define SCREEN_H 480
 
 #ifndef CLUTTER_ANGLE_FROM_RAD
-#define CLUTTER_ANGLE_FROM_RAD(x) CLUTTER_ANGLE_FROM_DEGX(\
-                                    clutter_qmulx(CLUTTER_FLOAT_TO_FIXED(x),\
-                                                  CFX_RADIANS_TO_DEGREES))
+#define CLUTTER_ANGLE_FROM_RAD(x) ((x) * 180.0 / M_PI)
 #endif
 
 static void
 circle_paint_cb (ClutterActor *actor)
 {
-  const ClutterColor fill_color = { 0xff, 0xff, 0xff, 0x80 };
+  const CoglColor fill_color = { 0xff, 0xff, 0xff, 0x80 };
   gint i;
   gdouble angle;
-  ClutterFixed radius =
-    CLUTTER_UNITS_TO_FIXED (clutter_actor_get_widthu (actor))/2;
+  guint radius = clutter_actor_get_width (actor)/2;
 
-  cogl_color (&fill_color);
+  cogl_set_source_color (&fill_color);
 
   angle = *((gdouble *)g_object_get_data (G_OBJECT (actor), "angle"));
   for (i = 0; i < CIRCLE_S; i++, angle += (2.0*M_PI)/(gdouble)CIRCLE_S)
     {
       gdouble angle2 = angle + ((2.0*M_PI)/(gdouble)CIRCLE_S)/2.0;
-      cogl_path_move_to (clutter_qmulx (radius - CIRCLE_WX,
-                           CLUTTER_FLOAT_TO_FIXED (cos (angle))) + radius,
-                         clutter_qmulx (radius - CIRCLE_WX,
-                           CLUTTER_FLOAT_TO_FIXED (sin (angle))) + radius);
+      cogl_path_move_to (((radius - CIRCLE_W) * cos (angle)) + radius,
+                         ((radius - CIRCLE_W) * sin (angle)) + radius);
       cogl_path_arc (radius, radius, radius, radius,
                      CLUTTER_ANGLE_FROM_RAD (angle),
                      CLUTTER_ANGLE_FROM_RAD (angle2));
-      cogl_path_line_to (clutter_qmulx (radius - CIRCLE_WX,
-                           CLUTTER_FLOAT_TO_FIXED (cos (angle2))) + radius,
-                         clutter_qmulx (radius - CIRCLE_WX,
-                           CLUTTER_FLOAT_TO_FIXED (sin (angle2))) + radius);
-      cogl_path_arc (radius, radius, radius - CIRCLE_WX, radius - CIRCLE_WX,
+      cogl_path_line_to (((radius - CIRCLE_W) * cos (angle2)) + radius,
+                         ((radius - CIRCLE_W) * sin (angle2)) + radius);
+      cogl_path_arc (radius, radius, radius - CIRCLE_W, radius - CIRCLE_W,
                      CLUTTER_ANGLE_FROM_RAD (angle2),
                      CLUTTER_ANGLE_FROM_RAD (angle));
       cogl_path_close ();
@@ -91,13 +83,11 @@ main (int argc, char **argv)
       g_signal_connect (actor, "paint", G_CALLBACK (circle_paint_cb), NULL);
       
       /* Animate */
-      alpha = clutter_alpha_new_full (timeline, (i % 2) ?
-                                      CLUTTER_ALPHA_RAMP_INC :
-                                      CLUTTER_ALPHA_RAMP_DEC,
-                                      NULL, NULL);
+      alpha = clutter_alpha_new_full (timeline, CLUTTER_LINEAR);
       behaviour = clutter_behaviour_rotate_new (alpha, CLUTTER_Z_AXIS,
-                                                CLUTTER_ROTATE_CW,
-                                                0.0, 360.0);
+                                                (i % 2) ? CLUTTER_ROTATE_CW
+                                                        : CLUTTER_ROTATE_CCW,
+                                                0.0, 0.0);
       clutter_behaviour_rotate_set_center (CLUTTER_BEHAVIOUR_ROTATE (behaviour),
                                            size/2, size/2, 0);
       clutter_behaviour_apply (behaviour, actor);
