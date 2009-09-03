@@ -1,4 +1,5 @@
 #include <clutter/clutter.h>
+#include <math.h>
 
 #define CSW() CLUTTER_STAGE_WIDTH()
 #define CSH() CLUTTER_STAGE_HEIGHT()
@@ -206,8 +207,17 @@ on_timeline_new_frame (ClutterTimeline *timeline,
 		       App             *app)
 {
   if (frame_num > clutter_timeline_get_n_frames (timeline)/2)
-    clutter_label_set_text (CLUTTER_LABEL(app->label),
-			    ItemDetails[app->selected_index].title);
+    clutter_text_set_text (CLUTTER_TEXT(app->label),
+                           ItemDetails[app->selected_index].title);
+}
+
+/* An alpha function that goes from 0->1->0 along a sine. */
+gdouble
+label_opacity_alpha_func (ClutterAlpha *alpha,
+                          gpointer unused)
+{
+  ClutterTimeline *timeline = clutter_alpha_get_timeline (alpha);
+  return sin (clutter_timeline_get_progress (timeline) * M_PI);
 }
 
 int
@@ -233,12 +243,11 @@ main (int argc, char *argv[])
   app->off = 0.0;
   app->timeline = clutter_timeline_new (20, 60);
   app->alpha_sine_inc
-    = clutter_alpha_new_full (app->timeline, CLUTTER_ALPHA_SINE_INC,
-			      NULL, NULL);
+    = clutter_alpha_new_full (app->timeline, CLUTTER_EASE_OUT_SINE);
 
   app->alpha_ramp
-    = clutter_alpha_new_full (app->timeline, CLUTTER_ALPHA_SINE_HALF,
-			      NULL, NULL);
+    = clutter_alpha_new_with_func (app->timeline, label_opacity_alpha_func,
+                                   NULL, NULL);
 
   for (i=0; i<N_ITEMS; i++)
     {
@@ -275,10 +284,8 @@ main (int argc, char *argv[])
       ang += STEP;
     }
 
-  app->label = clutter_label_new_with_text ("Coolvetica 60px", "");
-  clutter_label_set_color (CLUTTER_LABEL(app->label), &white);
-  clutter_label_set_line_wrap (CLUTTER_LABEL(app->label), FALSE);
-  clutter_actor_set_position (app->label, CSW()/2 - 40, CSH()/3 - 40);
+  app->label = clutter_text_new_full ("Bitstream Vera Sans 60px", "", &white);
+  clutter_actor_set_position (app->label, CSW()/2 - 30, CSH()/3 - 40);
   clutter_group_add (CLUTTER_GROUP(stage), app->label);
 
   behave = clutter_behaviour_opacity_new (app->alpha_ramp, 0xff, 0);
