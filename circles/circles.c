@@ -57,7 +57,7 @@ main (int argc, char **argv)
   clutter_actor_set_size (stage, SCREEN_W, SCREEN_H);
   clutter_stage_set_color (CLUTTER_STAGE (stage), &bg_color);
   
-  timeline = clutter_timeline_new_for_duration (5000);
+  timeline = clutter_timeline_new (5000);
   clutter_timeline_set_loop (timeline, TRUE);
 
   for (i = 0; i < N_CIRCLES; i++)
