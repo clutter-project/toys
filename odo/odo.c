@@ -28,7 +28,6 @@ new_frame_cb (ClutterTimeline *timeline,
 
 static void
 completed_cb (ClutterTimeline *timeline,
-              gint             msecs,
               gpointer         data)
 {
   struct distort_data *d = data;
