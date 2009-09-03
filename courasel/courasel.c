@@ -175,12 +175,10 @@ on_input (ClutterActor *stage,
 
   if (event->type == CLUTTER_KEY_RELEASE)
     {
-      ClutterKeyEvent* kev = (ClutterKeyEvent *) event;
-
       if (clutter_timeline_is_playing(app->timeline))
 	return FALSE;
 
-      switch (clutter_key_event_symbol (kev))
+      switch (clutter_event_get_key_symbol (event))
 	{
 	case CLUTTER_Left:
 	  rotate_items (app, -1);
@@ -203,10 +201,10 @@ on_input (ClutterActor *stage,
 
 void
 on_timeline_new_frame (ClutterTimeline *timeline,
-		       gint             frame_num,
+		               gint             frame_msecs,
 		       App             *app)
 {
-  if (frame_num > clutter_timeline_get_n_frames (timeline)/2)
+  if (frame_msecs > clutter_timeline_get_duration (timeline)/2)
     clutter_text_set_text (CLUTTER_TEXT(app->label),
                            ItemDetails[app->selected_index].title);
 }
@@ -241,7 +239,7 @@ main (int argc, char *argv[])
 
   app = g_new0(App, 1);
   app->off = 0.0;
-  app->timeline = clutter_timeline_new (20, 60);
+  app->timeline = clutter_timeline_new (300);
   app->alpha_sine_inc
     = clutter_alpha_new_full (app->timeline, CLUTTER_EASE_OUT_SINE);
 
