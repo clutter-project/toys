@@ -5,9 +5,9 @@
 
 #define N_ITEMS 8
 #define STEP (360.0/N_ITEMS)
-#define CLAMP_ANG(x) (((x) > 360.0) ? ((x) - 360.0) : (x))   
+#define CLAMP_ANG(x) (((x) > 360.0) ? ((x) - 360.0) : (x))
 
-struct { gchar *img; gchar *title; } ItemDetails[] = 
+struct { gchar *img; gchar *title; } ItemDetails[] =
 {
   { "accessories-text-editor.png", "Text Editor" },
   { "applications-games.png", "Game" },
@@ -23,7 +23,7 @@ typedef struct Item
 {
   ClutterActor     *actor;
   ClutterBehaviour *ellipse_behave, *opacity_behave, *scale_behave;
-} 
+}
 Item;
 
 typedef struct App
@@ -35,7 +35,7 @@ typedef struct App
   gdouble          off;
   int              selected_index;
   ClutterActor    *label;
-} 
+}
 App;
 
 void
@@ -54,10 +54,10 @@ introduce_items (App *app)
       ang_start = -90.0;
       ang_end   = (STEP * i);
 
-      clutter_behaviour_ellipse_set_angle_start 
+      clutter_behaviour_ellipse_set_angle_start
 	(CLUTTER_BEHAVIOUR_ELLIPSE(item->ellipse_behave), ang_start);
 
-      clutter_behaviour_ellipse_set_angle_end 
+      clutter_behaviour_ellipse_set_angle_end
 	(CLUTTER_BEHAVIOUR_ELLIPSE(item->ellipse_behave), ang_end);
 
       if (i == app->selected_index)
@@ -76,7 +76,7 @@ introduce_items (App *app)
       node = node->next;
     }
 
-  clutter_timeline_start (app->timeline);  
+  clutter_timeline_start (app->timeline);
 }
 
 
@@ -104,14 +104,14 @@ rotate_items (App *app, int step)
       ang_start = ang;
       ang_end   = ang + (STEP * step);
 
-      clutter_behaviour_ellipse_set_direction 
-	(CLUTTER_BEHAVIOUR_ELLIPSE(item->ellipse_behave), 
+      clutter_behaviour_ellipse_set_direction
+	(CLUTTER_BEHAVIOUR_ELLIPSE(item->ellipse_behave),
 	 step > 0 ? CLUTTER_ROTATE_CW : CLUTTER_ROTATE_CCW);
 
-      clutter_behaviour_ellipse_set_angle_start 
+      clutter_behaviour_ellipse_set_angle_start
 	(CLUTTER_BEHAVIOUR_ELLIPSE(item->ellipse_behave), ang_start);
 
-      clutter_behaviour_ellipse_set_angle_end 
+      clutter_behaviour_ellipse_set_angle_end
 	(CLUTTER_BEHAVIOUR_ELLIPSE(item->ellipse_behave), ang_end);
 
       if (i == from_index)
@@ -155,17 +155,17 @@ rotate_items (App *app, int step)
 			NULL);
 	}
 
-      ang += STEP; 
+      ang += STEP;
       node = node->next;
     }
 
-  clutter_timeline_start (app->timeline);  
+  clutter_timeline_start (app->timeline);
 
   app->off += (STEP * step);
   app->off = CLAMP_ANG(app->off);
 }
 
-static gboolean 
+static gboolean
 on_input (ClutterActor *stage,
 	  ClutterEvent *event,
 	  gpointer      user_data)
@@ -200,13 +200,13 @@ on_input (ClutterActor *stage,
   return FALSE;
 }
 
-void                
+void
 on_timeline_new_frame (ClutterTimeline *timeline,
 		       gint             frame_num,
-		       App             *app) 
+		       App             *app)
 {
   if (frame_num > clutter_timeline_get_n_frames (timeline)/2)
-    clutter_label_set_text (CLUTTER_LABEL(app->label), 
+    clutter_label_set_text (CLUTTER_LABEL(app->label),
 			    ItemDetails[app->selected_index].title);
 }
 
@@ -232,11 +232,11 @@ main (int argc, char *argv[])
   app = g_new0(App, 1);
   app->off = 0.0;
   app->timeline = clutter_timeline_new (20, 60);
-  app->alpha_sine_inc 
+  app->alpha_sine_inc
     = clutter_alpha_new_full (app->timeline, CLUTTER_ALPHA_SINE_INC,
 			      NULL, NULL);
 
-  app->alpha_ramp 
+  app->alpha_ramp
     = clutter_alpha_new_full (app->timeline, CLUTTER_ALPHA_SINE_HALF,
 			      NULL, NULL);
 
@@ -250,7 +250,7 @@ main (int argc, char *argv[])
 
       clutter_group_add (CLUTTER_GROUP(stage), item->actor);
 
-      item->ellipse_behave 
+      item->ellipse_behave
 	= clutter_behaviour_ellipse_new (app->alpha_sine_inc,
 					 CSW()/4,   /* center x */
 					 CSH() - (CSH()/3),   /* center y */
@@ -259,11 +259,11 @@ main (int argc, char *argv[])
 					 CLUTTER_ROTATE_CW,
 					 ang,
 					 ang + STEP);
-      item->opacity_behave 
+      item->opacity_behave
 	= clutter_behaviour_opacity_new (app->alpha_sine_inc, 0x66, 0x66);
 
-      item->scale_behave 
-	= clutter_behaviour_scale_new (app->alpha_sine_inc, 
+      item->scale_behave
+	= clutter_behaviour_scale_new (app->alpha_sine_inc,
 				       0.6, 0.6, 0.6, 0.6);
 
       clutter_behaviour_apply (item->ellipse_behave, item->actor);
@@ -279,17 +279,17 @@ main (int argc, char *argv[])
   clutter_label_set_color (CLUTTER_LABEL(app->label), &white);
   clutter_label_set_line_wrap (CLUTTER_LABEL(app->label), FALSE);
   clutter_actor_set_position (app->label, CSW()/2 - 40, CSH()/3 - 40);
-  clutter_group_add (CLUTTER_GROUP(stage), app->label);  
+  clutter_group_add (CLUTTER_GROUP(stage), app->label);
 
   behave = clutter_behaviour_opacity_new (app->alpha_ramp, 0xff, 0);
   clutter_behaviour_apply (behave, app->label);
 
-  g_signal_connect (app->timeline, 
-		    "new-frame", 
+  g_signal_connect (app->timeline,
+		    "new-frame",
 		    G_CALLBACK(on_timeline_new_frame),
 		    app);
 
-  g_signal_connect (stage, 
+  g_signal_connect (stage,
 		    "event",
 		    G_CALLBACK (on_input),
 		    app);
