@@ -1,7 +1,6 @@
 #include <clutter/clutter.h>
-#include <clutter-cairo/clutter-cairo.h>
+#include <cairo/cairo.h>
 #include <math.h>
-#include <X11/keysym.h>
 
 #define PADDLE_SIZE 48.0
 #define PADDLE_THICKNESS 8.0
@@ -43,7 +42,8 @@ typedef struct {
 	ClutterActor *arena;
 	ClutterTimeline *timeline;
 	ClutterAlpha *alpha;
-	ClutterBehaviour *path;
+	ClutterBehaviour *behaviour;
+	ClutterPath *path;
 	ClutterKnot start;
 	ClutterKnot end;
 	gboolean pause;
@@ -94,8 +94,8 @@ pong_ball_actor_create (PongData *data)
 	ClutterActor *actor, *group;
 	cairo_t *cr;
 	
-	actor = clutter_cairo_new (BALL_SIZE, BALL_SIZE);
-	cr = clutter_cairo_create (CLUTTER_CAIRO (actor));
+	actor = clutter_cairo_texture_new (BALL_SIZE, BALL_SIZE);
+	cr = clutter_cairo_texture_create (CLUTTER_CAIRO_TEXTURE (actor));
 	
 	/* Clear */
 	cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
@@ -188,23 +188,18 @@ pong_ball_path_calculate (PongData *data, gdouble ax, gdouble ay, gdouble w,
 		}
 	}
 	
-	clutter_timeline_set_n_frames (data->timeline, MAX (1,
-		(guint)((ABS (dx - x)/w) * FPS * data->speed)));
-	clutter_timeline_rewind (data->timeline);
-	
+	clutter_timeline_set_duration (data->timeline, MAX (1000/FPS,
+		(guint)(1000 * (ABS (dx - x)/w) * data->speed)));
 	data->end.x = (gint)dx;
 	data->end.y = (gint)dy;
 }
 
 static void
-pong_knot_reached_cb (ClutterBehaviourPath *pathb, const ClutterKnot *knot,
+pong_path_end_cb (ClutterTimeline *timeline,
 		      PongData *data)
 {
 	/* Figure out the new angle of the ball after a collision */
-	if ((knot->x == data->end.x) && (knot->y == data->end.y)) {
 		gint x, y;
-
-		clutter_behaviour_path_clear (pathb);
 
 		x = clutter_actor_get_x (data->ball);
 		y = clutter_actor_get_y (data->ball);
@@ -244,47 +239,46 @@ pong_knot_reached_cb (ClutterBehaviourPath *pathb, const ClutterKnot *knot,
 			ARENA_WIDTH,
 			ARENA_HEIGHT - PADDLE_THICKNESS);
 		
-		clutter_behaviour_path_clear (
-			CLUTTER_BEHAVIOUR_PATH (data->path));
-		clutter_behaviour_path_append_knots (
-			CLUTTER_BEHAVIOUR_PATH (data->path), &data->start,
-			&data->end, NULL);
+	clutter_path_clear (data->path);
+	clutter_path_add_move_to (data->path, data->start.x, data->start.y);
+	clutter_path_add_line_to (data->path, data->end.x,   data->end.y  );
+
+	clutter_timeline_start (data->timeline);
 
 		/*g_debug ("%d, %d, %lf", data->end.x,
 			data->end.y, data->angle);*/
-	}
 }
 
 static void
 pong_key_press_event_cb (ClutterStage *stage, ClutterEvent *event,
 			 PongData *data)
 {
-	ClutterKeyEvent *keyevent = (ClutterKeyEvent *)event;
+	guint key_symbol = clutter_event_get_key_symbol (event);
 
-	if ((keyevent->keyval != XK_p) && (data->pause)) {
+	if ((key_symbol != CLUTTER_p) && (data->pause)) {
 		data->pause = FALSE;
 		clutter_timeline_start (data->timeline);
 	}
 		
-	switch (keyevent->keyval)
+	switch (key_symbol)
 	{
-	    case XK_Escape:
-	    case XK_q:
+	    case CLUTTER_Escape:
+	    case CLUTTER_q:
 		clutter_main_quit ();
 		break;
-	    case XK_a:
+	    case CLUTTER_a:
 		data->up1 = TRUE;
 		break;
-	    case XK_z:
+	    case CLUTTER_z:
 		data->down1 = TRUE;
 		break;
-	    case XK_k:
+	    case CLUTTER_k:
 		data->up2 = TRUE;
 		break;
-	    case XK_m:
+	    case CLUTTER_m:
 		data->down2 = TRUE;
 		break;
-	    case XK_p:
+	    case CLUTTER_p:
 		data->pause = !data->pause;
 		if (data->pause) {
 			clutter_timeline_pause (data->timeline);
@@ -299,20 +293,20 @@ static void
 pong_key_release_event_cb (ClutterStage *stage, ClutterEvent *event,
 			   PongData *data)
 {
-	ClutterKeyEvent *keyevent = (ClutterKeyEvent *)event;
+	guint key_symbol = clutter_event_get_key_symbol (event);
 
-	switch (keyevent->keyval)
+	switch (key_symbol)
 	{
-	    case XK_a:
+	    case CLUTTER_a:
 		data->up1 = FALSE;
 		break;
-	    case XK_z:
+	    case CLUTTER_z:
 		data->down1 = FALSE;
 		break;
-	    case XK_k:
+	    case CLUTTER_k:
 		data->up2 = FALSE;
 		break;
-	    case XK_m:
+	    case CLUTTER_m:
 		data->down2 = FALSE;
 		break;
 	    default:
@@ -320,7 +314,8 @@ pong_key_release_event_cb (ClutterStage *stage, ClutterEvent *event,
 	}
 }
 
-static void pong_new_frame_cb (ClutterTimeline *timeline, gint frame_num,
+static void
+pong_new_frame_cb (ClutterTimeline *timeline, gint frame_num,
 			       PongData *data)
 {
 	if (data->up1 ^ data->down1) {
@@ -368,10 +363,10 @@ main (int argc, char **argv)
 	data.position1 = 0;
 	data.position2 = 0;
 	
-	data.timeline = clutter_timeline_new (FPS * 2, FPS);
-	data.alpha = clutter_alpha_new_full (data.timeline,
-		CLUTTER_ALPHA_RAMP_INC, NULL, NULL);
-	data.path = clutter_behaviour_path_new (data.alpha, NULL, 0);
+	data.timeline = clutter_timeline_new (2000);
+	data.alpha = clutter_alpha_new_full (data.timeline, CLUTTER_LINEAR);
+	data.path = clutter_path_new();
+	data.behaviour = clutter_behaviour_path_new (data.alpha, data.path);
 	
 	data.angle = ((M_PI * 1.8));
 	data.speed = 2;
@@ -395,14 +390,16 @@ main (int argc, char **argv)
 			0, PADDLE_THICKNESS,
 			ARENA_WIDTH,
 			ARENA_HEIGHT - PADDLE_THICKNESS);
-	clutter_behaviour_apply (data.path, data.ball);
-	clutter_behaviour_path_append_knots (CLUTTER_BEHAVIOUR_PATH (data.path),
-		&data.start, &data.end, NULL);
+	clutter_behaviour_apply (data.behaviour, data.ball);
 	
-	g_signal_connect (data.path, "knot_reached",
-		G_CALLBACK (pong_knot_reached_cb), &data);
+	clutter_path_add_move_to (data.path, data.start.x, data.start.y);
+	clutter_path_add_line_to (data.path, data.end.x,   data.end.y  );
+
+	g_signal_connect_after (data.timeline, "completed",
+		G_CALLBACK (pong_path_end_cb), &data);
 	g_signal_connect (data.timeline, "new_frame",
 		G_CALLBACK (pong_new_frame_cb), &data);
+
 	g_signal_connect (stage, "key-press-event",
 		G_CALLBACK (pong_key_press_event_cb), &data);
 	g_signal_connect (stage, "key-release-event",
