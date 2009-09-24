@@ -14,6 +14,9 @@
 /src/Makefile
 /src/Makefile.in
 /src/gps-globe
+/src/gpsg-enum-types.c
+/src/gpsg-enum-types.h
+/src/stamp-gpsg-enum-types.h
 
 .deps
 *.o

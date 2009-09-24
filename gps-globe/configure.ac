@@ -7,9 +7,10 @@ AM_INIT_AUTOMAKE([1.9])
 AC_PROG_CC
 AC_PROG_RANLIB
 
-PKG_CHECK_MODULES(CLUTTER, [clutter-0.9])
+PKG_CHECK_MODULES(CLUTTER, [clutter-1.0])
 
 AC_PATH_PROG([GLIB_GENMARSHAL], [glib-genmarshal])
+AC_PATH_PROG([GLIB_MKENUMS], [glib-mkenums])
 
 AC_CONFIG_FILES([
         Makefile
