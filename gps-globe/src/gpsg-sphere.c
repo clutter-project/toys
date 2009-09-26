@@ -482,7 +482,7 @@ gpsg_sphere_ensure_vertices (GpsgSphere *sphere)
   /* Calculate texture coordinates */
   for (i = 0; i < n_vertices; i++)
     {
-      vertices[i].tx = asin (vertices[i].x) / G_PI + 0.5;
+      vertices[i].tx = atan2 (vertices[i].x, vertices[i].z) / G_PI / 2.0 + 0.5;
       vertices[i].ty = asin (vertices[i].y) / G_PI + 0.5;
     }
 
