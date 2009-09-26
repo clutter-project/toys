@@ -3,3 +3,11 @@ GpsGlobe
 
 GpsGlobe is a small program to display a GPS position on a 3D model of
 the earth.
+
+Data
+====
+
+The image data for the earth is taken from the NASA Visible Earth
+project here:
+
+http://visibleearth.nasa.gov/view_rec.php?id=2430
