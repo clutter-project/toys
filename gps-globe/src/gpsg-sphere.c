@@ -496,6 +496,66 @@ gpsg_sphere_ensure_vertices (GpsgSphere *sphere)
       vertices_pos->ty = asin (vertices_pos->y) / G_PI + 0.5;
     }
 
+  /* Fix all of the triangles along the seam. If a triangle contains
+     vertices with texture coordinates that wrap the long way from
+     0->1 then we need to duplicate one of them to extend the texture
+     coordinate past 1 so that it will vary across the span
+     correctly */
+  for (i = 0; i < n_indices; i += 3)
+    {
+      gfloat min_tx = G_MAXDOUBLE, max_tx = -G_MAXDOUBLE;
+      int v;
+
+      for (v = 0; v < 3; v++)
+        {
+          gfloat tx = VERT (indices[i + v]).tx;
+          if (tx < min_tx)
+            min_tx = tx;
+          if (tx > max_tx)
+            max_tx = tx;
+        }
+
+      /* If the span is greater than half of the texture then it would
+         be shorter to wrap around instead */
+      if (max_tx - min_tx > 0.5f)
+        {
+          int n_left = 0, n_right = 0, left, right;
+          gfloat tx_diff;
+
+          /* Find the odd one out */
+          for (v = 0; v < 3; v++)
+            if (VERT (indices[i + v]).tx < 0.5f)
+              {
+                n_left++;
+                left = v;
+              }
+            else
+              {
+                n_right++;
+                right = v;
+              }
+
+          /* Duplicate whichever side is the odd one out */
+          if (n_left == 1)
+            {
+              v = left;
+              tx_diff = 1.0f;
+            }
+          else
+            {
+              v = right;
+              tx_diff = -1.0f;
+            }
+
+          /* Duplicate it with a different tx */
+          g_array_set_size (vertices, vertices->len + 1);
+          vertices_pos = &VERT (vertices->len - 1);
+          *vertices_pos = VERT (indices[i + v]);
+          vertices_pos->tx += tx_diff;
+          indices[i + v] = vertices->len - 1;
+        }
+    }
+
   /* Create the VBO */
   vertices_pos = &VERT (0);
   priv->vertices = cogl_vertex_buffer_new (vertices->len);
