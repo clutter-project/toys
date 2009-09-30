@@ -252,17 +252,21 @@ gpsg_sphere_ico_stack_entries[] =
   { { 3, 19, 1 }, 0, 6 }, { { 12, 3, 0 }, 0, 2 }
 };
 
+/* This helper macro is just used to abbreviate getting a vertex out
+   of the GArray */
+#define VERT(x) g_array_index (vertices, GpsgSphereVertex, (x))
+
 static void
 gpsg_sphere_ensure_vertices (GpsgSphere *sphere)
 {
   GpsgSpherePrivate *priv = sphere->priv;
   guint n_triangles;
-  guint n_vertices;
   guint n_indices;
   guint n_edges;
   GpsgSphereStackEntry *stack, *stack_pos, *max_stack_pos;
   guint stack_size;
-  GpsgSphereVertex *vertices, *vertices_pos;
+  GArray *vertices;
+  GpsgSphereVertex *vertices_pos;
   guint16 *indices, *indices_pos;
   GpsgSphereEdge *edges, *edges_pos;
   int i;
@@ -275,18 +279,16 @@ gpsg_sphere_ensure_vertices (GpsgSphere *sphere)
   n_edges = 0;
   for (i = 0; i <= priv->depth; i++)
     n_edges += 30 * powf (4, i) + 0.5f;
-  n_vertices = 12;
-  for (i = 0; i < priv->depth; i++)
-    n_vertices += 30 * powf (4, i) + 0.5f;
   n_indices = n_triangles * 3;
   stack_size = priv->depth * 3 + 20;
   stack = g_new (GpsgSphereStackEntry, stack_size);
   indices_pos = indices = g_new (guint16, n_indices);
-  vertices = g_new (GpsgSphereVertex, n_vertices);
+  vertices = g_array_new (FALSE, FALSE, sizeof (GpsgSphereVertex));
   edges = g_new (GpsgSphereEdge, n_edges + 100);
 
   /* Add the initial 12 vertices needed to make an icosahedron */
-  vertices_pos = vertices;
+  g_array_set_size (vertices, 12);
+  vertices_pos = &VERT (0);
   {
     int unit, magic;
 
@@ -348,25 +350,26 @@ gpsg_sphere_ensure_vertices (GpsgSphere *sphere)
           for (i = 0; i < 3; i++)
             if (edges[entry.e[i]].e0 == -1)
               {
-                vertices_pos->x = (vertices[edges[entry.e[i]].v0].x
-                                   + vertices[edges[entry.e[i]].v1].x) / 2.0;
-                vertices_pos->y = (vertices[edges[entry.e[i]].v0].y
-                                   + vertices[edges[entry.e[i]].v1].y) / 2.0;
-                vertices_pos->z = (vertices[edges[entry.e[i]].v0].z
-                                   + vertices[edges[entry.e[i]].v1].z) / 2.0;
+                g_array_set_size (vertices, vertices->len + 1);
+                vertices_pos = &VERT (vertices->len - 1);
+                vertices_pos->x = (VERT (edges[entry.e[i]].v0).x
+                                   + VERT (edges[entry.e[i]].v1).x) / 2.0;
+                vertices_pos->y = (VERT (edges[entry.e[i]].v0).y
+                                   + VERT (edges[entry.e[i]].v1).y) / 2.0;
+                vertices_pos->z = (VERT (edges[entry.e[i]].v0).z
+                                   + VERT (edges[entry.e[i]].v1).z) / 2.0;
                 edges[entry.e[i]].e0 = edges_pos - edges;
                 edges_pos->v0 = edges[entry.e[i]].v0;
-                edges_pos->v1 = vertices_pos - vertices;
+                edges_pos->v1 = vertices->len - 1;
                 edges_pos->e0 = -1;
                 edges_pos->e1 = -1;
                 edges_pos++;
                 edges[entry.e[i]].e1 = edges_pos - edges;
                 edges_pos->v0 = edges[entry.e[i]].v1;
-                edges_pos->v1 = vertices_pos - vertices;
+                edges_pos->v1 = vertices->len - 1;
                 edges_pos->e0 = -1;
                 edges_pos->e1 = -1;
                 edges_pos++;
-                vertices_pos++;
               }
 
           /* Add each triangle */
@@ -469,41 +472,49 @@ gpsg_sphere_ensure_vertices (GpsgSphere *sphere)
     }
 
   /* Normalise every vertex. The initial 12 are already normalised */
-  for (i = 12; i < n_vertices; i++)
+  for (i = 12; i < vertices->len; i++)
     {
-      gfloat length = sqrt (vertices[i].x * vertices[i].x
-                            + vertices[i].y * vertices[i].y
-                            + vertices[i].z * vertices[i].z);
-      vertices[i].x /= length;
-      vertices[i].y /= length;
-      vertices[i].z /= length;
+      gfloat length;
+
+      vertices_pos = &VERT (i);
+
+      length = sqrt (vertices_pos->x * vertices_pos->x
+                     + vertices_pos->y * vertices_pos->y
+                     + vertices_pos->z * vertices_pos->z);
+      vertices_pos->x /= length;
+      vertices_pos->y /= length;
+      vertices_pos->z /= length;
     }
 
   /* Calculate texture coordinates */
-  for (i = 0; i < n_vertices; i++)
+  for (i = 0; i < vertices->len; i++)
     {
-      vertices[i].tx = atan2 (vertices[i].x, vertices[i].z) / G_PI / 2.0 + 0.5;
-      vertices[i].ty = asin (vertices[i].y) / G_PI + 0.5;
+      vertices_pos = &VERT (i);
+
+      vertices_pos->tx = (atan2 (vertices_pos->x, vertices_pos->z)
+                          / G_PI / 2.0 + 0.5);
+      vertices_pos->ty = asin (vertices_pos->y) / G_PI + 0.5;
     }
 
   /* Create the VBO */
-  priv->vertices = cogl_vertex_buffer_new (n_vertices);
+  vertices_pos = &VERT (0);
+  priv->vertices = cogl_vertex_buffer_new (vertices->len);
   cogl_vertex_buffer_add (priv->vertices, "gl_Vertex", 3,
                           COGL_ATTRIBUTE_TYPE_FLOAT, FALSE,
                           sizeof (GpsgSphereVertex),
-                          &vertices->x);
+                          &vertices_pos->x);
   cogl_vertex_buffer_add (priv->vertices, "gl_MultiTexCoord0", 2,
                           COGL_ATTRIBUTE_TYPE_FLOAT, FALSE,
                           sizeof (GpsgSphereVertex),
-                          &vertices->tx);
+                          &vertices_pos->tx);
   /* The normals are the same as the untransformed vertices */
   cogl_vertex_buffer_add (priv->vertices, "gl_Normal", 3,
                           COGL_ATTRIBUTE_TYPE_FLOAT, FALSE,
                           sizeof (GpsgSphereVertex),
-                          &vertices->x);
+                          &vertices_pos->x);
   cogl_vertex_buffer_submit (priv->vertices);
 
-  priv->n_vertices = n_vertices;
+  priv->n_vertices = vertices->len;
   priv->n_indices = n_indices;
 
   priv->indices
@@ -512,15 +523,16 @@ gpsg_sphere_ensure_vertices (GpsgSphere *sphere)
 
   /* Make sure that we allocated exactly the right amount of memory */
   g_assert (edges_pos == edges + n_edges);
-  g_assert (vertices_pos == vertices + n_vertices);
   g_assert (indices_pos == indices + n_indices);
   g_assert (max_stack_pos == stack + stack_size);
 
   g_free (edges);
-  g_free (vertices);
+  g_array_free (vertices, TRUE);
   g_free (indices);
   g_free (stack);
 }
+
+#undef VERT
 
 static void
 gpsg_sphere_paint (ClutterActor *self)
