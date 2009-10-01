@@ -11,7 +11,15 @@ gps_globe_SOURCES = \
 	gpsg-sphere.c \
 	gpsg-enum-types.c \
 	gpsg-enum-types.h \
+	gpsg-sphere-vertex-shader.c \
+	gpsg-sphere-vertex-shader.h \
 	$(source_h)
+
+.glsl.c :
+	echo $< | \
+	sed -e 's/-/_/g' -e 's/^\(.\+\)\.glsl$$/const char \1[] =/' > $@ ; \
+	sed -e 's/["\\]/\\&/g' -e 's/^/"/' -e 's/$$/\\n"/' $< >> $@ ; \
+	echo ";" >> $@
 
 gps_globe_LDADD = \
 	@CLUTTER_LIBS@
@@ -42,4 +50,5 @@ DISTCLEANFILES = \
 
 EXTRA_DIST = \
 	gpsg-enum-types.h.in \
-	gpsg-enum-types.c.in
+	gpsg-enum-types.c.in \
+	gpsg-sphere-vertex-shader.glsl

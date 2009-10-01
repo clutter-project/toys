@@ -26,6 +26,7 @@
 
 #include "gpsg-sphere.h"
 #include "gpsg-enum-types.h"
+#include "gpsg-sphere-vertex-shader.h"
 
 #define GPSG_SPHERE_GET_PRIVATE(obj) \
   (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GPSG_TYPE_SPHERE, GpsgSpherePrivate))
@@ -58,6 +59,19 @@ struct _GpsgSpherePrivate
   CoglHandle vertices, indices;
   ClutterColor lines_color;
   GpsgSpherePaintFlags paint_flags;
+
+  /* A shader program use to render the transition between a flat
+     texture and a sphere */
+  CoglHandle flat_program;
+  /* Set to true if shaders aren't available or it won't compile */
+  gboolean shader_failed;
+
+  gint flatness_uniform;
+  gint flat_width_uniform;
+  gint flat_height_uniform;
+  gint sphere_radius_uniform;
+
+  gfloat flatness;
 };
 
 enum
@@ -66,7 +80,8 @@ enum
 
   PROP_PAINT_FLAGS,
   PROP_LINES_COLOR,
-  PROP_DEPTH
+  PROP_DEPTH,
+  PROP_FLATNESS
 };
 
 static void
@@ -94,6 +109,17 @@ gpsg_sphere_class_init (GpsgSphereClass *klass)
                              | G_PARAM_STATIC_NICK
                              | G_PARAM_STATIC_BLURB);
   g_object_class_install_property (object_class, PROP_DEPTH, pspec);
+
+  pspec = g_param_spec_float ("flatness", "Flatness",
+                              "A value between 0.0 and 1.0. Zero paints the "
+                              "texture normally and 1.0 paints it as a "
+                              "sphere. Other values mix between the two.",
+                              0.0f, 1.0f, 0.0f,
+                              G_PARAM_READWRITE
+                              | G_PARAM_STATIC_NAME
+                              | G_PARAM_STATIC_NICK
+                              | G_PARAM_STATIC_BLURB);
+  g_object_class_install_property (object_class, PROP_FLATNESS, pspec);
 
   pspec = g_param_spec_flags ("paint-flags", "Paint flags",
                               "A set of flags describing what parts of the "
@@ -145,6 +171,10 @@ gpsg_sphere_set_property (GObject      *self,
       gpsg_sphere_set_depth (sphere, g_value_get_uint (value));
       break;
 
+    case PROP_FLATNESS:
+      gpsg_sphere_set_flatness (sphere, g_value_get_float (value));
+      break;
+
     case PROP_PAINT_FLAGS:
       gpsg_sphere_set_paint_flags (sphere, g_value_get_flags (value));
       break;
@@ -171,6 +201,10 @@ gpsg_sphere_get_property (GObject    *self,
     {
     case PROP_DEPTH:
       g_value_set_uint (value, gpsg_sphere_get_depth (sphere));
+      break;
+
+    case PROP_FLATNESS:
+      g_value_set_float (value, gpsg_sphere_get_flatness (sphere));
       break;
 
     case PROP_PAINT_FLAGS:
@@ -594,64 +628,165 @@ gpsg_sphere_ensure_vertices (GpsgSphere *sphere)
 
 #undef VERT
 
+static gboolean
+gpsg_sphere_compile_program (GpsgSphere *sphere)
+{
+  GpsgSpherePrivate *priv = sphere->priv;
+  CoglHandle shader;
+  gboolean ret = TRUE;
+
+  /* If we've previously failed to create a shader then don't try
+     again */
+  if (priv->shader_failed)
+    ret = FALSE;
+  /* If we've already got the program then we don't need to do
+     anything */
+  else if (priv->flat_program == COGL_INVALID_HANDLE)
+    {
+      shader = cogl_create_shader (COGL_SHADER_TYPE_VERTEX);
+
+      if (shader == COGL_INVALID_HANDLE)
+        {
+          g_warning ("Failed to create shader");
+          priv->shader_failed = TRUE;
+          ret = FALSE;
+        }
+      else
+        {
+          cogl_shader_source (shader, gpsg_sphere_vertex_shader);
+          cogl_shader_compile (shader);
+
+          if (cogl_shader_is_compiled (shader))
+            {
+              priv->flat_program = cogl_create_program ();
+              cogl_program_attach_shader (priv->flat_program, shader);
+              cogl_program_link (priv->flat_program);
+
+              if ((priv->flatness_uniform
+                   = cogl_program_get_uniform_location (priv->flat_program,
+                                                        "flatness")) == -1
+                  || (priv->flat_width_uniform
+                      = cogl_program_get_uniform_location (priv->flat_program,
+                                                           "flat_width")) == -1
+                  || (priv->flat_height_uniform
+                      = cogl_program_get_uniform_location (priv->flat_program,
+                                                           "flat_height")) == -1
+                  || ((priv->sphere_radius_uniform
+                       = cogl_program_get_uniform_location (priv->flat_program,
+                                                            "sphere_radius"))
+                      == -1))
+                {
+                  g_warning ("Shader is missing some uniforms");
+                  cogl_handle_unref (priv->flat_program);
+                  priv->flat_program = COGL_INVALID_HANDLE;
+                  priv->shader_failed = TRUE;
+                  ret = FALSE;
+                }
+            }
+          else
+            {
+              gchar *info_log = cogl_shader_get_info_log (shader);
+              g_warning ("%s", info_log);
+              g_free (info_log);
+              priv->shader_failed = TRUE;
+              ret = FALSE;
+            }
+
+          cogl_handle_unref (shader);
+        }
+    }
+
+  return ret;
+}
+
 static void
 gpsg_sphere_paint (ClutterActor *self)
 {
   GpsgSphere *sphere = GPSG_SPHERE (self);
   GpsgSpherePrivate *priv = sphere->priv;
-  ClutterGeometry geom;
-  CoglHandle material;
-  gboolean backface_culling_was_enabled;
 
-  clutter_actor_get_allocation_geometry (self, &geom);
-
-  gpsg_sphere_ensure_vertices (sphere);
-
-  backface_culling_was_enabled = cogl_get_backface_culling_enabled ();
-  cogl_set_backface_culling_enabled (TRUE);
-
-  cogl_push_matrix ();
-  cogl_translate (geom.width / 2, geom.height / 2, 0.0f);
-  cogl_scale (MIN (geom.width, geom.height) / 2.0f,
-              MIN (geom.width, geom.height) / 2.0f,
-              MIN (geom.width, geom.height) / 2.0f);
-
-  if ((priv->paint_flags & GPSG_SPHERE_PAINT_TEXTURE))
+  /* If the sphere is completely flat we can just use the regular
+     texture paint method */
+  if (priv->flatness >= 1.0f)
     {
-      material = clutter_texture_get_cogl_material (CLUTTER_TEXTURE (self));
+      if (CLUTTER_ACTOR_CLASS (gpsg_sphere_parent_class)->paint)
+        CLUTTER_ACTOR_CLASS (gpsg_sphere_parent_class)->paint (self);
+    }
+  else
+    {
+      ClutterGeometry geom;
+      CoglHandle material;
+      gboolean backface_culling_was_enabled;
+      gfloat sphere_radius;
+      gboolean use_shader;
 
-      if (material != COGL_INVALID_HANDLE)
+      clutter_actor_get_allocation_geometry (self, &geom);
+
+      sphere_radius = MIN (geom.width, geom.height) / 2.0f;
+
+      gpsg_sphere_ensure_vertices (sphere);
+
+      backface_culling_was_enabled = cogl_get_backface_culling_enabled ();
+      cogl_set_backface_culling_enabled (TRUE);
+
+      use_shader = (priv->flatness > 0.0f
+                    && gpsg_sphere_compile_program (sphere));
+
+      cogl_push_matrix ();
+      cogl_translate (geom.width / 2.0f, geom.height / 2.0f, 0.0f);
+
+      if (use_shader)
         {
-          cogl_set_source (material);
-
-          cogl_vertex_buffer_draw_elements (priv->vertices,
-                                            COGL_VERTICES_MODE_TRIANGLES,
-                                            priv->indices,
-                                            0, priv->n_vertices - 1,
-                                            0, priv->n_indices);
+          cogl_program_use (priv->flat_program);
+          cogl_program_uniform_1f (priv->flatness_uniform, priv->flatness);
+          cogl_program_uniform_1f (priv->flat_width_uniform, geom.width);
+          cogl_program_uniform_1f (priv->flat_height_uniform, geom.height);
+          cogl_program_uniform_1f (priv->sphere_radius_uniform, sphere_radius);
         }
+      else
+        cogl_scale (sphere_radius, sphere_radius, sphere_radius);
+
+      if ((priv->paint_flags & GPSG_SPHERE_PAINT_TEXTURE))
+        {
+          material = clutter_texture_get_cogl_material (CLUTTER_TEXTURE (self));
+
+          if (material != COGL_INVALID_HANDLE)
+            {
+              cogl_set_source (material);
+
+              cogl_vertex_buffer_draw_elements (priv->vertices,
+                                                COGL_VERTICES_MODE_TRIANGLES,
+                                                priv->indices,
+                                                0, priv->n_vertices - 1,
+                                                0, priv->n_indices);
+            }
+        }
+
+      if ((priv->paint_flags & GPSG_SPHERE_PAINT_LINES))
+        {
+          int i;
+
+          cogl_set_source_color4ub (priv->lines_color.red,
+                                    priv->lines_color.green,
+                                    priv->lines_color.blue,
+                                    priv->lines_color.alpha);
+          /* If we could set the polygon mode this could be done with
+             triangles in a single call instead */
+          for (i = 0; i + 3 <= priv->n_indices; i += 3)
+            cogl_vertex_buffer_draw_elements (priv->vertices,
+                                              COGL_VERTICES_MODE_LINE_LOOP,
+                                              priv->indices,
+                                              0, priv->n_vertices - 1,
+                                              i, 3);
+        }
+
+      if (use_shader)
+        cogl_program_use (COGL_INVALID_HANDLE);
+
+      cogl_pop_matrix ();
+
+     cogl_set_backface_culling_enabled (backface_culling_was_enabled);
     }
-  if ((priv->paint_flags & GPSG_SPHERE_PAINT_LINES))
-    {
-      int i;
-
-      cogl_set_source_color4ub (priv->lines_color.red,
-                                priv->lines_color.green,
-                                priv->lines_color.blue,
-                                priv->lines_color.alpha);
-      /* If we could set the polygon mode this could be done with
-         triangles in a single call instead */
-      for (i = 0; i + 3 <= priv->n_indices; i += 3)
-        cogl_vertex_buffer_draw_elements (priv->vertices,
-                                          COGL_VERTICES_MODE_LINE_LOOP,
-                                          priv->indices,
-                                          0, priv->n_vertices - 1,
-                                          i, 3);
-    }
-
-  cogl_pop_matrix ();
-
-  cogl_set_backface_culling_enabled (backface_culling_was_enabled);
 }
 
 static void
@@ -672,8 +807,15 @@ static void
 gpsg_sphere_dispose (GObject *self)
 {
   GpsgSphere *sphere = GPSG_SPHERE (self);
+  GpsgSpherePrivate *priv = sphere->priv;
 
   gpsg_sphere_forget_vertices (sphere);
+
+  if (priv->flat_program != COGL_INVALID_HANDLE)
+    {
+      cogl_handle_unref (priv->flat_program);
+      priv->flat_program = COGL_INVALID_HANDLE;
+    }
 
   G_OBJECT_CLASS (gpsg_sphere_parent_class)->dispose (self);
 }
@@ -701,6 +843,31 @@ gpsg_sphere_set_depth (GpsgSphere *sphere, guint depth)
       priv->depth = depth;
       clutter_actor_queue_redraw (CLUTTER_ACTOR (sphere));
       g_object_notify (G_OBJECT (sphere), "depth");
+    }
+}
+
+gfloat
+gpsg_sphere_get_flatness (GpsgSphere *sphere)
+{
+  g_return_val_if_fail (GPSG_IS_SPHERE (sphere), 0);
+
+  return sphere->priv->flatness;
+}
+
+void
+gpsg_sphere_set_flatness (GpsgSphere *sphere, gfloat flatness)
+{
+  GpsgSpherePrivate *priv;
+
+  g_return_if_fail (GPSG_IS_SPHERE (sphere));
+
+  priv = sphere->priv;
+
+  if (flatness != priv->flatness)
+    {
+      priv->flatness = flatness;
+      clutter_actor_queue_redraw (CLUTTER_ACTOR (sphere));
+      g_object_notify (G_OBJECT (sphere), "flatness");
     }
 }
 

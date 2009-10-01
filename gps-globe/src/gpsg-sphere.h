@@ -65,6 +65,9 @@ ClutterActor *gpsg_sphere_new (void);
 guint gpsg_sphere_get_depth (GpsgSphere *sphere);
 void gpsg_sphere_set_depth (GpsgSphere *sphere, guint depth);
 
+gfloat gpsg_sphere_get_flatness (GpsgSphere *sphere);
+void gpsg_sphere_set_flatness (GpsgSphere *sphere, gfloat flatness);
+
 GpsgSpherePaintFlags gpsg_sphere_get_paint_flags (GpsgSphere *sphere);
 void gpsg_sphere_set_paint_flags (GpsgSphere *sphere,
                                   GpsgSpherePaintFlags flags);

@@ -17,6 +17,7 @@
 /src/gpsg-enum-types.c
 /src/gpsg-enum-types.h
 /src/stamp-gpsg-enum-types.h
+/src/gpsg-sphere-vertex-shader.c
 
 .deps
 *.o
