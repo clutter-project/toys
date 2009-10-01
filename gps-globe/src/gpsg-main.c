@@ -43,9 +43,18 @@ set_tex (ClutterActor *sphere)
 {
   if (n_tex > 0)
     {
+      GError *error = NULL;
+
       clutter_texture_set_from_file (CLUTTER_TEXTURE (sphere),
                                      tex[tex_num++],
-                                     NULL);
+                                     &error);
+
+      if (error)
+        {
+          g_warning ("%s", error->message);
+          g_error_free (error);
+        }
+
       if (tex_num >= n_tex)
         tex_num = 0;
     }
