@@ -719,8 +719,10 @@ gpsg_sphere_paint (ClutterActor *self)
       gboolean backface_culling_was_enabled;
       gfloat sphere_radius;
       gboolean use_shader;
+      guint8 paint_opacity;
 
       clutter_actor_get_allocation_geometry (self, &geom);
+      paint_opacity = clutter_actor_get_paint_opacity (self);
 
       sphere_radius = MIN (geom.width, geom.height) / 2.0f;
 
@@ -750,6 +752,12 @@ gpsg_sphere_paint (ClutterActor *self)
         {
           material = clutter_texture_get_cogl_material (CLUTTER_TEXTURE (self));
 
+          cogl_material_set_color4ub (material,
+                                      paint_opacity,
+                                      paint_opacity,
+                                      paint_opacity,
+                                      paint_opacity);
+
           if (material != COGL_INVALID_HANDLE)
             {
               cogl_set_source (material);
@@ -765,11 +773,17 @@ gpsg_sphere_paint (ClutterActor *self)
       if ((priv->paint_flags & GPSG_SPHERE_PAINT_LINES))
         {
           int i;
+          CoglColor color;
 
-          cogl_set_source_color4ub (priv->lines_color.red,
-                                    priv->lines_color.green,
-                                    priv->lines_color.blue,
-                                    priv->lines_color.alpha);
+          cogl_color_set_from_4ub (&color,
+                                   priv->lines_color.red,
+                                   priv->lines_color.green,
+                                   priv->lines_color.blue,
+                                   priv->lines_color.alpha
+                                   * paint_opacity / 255);
+          cogl_color_premultiply (&color);
+          cogl_set_source_color (&color);
+
           /* If we could set the polygon mode this could be done with
              triangles in a single call instead */
           for (i = 0; i + 3 <= priv->n_indices; i += 3)
