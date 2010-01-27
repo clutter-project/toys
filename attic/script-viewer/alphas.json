@@ -1,33 +1,28 @@
-# there are inconsistencies in the naming of the nicks of the
-# properties: 
-#               foo-begin vs start-foo vs foo-start
-
 [
   {
     "id" : "animation",
     "type" : "ClutterTimeline",
-    "num-frames" : 300,
-    "fps" : 60,
+    "duration" : 5000,
     "loop" : true
   },
   {
     "id" : "root",
     "type" : "ClutterGroup",
     "x": 0,
-    "y": 0
+    "y": 0,
     "children" : [
 
       {
-        "type": "ClutterLabel",
-        "text": "ramp-inc",
+        "type": "ClutterText",
+        "text": "linear",
         "font-name": "Sans 20px",
         "visible":true,
         "wrap":false,
         "behaviours" : [
             {
-              "type"          : "ClutterBehaviourPath",
-              "knots" : [[20, 10], [400, 10]],
-              "alpha" : {"timeline"  : "animation", "function"  : "ramp-inc"}
+              "type"  : "ClutterBehaviourPath",
+              "path" : "M 20,10 L 400,10",
+              "alpha" : {"timeline"  : "animation", "mode" : "linear"}
             }
           ]
       },

@@ -2,9 +2,11 @@
  * of clutterscript.
  *
  * Copyright 2007 OpenedHand Ltd
- * Authored by Øyvind Kolås <pippin@o-hand.com>
- * Licensed under the GPL v2 or greater.
+ * Copyright 2010 Intel Corp
  *
+ * Authored by Øyvind Kolås <pippin@o-hand.com>
+ *
+ * Licensed under the GPL v2 or greater.
  */
 
 #include <clutter/clutter.h>
@@ -125,12 +127,13 @@ initialize_stage ()
   ClutterColor  color;
 
   stage = clutter_stage_get_default ();
-  clutter_color_parse (args.bg_color, &color);
-  clutter_stage_set_color (CLUTTER_STAGE (stage), &color);
+
   clutter_actor_set_size (stage, args.width, args.height);
 
-  if (args.fullscreen)
-    clutter_stage_fullscreen (CLUTTER_STAGE (stage));
+  clutter_color_from_string (&color, args.bg_color);
+  clutter_stage_set_color (CLUTTER_STAGE (stage), &color);
+
+  clutter_stage_set_fullscreen (CLUTTER_STAGE (stage), args.fullscreen);
 
   return stage;
 }
@@ -147,14 +150,19 @@ load_script (const gchar *path)
   if (error)
     {
       ClutterColor error_color = { 0xff, 0, 0, 0xff };
-      actor = clutter_label_new_with_text ("Sans 20px", error->message);
-      clutter_actor_set_size (actor, clutter_actor_get_width (stage),
-                                     200);
+
+      actor = clutter_text_new_with_text ("Sans 20px", error->message);
+      clutter_text_set_color (CLUTTER_TEXT (actor), &error_color);
+
+      clutter_actor_set_size (actor, clutter_actor_get_width (stage), 200);
+
       g_print ("%s\n", error->message);
-      clutter_group_add (CLUTTER_GROUP (stage), actor);
+
+      clutter_container_add_actor (CLUTTER_CONTAINER (stage), actor);
       clutter_actor_show_all (stage);
-      clutter_label_set_color (CLUTTER_LABEL (actor), &error_color);
+
       g_clear_error (&error);
+
       return;
     }
 
@@ -166,36 +174,14 @@ load_script (const gchar *path)
       gchar        message[256];
 
       g_sprintf (message, "No actor with \"id\"=\"%s\" found", args.id);
-      actor = clutter_label_new_with_text ("Sans 30px", message);
-      clutter_label_set_color (CLUTTER_LABEL (actor), &error_color);
+      actor = clutter_text_new_with_text ("Sans 30px", message);
+      clutter_text_set_color (CLUTTER_TEXT (actor), &error_color);
     }
-  else 
+  else
     {
-      clutter_group_add (CLUTTER_GROUP (stage), actor);
+      clutter_container_add_actor (CLUTTER_CONTAINER (stage), actor);
       clutter_actor_show_all (stage);
 
-#if 0
-      if (args.png != NULL)
-        { 
-          /* write a screenshot to file */
-          GdkPixbuf *snapshot;
-          gint i;
-
-          for (i=0;i<10;i++) /* evil hack to force stage to be updated,
-                              * before screenshot
-                              */
-            {
-              g_usleep (10000);
-              while (g_main_context_pending (NULL))
-                g_main_context_iteration (NULL, FALSE);
-            }
-
-          snapshot = clutter_stage_snapshot (CLUTTER_STAGE (stage), 0, 0,
-                                             args.width, args.height);
-          gdk_pixbuf_save (snapshot, args.png, "png", NULL, NULL);
-          clutter_main_quit ();
-        }
-#endif
       if (args.timeline != NULL)
         {
           timeline = CLUTTER_TIMELINE (clutter_script_get_object (

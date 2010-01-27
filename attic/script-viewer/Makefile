@@ -9,12 +9,12 @@
 # Øyvind Kolås (c) 2007 <pippin@gimp.org>  placed in the Public Domain.
 ##
 
-PKGMODULES = clutter-0.8 
+PKGMODULES = clutter-1.0 
 
 # you only need to change the following if you want to change where the
 # generated tarball gets scp'd to:
 
-SCP_DESTINATION=pug.vpn:tmp
+SCP_DESTINATION=
 
 BINARY=$(shell basename `pwd`)#
 PACKAGE=../$(BINARY).tar.bz2 # you can use both .gz and .bz2 as extension here
