@@ -23,5 +23,6 @@ script-viewer - A ClutterScript viewer
 table         - A multi-touch table style picture/video viewer (not
 actually multi-touch)
 woohaa        - A video browser/player
+gps-globe     - The start of an app to draw a globe with your GPS pos
 
 Toys that haven't been ported to the 1.x API are placed in the attic.
