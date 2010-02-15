@@ -71,7 +71,7 @@ ripple (ClutterActor *stage,
                              "scale-x", scale_x,
                              "scale-y", scale_y,
                              "opacity", 0,
-                             "signal-swapped::completed",
+                             "signal-swapped-after::completed",
                                clutter_actor_destroy, actor,
                              NULL);
     }
