@@ -1,0 +1,8 @@
+This work has been superceded by the MxDeformTexture widget in the Mx
+toolkit. Mx is available from git,
+
+git://git.moblin.org/mx
+
+The effects here are all included in Mx, along with tweaks to improve
+their function, and the MxDeformTexture widget itself is better structured
+to allow for animating properties with clutter_actor_animate ().
