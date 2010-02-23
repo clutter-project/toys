@@ -69,9 +69,10 @@ struct _ClutterPlyDataLoadData
   gfloat current_vertex[G_N_ELEMENTS (clutter_ply_data_properties)];
   gint prop_map[G_N_ELEMENTS (clutter_ply_data_properties)];
   gint n_props, available_props, got_props;
-  gushort first_vertex, last_vertex;
+  guint first_vertex, last_vertex;
   GArray *vertices;
   GArray *faces;
+  CoglIndicesType indices_type;
 };
 
 struct _ClutterPlyDataPrivate
@@ -195,6 +196,112 @@ clutter_ply_data_vertex_read_cb (p_ply_argument argument)
   return 1;
 }
 
+static void
+clutter_ply_data_add_face_index (ClutterPlyDataLoadData *data,
+                                 guint index)
+{
+  switch (data->indices_type)
+    {
+    case COGL_INDICES_TYPE_UNSIGNED_BYTE:
+      {
+        guint8 value = index;
+        g_array_append_val (data->faces, value);
+      }
+      break;
+    case COGL_INDICES_TYPE_UNSIGNED_SHORT:
+      {
+        guint16 value = index;
+        g_array_append_val (data->faces, value);
+      }
+      break;
+    case COGL_INDICES_TYPE_UNSIGNED_INT:
+      {
+        guint32 value = index;
+        g_array_append_val (data->faces, value);
+      }
+      break;
+    }
+}
+
+static guint
+clutter_ply_data_get_face_index (ClutterPlyDataLoadData *data,
+                                 int index)
+{
+  switch (data->indices_type)
+    {
+    case COGL_INDICES_TYPE_UNSIGNED_BYTE:
+      return g_array_index (data->faces, guint8, index);
+
+    case COGL_INDICES_TYPE_UNSIGNED_SHORT:
+      return g_array_index (data->faces, guint16, index);
+
+    case COGL_INDICES_TYPE_UNSIGNED_INT:
+      return g_array_index (data->faces, guint32, index);
+    }
+
+  g_assert_not_reached ();
+}
+
+static gboolean
+clutter_ply_data_get_indices_type (ClutterPlyDataLoadData *data,
+                                   GError **error)
+{
+  p_ply_element elem = NULL;
+
+  /* Look for the 'vertices' element */
+  while ((elem = ply_get_next_element (data->ply, elem)))
+    {
+      const char *name;
+      gint32 n_instances;
+
+      if (ply_get_element_info (elem, &name, &n_instances))
+        {
+          if (!strcmp (name, "vertex"))
+            {
+              if (n_instances <= 0x100)
+                {
+                  data->indices_type = COGL_INDICES_TYPE_UNSIGNED_BYTE;
+                  data->faces = g_array_new (FALSE, FALSE, sizeof (guint8));
+                }
+              else if (n_instances <= 0x10000)
+                {
+                  data->indices_type = COGL_INDICES_TYPE_UNSIGNED_SHORT;
+                  data->faces = g_array_new (FALSE, FALSE, sizeof (guint16));
+                }
+              else if (cogl_features_available
+                       (COGL_FEATURE_UNSIGNED_INT_INDICES))
+                {
+                  data->indices_type = COGL_INDICES_TYPE_UNSIGNED_INT;
+                  data->faces = g_array_new (FALSE, FALSE, sizeof (guint32));
+                }
+              else
+                {
+                  g_set_error (error, CLUTTER_PLY_DATA_ERROR,
+                               CLUTTER_PLY_DATA_ERROR_UNSUPPORTED,
+                               "The PLY file requires unsigned int indices "
+                               "but this is not supported by your GL driver");
+                  return FALSE;
+                }
+
+              return TRUE;
+            }
+        }
+      else
+        {
+          g_set_error (error, CLUTTER_PLY_DATA_ERROR,
+                       CLUTTER_PLY_DATA_ERROR_PLY,
+                       "Error getting element info");
+          return FALSE;
+        }
+    }
+
+  g_set_error (error, CLUTTER_PLY_DATA_ERROR,
+               CLUTTER_PLY_DATA_ERROR_MISSING_PROPERTY,
+               "PLY file is missing the vertex element");
+
+  return FALSE;
+}
+
 static int
 clutter_ply_data_face_read_cb (p_ply_argument argument)
 {
@@ -211,13 +318,13 @@ clutter_ply_data_face_read_cb (p_ply_argument argument)
     data->last_vertex = ply_get_argument_value (argument);
   else if (index != -1)
     {
-      gushort new_vertex = ply_get_argument_value (argument);
+      guint new_vertex = ply_get_argument_value (argument);
 
       /* Add a triangle with the first vertex, the last vertex and
          this new vertex */
-      g_array_append_val (data->faces, data->first_vertex);
-      g_array_append_val (data->faces, data->last_vertex);
-      g_array_append_val (data->faces, new_vertex);
+      clutter_ply_data_add_face_index (data, data->first_vertex);
+      clutter_ply_data_add_face_index (data, data->last_vertex);
+      clutter_ply_data_add_face_index (data, new_vertex);
 
       /* Use the new vertex as one of the vertices next time around */
       data->last_vertex = new_vertex;
@@ -246,7 +353,7 @@ clutter_ply_data_load (ClutterPlyData *self,
   data.available_props = 0;
   data.got_props = 0;
   data.vertices = g_array_new (FALSE, FALSE, sizeof (gfloat));
-  data.faces = g_array_new (FALSE, FALSE, sizeof (gushort));
+  data.faces = NULL;
 
   utf8_filename = g_filename_to_utf8 (filename, -1, NULL, NULL, NULL);
   if (utf8_filename == NULL)
@@ -288,7 +395,8 @@ clutter_ply_data_load (ClutterPlyData *self,
                          "PLY file %s is missing face property "
                          "'vertex_indices'",
                          utf8_filename);
-          else if (!ply_read (data.ply))
+          else if (clutter_ply_data_get_indices_type (&data, &data.error)
+                   && !ply_read (data.ply))
             clutter_ply_data_check_unknown_error (&data);
         }
 
@@ -318,7 +426,7 @@ clutter_ply_data_load (ClutterPlyData *self,
          range of used vertices */
       for (i = 0; i < data.faces->len; i++)
         {
-          gushort index = g_array_index (data.faces, gushort, i);
+          guint index = clutter_ply_data_get_face_index (&data, i);
           if (index >= data.vertices->len / data.n_props)
             break;
           else if (index < min_index)
@@ -397,7 +505,7 @@ clutter_ply_data_load (ClutterPlyData *self,
 
           /* Create a VBO for the indices */
           priv->indices
-            = cogl_vertex_buffer_indices_new (COGL_INDICES_TYPE_UNSIGNED_SHORT,
+            = cogl_vertex_buffer_indices_new (data.indices_type,
                                               data.faces->data,
                                               data.faces->len);
 
@@ -411,7 +519,8 @@ clutter_ply_data_load (ClutterPlyData *self,
 
   g_free (utf8_filename);
   g_array_free (data.vertices, TRUE);
-  g_array_free (data.faces, TRUE);
+  if (data.faces)
+    g_array_free (data.faces, TRUE);
 
   return ret;
 }
