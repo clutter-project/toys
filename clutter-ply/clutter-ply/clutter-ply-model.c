@@ -91,12 +91,12 @@ clutter_ply_model_class_init (ClutterPlyModelClass *klass)
   pspec = g_param_spec_object ("data",
                                "Data",
                                "The ClutterPlyData to render",
-                               CLUTTER_PLY_TYPE_MODEL,
+                               CLUTTER_PLY_TYPE_DATA,
                                G_PARAM_READABLE | G_PARAM_WRITABLE
                                | G_PARAM_STATIC_NAME
                                | G_PARAM_STATIC_NICK
                                | G_PARAM_STATIC_BLURB);
-  g_object_class_install_property (gobject_class, PROP_MATERIAL, pspec);
+  g_object_class_install_property (gobject_class, PROP_DATA, pspec);
 
   g_type_class_add_private (klass, sizeof (ClutterPlyModelPrivate));
 }
