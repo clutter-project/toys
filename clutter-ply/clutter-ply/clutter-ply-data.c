@@ -340,7 +340,7 @@ clutter_ply_data_load (ClutterPlyData *self,
 {
   ClutterPlyDataPrivate *priv;
   ClutterPlyDataLoadData data;
-  gchar *utf8_filename;
+  gchar *display_name;
   gboolean ret;
 
   g_return_val_if_fail (CLUTTER_PLY_IS_DATA (self), FALSE);
@@ -355,9 +355,7 @@ clutter_ply_data_load (ClutterPlyData *self,
   data.vertices = g_array_new (FALSE, FALSE, sizeof (gfloat));
   data.faces = NULL;
 
-  utf8_filename = g_filename_to_utf8 (filename, -1, NULL, NULL, NULL);
-  if (utf8_filename == NULL)
-    utf8_filename = g_strdup ("?");
+  display_name = g_filename_display_name (filename);
 
   if ((data.ply = ply_open (filename,
                             clutter_ply_data_error_cb,
@@ -386,7 +384,7 @@ clutter_ply_data_load (ClutterPlyData *self,
             g_set_error (&data.error, CLUTTER_PLY_DATA_ERROR,
                          CLUTTER_PLY_DATA_ERROR_MISSING_PROPERTY,
                          "PLY file %s is missing the vertex properties",
-                         utf8_filename);
+                         display_name);
           else if (!ply_set_read_cb (data.ply, "face", "vertex_indices",
                                      clutter_ply_data_face_read_cb,
                                      &data, i))
@@ -394,7 +392,7 @@ clutter_ply_data_load (ClutterPlyData *self,
                          CLUTTER_PLY_DATA_ERROR_MISSING_PROPERTY,
                          "PLY file %s is missing face property "
                          "'vertex_indices'",
-                         utf8_filename);
+                         display_name);
           else if (clutter_ply_data_get_indices_type (&data, &data.error)
                    && !ply_read (data.ply))
             clutter_ply_data_check_unknown_error (&data);
@@ -413,7 +411,7 @@ clutter_ply_data_load (ClutterPlyData *self,
       g_set_error (error, CLUTTER_PLY_DATA_ERROR,
                    CLUTTER_PLY_DATA_ERROR_INVALID,
                    "No faces found in %s",
-                   utf8_filename);
+                   display_name);
       ret = FALSE;
     }
   else
@@ -439,7 +437,7 @@ clutter_ply_data_load (ClutterPlyData *self,
           g_set_error (error, CLUTTER_PLY_DATA_ERROR,
                        CLUTTER_PLY_DATA_ERROR_INVALID,
                        "Index out of range in %s",
-                       utf8_filename);
+                       display_name);
           ret = FALSE;
         }
       else
@@ -517,7 +515,7 @@ clutter_ply_data_load (ClutterPlyData *self,
         }
     }
 
-  g_free (utf8_filename);
+  g_free (display_name);
   g_array_free (data.vertices, TRUE);
   if (data.faces)
     g_array_free (data.faces, TRUE);
