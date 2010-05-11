@@ -1,4 +1,4 @@
-noinst_PROGRAMS = monkey
+noinst_PROGRAMS = viewer
 
 INCLUDES = \
 	-I $(top_srcdir)
@@ -6,10 +6,10 @@ INCLUDES = \
 AM_CPPFLAGS = \
 	@CLUTTER_CFLAGS@
 
-monkey_SOURCES = \
-	monkey.c
+viewer_SOURCES = \
+	viewer.c
 
-monkey_LDADD = \
+viewer_LDADD = \
 	@CLUTTER_LIBS@ \
 	$(top_builddir)/clutter-ply/libclutter-ply.la
 

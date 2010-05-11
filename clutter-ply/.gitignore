@@ -18,7 +18,7 @@
 /depcomp
 /example/Makefile
 /example/Makefile.in
-/example/monkey
+/example/viewer
 /install-sh
 /libtool
 /ltmain.sh

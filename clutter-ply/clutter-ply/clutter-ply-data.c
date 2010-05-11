@@ -206,11 +206,12 @@ clutter_ply_data_vertex_read_cb (p_ply_argument argument)
         {
           gfloat *min = &data->min_vertex.x + i;
           gfloat *max = &data->max_vertex.x + i;
+          gfloat value = data->current_vertex[data->prop_map[i]];
 
-          if (data->current_vertex[i] < *min)
-            *min = data->current_vertex[i];
-          if (data->current_vertex[i] > *max)
-            *max = data->current_vertex[i];
+          if (value < *min)
+            *min = value;
+          if (value > *max)
+            *max = value;
         }
     }
 
