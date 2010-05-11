@@ -77,6 +77,9 @@ struct _ClutterPlyDataLoadData
 
   /* Bounding cuboid of the data */
   ClutterVertex min_vertex, max_vertex;
+
+  /* Range of indices used */
+  guint min_index, max_index;
 };
 
 struct _ClutterPlyDataPrivate
@@ -222,6 +225,11 @@ static void
 clutter_ply_data_add_face_index (ClutterPlyDataLoadData *data,
                                  guint index)
 {
+  if (index > data->max_index)
+    data->max_index = index;
+  if (index < data->min_index)
+    data->min_index = index;
+
   switch (data->indices_type)
     {
     case COGL_INDICES_TYPE_UNSIGNED_BYTE:
@@ -243,25 +251,6 @@ clutter_ply_data_add_face_index (ClutterPlyDataLoadData *data,
       }
       break;
     }
-}
-
-static guint
-clutter_ply_data_get_face_index (ClutterPlyDataLoadData *data,
-                                 int index)
-{
-  switch (data->indices_type)
-    {
-    case COGL_INDICES_TYPE_UNSIGNED_BYTE:
-      return g_array_index (data->faces, guint8, index);
-
-    case COGL_INDICES_TYPE_UNSIGNED_SHORT:
-      return g_array_index (data->faces, guint16, index);
-
-    case COGL_INDICES_TYPE_UNSIGNED_INT:
-      return g_array_index (data->faces, guint32, index);
-    }
-
-  g_assert_not_reached ();
 }
 
 static gboolean
@@ -382,6 +371,8 @@ clutter_ply_data_load (ClutterPlyData *self,
   data.max_vertex.x = -G_MAXFLOAT;
   data.max_vertex.y = -G_MAXFLOAT;
   data.max_vertex.z = -G_MAXFLOAT;
+  data.min_index = G_MAXUINT;
+  data.max_index = 0;
 
   display_name = g_filename_display_name (filename);
 
@@ -444,23 +435,8 @@ clutter_ply_data_load (ClutterPlyData *self,
     }
   else
     {
-      GLuint min_index = G_MAXUINT;
-      GLuint max_index = 0;
-      int i;
-
-      /* Make sure all of the indices are valid and calculate the
-         range of used vertices */
-      for (i = 0; i < data.faces->len; i++)
-        {
-          guint index = clutter_ply_data_get_face_index (&data, i);
-          if (index >= data.vertices->len / data.n_props)
-            break;
-          else if (index < min_index)
-            min_index = index;
-          else if (index > max_index)
-            max_index = index;
-        }
-      if (i < data.faces->len)
+      /* Make sure all of the indices are valid */
+      if (data.max_index >= data.vertices->len / data.n_props)
         {
           g_set_error (error, CLUTTER_PLY_DATA_ERROR,
                        CLUTTER_PLY_DATA_ERROR_INVALID,
@@ -535,8 +511,8 @@ clutter_ply_data_load (ClutterPlyData *self,
                                               data.faces->data,
                                               data.faces->len);
 
-          priv->min_index = min_index;
-          priv->max_index = max_index;
+          priv->min_index = data.min_index;
+          priv->max_index = data.max_index;
           priv->n_triangles = data.faces->len / 3;
 
           priv->min_vertex = data.min_vertex;
