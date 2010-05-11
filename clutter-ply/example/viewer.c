@@ -73,9 +73,9 @@ main (int argc, char **argv)
 
   clutter_init (&argc, &argv);
 
-  if (argc != 2)
+  if (argc != 2 && argc != 3)
     {
-      fprintf (stderr, "usage: %s <ply-file>\n", argv[0]);
+      fprintf (stderr, "usage: %s <ply-file> [texture]\n", argv[0]);
       exit (1);
     }
 
@@ -100,6 +100,33 @@ main (int argc, char **argv)
       ClutterPlyData *ply_data;
       ClutterVertex min_vertex, max_vertex;
       gfloat scale, min_scale;
+
+      /* If a texture was specified then set that as a material */
+      if (argc > 2)
+        {
+          CoglHandle texture =
+            cogl_texture_new_from_file (argv[2],
+                                        COGL_TEXTURE_NONE,
+                                        COGL_PIXEL_FORMAT_ANY,
+                                        &error);
+
+          if (texture == COGL_INVALID_HANDLE)
+            {
+              g_warning ("%s", error->message);
+              g_clear_error (&error);
+            }
+          else
+            {
+              CoglHandle material = cogl_material_new ();
+              cogl_material_set_layer (material, 0, texture);
+              cogl_handle_unref (texture);
+
+              clutter_ply_model_set_material (CLUTTER_PLY_MODEL (model),
+                                              material);
+
+              cogl_handle_unref (material);
+            }
+        }
 
       /* Get the extents of the model */
       ply_data = clutter_ply_model_get_data (CLUTTER_PLY_MODEL (model));
