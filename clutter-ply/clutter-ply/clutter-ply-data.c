@@ -23,6 +23,7 @@
 #include <glib-object.h>
 #include <string.h>
 #include <cogl/cogl.h>
+#include <clutter/clutter.h>
 
 #include "clutter-ply-data.h"
 #include "rply/rply.h"
@@ -73,6 +74,9 @@ struct _ClutterPlyDataLoadData
   GArray *vertices;
   GArray *faces;
   CoglIndicesType indices_type;
+
+  /* Bounding cuboid of the data */
+  ClutterVertex min_vertex, max_vertex;
 };
 
 struct _ClutterPlyDataPrivate
@@ -81,6 +85,9 @@ struct _ClutterPlyDataPrivate
   CoglHandle indices;
   guint min_index, max_index;
   guint n_triangles;
+
+  /* Bounding cuboid of the data */
+  ClutterVertex min_vertex, max_vertex;
 };
 
 static void
@@ -189,8 +196,22 @@ clutter_ply_data_vertex_read_cb (p_ply_argument argument)
      to the array */
   if (data->got_props == data->available_props)
     {
+      int i;
+
       g_array_append_vals (data->vertices, data->current_vertex, data->n_props);
       data->got_props = 0;
+
+      /* Update the bounding box for the data */
+      for (i = 0; i < 3; i++)
+        {
+          gfloat *min = &data->min_vertex.x + i;
+          gfloat *max = &data->max_vertex.x + i;
+
+          if (data->current_vertex[i] < *min)
+            *min = data->current_vertex[i];
+          if (data->current_vertex[i] > *max)
+            *max = data->current_vertex[i];
+        }
     }
 
   return 1;
@@ -354,6 +375,12 @@ clutter_ply_data_load (ClutterPlyData *self,
   data.got_props = 0;
   data.vertices = g_array_new (FALSE, FALSE, sizeof (gfloat));
   data.faces = NULL;
+  data.min_vertex.x = G_MAXFLOAT;
+  data.min_vertex.y = G_MAXFLOAT;
+  data.min_vertex.z = G_MAXFLOAT;
+  data.max_vertex.x = -G_MAXFLOAT;
+  data.max_vertex.y = -G_MAXFLOAT;
+  data.max_vertex.z = -G_MAXFLOAT;
 
   display_name = g_filename_display_name (filename);
 
@@ -511,6 +538,9 @@ clutter_ply_data_load (ClutterPlyData *self,
           priv->max_index = max_index;
           priv->n_triangles = data.faces->len / 3;
 
+          priv->min_vertex = data.min_vertex;
+          priv->max_vertex = data.max_vertex;
+
           ret = TRUE;
         }
     }
@@ -542,6 +572,17 @@ clutter_ply_data_render (ClutterPlyData *self)
                                     priv->min_index,
                                     priv->max_index,
                                     0, priv->n_triangles * 3);
+}
+
+void
+clutter_ply_data_get_extents (ClutterPlyData *self,
+                              ClutterVertex *min_vertex,
+                              ClutterVertex *max_vertex)
+{
+  ClutterPlyDataPrivate *priv = self->priv;
+
+  *min_vertex = priv->min_vertex;
+  *max_vertex = priv->max_vertex;
 }
 
 GQuark

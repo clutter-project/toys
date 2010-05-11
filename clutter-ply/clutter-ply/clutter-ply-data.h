@@ -23,7 +23,7 @@
 #ifndef __CLUTTER_PLY_DATA_H__
 #define __CLUTTER_PLY_DATA_H__
 
-#include <glib-object.h>
+#include <clutter/clutter.h>
 
 G_BEGIN_DECLS
 
@@ -85,6 +85,10 @@ gboolean clutter_ply_data_load (ClutterPlyData *self,
 void clutter_ply_data_render (ClutterPlyData *self);
 
 GQuark clutter_ply_data_error_quark (void);
+
+void clutter_ply_data_get_extents (ClutterPlyData *self,
+                                   ClutterVertex *min_vertex,
+                                   ClutterVertex *max_vertex);
 
 G_END_DECLS
 
