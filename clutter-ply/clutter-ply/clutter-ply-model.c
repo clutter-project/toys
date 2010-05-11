@@ -104,7 +104,12 @@ clutter_ply_model_class_init (ClutterPlyModelClass *klass)
 static void
 clutter_ply_model_init (ClutterPlyModel *self)
 {
-  self->priv = CLUTTER_PLY_MODEL_GET_PRIVATE (self);
+  ClutterPlyModelPrivate *priv;
+
+  priv = self->priv = CLUTTER_PLY_MODEL_GET_PRIVATE (self);
+
+  /* Default to a plain white material */
+  priv->material = cogl_material_new ();
 }
 
 ClutterActor *
