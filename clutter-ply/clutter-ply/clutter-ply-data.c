@@ -39,20 +39,23 @@ G_DEFINE_TYPE (ClutterPlyData, clutter_ply_data, G_TYPE_OBJECT);
 static const struct
 {
   const gchar *name;
+  int size;
 }
 clutter_ply_data_properties[] =
 {
-  { "x" },
-  { "y" },
-  { "z" },
-  { "nx" },
-  { "ny" },
-  { "nz" },
-  { "s" },
-  { "t" },
-  { "red" },
-  { "green" },
-  { "blue" }
+  /* These should be sorted in descending order of size so that it
+     never ends doing an unaligned write */
+  { "x", sizeof (gfloat) },
+  { "y", sizeof (gfloat) },
+  { "z", sizeof (gfloat) },
+  { "nx", sizeof (gfloat) },
+  { "ny", sizeof (gfloat) },
+  { "nz", sizeof (gfloat) },
+  { "s", sizeof (gfloat) },
+  { "t", sizeof (gfloat) },
+  { "red", sizeof (guint8) },
+  { "green", sizeof (guint8) },
+  { "blue", sizeof (guint8) }
 };
 
 #define CLUTTER_PLY_DATA_VERTEX_PROPS    7
@@ -67,11 +70,15 @@ struct _ClutterPlyDataLoadData
   ClutterPlyData *model;
   p_ply ply;
   GError *error;
-  gfloat current_vertex[G_N_ELEMENTS (clutter_ply_data_properties)];
+  /* Data for the current vertex */
+  guint8 current_vertex[G_N_ELEMENTS (clutter_ply_data_properties) * 4];
+  /* Map from property number to byte offset in the current_vertex array */
   gint prop_map[G_N_ELEMENTS (clutter_ply_data_properties)];
-  gint n_props, available_props, got_props;
+  /* Number of bytes for a vertex */
+  guint n_vertex_bytes;
+  gint available_props, got_props;
   guint first_vertex, last_vertex;
-  GArray *vertices;
+  GByteArray *vertices;
   GArray *faces;
   CoglIndicesType indices_type;
 
@@ -187,12 +194,13 @@ clutter_ply_data_vertex_read_cb (p_ply_argument argument)
     }
 
   value = ply_get_argument_value (argument);
-  /* Colors are specified as a byte so we need to normalize them to a
-     float */
-  if (((1 << prop_num) & CLUTTER_PLY_DATA_COLOR_PROPS))
-    value /= 255.0;
 
-  data->current_vertex[data->prop_map[prop_num]] = value;
+  /* Colors are specified as a byte so we need to treat them specially */
+  if (((1 << prop_num) & CLUTTER_PLY_DATA_COLOR_PROPS))
+    data->current_vertex[data->prop_map[prop_num]] = value;
+  else
+    *(gfloat *) (data->current_vertex + data->prop_map[prop_num]) = value;
+
   data->got_props |= 1 << prop_num;
 
   /* If we've got enough properties for a complete vertex then add it
@@ -201,7 +209,8 @@ clutter_ply_data_vertex_read_cb (p_ply_argument argument)
     {
       int i;
 
-      g_array_append_vals (data->vertices, data->current_vertex, data->n_props);
+      g_byte_array_append (data->vertices, data->current_vertex,
+                           data->n_vertex_bytes);
       data->got_props = 0;
 
       /* Update the bounding box for the data */
@@ -209,7 +218,7 @@ clutter_ply_data_vertex_read_cb (p_ply_argument argument)
         {
           gfloat *min = &data->min_vertex.x + i;
           gfloat *max = &data->max_vertex.x + i;
-          gfloat value = data->current_vertex[data->prop_map[i]];
+          gfloat value = *(gfloat *) (data->current_vertex + data->prop_map[i]);
 
           if (value < *min)
             *min = value;
@@ -360,10 +369,10 @@ clutter_ply_data_load (ClutterPlyData *self,
 
   data.model = self;
   data.error = NULL;
-  data.n_props = 0;
+  data.n_vertex_bytes = 0;
   data.available_props = 0;
   data.got_props = 0;
-  data.vertices = g_array_new (FALSE, FALSE, sizeof (gfloat));
+  data.vertices = g_byte_array_new ();
   data.faces = NULL;
   data.min_vertex.x = G_MAXFLOAT;
   data.min_vertex.y = G_MAXFLOAT;
@@ -394,9 +403,13 @@ clutter_ply_data_load (ClutterPlyData *self,
                                  clutter_ply_data_vertex_read_cb,
                                  &data, i))
               {
-                data.prop_map[i] = data.n_props++;
+                data.prop_map[i] = data.n_vertex_bytes;
+                data.n_vertex_bytes += clutter_ply_data_properties[i].size;
                 data.available_props |= 1 << i;
               }
+
+          /* Align the size of a vertex to 32 bits */
+          data.n_vertex_bytes = (data.n_vertex_bytes + 3) & ~(guint) 3;
 
           if ((data.available_props & CLUTTER_PLY_DATA_VERTEX_PROPS)
               != CLUTTER_PLY_DATA_VERTEX_PROPS)
@@ -436,7 +449,7 @@ clutter_ply_data_load (ClutterPlyData *self,
   else
     {
       /* Make sure all of the indices are valid */
-      if (data.max_index >= data.vertices->len / data.n_props)
+      if (data.max_index >= data.vertices->len / data.n_vertex_bytes)
         {
           g_set_error (error, CLUTTER_PLY_DATA_ERROR,
                        CLUTTER_PLY_DATA_ERROR_INVALID,
@@ -446,62 +459,49 @@ clutter_ply_data_load (ClutterPlyData *self,
         }
       else
         {
-          guint offset = 0;
           /* Get rid of the old VBOs (if any) */
           clutter_ply_data_free_vbos (self);
 
           /* Create a new VBO for the vertices */
           priv->vertices_vbo = cogl_vertex_buffer_new (data.vertices->len
-                                                       / data.n_props);
+                                                       / data.n_vertex_bytes);
 
           /* Upload the data */
           if ((data.available_props & CLUTTER_PLY_DATA_VERTEX_PROPS)
               == CLUTTER_PLY_DATA_VERTEX_PROPS)
-            {
-              cogl_vertex_buffer_add (priv->vertices_vbo,
-                                      "gl_Vertex",
-                                      3, COGL_ATTRIBUTE_TYPE_FLOAT,
-                                      FALSE, sizeof (gfloat) * data.n_props,
-                                      data.vertices->data
-                                      + sizeof (gfloat) * offset);
-              offset += 3;
-            }
+            cogl_vertex_buffer_add (priv->vertices_vbo,
+                                    "gl_Vertex",
+                                    3, COGL_ATTRIBUTE_TYPE_FLOAT,
+                                    FALSE, data.n_vertex_bytes,
+                                    data.vertices->data
+                                    + data.prop_map[0]);
 
           if ((data.available_props & CLUTTER_PLY_DATA_NORMAL_PROPS)
               == CLUTTER_PLY_DATA_NORMAL_PROPS)
-            {
-              cogl_vertex_buffer_add (priv->vertices_vbo,
-                                      "gl_Normal",
-                                      3, COGL_ATTRIBUTE_TYPE_FLOAT,
-                                      FALSE, sizeof (gfloat) * data.n_props,
-                                      data.vertices->data
-                                      + sizeof (gfloat) * offset);
-              offset += 3;
-            }
+            cogl_vertex_buffer_add (priv->vertices_vbo,
+                                    "gl_Normal",
+                                    3, COGL_ATTRIBUTE_TYPE_FLOAT,
+                                    FALSE, data.n_vertex_bytes,
+                                    data.vertices->data
+                                    + data.prop_map[3]);
 
           if ((data.available_props & CLUTTER_PLY_DATA_TEX_COORD_PROPS)
               == CLUTTER_PLY_DATA_TEX_COORD_PROPS)
-            {
-              cogl_vertex_buffer_add (priv->vertices_vbo,
-                                      "gl_MultiTexCoord0",
-                                      2, COGL_ATTRIBUTE_TYPE_FLOAT,
-                                      FALSE, sizeof (gfloat) * data.n_props,
-                                      data.vertices->data
-                                      + sizeof (gfloat) * offset);
-              offset += 2;
-            }
+            cogl_vertex_buffer_add (priv->vertices_vbo,
+                                    "gl_MultiTexCoord0",
+                                    2, COGL_ATTRIBUTE_TYPE_FLOAT,
+                                    FALSE, data.n_vertex_bytes,
+                                    data.vertices->data
+                                    + data.prop_map[6]);
 
           if ((data.available_props & CLUTTER_PLY_DATA_COLOR_PROPS)
               == CLUTTER_PLY_DATA_COLOR_PROPS)
-            {
-              cogl_vertex_buffer_add (priv->vertices_vbo,
-                                      "gl_Color",
-                                      3, COGL_ATTRIBUTE_TYPE_FLOAT,
-                                      FALSE, sizeof (gfloat) * data.n_props,
-                                      data.vertices->data
-                                      + sizeof (gfloat) * offset);
-              offset += 3;
-            }
+            cogl_vertex_buffer_add (priv->vertices_vbo,
+                                    "gl_Color",
+                                    3, COGL_ATTRIBUTE_TYPE_UNSIGNED_BYTE,
+                                    FALSE, data.n_vertex_bytes,
+                                    data.vertices->data
+                                    + data.prop_map[8]);
 
           cogl_vertex_buffer_submit (priv->vertices_vbo);
 
@@ -523,7 +523,7 @@ clutter_ply_data_load (ClutterPlyData *self,
     }
 
   g_free (display_name);
-  g_array_free (data.vertices, TRUE);
+  g_byte_array_free (data.vertices, TRUE);
   if (data.faces)
     g_array_free (data.faces, TRUE);
 
