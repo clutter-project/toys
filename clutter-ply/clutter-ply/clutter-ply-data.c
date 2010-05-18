@@ -16,6 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * SECTION:clutter-ply-data
+ * @short_description: An object that contains the data for a PLY model.
+ *
+ * #ClutterPlyData is an object that can represent the data contained
+ * in a PLY file. The data is internally converted to a
+ * Cogl vertex buffer so that it can be rendered efficiently.
+ *
+ * The #ClutterPlyData object is usually associated with a
+ * #ClutterPlyModel so that it can be animated as a regular actor. The
+ * data is separated from the actor in this way to make it easy to
+ * share data with multiple actors without having to keep two copies
+ * of the data.
+ */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -144,6 +159,15 @@ clutter_ply_data_finalize (GObject *object)
   G_OBJECT_CLASS (clutter_ply_data_parent_class)->finalize (object);
 }
 
+/**
+ * clutter_ply_data_new:
+ *
+ * Constructs a new #ClutterPlyData instance. The object initially has
+ * no data so nothing will be drawn when clutter_ply_data_render() is
+ * called. To load data into the object, call clutter_ply_data_load().
+ *
+ * Return value: a new #ClutterPlyData.
+ */
 ClutterPlyData *
 clutter_ply_data_new (void)
 {
@@ -353,6 +377,19 @@ clutter_ply_data_face_read_cb (p_ply_argument argument)
   return 1;
 }
 
+/**
+ * clutter_ply_data_load:
+ * @self: The #ClutterPlyData instance
+ * @filename: The name of a PLY file to load
+ * @error: Return location for an error or %NULL
+ *
+ * Loads the data from the PLY file called @filename into @self. The
+ * model can then be rendered using clutter_ply_data_render(). If
+ * there is an error loading the file it will return %FALSE and @error
+ * will be set to a GError instance.
+ *
+ * Return value: %TRUE if the load succeeded or %FALSE otherwise.
+ */
 gboolean
 clutter_ply_data_load (ClutterPlyData *self,
                        const gchar *filename,
@@ -530,6 +567,17 @@ clutter_ply_data_load (ClutterPlyData *self,
   return ret;
 }
 
+/**
+ * clutter_ply_data_render:
+ * @self: A #ClutterPlyData instance
+ *
+ * Renders the data contained in the PLY model to the Clutter
+ * scene. The current Cogl source material will be used to affect the
+ * appearance of the model. This function is not usually called
+ * directly but instead the #ClutterPlyData instance is added to a
+ * #ClutterPlyModel and this function will be automatically called by
+ * the paint method of the model.
+ */
 void
 clutter_ply_data_render (ClutterPlyData *self)
 {
@@ -551,6 +599,19 @@ clutter_ply_data_render (ClutterPlyData *self)
                                     0, priv->n_triangles * 3);
 }
 
+/**
+ * clutter_ply_data_get_extents:
+ * @self: A #ClutterPlyData instance
+ * @min_vertex: A location to return the minimum vertex
+ * @max_vertex: A location to return the maximum vertex
+ *
+ * Gets the bounding cuboid of the vertices in @self. The cuboid is
+ * represented by two vertices representing the minimum and maximum
+ * extents. The x, y and z components of @min_vertex will contain the
+ * minimum x, y and z values of all the vertices and @max_vertex will
+ * contain the maximum. The extents of the model are cached so it is
+ * cheap to call this function.
+ */
 void
 clutter_ply_data_get_extents (ClutterPlyData *self,
                               ClutterVertex *min_vertex,

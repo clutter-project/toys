@@ -48,24 +48,56 @@ G_BEGIN_DECLS
                               CLUTTER_PLY_TYPE_DATA,    \
                               ClutterPlyDataClass))
 
+/**
+ * CLUTTER_PLY_DATA_ERROR:
+ *
+ * Error domain for #ClutterPlyData errors
+ */
 #define CLUTTER_PLY_DATA_ERROR clutter_ply_data_error_quark ()
 
 typedef struct _ClutterPlyData        ClutterPlyData;
 typedef struct _ClutterPlyDataClass   ClutterPlyDataClass;
 typedef struct _ClutterPlyDataPrivate ClutterPlyDataPrivate;
 
+/**
+ * ClutterPlyDataClass:
+ *
+ * The #ClutterPlyDataClass structure contains only private data.
+ */
 struct _ClutterPlyDataClass
 {
+  /*< private >*/
   GObjectClass parent_class;
 };
 
+/**
+ * ClutterPlyData:
+ *
+ * The #ClutterPlyData structure contains only private data.
+ */
 struct _ClutterPlyData
 {
+  /*< private >*/
   GObject parent;
 
   ClutterPlyDataPrivate *priv;
 };
 
+/**
+ * ClutterPlyDataError:
+ * @CLUTTER_PLY_DATA_ERROR_PLY: The underlying PLY library reported an
+ *  error.
+ * @CLUTTER_PLY_DATA_ERROR_MISSING_PROPERTY: A property that is needed
+ *  by #ClutterPlyData is not present in the file. For example, this
+ *  will happen if the file does not contain the x, y and z properties.
+ * @CLUTTER_PLY_DATA_ERROR_INVALID: The PLY file is not valid.
+ * @CLUTTER_PLY_DATA_ERROR_UNSUPPORTED: The PLY file is not supported
+ *  by your GL driver. This will happen if your driver can't support
+ *  GL_UNSIGNED_INT indices but the model has more than 65,536
+ *  vertices.
+ *
+ * Error enumeration for #ClutterPlyData
+ */
 typedef enum
   {
     CLUTTER_PLY_DATA_ERROR_PLY,

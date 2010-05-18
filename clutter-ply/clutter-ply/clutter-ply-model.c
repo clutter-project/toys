@@ -16,6 +16,53 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * SECTION:clutter-ply-model
+ * @short_description: An actor that can be used to render a PLY model.
+ *
+ * #ClutterPlyModel is an actor subclass that can be used to render a
+ * 3D model. The model is a normal #ClutterActor that can be animated
+ * and positioned with the methods of #ClutterActor. The model is
+ * rendered at the origin of the actor so that a vertex at 0,0,0 will
+ * be at the top left of the actor's allocation.
+ *
+ * The actual data for the model is stored in a separate object called
+ * #ClutterPlyData. This can be used to share the data for a model
+ * between multiple actors without having to duplicate resources of
+ * the data. Alternatively clutter_ply_model_new_from_file() can be
+ * used as a convenience wrapper to easily make an actor out of a PLY
+ * without having to worry about #ClutterPlyData. To share the data
+ * with another actor, call clutter_ply_model_get_data() on an
+ * existing actor then call clutter_ply_model_set_data() with the
+ * return value on a new actor.
+ *
+ * The model can be rendered with any Cogl material. By default the
+ * model will use a solid white material. The material color is
+ * blended with the model's vertex colors so the white material will
+ * cause the vertex colors to be used directly. #ClutterPlyData is
+ * able to load texture coordinates from the PLY file so it is
+ * possible to render a textured model by setting a texture layer on
+ * the material, like so:
+ *
+ * |[
+ *   /&ast; Create an actor out of a PLY model file &ast;/
+ *   ClutterActor *model
+ *     = clutter_ply_model_new_from_file ("some-model.ply", NULL);
+ *   /&ast; Get a handle to the default material for the actor &ast;/
+ *   CoglHandle material
+ *     = clutter_ply_model_get_material (CLUTTER_PLY_MODEL (model));
+ *   /&ast; Load a texture image from a file &ast;/
+ *   CoglHandle texture
+ *     = cogl_texture_new_from_file ("some-image.png", COGL_TEXTURE_NONE,
+ *                                   COGL_PIXEL_FORMAT_ANY, NULL);
+ *   /&ast; Set a texture layer on the material &ast;/
+ *   cogl_material_set_layer (material, 0, texture);
+ *   /&ast; The texture is now referenced by the material so we can
+ *     drop the reference we have &ast;/
+ *   cogl_handle_unref (texture);
+ * ]|
+ */
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -112,6 +159,16 @@ clutter_ply_model_init (ClutterPlyModel *self)
   priv->material = cogl_material_new ();
 }
 
+/**
+ * clutter_ply_model_new:
+ *
+ * Constructs a new #ClutterPlyModel. Nothing will be rendered by the
+ * model until a #ClutterPlyData is attached using
+ * clutter_ply_model_set_data().
+ *
+ * Return value: a new #ClutterPlyModel.
+ */
+
 ClutterActor *
 clutter_ply_model_new (void)
 {
@@ -120,6 +177,21 @@ clutter_ply_model_new (void)
   return self;
 }
 
+/**
+ * clutter_ply_model_new_from_file:
+ * @filename: The name of a PLY file to load.
+ * @error: Return location for a #GError or %NULL.
+ *
+ * This is a convenience function that creates a new #ClutterPlyData
+ * and immediately loads the data in @filename. If the load succeeds a
+ * new #ClutterPlyModel will be created for the data. The model has a
+ * default white material so that if vertices of the model have any
+ * color attributes they will be used directly. The material does not
+ * have textures by default so if you want the model to be textured
+ * you will need to modify the material.
+ *
+ * Return value: a new #ClutterPlyModel or %NULL if the load failed.
+ */
 ClutterActor *
 clutter_ply_model_new_from_file (const gchar *filename,
                                  GError **error)
@@ -156,6 +228,19 @@ clutter_ply_model_dispose (GObject *object)
   G_OBJECT_CLASS (clutter_ply_model_parent_class)->dispose (object);
 }
 
+/**
+ * clutter_ply_model_set_material:
+ * @self: A #ClutterPlyModel instance
+ * @material: A handle to a Cogl material
+ *
+ * Replaces the material that will be used to render the model with
+ * the given one. By default a #ClutterPlyModel will use a solid white
+ * material. However the color of the material is still blended with
+ * the vertex colors so the white material will cause the vertex
+ * colors to be used directly. If you want the model to be textured
+ * you will need to create a material that has a texture layer and set
+ * it with this function.
+ */
 void
 clutter_ply_model_set_material (ClutterPlyModel *self,
                                 CoglHandle material)
@@ -181,6 +266,16 @@ clutter_ply_model_set_material (ClutterPlyModel *self,
   g_object_notify (G_OBJECT (self), "material");
 }
 
+/**
+ * clutter_ply_model_get_material:
+ * @self: A #ClutterPlyModel instance
+ *
+ * Gets the material that will be used to render the model. The
+ * material can be modified to affect the appearence of the model. By
+ * default the material will be solid white.
+ *
+ * Return value: a handle to the Cogl material used by the model.
+ */
 CoglHandle
 clutter_ply_model_get_material (ClutterPlyModel *self)
 {
@@ -249,6 +344,15 @@ clutter_ply_model_pick (ClutterActor *actor,
   clutter_ply_data_render (priv->data);
 }
 
+/**
+ * clutter_ply_model_get_data:
+ * @self: A #ClutterPlyModel instance
+ *
+ * Gets the model data that will be used to render the actor.
+ *
+ * Return value: A pointer to a #ClutterPlyData instance or %NULL if
+ * no data has been set yet.
+ */
 ClutterPlyData *
 clutter_ply_model_get_data (ClutterPlyModel *self)
 {
@@ -257,6 +361,15 @@ clutter_ply_model_get_data (ClutterPlyModel *self)
   return self->priv->data;
 }
 
+/**
+ * clutter_ply_model_set_data:
+ * @self: A #ClutterPlyModel instance
+ * @data: The new #ClutterPlyData
+ *
+ * Replaces the data used by the actor with @data. A reference is
+ * taken on @data so if you no longer need it you should unref it with
+ * g_object_unref().
+ */
 void
 clutter_ply_model_set_data (ClutterPlyModel *self,
                             ClutterPlyData *data)

@@ -54,13 +54,25 @@ typedef struct _ClutterPlyModel        ClutterPlyModel;
 typedef struct _ClutterPlyModelClass   ClutterPlyModelClass;
 typedef struct _ClutterPlyModelPrivate ClutterPlyModelPrivate;
 
+/**
+ * ClutterPlyModelClass:
+ *
+ * The #ClutterPlyModelClass structure contains only private data.
+ */
 struct _ClutterPlyModelClass
 {
+  /*< private >*/
   ClutterActorClass parent_class;
 };
 
+/**
+ * ClutterPlyModel:
+ *
+ * The #ClutterPlyModel structure contains only private data.
+ */
 struct _ClutterPlyModel
 {
+  /*< private >*/
   ClutterActor parent;
 
   ClutterPlyModelPrivate *priv;

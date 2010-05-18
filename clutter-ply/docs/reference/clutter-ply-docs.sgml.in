@@ -45,6 +45,8 @@
 
   <chapter>
     <title>Core reference</title>
+    <xi:include href="xml/clutter-ply-model.xml"/>
+    <xi:include href="xml/clutter-ply-data.xml"/>
   </chapter>
   <chapter id="object-tree">
     <title>Object Hierarchy</title>
