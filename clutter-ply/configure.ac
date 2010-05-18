@@ -15,11 +15,20 @@ PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.16 gobject-2.0 >= 2.16])
 PKG_CHECK_MODULES(CLUTTER, [clutter-1.0 >= 1.2])
 
+# prefixes for fixing gtk-doc references
+CLUTTER_PREFIX="`$PKG_CONFIG --variable=prefix clutter-1.0`"
+AC_SUBST(CLUTTER_PREFIX)
+
+GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
+
 AC_CONFIG_FILES([
         Makefile
         clutter-ply/Makefile
         clutter-ply/rply/Makefile
         example/Makefile
+        docs/Makefile
+        docs/reference/Makefile
+        docs/reference/clutter-ply-docs.sgml
         clutter-ply.pc
 ])
 
