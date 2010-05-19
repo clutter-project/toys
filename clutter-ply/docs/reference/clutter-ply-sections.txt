@@ -34,6 +34,8 @@ clutter_ply_model_get_material
 clutter_ply_model_set_material
 clutter_ply_model_get_data
 clutter_ply_model_set_data
+clutter_ply_model_get_fit_to_allocation
+clutter_ply_model_set_fit_to_allocation
 <SUBSECTION Standard>
 CLUTTER_PLY_MODEL
 CLUTTER_PLY_IS_MODEL

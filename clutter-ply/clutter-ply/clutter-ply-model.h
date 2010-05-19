@@ -93,6 +93,10 @@ ClutterPlyData *clutter_ply_model_get_data (ClutterPlyModel *self);
 void clutter_ply_model_set_data (ClutterPlyModel *self,
                                  ClutterPlyData *data);
 
+gboolean clutter_ply_model_get_fit_to_allocation (ClutterPlyModel *self);
+void clutter_ply_model_set_fit_to_allocation (ClutterPlyModel *self,
+                                              gboolean fit_to_allocation);
+
 G_END_DECLS
 
 #endif /* __CLUTTER_PLY_MODEL_H__ */

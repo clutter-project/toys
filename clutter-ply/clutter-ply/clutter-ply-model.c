@@ -22,9 +22,13 @@
  *
  * #ClutterPlyModel is an actor subclass that can be used to render a
  * 3D model. The model is a normal #ClutterActor that can be animated
- * and positioned with the methods of #ClutterActor. The model is
- * rendered at the origin of the actor so that a vertex at 0,0,0 will
- * be at the top left of the actor's allocation.
+ * and positioned with the methods of #ClutterActor.
+ *
+ * By default the model will be scaled to best fit within the size of
+ * the actor. Therefore it is possible to take a small model that may
+ * have positions ranging between -1 and 1 and draw it at a larger
+ * size just by setting the size on the actor. This behaviour can be
+ * disabled with clutter_ply_model_set_fit_to_allocation().
  *
  * The actual data for the model is stored in a separate object called
  * #ClutterPlyData. This can be used to share the data for a model
@@ -100,6 +104,10 @@ static void clutter_ply_model_get_preferred_height (ClutterActor *actor,
                                                     gfloat *minimum_height,
                                                     gfloat *natural_height);
 
+static void clutter_ply_model_allocate (ClutterActor *actor,
+                                        const ClutterActorBox *box,
+                                        ClutterAllocationFlags flags);
+
 G_DEFINE_TYPE (ClutterPlyModel, clutter_ply_model, CLUTTER_TYPE_ACTOR);
 
 #define CLUTTER_PLY_MODEL_GET_PRIVATE(obj)                      \
@@ -110,6 +118,14 @@ struct _ClutterPlyModelPrivate
 {
   ClutterPlyData *data;
   CoglHandle material, pick_material;
+  /* Whether the model should be transformed to fill the allocation */
+  gboolean fit_to_allocation;
+  /* The amount to scale (on all axes) when fit_to_allocation is
+     TRUE. This is calculated in the allocate method */
+  gfloat scale;
+  /* Translation used when fit_to_allocation is TRUE. This is
+     calculated in the allocate method */
+  gfloat translate_x, translate_y, translate_z;
 };
 
 enum
@@ -117,7 +133,8 @@ enum
     PROP_0,
 
     PROP_MATERIAL,
-    PROP_DATA
+    PROP_DATA,
+    PROP_FIT_TO_ALLOCATION
   };
 
 static void
@@ -135,6 +152,7 @@ clutter_ply_model_class_init (ClutterPlyModelClass *klass)
   actor_class->pick = clutter_ply_model_pick;
   actor_class->get_preferred_width = clutter_ply_model_get_preferred_width;
   actor_class->get_preferred_height = clutter_ply_model_get_preferred_height;
+  actor_class->allocate = clutter_ply_model_allocate;
 
   pspec = g_param_spec_boxed ("material",
                               "Material",
@@ -156,6 +174,19 @@ clutter_ply_model_class_init (ClutterPlyModelClass *klass)
                                | G_PARAM_STATIC_BLURB);
   g_object_class_install_property (gobject_class, PROP_DATA, pspec);
 
+  pspec = g_param_spec_boolean ("fit-to-allocation",
+                                "Fit to allocation",
+                                "Whether to transform the model so that "
+                                "it fills the actor's allocation while "
+                                "preserving the aspect ratio",
+                                TRUE,
+                                G_PARAM_READABLE | G_PARAM_WRITABLE
+                                | G_PARAM_STATIC_NAME
+                                | G_PARAM_STATIC_NICK
+                                | G_PARAM_STATIC_BLURB);
+  g_object_class_install_property (gobject_class,
+                                   PROP_FIT_TO_ALLOCATION, pspec);
+
   g_type_class_add_private (klass, sizeof (ClutterPlyModelPrivate));
 }
 
@@ -168,6 +199,8 @@ clutter_ply_model_init (ClutterPlyModel *self)
 
   /* Default to a plain white material */
   priv->material = cogl_material_new ();
+
+  priv->fit_to_allocation = TRUE;
 }
 
 /**
@@ -296,6 +329,27 @@ clutter_ply_model_get_material (ClutterPlyModel *self)
 }
 
 static void
+clutter_ply_model_render_data (ClutterPlyModel *self)
+{
+  ClutterPlyModelPrivate *priv = self->priv;
+
+  if (priv->fit_to_allocation)
+    {
+      cogl_push_matrix ();
+
+      cogl_translate (priv->translate_x,
+                      priv->translate_y,
+                      priv->translate_z);
+      cogl_scale (priv->scale, priv->scale, priv->scale);
+    }
+
+  clutter_ply_data_render (priv->data);
+
+  if (priv->fit_to_allocation)
+    cogl_pop_matrix ();
+}
+
+static void
 clutter_ply_model_paint (ClutterActor *actor)
 {
   ClutterPlyModel *self = CLUTTER_PLY_MODEL (actor);
@@ -311,7 +365,7 @@ clutter_ply_model_paint (ClutterActor *actor)
 
   cogl_set_source (priv->material);
 
-  clutter_ply_data_render (priv->data);
+  clutter_ply_model_render_data (self);
 }
 
 static void
@@ -352,7 +406,7 @@ clutter_ply_model_pick (ClutterActor *actor,
 
   cogl_set_source (priv->pick_material);
 
-  clutter_ply_data_render (priv->data);
+  clutter_ply_model_render_data (self);
 }
 
 /**
@@ -405,6 +459,69 @@ clutter_ply_model_set_data (ClutterPlyModel *self,
   g_object_notify (G_OBJECT (self), "data");
 }
 
+/**
+ * clutter_ply_model_get_fit_to_allocation:
+ * @self: A #ClutterPlyModel instance
+ *
+ * Return value: whether the actor will try to scale the model to fit
+ * within the allocation.
+ */
+gboolean
+clutter_ply_model_get_fit_to_allocation (ClutterPlyModel *self)
+{
+  g_return_val_if_fail (CLUTTER_PLY_IS_MODEL (self), FALSE);
+
+  return self->priv->fit_to_allocation;
+}
+
+/**
+ * clutter_ply_model_set_fit_to_allocation:
+ * @self: A #ClutterPlyModel instance
+ * @fit_to_allocation: New value
+ *
+ * This sets whether the actor should scale the model to fit the
+ * actor's allocation. If it's %TRUE then all of the axes of the model
+ * will be scaled by the same amount to fill the allocation as much as
+ * possible without distorting the aspect ratio. The model is also
+ * translated so that it is at the center of the allocation and
+ * centered at 0 along the z axis. The size along the z axis is not
+ * considered when calculating a scale so if the model is largest
+ * along that axis then the actor may appear too large. The
+ * transformations are applied in addition to the actor's
+ * transformations so it is still possible scale the actor further
+ * using the scale-x and scale-y properties. The preferred size of the
+ * actor will be the width and height of the model. If
+ * width-for-height or height-for-width allocation is being used then
+ * #ClutterPlyModel will return whatever width or height will exactly
+ * preserve the aspect ratio.
+ *
+ * If the value is %FALSE then the actor is not transformed so the
+ * origin of the model will be the top left corner of the actor. The
+ * preferred size of the actor will be maximum extents of the model
+ * although the allocation is not considered during paint so if the
+ * model extends past the allocated size then it will draw outside the
+ * allocation.
+ *
+ * The default value is %TRUE.
+ */
+void
+clutter_ply_model_set_fit_to_allocation (ClutterPlyModel *self,
+                                         gboolean fit_to_allocation)
+{
+  ClutterPlyModelPrivate *priv;
+
+  g_return_if_fail (CLUTTER_PLY_IS_MODEL (self));
+
+  priv = self->priv;
+
+  if (priv->fit_to_allocation != fit_to_allocation)
+    {
+      priv->fit_to_allocation = fit_to_allocation;
+      clutter_actor_queue_relayout (CLUTTER_ACTOR (self));
+      g_object_notify (G_OBJECT (self), "fit-to-allocation");
+    }
+}
+
 static void
 clutter_ply_model_get_property (GObject *object,
                                 guint prop_id,
@@ -421,6 +538,11 @@ clutter_ply_model_get_property (GObject *object,
 
     case PROP_DATA:
       g_value_set_object (value, clutter_ply_model_get_data (model));
+      break;
+
+    case PROP_FIT_TO_ALLOCATION:
+      g_value_set_boolean (value,
+                           clutter_ply_model_get_fit_to_allocation (model));
       break;
 
     default:
@@ -447,6 +569,11 @@ clutter_ply_model_set_property (GObject *object,
       clutter_ply_model_set_data (model, g_value_get_object (value));
       break;
 
+    case PROP_FIT_TO_ALLOCATION:
+      clutter_ply_model_set_fit_to_allocation (model,
+                                               g_value_get_boolean (value));
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -456,49 +583,141 @@ clutter_ply_model_set_property (GObject *object,
 static void
 clutter_ply_model_get_preferred_width (ClutterActor *actor,
                                        gfloat for_height,
-                                       gfloat *minimum_width,
-                                       gfloat *natural_width)
+                                       gfloat *minimum_width_p,
+                                       gfloat *natural_width_p)
 {
   ClutterPlyModel *model = CLUTTER_PLY_MODEL (actor);
   ClutterPlyModelPrivate *priv = model->priv;
   ClutterVertex min_vertex, max_vertex;
+  gfloat minimum_width, natural_width;
 
   if (priv->data)
-    clutter_ply_data_get_extents (priv->data, &min_vertex, &max_vertex);
-  else
-    max_vertex.x = 0.0f;
+    {
+      clutter_ply_data_get_extents (priv->data, &min_vertex, &max_vertex);
 
-  /* We can't report if the actor draws to the left of the origin so
-     the best we can do is to report the extent to the right of the
-     origin. If the data also contains vertices to the left of the
-     origin then this won't be the actual width */
-  if (minimum_width)
-    *minimum_width = max_vertex.x;
-  if (natural_width)
-    *natural_width = max_vertex.x;
+      if (priv->fit_to_allocation)
+        {
+          gfloat model_width = max_vertex.x - min_vertex.x;
+          gfloat model_height = max_vertex.y - min_vertex.y;
+
+          if (for_height < 0.0f || model_height == 0.0f)
+            natural_width = model_width;
+          else
+            /* Pick a width that would preserve the aspect ratio */
+            natural_width = for_height * model_width / model_height;
+
+          minimum_width = 0.0f;
+        }
+      else
+        /* We can't report if the actor draws to the left of the origin so
+           the best we can do is to report the extent to the right of the
+           origin. If the data also contains vertices to the left of the
+           origin then this won't be the actual width */
+        minimum_width = natural_width = max_vertex.x;
+    }
+  else
+    minimum_width = natural_width = 0.0f;
+
+  if (minimum_width_p)
+    *minimum_width_p = minimum_width;
+  if (natural_width_p)
+    *natural_width_p = natural_width;
 }
 
 static void
 clutter_ply_model_get_preferred_height (ClutterActor *actor,
                                         gfloat for_width,
-                                        gfloat *minimum_height,
-                                        gfloat *natural_height)
+                                        gfloat *minimum_height_p,
+                                        gfloat *natural_height_p)
 {
   ClutterPlyModel *model = CLUTTER_PLY_MODEL (actor);
   ClutterPlyModelPrivate *priv = model->priv;
   ClutterVertex min_vertex, max_vertex;
+  gfloat minimum_height, natural_height;
 
   if (priv->data)
-    clutter_ply_data_get_extents (priv->data, &min_vertex, &max_vertex);
-  else
-    max_vertex.y = 0.0f;
+    {
+      clutter_ply_data_get_extents (priv->data, &min_vertex, &max_vertex);
 
-  /* We can't report if the actor draws above the origin so the best
-     we can do is to report the extent below the origin. If the data
-     also contains vertices above the origin then this won't be the
-     actual height */
-  if (minimum_height)
-    *minimum_height = max_vertex.y;
-  if (natural_height)
-    *natural_height = max_vertex.y;
+      if (priv->fit_to_allocation)
+        {
+          gfloat model_width = max_vertex.x - min_vertex.x;
+          gfloat model_height = max_vertex.y - min_vertex.y;
+
+          if (for_width < 0.0f || model_width == 0.0f)
+            natural_height = model_height;
+          else
+            /* Pick a height that would preserve the aspect ratio */
+            natural_height = for_width * model_height / model_width;
+
+          minimum_height = 0.0f;
+        }
+      else
+        /* We can't report if the actor draws above the origin so the
+           best we can do is to report the extent below the origin. If
+           the data also contains vertices above the origin then this
+           won't be the actual height */
+        minimum_height = natural_height = max_vertex.y;
+    }
+  else
+    minimum_height = natural_height = 0.0f;
+
+  if (minimum_height_p)
+    *minimum_height_p = minimum_height;
+  if (natural_height_p)
+    *natural_height_p = natural_height;
+}
+
+static gfloat
+clutter_ply_model_calculate_scale (gfloat target_extents,
+                                   gfloat min,
+                                   gfloat max)
+{
+  if (min == max)
+    return G_MAXFLOAT;
+  else
+    return target_extents / (max - min);
+}
+
+static void
+clutter_ply_model_allocate (ClutterActor *actor,
+                            const ClutterActorBox *box,
+                            ClutterAllocationFlags flags)
+{
+  ClutterPlyModel *self = CLUTTER_PLY_MODEL (actor);
+  ClutterPlyModelPrivate *priv = self->priv;
+
+  CLUTTER_ACTOR_CLASS (clutter_ply_model_parent_class)
+    ->allocate (actor, box, flags);
+
+  if (priv->fit_to_allocation && priv->data)
+    {
+      ClutterVertex min_vertex, max_vertex;
+      gfloat scale, min_scale;
+
+      /* Try to scale the model uniformly so that it will fill the
+         maximum amount of space without breaking the aspect
+         ratio. The model is then centered in the allocation */
+      clutter_ply_data_get_extents (priv->data, &min_vertex, &max_vertex);
+
+      min_scale = clutter_ply_model_calculate_scale (box->x2 - box->x1,
+                                                     min_vertex.x,
+                                                     max_vertex.x);
+      scale = clutter_ply_model_calculate_scale (box->y2 - box->y1,
+                                                 min_vertex.y,
+                                                 max_vertex.y);
+      if (min_scale > scale)
+        min_scale = scale;
+
+      if (min_scale >= G_MAXFLOAT)
+        min_scale = 0.0f;
+
+      priv->scale = min_scale;
+
+      priv->translate_x = ((box->x2 - box->x1) / 2.0f
+                           - (min_vertex.x + max_vertex.x) / 2.0f * min_scale);
+      priv->translate_y = ((box->y2 - box->y1) / 2.0f
+                           - (min_vertex.y + max_vertex.y) / 2.0f * min_scale);
+      priv->translate_z = -(min_vertex.z + max_vertex.z) / 2.0f * min_scale;
+    }
 }
