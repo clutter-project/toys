@@ -91,6 +91,15 @@ static void clutter_ply_model_paint (ClutterActor *actor);
 static void clutter_ply_model_pick (ClutterActor *actor,
                                     const ClutterColor *pick_color);
 
+static void clutter_ply_model_get_preferred_width (ClutterActor *actor,
+                                                   gfloat for_height,
+                                                   gfloat *minimum_width,
+                                                   gfloat *natural_width);
+static void clutter_ply_model_get_preferred_height (ClutterActor *actor,
+                                                    gfloat for_width,
+                                                    gfloat *minimum_height,
+                                                    gfloat *natural_height);
+
 G_DEFINE_TYPE (ClutterPlyModel, clutter_ply_model, CLUTTER_TYPE_ACTOR);
 
 #define CLUTTER_PLY_MODEL_GET_PRIVATE(obj)                      \
@@ -124,6 +133,8 @@ clutter_ply_model_class_init (ClutterPlyModelClass *klass)
 
   actor_class->paint = clutter_ply_model_paint;
   actor_class->pick = clutter_ply_model_pick;
+  actor_class->get_preferred_width = clutter_ply_model_get_preferred_width;
+  actor_class->get_preferred_height = clutter_ply_model_get_preferred_height;
 
   pspec = g_param_spec_boxed ("material",
                               "Material",
@@ -389,7 +400,7 @@ clutter_ply_model_set_data (ClutterPlyModel *self,
 
   priv->data = data;
 
-  clutter_actor_queue_redraw (CLUTTER_ACTOR (self));
+  clutter_actor_queue_relayout (CLUTTER_ACTOR (self));
 
   g_object_notify (G_OBJECT (self), "data");
 }
@@ -440,4 +451,54 @@ clutter_ply_model_set_property (GObject *object,
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
     }
+}
+
+static void
+clutter_ply_model_get_preferred_width (ClutterActor *actor,
+                                       gfloat for_height,
+                                       gfloat *minimum_width,
+                                       gfloat *natural_width)
+{
+  ClutterPlyModel *model = CLUTTER_PLY_MODEL (actor);
+  ClutterPlyModelPrivate *priv = model->priv;
+  ClutterVertex min_vertex, max_vertex;
+
+  if (priv->data)
+    clutter_ply_data_get_extents (priv->data, &min_vertex, &max_vertex);
+  else
+    max_vertex.x = 0.0f;
+
+  /* We can't report if the actor draws to the left of the origin so
+     the best we can do is to report the extent to the right of the
+     origin. If the data also contains vertices to the left of the
+     origin then this won't be the actual width */
+  if (minimum_width)
+    *minimum_width = max_vertex.x;
+  if (natural_width)
+    *natural_width = max_vertex.x;
+}
+
+static void
+clutter_ply_model_get_preferred_height (ClutterActor *actor,
+                                        gfloat for_width,
+                                        gfloat *minimum_height,
+                                        gfloat *natural_height)
+{
+  ClutterPlyModel *model = CLUTTER_PLY_MODEL (actor);
+  ClutterPlyModelPrivate *priv = model->priv;
+  ClutterVertex min_vertex, max_vertex;
+
+  if (priv->data)
+    clutter_ply_data_get_extents (priv->data, &min_vertex, &max_vertex);
+  else
+    max_vertex.y = 0.0f;
+
+  /* We can't report if the actor draws above the origin so the best
+     we can do is to report the extent below the origin. If the data
+     also contains vertices above the origin then this won't be the
+     actual height */
+  if (minimum_height)
+    *minimum_height = max_vertex.y;
+  if (natural_height)
+    *natural_height = max_vertex.y;
 }
