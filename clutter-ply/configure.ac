@@ -21,6 +21,8 @@ AC_SUBST(CLUTTER_PREFIX)
 
 GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
 
+GOBJECT_INTROSPECTION_CHECK([0.6.7])
+
 AC_CONFIG_FILES([
         Makefile
         clutter-ply/Makefile
