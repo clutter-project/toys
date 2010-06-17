@@ -23,6 +23,7 @@
 
 #include "clutter-ply-model.h"
 #include "clutter-ply-data.h"
+#include "clutter-ply-enum-types.h"
 
 #undef __CLUTTER_PLY_H_INSIDE__
 

@@ -10,6 +10,8 @@
 /clutter-ply/rply/convert
 /clutter-ply/ClutterPly.gir
 /clutter-ply/ClutterPly.typelib
+/clutter-ply/clutter-ply-enum-types.[ch]
+/clutter-ply/stamp-enum-types
 /docs/Makefile
 /docs/Makefile.in
 /docs/reference/clutter-ply-*.txt
