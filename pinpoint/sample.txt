@@ -1,0 +1,66 @@
+font=Sans 40px 
+background=bg.jpg
+---------------- The bits above are slide defaults
+pinpoint 
+---------------------------------- lines starting with - are slide seperators
+minimalist presentation tool [wth.jpg]
+-----------------------------
+sketch/finish presentations in
+$EDITOR
+-----------------------------
+ font=Sans 50px 
+ background=bg.jpg
+ -----------------------------
+ pinpoint
+ -----------------------------
+ minimalist presentation tool \[wth.jpg]
+ -----------------------------
+ Simple text source
+ -----------------------------
+  font=Sans 50px
+  background=bg.jpg
+  -----------------------------
+  pinpoint
+  -----------------------------
+  minimalist presentation tool \[wth.jpg]
+  ..
+-----------------------------
+Large amount of a text is boring to read, you should
+avoid it, the slides shouldnt be a manuscript,
+perhaps a cue card - with nice visual things for the
+audience to look at. When you write a full essay in a
+slide though pinpoint will scale it to fit; but it
+will be tiny and kind of ugly.
+-----------------------------
+Compfight for backgrounds \[wth.jpg] [wth.jpg]
+-----------------------------
+Miss bullets?
+-----------------------------
+bullets?
+ ❥ no worries; just utf8 it
+• ✽ ✩ ✔ ❧ ◦
+-----------------------------
+Keybindings:
+-----------------------------
+F11
+toggle fullscreen
+-----------------------------
+Esc
+quit
+-----------------------------
+left
+previous slide
+-----------------------------
+right/space
+next slide
+-----------------------------
+todo: [wth.jpg]
+ • Enable changing location of text from center
+ • Customize colors/contrast shadow?
+ • Customizing transitions
+   • Just edit the code?
+   • For default presentation, scale it to fit?
+ • Conserve resources
+-----------------------------
+FIN
+------------- This final line is needed
