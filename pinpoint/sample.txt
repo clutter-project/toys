@@ -1,4 +1,4 @@
-font=Sans 40px 
+font=Sans 20px 
 background=bg.jpg
 ---------------- The bits above are slide defaults
 pinpoint 
@@ -8,7 +8,7 @@ minimalist presentation tool [wth.jpg]
 sketch/finish presentations in
 $EDITOR
 -----------------------------
- font=Sans 50px 
+ font=Sans 50px [bottom-left]
  background=bg.jpg
  -----------------------------
  pinpoint
@@ -17,7 +17,7 @@ $EDITOR
  -----------------------------
  Simple text source
  -----------------------------
-  font=Sans 50px
+  font=Sans 50px \[bottom-left]
   background=bg.jpg
   -----------------------------
   pinpoint
@@ -33,6 +33,26 @@ slide though pinpoint will scale it to fit; but it
 will be tiny and kind of ugly.
 -----------------------------
 Compfight for backgrounds \[wth.jpg] [wth.jpg]
+-----------------------------
+Place text [top-right]
+-----------------------------
+\[top-right][top-right]
+-----------------------------
+\[right][right]
+-----------------------------
+\[bottom-right][bottom-right]
+-----------------------------
+\[bottom][bottom]
+-----------------------------
+\[bottom-left][bottom-left]
+-----------------------------
+\[left][left]
+-----------------------------
+\[top-left][top-left]
+-----------------------------
+\[top][top]
+-----------------------------
+\[center][center] (which is the default)
 -----------------------------
 Miss bullets?
 -----------------------------
@@ -55,12 +75,12 @@ right/space
 next slide
 -----------------------------
 todo: [wth.jpg]
- • Enable changing location of text from center
- • Customize colors/contrast shadow?
+ • Customize colors?
+ • watch text file and reload
  • Customizing transitions
    • Just edit the code?
    • For default presentation, scale it to fit?
- • Conserve resources
+ • Conserve more resources
 -----------------------------
 FIN
 ------------- This final line is needed
