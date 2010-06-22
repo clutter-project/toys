@@ -1,4 +1,4 @@
-font=Sans 20px 
+font=Sans 40px 
 background=bg.jpg
 ---------------- The bits above are slide defaults
 pinpoint 

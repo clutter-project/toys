@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static ClutterColor white = {0xff,0xff,0xff,0xff};
 static ClutterColor black = {0x00,0x00,0x00,0xff};
+
 static char *default_font = "Sans 60px";
 static char *default_bg  = "";
 static ClutterGravity default_position = CLUTTER_GRAVITY_CENTER;
@@ -331,7 +332,6 @@ parse_config (const char *config)
       switch (*p)
         {
           case '\n':
-            g_print ("{%s}\n", str2->str);
             if (g_str_has_prefix (str2->str, "font"))
               {
                 default_font = g_strdup (strrchr (str2->str, '=') + 1);
@@ -386,7 +386,7 @@ parse_slides (const char *slide_src)
           g_string_assign (command_str, "");
           for (;*p && *p!='\n' && *p!=']'; p++) /* until ] or endof line/buf */
               g_string_append_c (command_str, *p);
-          /* now deal with known strings */
+
 #define IF_PREFIX(prefix) } else if (g_str_has_prefix (command_str->str, prefix)) {
 #define IF_EQUAL(string) } else if (g_str_equal (command_str->str, string)) {
 

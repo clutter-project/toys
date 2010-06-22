@@ -1,3 +1,6 @@
-pinpoint is a simple presentation tool that encourages small amounts of text
-and images instead of death by bullet points. Take a look at sample.txt for
-a sample presentation.
+pinpoint
+
+pinpoint a simple presentation tool that hopes to encourage small amounts of
+text and images instead of death by bullet points. sample.txt contains a
+demonstration of most features. Look at it in a text editor and run it with
+pinpoint name-of-file.
