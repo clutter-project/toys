@@ -38,21 +38,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RESTX        4600.0
 #define STARTPOS    -3000.0
 
-static ClutterColor white = {0xff,0xff,0xff,0xff};
 static ClutterColor black = {0x00,0x00,0x00,0xff};
-
-static char *default_font = "Sans 60px";
-static char *default_bg  = "";
-static ClutterGravity default_position = CLUTTER_GRAVITY_CENTER;
 
 typedef struct PinPointPoint
 {
-  gchar          *bg;
+  ClutterGravity  position;
+  const char     *font;
+  const char     *text_color;
+  const char     *shading_color;
+  float           shading_opacity;
+  const gchar    *bg;
+  const char     *command;
+
   ClutterActor   *background;
   ClutterActor   *text;
-  char           *command;
-  ClutterGravity  position;
 } PinPointPoint;
+
+static PinPointPoint default_point = 
+{
+  CLUTTER_GRAVITY_CENTER, "Sans 60px", "white", "black", 0.66, "black", NULL,
+};
 
 static GList *slides      = NULL; /* list of slide texts */
 static GList *slidep      = NULL; /* current slide */
@@ -62,34 +67,20 @@ static ClutterActor *background;
 static ClutterActor *shading;
 static ClutterActor *foreground;
 
-
-static void leave_slide  (void);
-static void show_slide   (void);
-static void parse_slides (const char *slide_src);
-
-static void file_changed (GFileMonitor     *monitor,
-                          GFile            *file,
-                          GFile            *other_file,
-                          GFileMonitorEvent event_type,
-                          char             *path)
-{
-  char   *text = NULL;
-  if (!g_file_get_contents (path, &text, NULL, NULL))
-    g_error ("failed to load slides from %s\n", path);
-  parse_slides (text);
-  g_free (text);
-}
-
-static void stage_resized (ClutterActor *actor,
-                           GParamSpec   *pspec,
-                           gpointer      data)
-{
-  show_slide ();
-}
-
-static gboolean key_pressed (ClutterActor *actor,
-                             ClutterEvent *event,
-                             gpointer      data);
+static void     leave_slide   (void);
+static void     show_slide    (void);
+static void     parse_slides  (const char       *slide_src);
+static void     file_changed  (GFileMonitor     *monitor,
+                               GFile            *file,
+                               GFile            *other_file,
+                               GFileMonitorEvent event_type,
+                               char             *path);
+static void     stage_resized (ClutterActor     *actor,
+                               GParamSpec       *pspec,
+                               gpointer          data);
+static gboolean key_pressed   (ClutterActor     *actor,
+                               ClutterEvent     *event,
+                               gpointer          data);
 
 int main (int argc, char **argv)
 {
@@ -99,7 +90,7 @@ int main (int argc, char **argv)
   if (!argv[1])
     {
       g_print ("usage: %s <slides>\n", argv[0]);
-      text = g_strdup ("--\nusage: pinpoint <slides.txt>\n--");
+      text = g_strdup ("red\n--\nusage: pinpoint <slides.txt>\n--");
     }
   else
     {
@@ -125,7 +116,6 @@ int main (int argc, char **argv)
   clutter_container_add (CLUTTER_CONTAINER (stage),
                          background, shading, foreground, NULL);
 
-
   clutter_actor_show (stage);
   clutter_stage_set_color (CLUTTER_STAGE (stage), &black);
   g_signal_connect (stage, "key-press-event", G_CALLBACK (key_pressed), NULL);
@@ -134,12 +124,14 @@ int main (int argc, char **argv)
 
   clutter_stage_set_user_resizable (CLUTTER_STAGE (stage), TRUE);
 
-
+  if (argv[1])
+    {
+      monitor = g_file_monitor (g_file_new_for_commandline_arg (argv[1]),
+                                G_FILE_MONITOR_NONE, NULL, NULL);
+      g_signal_connect (monitor, "changed", G_CALLBACK (file_changed),
+                                            argv[1]);
+    }
   parse_slides (text);
-  monitor = g_file_monitor (g_file_new_for_commandline_arg (argv[1]),
-                            G_FILE_MONITOR_NONE, NULL, NULL);
-  g_signal_connect (monitor, "changed", G_CALLBACK (file_changed),
-                                        argv[1]);
   g_free (text);
   clutter_main ();
 
@@ -233,7 +225,15 @@ static void show_slide (void)
       float w,h;
       float x,y;
       float s = 1.0;
-      clutter_actor_get_size (point->background, &w, &h);
+      if (CLUTTER_IS_RECTANGLE (point->background))
+        {
+          clutter_actor_get_size (stage, &w, &h);
+          clutter_actor_set_size (point->background, w, h);
+        }
+      else
+        {
+          clutter_actor_get_size (point->background, &w, &h);
+        }
       s = clutter_actor_get_width (stage)/w;
       if (s > 1.0 || clutter_actor_get_height (stage) < s * h)
         s = clutter_actor_get_height (stage)/h;
@@ -251,7 +251,6 @@ static void show_slide (void)
         {
           clutter_media_set_progress (CLUTTER_MEDIA (point->background), 0.0);
           clutter_media_set_playing (CLUTTER_MEDIA (point->background), TRUE);
-          clutter_actor_set_size (point->background, 320, 200);
         }
 #endif
     }
@@ -317,14 +316,19 @@ static void show_slide (void)
                            NULL);
 
     if (clutter_actor_get_width (point->text) > 1.0)
-      clutter_actor_animate (shading,
-             CLUTTER_LINEAR, 500,
-             "x", x - padding,
-             "y", y - padding,
-             "opacity", 0x88,
-             "width", clutter_actor_get_width (point->text) * sx + padding*2,
-             "height", clutter_actor_get_height (point->text) * sx + padding*2,
-             NULL);
+      {
+        ClutterColor color;
+        clutter_color_from_string (&color, point->shading_color);
+        clutter_actor_animate (shading,
+               CLUTTER_LINEAR, 500,
+               "x", x - padding,
+               "y", y - padding,
+               "opacity", (int)(point->shading_opacity*255),
+               "color", &color,
+               "width", clutter_actor_get_width (point->text) * sx + padding*2,
+               "height", clutter_actor_get_height (point->text) * sx + padding*2,
+               NULL);
+      }
     else /* no text, fade out shading */
       clutter_actor_animate (shading,
              CLUTTER_LINEAR, 500,
@@ -343,32 +347,75 @@ static void show_slide (void)
     }
 }
 
+static void stage_resized (ClutterActor *actor,
+                           GParamSpec   *pspec,
+                           gpointer      data)
+{
+  show_slide (); /* redisplay the current slide */
+}
+
+static void file_changed (GFileMonitor     *monitor,
+                          GFile            *file,
+                          GFile            *other_file,
+                          GFileMonitorEvent event_type,
+                          char             *path)
+{
+  char   *text = NULL;
+  if (!g_file_get_contents (path, &text, NULL, NULL))
+    g_error ("failed to load slides from %s\n", path);
+  parse_slides (text);
+  g_free (text);
+}
+
+static void
+parse_setting(PinPointPoint *point,
+              const gchar   *setting)
+{
+#define IF_PREFIX(prefix) } else if (g_str_has_prefix (setting, prefix)) {
+#define IF_EQUAL(string) } else if (g_str_equal (setting, string)) {
+  if (0) {
+    IF_PREFIX("font=") point->font = g_intern_string (strrchr (setting, '=') + 1);
+    IF_PREFIX("text-color=") point->text_color = g_intern_string (strrchr (setting, '=') + 1);
+    IF_PREFIX("shading-color=") point->shading_color = g_intern_string (strrchr (setting, '=') + 1);
+    IF_PREFIX("shading-opacity=") point->shading_opacity = g_ascii_strtod (strrchr (setting, '=') + 1, NULL);
+    IF_PREFIX("command=") point->command = g_intern_string (strrchr (setting, '=') + 1);
+    IF_EQUAL("center") point->position = CLUTTER_GRAVITY_CENTER;
+    IF_EQUAL("top") point->position = CLUTTER_GRAVITY_NORTH;
+    IF_EQUAL("bottom") point->position = CLUTTER_GRAVITY_SOUTH;
+    IF_EQUAL("left") point->position = CLUTTER_GRAVITY_WEST;
+    IF_EQUAL("right") point->position = CLUTTER_GRAVITY_EAST;
+    IF_EQUAL("top-left") point->position = CLUTTER_GRAVITY_NORTH_WEST;
+    IF_EQUAL("top-right") point->position = CLUTTER_GRAVITY_NORTH_EAST;
+    IF_EQUAL("bottom-left") point->position = CLUTTER_GRAVITY_SOUTH_WEST;
+    IF_EQUAL("bottom-right") point->position = CLUTTER_GRAVITY_SOUTH_EAST;
+  } else {
+    point->bg = g_intern_string (setting);
+  }
+#undef IF_PREFIX
+#undef IF_EQUAL
+
+
+}
+
 static void
 parse_config (const char *config)
 {
-  GString *str2 = g_string_new ("");
+  GString *str = g_string_new ("");
   const char *p;
   for (p = config; *p; p++)
     {
       switch (*p)
         {
           case '\n':
-            if (g_str_has_prefix (str2->str, "font"))
-              {
-                default_font = g_strdup (strrchr (str2->str, '=') + 1);
-              }
-            else if (g_str_has_prefix (str2->str, "background"))
-              {
-                default_bg = g_strdup (strrchr (str2->str, '=') + 1);
-              }
-            g_string_truncate (str2, 0);
+            parse_setting (&default_point, str->str);
+            g_string_truncate (str, 0);
             break;
           default:
-            g_string_append_c (str2, *p);
+            g_string_append_c (str, *p);
             break;
         }
     }
-  g_string_free (str2, TRUE);
+  g_string_free (str, TRUE);
 }
 
 static void point_free (PinPointPoint *point)
@@ -380,6 +427,16 @@ static void point_free (PinPointPoint *point)
   g_free (point);
 }
 
+static
+PinPointPoint *pin_point_new (void)
+{
+  PinPointPoint *point;
+  point = g_new0 (PinPointPoint, 1);
+  *point = default_point;
+
+  return point;
+}
+
 static void
 parse_slides (const char *slide_src)
 {
@@ -389,7 +446,7 @@ parse_slides (const char *slide_src)
   gboolean startofline = TRUE;
   gboolean gotconfig = FALSE;
   GString *slide_str = g_string_new ("");
-  GString *command_str = g_string_new ("");
+  GString *setting_str = g_string_new ("");
   PinPointPoint *point;
   GList *s;
 
@@ -402,10 +459,9 @@ parse_slides (const char *slide_src)
     point_free (s->data);
   g_list_free (slides);
   slides = NULL;
+  point = pin_point_new ();
 
   y = STARTPOS;
-  point = g_new0 (PinPointPoint, 1);
-  point->position = default_position;
 
   /* parse the slides, constructing lists of objects, adding all generated
    * actors to the stage
@@ -426,30 +482,11 @@ parse_slides (const char *slide_src)
           break;
         case '[': 
           p++;
-          g_string_assign (command_str, "");
+          g_string_assign (setting_str, "");
           for (;*p && *p!='\n' && *p!=']'; p++) /* until ] or endof line/buf */
-              g_string_append_c (command_str, *p);
+              g_string_append_c (setting_str, *p);
 
-#define IF_PREFIX(prefix) } else if (g_str_has_prefix (command_str->str, prefix)) {
-#define IF_EQUAL(string) } else if (g_str_equal (command_str->str, string)) {
-
-          if (0) {
-          IF_PREFIX("command=") point->command = strdup (strrchr (command_str->str, '=') + 1);
-          IF_EQUAL("center") point->position = CLUTTER_GRAVITY_CENTER;
-          IF_EQUAL("top") point->position = CLUTTER_GRAVITY_NORTH;
-          IF_EQUAL("bottom") point->position = CLUTTER_GRAVITY_SOUTH;
-          IF_EQUAL("left") point->position = CLUTTER_GRAVITY_WEST;
-          IF_EQUAL("right") point->position = CLUTTER_GRAVITY_EAST;
-          IF_EQUAL("top-left") point->position = CLUTTER_GRAVITY_NORTH_WEST;
-          IF_EQUAL("top-right") point->position = CLUTTER_GRAVITY_NORTH_EAST;
-          IF_EQUAL("bottom-left") point->position = CLUTTER_GRAVITY_SOUTH_WEST;
-          IF_EQUAL("bottom-right") point->position = CLUTTER_GRAVITY_SOUTH_EAST;
-          } else {
-              point->bg = strdup (command_str->str);
-          }
-#undef IF_PREFIX
-#undef IF_EQUAL
-
+          parse_setting (point, setting_str->str);
           break;
         case '-': /* slide seperator */
           if (startofline)
@@ -460,9 +497,10 @@ parse_slides (const char *slide_src)
               if (!gotconfig)
                 {
                   parse_config (slide_str->str);
+                  *point = default_point;
                   gotconfig = TRUE;
                   g_string_assign (slide_str, "");
-                  g_string_assign (command_str, "");
+                  g_string_assign (setting_str, "");
                 }
               else
                 {
@@ -492,29 +530,36 @@ parse_slides (const char *slide_src)
                       else
 #endif
                         {
-                          point->background = g_object_new (
-                                  CLUTTER_TYPE_TEXTURE,
-                                  "filename", point->bg,
-                                  "load-data-async", TRUE,
-                                  NULL);
+                          ClutterColor color;
+                          if (clutter_color_from_string (&color, point->bg))
+                            point->background = g_object_new (CLUTTER_TYPE_RECTANGLE,
+                                           "color", &color,
+                                           "width", 100.0,
+                                           "height", 100.0,
+                                           NULL);
+                          else
+                             point->background = g_object_new (
+                                     CLUTTER_TYPE_TEXTURE,
+                                     "filename", point->bg,
+                                     "load-data-async", TRUE,
+                                     NULL);
                         }
                     }
-                  else if (default_bg[0])
-                    {
-                      /* should reuse clones of a default loaded texture */
-                      point->background = g_object_new (CLUTTER_TYPE_TEXTURE,
-                              "filename", default_bg,
-                              "load-data-async", TRUE,
-                              NULL);
-                    }
 
-                  /* trim newline */
-                  if (slide_str->str[strlen(slide_str->str)-1]=='\n')
-                      slide_str->str[strlen(slide_str->str)-1]='\0';
+                  /* trim newlines and spaces from end */
+                  while ( slide_str->str[strlen(slide_str->str)-1]=='\n'
+                       || slide_str->str[strlen(slide_str->str)-1]==' ')
+                          slide_str->str[strlen(slide_str->str)-1]='\0';
 
-                  point->text = clutter_text_new_with_text (default_font, slide_str->str);
-                  clutter_text_set_color (CLUTTER_TEXT (point->text), &white);
-
+                  {
+                    ClutterColor color;
+                    clutter_color_from_string (&color, point->text_color);
+                    point->text = g_object_new (CLUTTER_TYPE_TEXT,
+                                                "font-name", point->font,
+                                                "text", slide_str->str,
+                                                "color", &color,
+                                                NULL);
+                  }
 
                   clutter_container_add_actor (CLUTTER_CONTAINER (foreground),
                                                point->text);
@@ -533,11 +578,10 @@ parse_slides (const char *slide_src)
                   clutter_actor_set_depth (point->text, RESTDEPTH);
 
                   g_string_assign (slide_str, "");
-                  g_string_assign (command_str, "");
+                  g_string_assign (setting_str, "");
 
                   slides = g_list_append (slides, point);
-                  point = g_new0 (PinPointPoint, 1);
-                  point->position = default_position;
+                  point = pin_point_new ();
                 }
             }
           else
@@ -554,7 +598,7 @@ parse_slides (const char *slide_src)
     }
 
   g_string_free (slide_str, TRUE);
-  g_string_free (command_str, TRUE);
+  g_string_free (setting_str, TRUE);
 
   if (g_list_nth (slides, slideno))
     slidep = g_list_nth (slides, slideno);

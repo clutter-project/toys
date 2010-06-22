@@ -1,15 +1,16 @@
 #!/usr/bin/env pinpoint
-font=Sans Bold 60px 
-background=bg.jpg
+font=Sans 40px
+bg.jpg
 - The bits above are slide defaults
 pinpoint 
 - lines starting with - are slide seperators
-minimalist presentation tool [wth.jpg]
+minimalist presentation tool  [wth.jpg]
 -
 Simple text source
 -
- font=Sans 50px 
- background=bg.jpg
+ #!/usr/bin/env pinpoint
+ font=Sans 50px   [font=monospace 18px] 
+ bg.jpg           [shading-opacity=1.0]
  -
  pinpoint
  -
@@ -17,8 +18,9 @@ Simple text source
  -
  Simple text source
  -
-  font=Sans 50px 
-  background=bg.jpg
+  #!/usr/bin/env pinpoint
+  font=Sans 50px   \[font=monospace 18px]
+  bg.jpg           \[shading-opacity=1.0]
   -
   pinpoint
   -
@@ -26,15 +28,18 @@ Simple text source
   -
   Simple text source
   -
-  Large amount of a text is boring to read, you should
-  avoid it, the slides shouldnt be a manuscript. [bottom-left]
 -
-Large amount of a text is boring to read, you should
-avoid it, the slides shouldnt be a manuscript,
-perhaps a cue card - with nice visual things for the
-audience to look at. When you write a full essay in a
-slide though pinpoint will scale it to fit; but it
-will be tiny and kind of ugly.
+Start by writing down the core concepts of
+what you will be talking about sort them and
+format them as a pinpoint presentation, if
+this was a presentation given as a
+demonstration of pinpoint you would now be
+be trying to read this slide as well as pay
+attention to what is said. Pinpoint realods
+the presentation if you change it on disk, 
+this is useful when tuning things, keep both
+programs open. And remember Less text in a
+slide is almost always better. ;)
 -
 Compfight for backgrounds \[wth.jpg] [wth.jpg]
 -
@@ -58,6 +63,13 @@ Place text [top-right]
 -
 \[center][center] (which is the default)
 -
+\[font=Monospace 100px]
+\[white]\[text-color=black]
+\[shading-opacity=0.0]\[bottom]
+[font=Monospace 100px]
+[white][text-color=black]
+[shading-opacity=0.0][bottom]
+-
 Miss bullets?
 -
 bullets?
@@ -66,22 +78,17 @@ bullets?
 -
 Keybindings:
 -
-F11
-toggle fullscreen
+F11 - toggle fullscreen
 -
-Esc
-quit
+Escape - quit
 -
-left
-previous slide
+left - previous slide
 -
-right/space
-next slide
+right/space - next slide
 -
 todo: [wth.jpg]
- • Customize (per-slide) colors and font?
  • Simpler default or selection of? transitions
    • easiest to just edit the code?
 -
-FIN
+FIN [font=Sans 100px]
 - This final line is needed
