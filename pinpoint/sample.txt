@@ -1,14 +1,14 @@
-font=Sans 40px 
+#!/usr/bin/env pinpoint
+font=Serif 40px 
 background=bg.jpg
 ---------------- The bits above are slide defaults
 pinpoint 
 ---------------------------------- lines starting with - are slide seperators
 minimalist presentation tool [wth.jpg]
 -----------------------------
-sketch/finish presentations in
-$EDITOR
+Simple text source
 -----------------------------
- font=Sans 50px [bottom-left]
+ font=Sans 50px 
  background=bg.jpg
  -----------------------------
  pinpoint
@@ -17,13 +17,17 @@ $EDITOR
  -----------------------------
  Simple text source
  -----------------------------
-  font=Sans 50px \[bottom-left]
+  font=Sans 50px 
   background=bg.jpg
   -----------------------------
   pinpoint
   -----------------------------
   minimalist presentation tool \[wth.jpg]
-  ..
+  -----------------------------
+  Simple text source
+  ------
+  Large amount of a text is boring to read, you should
+  avoid it, the slides shouldnt be a manuscript. [bottom-left]
 -----------------------------
 Large amount of a text is boring to read, you should
 avoid it, the slides shouldnt be a manuscript,
@@ -76,7 +80,6 @@ next slide
 -----------------------------
 todo: [wth.jpg]
  • Customize colors?
- • watch text file and reload
  • Customizing transitions
    • Just edit the code?
    • For default presentation, scale it to fit?

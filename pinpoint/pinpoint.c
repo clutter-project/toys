@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <clutter/clutter.h>
+#include <gio/gio.h>
 #ifdef USE_CLUTTER_GST
 #include <clutter-gst/clutter-gst.h>
 #endif
@@ -66,6 +67,19 @@ static void leave_slide  (void);
 static void show_slide   (void);
 static void parse_slides (const char *slide_src);
 
+static void file_changed (GFileMonitor     *monitor,
+                          GFile            *file,
+                          GFile            *other_file,
+                          GFileMonitorEvent event_type,
+                          char             *path)
+{
+  char   *text = NULL;
+  if (!g_file_get_contents (path, &text, NULL, NULL))
+    g_error ("failed to load slides from %s\n", path);
+  parse_slides (text);
+  g_free (text);
+}
+
 static void stage_resized (ClutterActor *actor,
                            GParamSpec   *pspec,
                            gpointer      data)
@@ -79,6 +93,7 @@ static gboolean key_pressed (ClutterActor *actor,
 
 int main (int argc, char **argv)
 {
+  GFileMonitor *monitor;
   char   *text = NULL;
 
   if (!argv[1])
@@ -110,8 +125,6 @@ int main (int argc, char **argv)
   clutter_container_add (CLUTTER_CONTAINER (stage),
                          background, shading, foreground, NULL);
 
-  parse_slides (text);
-  g_free (text);
 
   clutter_actor_show (stage);
   clutter_stage_set_color (CLUTTER_STAGE (stage), &black);
@@ -121,9 +134,13 @@ int main (int argc, char **argv)
 
   clutter_stage_set_user_resizable (CLUTTER_STAGE (stage), TRUE);
 
-  /* start with first slide */
-  slidep = slides;
 
+  parse_slides (text);
+  monitor = g_file_monitor (g_file_new_for_commandline_arg (argv[1]),
+                            G_FILE_MONITOR_NONE, NULL, NULL);
+  g_signal_connect (monitor, "changed", G_CALLBACK (file_changed),
+                                        argv[1]);
+  g_free (text);
   clutter_main ();
 
   clutter_actor_destroy (stage);
@@ -145,7 +162,7 @@ static gboolean key_pressed (ClutterActor *actor,
       case CLUTTER_Left:
       case CLUTTER_Up:
       case CLUTTER_BackSpace:
-        if (slidep->prev)
+        if (slidep && slidep->prev)
           {
             leave_slide ();
             slidep = slidep->prev;
@@ -154,7 +171,7 @@ static gboolean key_pressed (ClutterActor *actor,
         break;
       case CLUTTER_Right:
       case CLUTTER_space:
-        if (slidep->next)
+        if (slidep && slidep->next)
           {
             leave_slide ();
             slidep = slidep->next;
@@ -206,7 +223,11 @@ static void leave_slide (void)
 
 static void show_slide (void)
 {
-  PinPointPoint *point = slidep->data;
+  PinPointPoint *point;
+  if (!slidep)
+    return;
+ 
+  point = slidep->data;
   if (point->background)
     {
       float w,h;
@@ -350,17 +371,39 @@ parse_config (const char *config)
   g_string_free (str2, TRUE);
 }
 
+static void point_free (PinPointPoint *point)
+{
+  if (point->text)
+    clutter_actor_destroy (point->text);
+  if (point->background)
+    clutter_actor_destroy (point->background);
+  g_free (point);
+}
+
 static void
 parse_slides (const char *slide_src)
 {
   const char *p;
-  int      y = STARTPOS;
+  int      y;
+  int      slideno = 0;
   gboolean startofline = TRUE;
   gboolean gotconfig = FALSE;
   GString *slide_str = g_string_new ("");
   GString *command_str = g_string_new ("");
   PinPointPoint *point;
-  
+  GList *s;
+
+  /* store current slideno */
+  if (slidep)
+  for (;slidep->prev; slidep = slidep->prev)
+    slideno++;
+
+  for (s = slides; s; s = s->next)
+    point_free (s->data);
+  g_list_free (slides);
+  slides = NULL;
+
+  y = STARTPOS;
   point = g_new0 (PinPointPoint, 1);
   point->position = default_position;
 
@@ -469,7 +512,7 @@ parse_slides (const char *slide_src)
                   if (slide_str->str[strlen(slide_str->str)-1]=='\n')
                       slide_str->str[strlen(slide_str->str)-1]='\0';
 
-                  point->text= clutter_text_new_with_text (default_font, slide_str->str);
+                  point->text = clutter_text_new_with_text (default_font, slide_str->str);
                   clutter_text_set_color (CLUTTER_TEXT (point->text), &white);
 
 
@@ -512,4 +555,10 @@ parse_slides (const char *slide_src)
 
   g_string_free (slide_str, TRUE);
   g_string_free (command_str, TRUE);
+
+  if (g_list_nth (slides, slideno))
+    slidep = g_list_nth (slides, slideno);
+  else
+    slidep = slides;
+  show_slide ();
 }
