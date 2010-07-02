@@ -1,5 +1,5 @@
-LIBS=`pkg-config --libs clutter-1.0`
-INCS=`pkg-config --cflags clutter-1.0`
+LIBS=`pkg-config --libs clutter-x11-1.0`
+INCS=`pkg-config --cflags clutter-x11-1.0`
 
 QUIET_CC=@echo '  CC     '$@;
 QUIET_LD=@echo '  CCLD   '$@;
