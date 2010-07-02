@@ -126,6 +126,10 @@ static GOptionEntry entries[] = {
 int
 main (int argc, char *argv[])
 {
+#if !CLUTTER_CHECK_VERSION (1, 3, 6)
+#error "You need Clutter >= 1.3.6 to compile arc-clock."
+#endif
+
   clutter_x11_set_use_argb_visual (TRUE);
 
   GError *error = NULL;
