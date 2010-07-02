@@ -7,7 +7,7 @@ INCS=`pkg-config --cflags clutter-1.0`
 all: circles
 
 circles: circles.o
-	$(CC) -g -Wall $(CFLAGS) -o $@ circles.o $(LIBS)
+	$(CC) -g -Wall $(CFLAGS) -o $@ circles.o -lm $(LIBS)
 
 clean:
 	rm -fr *.o circles
