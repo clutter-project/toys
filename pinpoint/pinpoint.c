@@ -106,7 +106,7 @@ int main (int argc, char **argv)
 #else
   clutter_init (&argc, &argv);
 #endif
-  stage = CLUTTER_ACTOR (clutter_stage_new ());
+  stage = clutter_stage_get_default ();
 
   background = clutter_group_new ();
   foreground = clutter_group_new ();
