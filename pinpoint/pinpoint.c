@@ -51,6 +51,7 @@ typedef struct PinPointPoint
 {
   ClutterGravity  position;
   const char     *font;
+  const char     *stage_color;
   const char     *text_color;
   const char     *shading_color;
   float           shading_opacity;
@@ -63,7 +64,8 @@ typedef struct PinPointPoint
 
 static PinPointPoint default_point = 
 {
-  CLUTTER_GRAVITY_CENTER, "Sans 60px", "white", "black", 0.66, "black", NULL,
+  CLUTTER_GRAVITY_CENTER, "Sans 60px", "black", "white",
+  "black", 0.66, "black", NULL,
 };
 
 static GList *slides      = NULL; /* list of slide texts */
@@ -152,7 +154,6 @@ int main (int argc, char **argv)
   return 0;
 }
 
-
 static gboolean key_pressed (ClutterActor *actor,
                              ClutterEvent *event,
                              gpointer      data)
@@ -237,6 +238,15 @@ static void show_slide (void)
     return;
  
   point = slidep->data;
+
+  if (point->stage_color)
+    {
+      ClutterColor color;
+
+      clutter_color_from_string (&color, point->stage_color);
+      clutter_stage_set_color (CLUTTER_STAGE (stage), &color);
+    }
+
   if (point->background)
     {
       float w,h;
@@ -398,14 +408,18 @@ static void
 parse_setting(PinPointPoint *point,
               const gchar   *setting)
 {
+/* pippin started it */
 #define IF_PREFIX(prefix) } else if (g_str_has_prefix (setting, prefix)) {
 #define IF_EQUAL(string) } else if (g_str_equal (setting, string)) {
+#define char g_intern_string (strrchr (setting, '=') + 1)
+#define float g_ascii_strtod (strrchr (setting, '=') + 1, NULL);
   if (0) {
-    IF_PREFIX("font=") point->font = g_intern_string (strrchr (setting, '=') + 1);
-    IF_PREFIX("text-color=") point->text_color = g_intern_string (strrchr (setting, '=') + 1);
-    IF_PREFIX("shading-color=") point->shading_color = g_intern_string (strrchr (setting, '=') + 1);
-    IF_PREFIX("shading-opacity=") point->shading_opacity = g_ascii_strtod (strrchr (setting, '=') + 1, NULL);
-    IF_PREFIX("command=") point->command = g_intern_string (strrchr (setting, '=') + 1);
+    IF_PREFIX("stage-color=") point->stage_color = char;
+    IF_PREFIX("font=") point->font = char;
+    IF_PREFIX("text-color=") point->text_color = char;
+    IF_PREFIX("shading-color=") point->shading_color = char;
+    IF_PREFIX("shading-opacity=") point->shading_opacity = float;
+    IF_PREFIX("command=") point->command = char;
     IF_EQUAL("center") point->position = CLUTTER_GRAVITY_CENTER;
     IF_EQUAL("top") point->position = CLUTTER_GRAVITY_NORTH;
     IF_EQUAL("bottom") point->position = CLUTTER_GRAVITY_SOUTH;
@@ -420,8 +434,8 @@ parse_setting(PinPointPoint *point,
   }
 #undef IF_PREFIX
 #undef IF_EQUAL
-
-
+#undef float
+#undef char
 }
 
 static void
