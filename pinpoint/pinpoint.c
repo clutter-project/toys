@@ -26,10 +26,17 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <clutter/clutter.h>
 #include <gio/gio.h>
 #ifdef USE_CLUTTER_GST
 #include <clutter-gst/clutter-gst.h>
+#endif
+#ifdef USE_DAX
+#include <dax/dax.h>
 #endif
 #include <string.h>
 #include <stdlib.h>
@@ -106,6 +113,10 @@ int main (int argc, char **argv)
 #else
   clutter_init (&argc, &argv);
 #endif
+#ifdef USE_DAX
+  dax_init (&argc, &argv);
+#endif
+
   stage = clutter_stage_get_default ();
 
   background = clutter_group_new ();
@@ -209,6 +220,12 @@ static void leave_slide (void)
           clutter_media_set_playing (CLUTTER_MEDIA (point->background), FALSE);
         }
 #endif
+#ifdef USE_DAX
+      if (DAX_IS_ACTOR (point->background))
+        {
+          dax_actor_set_playing (DAX_ACTOR (point->background), FALSE);
+        }
+#endif
     }
 }
 
@@ -252,7 +269,17 @@ static void show_slide (void)
           clutter_media_set_progress (CLUTTER_MEDIA (point->background), 0.0);
           clutter_media_set_playing (CLUTTER_MEDIA (point->background), TRUE);
         }
+      else
 #endif
+#ifdef USE_DAX
+      if (DAX_IS_ACTOR (point->background))
+        {
+          dax_actor_set_playing (DAX_ACTOR (point->background), TRUE);
+        }
+      else
+#endif
+        {
+        }
     }
 
   {
@@ -526,6 +553,23 @@ parse_slides (const char *slide_src)
                           clutter_media_set_filename (CLUTTER_MEDIA (point->background), point->bg);
                           /* should pre-roll the video and set the size */
                           clutter_actor_set_size (point->background, 400, 300);
+                        }
+                      else
+#endif
+#ifdef USE_DAX
+                      if (g_str_has_suffix (point->bg, ".svg"))
+                        {
+                          GError *error = NULL;
+
+                          point->background =
+                            dax_actor_new_from_file (point->bg, &error);
+
+                          if (point->background == NULL)
+                            {
+                              g_warning ("Could not open SVG file %s: %s",
+                                         point->bg, error->message);
+                              g_clear_error (&error);
+                            }
                         }
                       else
 #endif
