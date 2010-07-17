@@ -1,5 +1,6 @@
 pinpoint
 .*.sw?
+.deps
 *.o
 *~
 INSTALL
