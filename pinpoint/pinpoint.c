@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #ifdef USE_DAX
 #include <dax/dax.h>
+#include "pp-super-aa.h"
 #endif
 #include <string.h>
 #include <stdlib.h>
@@ -573,10 +574,16 @@ parse_slides (const char *slide_src)
 #ifdef USE_DAX
                       if (g_str_has_suffix (point->bg, ".svg"))
                         {
+                          ClutterActor *aa, *svg;
                           GError *error = NULL;
 
-                          point->background =
-                            dax_actor_new_from_file (point->bg, &error);
+                          aa = pp_super_aa_new ();
+                          pp_super_aa_set_resolution (PP_SUPER_AA (aa), 2, 2);
+                          svg = dax_actor_new_from_file (point->bg, &error);
+                          clutter_container_add_actor (CLUTTER_CONTAINER (aa),
+                                                       svg);
+
+                          point->background = aa;
 
                           if (point->background == NULL)
                             {

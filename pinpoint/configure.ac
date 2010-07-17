@@ -30,8 +30,9 @@ AS_CASE([$enable_dax],
 	AC_MSG_ERROR([invalid argumented passed to --enable-dax]))
 AC_MSG_RESULT([$use_dax])
 AS_IF([test "x$use_dax" = "xyes"], [
-       PINPOINT_DEPS="$PINPOINT_DEPS dax-0.2"
+       PINPOINT_DEPS="$PINPOINT_DEPS dax-0.2 mx-1.0"
        AC_DEFINE([USE_DAX], [1], [Wether pipoint will use Dax])])
+AM_CONDITIONAL([USE_DAX], [test "x$use_dax" = "xyes"])
 
 PKG_CHECK_MODULES([DEPS], [$PINPOINT_DEPS])
 

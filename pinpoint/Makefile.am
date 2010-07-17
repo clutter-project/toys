@@ -3,10 +3,14 @@ bin_PROGRAMS=pinpoint
 AM_CFLAGS = $(DEPS_CFLAGS) $(MAINTAINER_FLAGS) -D_GNU_SOURCE
 ACLOCAL_AMFLAGS = -I m4
 
-pinpoint_LDADD  = $(DEPS_LIBS)
-pinpoint_SOURCES = pinpoint.c
+if USE_DAX
+DAX_SOURCES = pp-super-aa.c pp-super-aa.h
+endif
 
-EXTRA_DIST=sample.txt wth.jpg bg.jpg
+pinpoint_LDADD  = $(DEPS_LIBS)
+pinpoint_SOURCES = pinpoint.c $(DAX_SOURCES)
+
+EXTRA_DIST=sample.txt wth.jpg bg.jpg pp-super-aa.c pp-super-aa.h
 
 MAINTAINERCLEANFILES = aclocal.m4 compile config.guess config.sub configure depcomp install-sh ltmain.sh Makefile.in missing
 
