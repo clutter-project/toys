@@ -580,6 +580,7 @@ parse_slides (const char *slide_src)
                           aa = pp_super_aa_new ();
                           pp_super_aa_set_resolution (PP_SUPER_AA (aa), 2, 2);
                           svg = dax_actor_new_from_file (point->bg, &error);
+                          mx_offscreen_set_pick_child (MX_OFFSCREEN (aa), TRUE);
                           clutter_container_add_actor (CLUTTER_CONTAINER (aa),
                                                        svg);
 
