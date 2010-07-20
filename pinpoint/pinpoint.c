@@ -882,6 +882,19 @@ _cairo_render_background (CairoRenderer *renderer,
 {
   CairoPointData *data = point->data;
 
+  if (point->stage_color)
+    {
+      ClutterColor color;
+
+      clutter_color_from_string (&color, point->stage_color);
+      cairo_set_source_rgba (renderer->ctx,
+                             color.red / 255.f,
+                             color.green / 255.f,
+                             color.blue / 255.f,
+                             color.alpha / 255.f);
+      cairo_paint (renderer->ctx);
+    }
+
   switch (data->bg_type)
     {
     case PP_BG_COLOR:
@@ -1376,6 +1389,8 @@ main (int    argc,
     {
 #ifdef HAVE_PDF
       renderer = PINPOINT_RENDERER (&cairo_renderer);
+      /* makes more sense to default to white for "stage" color in PDFs*/
+      default_point.stage_color = "white";
 #else
       g_warning ("Pinpoint was built without PDF support");
       return EXIT_FAILURE;
