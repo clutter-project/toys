@@ -8,26 +8,21 @@ minimalist presentation tool  [wth.jpg]
 -
 Simple text source
 -
- #!/usr/bin/env pinpoint
+The current presentation thus far:
+ #!/usr/bin/env pinpoint 
  font=Sans 50px   [font=monospace 18px] 
  bg.jpg           [shading-opacity=1.0]
- -
+ - The bits above are slide defaults
  pinpoint
- -
+ - lines starting with - are slide seperators
  minimalist presentation tool \[wth.jpg]
  -
  Simple text source
  -
+ The current presentation thus far:
   #!/usr/bin/env pinpoint
-  font=Sans 50px   \[font=monospace 18px]
+  font=Sans 40px   \[font=monospace 18px]
   bg.jpg           \[shading-opacity=1.0]
-  -
-  pinpoint
-  -
-  minimalist presentation tool \[wth.jpg]
-  -
-  Simple text source
-  -
 -
 Start by writing down the core concepts of
 what you will be talking about sort them and
@@ -35,7 +30,7 @@ format them as a pinpoint presentation, if
 this was a presentation given as a
 demonstration of pinpoint you would now be
 be trying to read this slide as well as pay
-attention to what is said. Pinpoint realods
+attention to what is said. Pinpoint reloads
 the presentation if you change it on disk, 
 this is useful when tuning things, keep both
 programs open. And remember Less text in a
@@ -75,6 +70,8 @@ Miss bullets?
 bullets?
  ❥ no worries; just utf8 it
 • ✽ ✩ ✔ ❧ ◦
+-
+$ pinpoint presentation.txt -o presentation.pdf
 -
 Keybindings:
 -
