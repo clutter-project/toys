@@ -30,8 +30,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.h"
 #endif
 
+#include <cairo.h>
+#include <cairo-pdf.h>
 #include <clutter/clutter.h>
 #include <gio/gio.h>
+#ifdef HAVE_PDF
+#include <gdk-pixbuf/gdk-pixbuf.h>
+#include <pango/pango.h>
+#include <pango/pangocairo.h>
+#endif
 #ifdef USE_CLUTTER_GST
 #include <clutter-gst/clutter-gst.h>
 #endif
@@ -50,6 +57,7 @@ typedef struct _PinPointPoint PinPointPoint;
 typedef struct _PinPointRenderer PinPointRenderer;
 
 static ClutterColor black = {0x00,0x00,0x00,0xff};
+static char *output_filename;
 
 typedef enum
 {
@@ -63,9 +71,8 @@ typedef enum
 
 struct _PinPointRenderer
 {
-  void      (*init)              (PinPointRenderer    *renderer,
-                                  int                 *argc,
-                                  char             ***argv);
+  void      (*init)              (PinPointRenderer  *renderer,
+                                  char              *pinpoint_file);
   void      (*run)                (PinPointRenderer *renderer);
   void      (*finalize)           (PinPointRenderer *renderer);
   gboolean  (*create_background)  (PinPointRenderer *renderer,
@@ -101,6 +108,109 @@ static PinPointPoint default_point =
 
 static GList *slides      = NULL; /* list of slide texts */
 static GList *slidep      = NULL; /* current slide */
+
+/*
+ * Cross-renderers helpers
+ */
+
+static void
+get_padding (float  stage_width,
+             float  stage_height,
+             float *padding)
+{
+  *padding = stage_width * 0.01;
+}
+
+static void
+get_text_position_scale (PinPointPoint *point,
+                         float          stage_width,
+                         float          stage_height,
+                         float          text_width,
+                         float          text_height,
+                         float         *text_x,
+                         float         *text_y,
+                         float         *text_scale)
+{
+  float w, h;
+  float x, y;
+  float sx = 1.0;
+  float sy = 1.0;
+  float padding;
+
+  get_padding (stage_width, stage_height, &padding);
+
+  w = text_width;
+  h = text_height;
+
+  sx = stage_width / w * 0.8;
+  sy = stage_height / h * 0.8;
+
+  if (sy < sx)
+    sx = sy;
+  if (sx > 1.0) /* avoid enlarging text */
+    sx = 1.0;
+
+  switch (point->position)
+    {
+  case CLUTTER_GRAVITY_EAST:
+  case CLUTTER_GRAVITY_NORTH_EAST:
+  case CLUTTER_GRAVITY_SOUTH_EAST:
+    x = stage_width * 0.95 - w * sx;
+    break;
+  case CLUTTER_GRAVITY_WEST:
+  case CLUTTER_GRAVITY_NORTH_WEST:
+  case CLUTTER_GRAVITY_SOUTH_WEST:
+    x = stage_width * 0.05;
+    break;
+  case CLUTTER_GRAVITY_CENTER:
+  default:
+    x = (stage_width - w * sx) / 2;
+    break;
+    }
+  switch (point->position)
+    {
+  case CLUTTER_GRAVITY_SOUTH:
+  case CLUTTER_GRAVITY_SOUTH_EAST:
+  case CLUTTER_GRAVITY_SOUTH_WEST:
+    y = stage_height * 0.95 - h * sx;
+    break;
+  case CLUTTER_GRAVITY_NORTH:
+  case CLUTTER_GRAVITY_NORTH_EAST:
+  case CLUTTER_GRAVITY_NORTH_WEST:
+    y = stage_height * 0.05;
+    break;
+  default:
+    y = (stage_height- h * sx) / 2;
+    break;
+    }
+
+  *text_scale = sx;
+  *text_x = x;
+  *text_y = y;
+}
+
+static void
+get_shading_position_size (float stage_width,
+                           float stage_height,
+                           float text_x,
+                           float text_y,
+                           float text_width,
+                           float text_height,
+                           float text_scale,
+                           float *shading_x,
+                           float *shading_y,
+                           float *shading_width,
+                           float *shading_height)
+{
+  float padding;
+
+  get_padding (stage_width, stage_height, &padding);
+
+  *shading_x = text_x - padding;
+  *shading_y = text_y - padding;
+  *shading_width = text_width * text_scale + padding * 2;
+  *shading_height = text_height * text_scale + padding * 2;
+}
 
 /*
  * ClutterRenderer
@@ -144,8 +254,7 @@ static gboolean key_pressed   (ClutterActor     *actor,
 
 static void
 clutter_renderer_init (PinPointRenderer   *pp_renderer,
-                       int                *argc,
-                       char             ***argv)
+                       char               *pinpoint_file)
 {
   ClutterRenderer *renderer = CLUTTER_RENDERER (pp_renderer);
   GFileMonitor *monitor;
@@ -175,10 +284,10 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
 
   clutter_stage_set_user_resizable (CLUTTER_STAGE (stage), TRUE);
 
-  renderer->path = *argv[1];
+  renderer->path = pinpoint_file;
   if (renderer->path)
     {
-      monitor = g_file_monitor (g_file_new_for_commandline_arg (*argv[1]),
+      monitor = g_file_monitor (g_file_new_for_commandline_arg (pinpoint_file),
                                 G_FILE_MONITOR_NONE, NULL, NULL);
       g_signal_connect (monitor, "changed", G_CALLBACK (file_changed),
                                             renderer);
@@ -283,7 +392,6 @@ static void
 clutter_renderer_create_text (PinPointRenderer *pp_renderer,
                               PinPointPoint    *point,
                               const char       *text)
-
 {
   ClutterRenderer *renderer = CLUTTER_RENDERER (pp_renderer);
   ClutterPointData *data = point->data;
@@ -482,89 +590,58 @@ show_slide (ClutterRenderer *renderer)
     }
 
   {
-    float w, h;
-    float x, y;
-    float sx = 1.0;
-    float sy = 1.0;
-    float padding = clutter_actor_get_width (renderer->stage) * 0.01;
+    float text_x, text_y, text_width, text_height, text_scale;
+    float shading_x, shading_y, shading_width, shading_height;
 
-    clutter_actor_get_size (data->text, &w, &h);
+    clutter_actor_get_size (data->text, &text_width, &text_height);
 
-    sx = clutter_actor_get_width (renderer->stage) / w * 0.8;
-    sy = clutter_actor_get_height (renderer->stage) / h * 0.8;
-
-    if (sy < sx)
-      sx = sy;
-    if (sx > 1.0) /* avoid enlarging text */
-      sx = 1.0;
-
-    switch (point->position)
-      {
-        case CLUTTER_GRAVITY_EAST:
-        case CLUTTER_GRAVITY_NORTH_EAST:
-        case CLUTTER_GRAVITY_SOUTH_EAST:
-          x = clutter_actor_get_width (renderer->stage) * 0.95
-              - clutter_actor_get_width (data->text) * sx;
-          break;
-        case CLUTTER_GRAVITY_WEST:
-        case CLUTTER_GRAVITY_NORTH_WEST:
-        case CLUTTER_GRAVITY_SOUTH_WEST:
-          x = clutter_actor_get_width (renderer->stage) * 0.05;
-          break;
-        case CLUTTER_GRAVITY_CENTER:
-        default:
-          x = (clutter_actor_get_width (renderer->stage) - w * sx) / 2;
-          break;
-      }
-    switch (point->position)
-      {
-        case CLUTTER_GRAVITY_SOUTH:
-        case CLUTTER_GRAVITY_SOUTH_EAST:
-        case CLUTTER_GRAVITY_SOUTH_WEST:
-          y = clutter_actor_get_height (renderer->stage) * 0.95
-              - clutter_actor_get_height (data->text) * sx;
-          break;
-        case CLUTTER_GRAVITY_NORTH:
-        case CLUTTER_GRAVITY_NORTH_EAST:
-        case CLUTTER_GRAVITY_NORTH_WEST:
-          y = clutter_actor_get_height (renderer->stage) * 0.05;
-          break;
-        default:
-          y = (clutter_actor_get_height (renderer->stage)- h * sx) / 2;
-          break;
-      }
+    get_text_position_scale (point,
+                             clutter_actor_get_width (renderer->stage),
+                             clutter_actor_get_height (renderer->stage),
+                             text_width, text_height,
+                             &text_x, &text_y,
+                             &text_scale);
 
     clutter_actor_animate (data->text,
                            CLUTTER_EASE_OUT_QUINT, 1000,
                            "depth", 0.0,
-                           "scale-x", sx,
-                           "scale-y", sx,
-                           "x", x,
-                           "y", y,
+                           "scale-x", text_scale,
+                           "scale-y", text_scale,
+                           "x", text_x,
+                           "y", text_y,
                            NULL);
+
+    get_shading_position_size (clutter_actor_get_width (renderer->stage),
+                               clutter_actor_get_height (renderer->stage),
+                               text_x, text_y,
+                               text_width, text_height,
+                               text_scale,
+                               &shading_x, &shading_y,
+                               &shading_width, &shading_height);
 
     if (clutter_actor_get_width (data->text) > 1.0)
       {
         ClutterColor color;
         clutter_color_from_string (&color, point->shading_color);
+
         clutter_actor_animate (renderer->shading,
                CLUTTER_LINEAR, 500,
-               "x", x - padding,
-               "y", y - padding,
+               "x", shading_x,
+               "y", shading_y,
                "opacity", (int)(point->shading_opacity*255),
                "color", &color,
-               "width", clutter_actor_get_width (data->text) * sx + padding*2,
-               "height", clutter_actor_get_height (data->text) * sx + padding*2,
+               "width", shading_width,
+               "height", shading_height,
                NULL);
       }
     else /* no text, fade out shading */
       clutter_actor_animate (renderer->shading,
              CLUTTER_LINEAR, 500,
              "opacity", 0,
-             "x", x - padding,
-             "y", y - padding,
-             "width", clutter_actor_get_width (data->text) * sx + padding*2,
-             "height", clutter_actor_get_height (data->text) * sx + padding*2,
+             "x", shading_x,
+             "y", shading_y,
+             "width", shading_width,
+             "height", shading_height,
              NULL);
   }
 
@@ -596,6 +673,435 @@ file_changed (GFileMonitor      *monitor,
   parse_slides (PINPOINT_RENDERER (renderer), text);
   g_free (text);
 }
+
+/*
+ * Cairo renderer
+ */
+
+#ifdef HAVE_PDF
+
+#define CAIRO_RENDERER(renderer)  ((CairoRenderer *) renderer)
+
+typedef struct _CairoRenderer
+{
+  PinPointRenderer renderer;
+  GHashTable *surfaces;         /* keep cairo_surface_t around for source
+                                   images as we wantt to only include one
+                                   instance of the image when using it in
+                                   several slides */
+  cairo_surface_t  *surface;
+  cairo_t *ctx;
+} CairoRenderer;
+
+typedef struct
+{
+  PPBackgroundType bg_type;
+  char *text;
+} CairoPointData;
+
+static void
+_destroy_surface (gpointer data)
+{
+  cairo_surface_t *surface;
+
+  cairo_surface_destroy (surface);
+}
+
+#define A4_LS_WIDTH  841.88976378
+#define A4_LS_HEIGHT 595.275590551
+
+static void
+cairo_renderer_init (PinPointRenderer *pp_renderer,
+                     char             *pinpoint_file)
+{
+  CairoRenderer *renderer = CAIRO_RENDERER (pp_renderer);
+
+  /* A4, landscape */
+  renderer->surface = cairo_pdf_surface_create (output_filename,
+                                                A4_LS_WIDTH, A4_LS_HEIGHT);
+
+  renderer->ctx = cairo_create (renderer->surface);
+  renderer->surfaces = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                              NULL, _destroy_surface);
+}
+
+static cairo_surface_t *
+_cairo_new_surface_from_pixbuf (const GdkPixbuf *pixbuf)
+{
+  gint width = gdk_pixbuf_get_width (pixbuf);
+  gint height = gdk_pixbuf_get_height (pixbuf);
+  guchar *gdk_pixels = gdk_pixbuf_get_pixels (pixbuf);
+  int gdk_rowstride = gdk_pixbuf_get_rowstride (pixbuf);
+  int n_channels = gdk_pixbuf_get_n_channels (pixbuf);
+  int cairo_stride;
+  guchar *cairo_pixels;
+  cairo_format_t format;
+  cairo_surface_t *surface;
+  static const cairo_user_data_key_t key;
+  int j;
+
+  if (n_channels == 3)
+    format = CAIRO_FORMAT_RGB24;
+  else
+    format = CAIRO_FORMAT_ARGB32;
+
+  cairo_stride = cairo_format_stride_for_width (format, width);
+  cairo_pixels = g_malloc (height * cairo_stride);
+  surface = cairo_image_surface_create_for_data ((unsigned char *)cairo_pixels,
+                                                 format,
+                                                 width, height, cairo_stride);
+
+  cairo_surface_set_user_data (surface, &key,
+			       cairo_pixels, (cairo_destroy_func_t)g_free);
+
+  for (j = height; j; j--)
+    {
+      guchar *p = gdk_pixels;
+      guchar *q = cairo_pixels;
+
+      if (n_channels == 3)
+	{
+	  guchar *end = p + 3 * width;
+
+	  while (p < end)
+	    {
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+	      q[0] = p[2];
+	      q[1] = p[1];
+	      q[2] = p[0];
+#else
+	      q[1] = p[0];
+	      q[2] = p[1];
+	      q[3] = p[2];
+#endif
+	      p += 3;
+	      q += 4;
+	    }
+	}
+      else
+	{
+	  guchar *end = p + 4 * width;
+	  guint t1,t2,t3;
+
+#define MULT(d,c,a,t) G_STMT_START { t = c * a + 0x7f; d = ((t >> 8) + t) >> 8; } G_STMT_END
+
+	  while (p < end)
+	    {
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+	      MULT(q[0], p[2], p[3], t1);
+	      MULT(q[1], p[1], p[3], t2);
+	      MULT(q[2], p[0], p[3], t3);
+	      q[3] = p[3];
+#else
+	      q[0] = p[3];
+	      MULT(q[1], p[0], p[3], t1);
+	      MULT(q[2], p[1], p[3], t2);
+	      MULT(q[3], p[2], p[3], t3);
+#endif
+
+	      p += 4;
+	      q += 4;
+	    }
+
+#undef MULT
+	}
+
+      gdk_pixels += gdk_rowstride;
+      cairo_pixels += cairo_stride;
+    }
+
+  return surface;
+}
+
+static gboolean
+_cairo_read_file (const char     *file,
+                  unsigned char **data,
+                  unsigned int   *len)
+{
+    FILE *fp;
+
+    fp = fopen (file, "rb");
+    if (fp == NULL)
+      return FALSE;
+
+    fseek (fp, 0, SEEK_END);
+    *len = ftell(fp);
+    fseek (fp, 0, SEEK_SET);
+    *data = g_malloc (*len);
+
+    if (fread(*data, *len, 1, fp) != 1)
+	return FALSE;
+
+    fclose(fp);
+    return TRUE;
+}
+
+static cairo_surface_t *
+_cairo_get_surface (CairoRenderer *renderer,
+                    const char    *file)
+{
+  cairo_surface_t *surface;
+  GdkPixbuf *pixbuf;
+  GError *error = NULL;
+
+  surface = g_hash_table_lookup (renderer->surfaces, file);
+  if (surface)
+    return surface;
+
+  pixbuf = gdk_pixbuf_new_from_file (file, &error);
+  if (pixbuf == NULL)
+    {
+      if (error)
+        {
+          g_warning ("could not load file %s: %s", file, error->message);
+          g_clear_error (&error);
+        }
+      return NULL;
+    }
+
+  surface = _cairo_new_surface_from_pixbuf (pixbuf);
+  g_hash_table_insert (renderer->surfaces, (char *) file, surface);
+
+  /* If we embed a JPEG, we can actually insert the coded data into the PDF in
+   * a lossless fashion (no recompression of the JPEG) */
+  if (g_str_has_suffix (file, ".jpg") || g_str_has_suffix (file, ".jpeg"))
+      {
+        unsigned char *data = NULL;
+        guint len;
+
+        _cairo_read_file (file, &data, &len);
+        cairo_surface_set_mime_data (surface, CAIRO_MIME_TYPE_JPEG,
+                                     data, len,
+                                     g_free, data);
+      }
+
+  return surface;
+}
+
+static void
+_cairo_render_background (CairoRenderer *renderer,
+                          PinPointPoint *point)
+{
+  CairoPointData *data = point->data;
+
+  switch (data->bg_type)
+    {
+    case PP_BG_COLOR:
+      {
+        ClutterColor color;
+
+        clutter_color_from_string (&color, point->bg);
+        cairo_set_source_rgba (renderer->ctx,
+                               color.red / 255.f,
+                               color.green / 255.f,
+                               color.blue / 255.f,
+                               color.alpha / 255.f);
+        cairo_paint (renderer->ctx);
+      }
+      break;
+    case PP_BG_IMAGE:
+      {
+        cairo_surface_t *surface;
+        float w, h, s, r, x, y;
+
+        surface = _cairo_get_surface (renderer, point->bg);
+        if (surface == NULL)
+          break;
+
+        cairo_save (renderer->ctx);
+
+        w = cairo_image_surface_get_width (surface);
+        h = cairo_image_surface_get_height (surface);
+
+        s = A4_LS_WIDTH / w;
+        if (s > 1.0 || A4_LS_HEIGHT < s * h)
+          s = A4_LS_HEIGHT / h;
+        x = (A4_LS_WIDTH - w * s) / 2;
+        y = (A4_LS_HEIGHT - h * s) / 2;
+
+        cairo_translate (renderer->ctx, x, y);
+        cairo_scale (renderer->ctx, s, s);
+        cairo_set_source_surface (renderer->ctx, surface, 0., 0.);
+        cairo_paint (renderer->ctx);
+        cairo_restore (renderer->ctx);
+      }
+      break;
+    case PP_BG_VIDEO:
+#ifdef USE_CLUTTER_GST
+      /* TODO */
+#endif
+      break;
+    case PP_BG_SVG:
+#ifdef USE_DAX
+      /* TODO */
+#endif
+      break;
+    default:
+      g_assert_not_reached();
+    }
+}
+
+static void
+_cairo_render_text (CairoRenderer *renderer,
+                    PinPointPoint *point)
+{
+  CairoPointData *data = point->data;
+  PangoLayout *layout;
+  PangoFontDescription *desc;
+  PangoRectangle logical_rect = { 0, };
+  ClutterColor text_color, shading_color;
+
+  float text_width, text_height, text_x, text_y, text_scale;
+  float shading_x, shading_y, shading_width, shading_height;
+
+  layout = pango_cairo_create_layout (renderer->ctx);
+  desc = pango_font_description_from_string (point->font);
+  pango_layout_set_font_description (layout, desc);
+  pango_layout_set_text (layout, data->text, -1);
+
+  pango_layout_get_extents (layout, NULL, &logical_rect);
+
+  text_width = (logical_rect.x + logical_rect.width) / 1024;
+  text_height = (logical_rect.y + logical_rect.height) / 1024;
+  get_text_position_scale (point,
+                           A4_LS_WIDTH,
+                           A4_LS_HEIGHT,
+                           text_width,
+                           text_height,
+                           &text_x,
+                           &text_y,
+                           &text_scale);
+
+  get_shading_position_size (A4_LS_HEIGHT,
+                             A4_LS_WIDTH,
+                             text_x,
+                             text_y,
+                             text_width,
+                             text_height,
+                             text_scale,
+                             &shading_x,
+                             &shading_y,
+                             &shading_width,
+                             &shading_height);
+
+  clutter_color_from_string (&text_color, point->text_color);
+  clutter_color_from_string (&shading_color, point->shading_color);
+
+  cairo_set_source_rgba (renderer->ctx,
+                         shading_color.red / 255.f,
+                         shading_color.green / 255.f,
+                         shading_color.blue / 255.f,
+                         shading_color.alpha / 255.f * point->shading_opacity);
+  cairo_rectangle (renderer->ctx,
+                   shading_x, shading_y, shading_width, shading_height);
+  cairo_fill (renderer->ctx);
+
+  cairo_save (renderer->ctx);
+  cairo_translate (renderer->ctx, text_x, text_y);
+  cairo_scale (renderer->ctx, text_scale, text_scale);
+  cairo_set_source_rgba (renderer->ctx,
+                         text_color.red / 255.f,
+                         text_color.green / 255.f,
+                         text_color.blue / 255.f,
+                         text_color.alpha / 255.f);
+  pango_cairo_show_layout (renderer->ctx, layout);
+  cairo_restore (renderer->ctx);
+
+  pango_font_description_free (desc);
+  g_object_unref (layout);
+}
+
+static void
+_cairo_render_page (CairoRenderer *renderer,
+                    PinPointPoint *point)
+{
+  CairoPointData *data = point->data;
+
+  _cairo_render_background (renderer, point);
+  _cairo_render_text (renderer, point);
+  cairo_show_page (renderer->ctx);
+}
+
+static void
+cairo_renderer_run (PinPointRenderer *pp_renderer)
+{
+  CairoRenderer *renderer = CAIRO_RENDERER (pp_renderer);
+  GList *cur;
+
+  for (cur = slides; cur; cur = g_list_next (cur))
+    _cairo_render_page (renderer, cur->data);
+}
+
+static void
+cairo_renderer_finalize (PinPointRenderer *pp_renderer)
+{
+  CairoRenderer *renderer = CAIRO_RENDERER (pp_renderer);
+
+  cairo_surface_destroy (renderer->surface);
+  g_hash_table_unref (renderer->surfaces);
+  cairo_destroy (renderer->ctx);
+}
+
+static gboolean
+cairo_renderer_create_background (PinPointRenderer *pp_renderer,
+                                  PinPointPoint    *point,
+                                  PPBackgroundType  type)
+{
+  CairoPointData *data = point->data;
+  gboolean ret = TRUE;
+
+  data->bg_type = type;
+
+  if (type == PP_BG_COLOR)
+    {
+      ClutterColor color;
+
+      ret =  clutter_color_from_string (&color, point->bg);
+    }
+
+  return ret;
+}
+
+static void
+cairo_renderer_create_text (PinPointRenderer *pp_renderer,
+                            PinPointPoint    *point,
+                            const char       *text)
+{
+  CairoPointData *data = point->data;
+
+  data->text = g_strdup (text);
+}
+
+static void *
+cairo_renderer_allocate_data (PinPointRenderer *renderer)
+{
+  return g_slice_new0 (CairoPointData);
+}
+
+static void
+cairo_renderer_free_data (PinPointRenderer *renderer,
+                          void             *datap)
+{
+  CairoPointData *data = datap;
+
+  g_free (data->text);
+}
+
+static ClutterRenderer cairo_renderer =
+{
+  .renderer =
+    {
+      .init = cairo_renderer_init,
+      .run = cairo_renderer_run,
+      .finalize = cairo_renderer_finalize,
+      .create_background = cairo_renderer_create_background,
+      .create_text = cairo_renderer_create_text,
+      .allocate_data = cairo_renderer_allocate_data,
+      .free_data = cairo_renderer_free_data
+    }
+};
+
+#endif /* HAVE_PDF */
 
 /*
  * Parsing
@@ -820,12 +1326,29 @@ parse_slides (PinPointRenderer *renderer,
     slidep = slides;
 }
 
+static GOptionEntry entries[] =
+{
+    { "output", 'o', 0, G_OPTION_ARG_STRING, &output_filename,
+      "Output slides to FILE (formats supported: pdf)", "FILE" },
+    { NULL }
+};
+
 int
 main (int    argc,
       char **argv)
 {
   PinPointRenderer *renderer = PINPOINT_RENDERER (&clutter_renderer);
+  GOptionContext *context;
+  GError *error = NULL;
   char   *text = NULL;
+
+  context = g_option_context_new ("- Presentations made easy");
+  g_option_context_add_main_entries (context, entries, NULL);
+  if (!g_option_context_parse (context, &argc, &argv, &error))
+    {
+      g_print ("option parsing failed: %s\n", error->message);
+      return EXIT_FAILURE;
+    }
 
   if (!argv[1])
     {
@@ -850,7 +1373,18 @@ main (int    argc,
   dax_init (&argc, &argv);
 #endif
 
-  renderer->init (renderer, &argc, &argv);
+  /* select the cairo renderer if we are requested a pdf output */
+  if (output_filename && g_str_has_suffix (output_filename, ".pdf"))
+    {
+#ifdef HAVE_PDF
+      renderer = PINPOINT_RENDERER (&cairo_renderer);
+#else
+      g_warning ("Pinpoint was built without PDF support");
+      return EXIT_FAILURE;
+#endif
+    }
+
+  renderer->init (renderer, argv[1]);
 
   parse_slides (renderer, text);
   g_free (text);
