@@ -108,6 +108,23 @@ static GList *slidep      = NULL; /* current slide */
  */
 
 static void
+get_background_position_scale (PinPointPoint *point,
+                               float          stage_width,
+                               float          stage_height,
+                               float          bg_width,
+                               float          bg_height,
+                               float         *bg_x,
+                               float         *bg_y,
+                               float         *bg_scale)
+{
+  *bg_scale = stage_width / bg_width;
+  if (*bg_scale > 1.0 || stage_height < *bg_scale * bg_height)
+    *bg_scale = stage_height / bg_height;
+  *bg_x = (stage_width - bg_width * *bg_scale) / 2;
+  *bg_y = (stage_height - bg_height * *bg_scale) / 2;
+}
+
+static void
 get_padding (float  stage_width,
              float  stage_height,
              float *padding)
@@ -540,25 +557,26 @@ show_slide (ClutterRenderer *renderer)
 
   if (data->background)
     {
-      float w,h;
-      float x,y;
-      float s = 1.0;
+      float bg_x, bg_y, bg_width, bg_height, bg_scale;
+
       if (CLUTTER_IS_RECTANGLE (data->background))
         {
-          clutter_actor_get_size (renderer->stage, &w, &h);
-          clutter_actor_set_size (data->background, w, h);
+          clutter_actor_get_size (renderer->stage, &bg_width, &bg_height);
+          clutter_actor_set_size (data->background, bg_width, bg_height);
         }
       else
         {
-          clutter_actor_get_size (data->background, &w, &h);
+          clutter_actor_get_size (data->background, &bg_width, &bg_height);
         }
-      s = clutter_actor_get_width (renderer->stage) / w;
-      if (s > 1.0 || clutter_actor_get_height (renderer->stage) < s * h)
-        s = clutter_actor_get_height (renderer->stage)/h;
-      clutter_actor_set_scale (data->background, s, s);
-      x = (clutter_actor_get_width (renderer->stage) - w * s) / 2;
-      y = (clutter_actor_get_height (renderer->stage) - h * s) / 2;
-      clutter_actor_set_position (data->background, x, y);
+
+      get_background_position_scale (point,
+                                     clutter_actor_get_width (renderer->stage),
+                                     clutter_actor_get_height (renderer->stage),
+                                     bg_width, bg_height,
+                                     &bg_x, &bg_y, &bg_scale);
+
+      clutter_actor_set_scale (data->background, bg_scale, bg_scale);
+      clutter_actor_set_position (data->background, bg_x, bg_y);
       clutter_actor_animate (data->background,
                              CLUTTER_LINEAR, 1000,
                              "opacity", 0xff,
@@ -914,25 +932,24 @@ _cairo_render_background (CairoRenderer *renderer,
     case PP_BG_IMAGE:
       {
         cairo_surface_t *surface;
-        float w, h, s, r, x, y;
+        float bg_x, bg_y, bg_width, bg_height, bg_scale;
 
         surface = _cairo_get_surface (renderer, point->bg);
         if (surface == NULL)
           break;
 
+        bg_width = cairo_image_surface_get_width (surface);
+        bg_height = cairo_image_surface_get_height (surface);
+
+        get_background_position_scale (point,
+                                       A4_LS_WIDTH, A4_LS_HEIGHT,
+                                       bg_width, bg_height,
+                                       &bg_x, &bg_y,
+                                       &bg_scale);
+
         cairo_save (renderer->ctx);
-
-        w = cairo_image_surface_get_width (surface);
-        h = cairo_image_surface_get_height (surface);
-
-        s = A4_LS_WIDTH / w;
-        if (s > 1.0 || A4_LS_HEIGHT < s * h)
-          s = A4_LS_HEIGHT / h;
-        x = (A4_LS_WIDTH - w * s) / 2;
-        y = (A4_LS_HEIGHT - h * s) / 2;
-
-        cairo_translate (renderer->ctx, x, y);
-        cairo_scale (renderer->ctx, s, s);
+        cairo_translate (renderer->ctx, bg_x, bg_y);
+        cairo_scale (renderer->ctx, bg_scale, bg_scale);
         cairo_set_source_surface (renderer->ctx, surface, 0., 0.);
         cairo_paint (renderer->ctx);
         cairo_restore (renderer->ctx);
