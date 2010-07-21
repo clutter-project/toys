@@ -4,9 +4,14 @@
 - The bits above are slide defaults
 pinpoint 
 - [wth.jpg] lines starting with - are slide seperators with per-slide properties
-minimalist presentation tool  [wth.jpg]
--
+minimalist presentation tool
+
+- You can add '\n' before and after the slides' text to tidy the file a bit
+
+
 Simple text source
+
+
 - [font=monospace 18px] [shading-opacity=1.0]
 The current presentation thus far:
  #!/usr/bin/env pinpoint 

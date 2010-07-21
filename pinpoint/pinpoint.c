@@ -1305,12 +1305,18 @@ parse_slides (PinPointRenderer *renderer,
                         }
                     }
 
-                  /* trim newlines and spaces from end */
-                  while ( slide_str->str[strlen(slide_str->str)-1]=='\n'
-                       || slide_str->str[strlen(slide_str->str)-1]==' ')
-                          slide_str->str[strlen(slide_str->str)-1]='\0';
+                  {
+                    char *str = slide_str->str;
 
-                  renderer->create_text (renderer, point, slide_str->str);
+                  /* trim newlines from start and end. ' ' can be used in the
+                   * insane case you actually want blank lines before or after
+                   * the text of a slide */
+                    while (*str == '\n') str++;
+                    while ( slide_str->str[strlen(slide_str->str)-1]=='\n')
+                      slide_str->str[strlen(slide_str->str)-1]='\0';
+
+                    renderer->create_text (renderer, point, str);
+                  }
 
                   g_string_assign (slide_str, "");
                   g_string_assign (setting_str, "");
