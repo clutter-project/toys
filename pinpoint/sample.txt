@@ -1,28 +1,28 @@
 #!/usr/bin/env pinpoint
-font=Sans 40px
-bg.jpg
+[font=Sans 40px]
+[bg.jpg]
 - The bits above are slide defaults
 pinpoint 
-- lines starting with - are slide seperators
+- [wth.jpg] lines starting with - are slide seperators with per-slide properties
 minimalist presentation tool  [wth.jpg]
 -
 Simple text source
--
+- [font=monospace 18px] [shading-opacity=1.0]
 The current presentation thus far:
  #!/usr/bin/env pinpoint 
- font=Sans 50px   [font=monospace 18px] 
- bg.jpg           [shading-opacity=1.0]
+ [font=Sans 50px]
+ [bg.jpg]
  - The bits above are slide defaults
  pinpoint
- - lines starting with - are slide seperators
- minimalist presentation tool \[wth.jpg]
+ - [wth.jpg] lines starting with - are slide seperators with per-slide properties
+ minimalist presentation tool
  -
  Simple text source
- -
+ - [font=monospace 18px] [shading-opacity=1.0]
  The current presentation thus far:
   #!/usr/bin/env pinpoint
-  font=Sans 40px   \[font=monospace 18px]
-  bg.jpg           \[shading-opacity=1.0]
+  [font=Sans 40px]
+  [bg.jpg]
 -
 Start by writing down the core concepts of
 what you will be talking about sort them and
@@ -35,32 +35,29 @@ the presentation if you change it on disk,
 this is useful when tuning things, keep both
 programs open. And remember Less text in a
 slide is almost always better. ;)
--
-Compfight for backgrounds \[wth.jpg] [wth.jpg]
--
-Place text [top-right]
--
-\[top-right][top-right]
--
-\[right][right]
--
-\[bottom-right][bottom-right]
--
-\[bottom][bottom]
--
-\[bottom-left][bottom-left]
--
-\[left][left]
--
-\[top-left][top-left]
--
-\[top][top]
--
-\[center][center] (which is the default)
--
-\[font=Monospace 100px]
-\[white]\[text-color=black]
-\[shading-opacity=0.0]\[bottom]
+- [wth.jpg]
+Compfight for backgrounds
+- [top-right]
+Place text
+-[top-right]
+[top-right]
+- [right]
+[right]
+- [bottom-right]
+[bottom-right]
+- [bottom]
+[bottom]
+- [bottom-left]
+[bottom-left]
+- [left]
+[left]
+- [top-left]
+[top-left]
+- [top]
+[top]
+- [center]
+[center] (which is the default)
+- [font=Monospace 100px][white][text-color=black][shading-opacity=0.0][bottom]
 [font=Monospace 100px]
 [white][text-color=black]
 [shading-opacity=0.0][bottom]
@@ -82,10 +79,10 @@ Escape - quit
 left - previous slide
 -
 right/space - next slide
--
-todo: [wth.jpg]
+- [wth.jpg]
+todo:
  • Simpler default or selection of? transitions
    • easiest to just edit the code?
--
-FIN [font=Sans 100px]
+- [font=Sans 100px]
+FIN
 - This final line is needed

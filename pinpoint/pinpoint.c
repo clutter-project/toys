@@ -1154,22 +1154,26 @@ parse_setting (PinPointPoint *point,
 }
 
 static void
-parse_config (const char *config)
+parse_config (PinPointPoint *point,
+              const char    *config)
 {
   GString *str = g_string_new ("");
   const char *p;
   for (p = config; *p; p++)
     {
-      switch (*p)
+      if (*p != '[')
+        continue;
+
+      p++;
+      g_string_truncate (str, 0);
+      while (*p && *p != ']' && *p != '\n')
         {
-          case '\n':
-            parse_setting (&default_point, str->str);
-            g_string_truncate (str, 0);
-            break;
-          default:
-            g_string_append_c (str, *p);
-            break;
+          g_string_append_c (str, *p);
+          p++;
         }
+
+      if (*p == ']')
+        parse_setting (point, str->str);
     }
   g_string_free (str, TRUE);
 }
@@ -1207,7 +1211,7 @@ parse_slides (PinPointRenderer *renderer,
   gboolean gotconfig = FALSE;
   GString *slide_str = g_string_new ("");
   GString *setting_str = g_string_new ("");
-  PinPointPoint *point;
+  PinPointPoint *point, *next_point;
   GList *s;
 
   /* store current slideno */
@@ -1239,23 +1243,22 @@ parse_slides (PinPointRenderer *renderer,
           startofline = TRUE;
           g_string_append_c (slide_str, *p);
           break;
-        case '[': 
-          p++;
-          g_string_assign (setting_str, "");
-          for (;*p && *p!='\n' && *p!=']'; p++) /* until ] or endof line/buf */
-              g_string_append_c (setting_str, *p);
-
-          parse_setting (point, setting_str->str);
-          break;
         case '-': /* slide seperator */
           if (startofline)
             {
+              next_point = pin_point_new (renderer);
+
+              g_string_assign (setting_str, "");
               while (*p && *p!='\n')  /* until newline */
-                p++;
+                {
+                  g_string_append_c (setting_str, *p);
+                  p++;
+                }
+              parse_config (next_point, setting_str->str);
 
               if (!gotconfig)
                 {
-                  parse_config (slide_str->str);
+                  parse_config (&default_point, slide_str->str);
                   /* copy the default point except the per-slide allocated
                    * data (void *) */
                   memcpy (point, &default_point,
@@ -1313,7 +1316,7 @@ parse_slides (PinPointRenderer *renderer,
                   g_string_assign (setting_str, "");
 
                   slides = g_list_append (slides, point);
-                  point = pin_point_new (renderer);
+                  point = next_point;
                 }
             }
           else
@@ -1365,7 +1368,7 @@ main (int    argc,
   if (!argv[1])
     {
       g_print ("usage: %s <slides>\n", argv[0]);
-      text = g_strdup ("red\n--\nusage: pinpoint <slides.txt>\n--");
+      text = g_strdup ("[red]\n--\nusage: pinpoint <slides.txt>\n--");
     }
   else
     {
