@@ -53,6 +53,12 @@ typedef struct _PinPointRenderer PinPointRenderer;
 static ClutterColor black = {0x00,0x00,0x00,0xff};
 static char *output_filename;
 
+typedef struct
+{
+  const char *name;
+  int value;
+} BackgroundDescription;
+
 typedef enum
 {
   PP_BG_COLOR,
@@ -60,6 +66,19 @@ typedef enum
   PP_BG_VIDEO,
   PP_BG_SVG
 } PPBackgroundType;
+
+typedef enum
+{
+  PP_BG_FIT,  /* default value */
+  PP_BG_ZOOM
+} PPBackgroundScale;
+
+static BackgroundDescription PPBackgroundScale_desc[] =
+{
+  { "fit",  PP_BG_FIT },
+  { "zoom", PP_BG_ZOOM },
+  { NULL,   0}
+};
 
 #define PINPOINT_RENDERER(renderer) ((PinPointRenderer *) renderer)
 
@@ -82,24 +101,25 @@ struct _PinPointRenderer
 
 struct _PinPointPoint
 {
-  const char     *text;               /*  the text of the slide */
-  ClutterGravity  position;
-  const gchar    *bg;
-  const char     *font;
-  const char     *stage_color;
-  const char     *text_color;
-  const char     *shading_color;
-  float           shading_opacity;
-  const char     *transition;         /* transition template to use, if any */
-  const char     *command;
+  const char        *text;            /*  the text of the slide */
+  ClutterGravity     position;
+  const gchar       *bg;
+  PPBackgroundScale  bg_scale;
+  const char        *font;
+  const char        *stage_color;
+  const char        *text_color;
+  const char        *shading_color;
+  float              shading_opacity;
+  const char        *transition;      /* transition template to use, if any */
+  const char        *command;
 
   void           *data;               /* the renderer can attach data here */
 };
 
 static PinPointPoint default_point = 
 {
-  NULL, CLUTTER_GRAVITY_CENTER, "NULL", "Sans 60px", "black", "white",
-  "black", 0.66, NULL,  NULL, NULL,
+  NULL, CLUTTER_GRAVITY_CENTER, "NULL", PP_BG_FIT, "Sans 60px", "black",
+  "white", "black", 0.66, NULL,  NULL, NULL,
 };
 
 static GList *slides      = NULL; /* list of slide texts */
@@ -127,9 +147,23 @@ get_background_position_scale (PinPointPoint *point,
                                float         *bg_y,
                                float         *bg_scale)
 {
-  *bg_scale = stage_width / bg_width;
-  if (*bg_scale > 1.0 || stage_height < *bg_scale * bg_height)
-    *bg_scale = stage_height / bg_height;
+  if (point->bg_scale == PP_BG_ZOOM)
+    {
+      float w_scale, h_scale;
+
+      w_scale = stage_width / bg_width;
+      h_scale = stage_height / bg_height;
+      if (w_scale > h_scale)
+        *bg_scale = w_scale;
+      else
+        *bg_scale = h_scale;
+    }
+  else
+    {
+      *bg_scale =  stage_width / bg_width;
+      if (*bg_scale > 1.0 || stage_height < *bg_scale * bg_height)
+        *bg_scale = stage_height / bg_height;
+    }
   *bg_x = (stage_width - bg_width * *bg_scale) / 2;
   *bg_y = (stage_height - bg_height * *bg_scale) / 2;
 }
@@ -1343,6 +1377,15 @@ parse_setting (PinPointPoint *point,
 #define IF_EQUAL(string) } else if (g_str_equal (setting, string)) {
 #define char g_intern_string (strrchr (setting, '=') + 1)
 #define float g_ascii_strtod (strrchr (setting, '=') + 1, NULL);
+#define enum(r,t,s) \
+  do { \
+      int _i; \
+      BackgroundDescription *_d = PPBackgroundScale_desc; \
+      r = _d[0].value; \
+      for (_i = 0; _d[_i].name; _i++) \
+        if (g_strcmp0 (_d[_i].name, s) == 0) \
+          r = _d[_i].value; \
+  } while (0)
   if (0) {
     IF_PREFIX("stage-color=") point->stage_color = char;
     IF_PREFIX("font=") point->font = char;
@@ -1351,6 +1394,7 @@ parse_setting (PinPointPoint *point,
     IF_PREFIX("shading-opacity=") point->shading_opacity = float;
     IF_PREFIX("command=") point->command = char;
     IF_PREFIX("transition=") point->transition = char;
+    IF_PREFIX("bg-scale") enum(point->bg_scale, PPBackgroundScale, char);
     IF_EQUAL("center") point->position = CLUTTER_GRAVITY_CENTER;
     IF_EQUAL("top") point->position = CLUTTER_GRAVITY_NORTH;
     IF_EQUAL("bottom") point->position = CLUTTER_GRAVITY_SOUTH;
@@ -1367,6 +1411,7 @@ parse_setting (PinPointPoint *point,
 #undef IF_EQUAL
 #undef float
 #undef char
+#undef enum
 }
 
 static void

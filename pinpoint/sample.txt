@@ -74,6 +74,9 @@ bullets?
 • ✽ ✩ ✔ ❧ ◦
 -
 $ pinpoint presentation.txt -o presentation.pdf
+- [bg-scale=zoom]
+[bg-scale=zoom]
+Fill the slide with your background
 -
 Keybindings:
 -
