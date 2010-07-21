@@ -666,6 +666,7 @@ file_changed (GFileMonitor      *monitor,
     g_error ("failed to load slides from %s\n", renderer->path);
   parse_slides (PINPOINT_RENDERER (renderer), text);
   g_free (text);
+  show_slide(renderer);
 }
 
 /*
