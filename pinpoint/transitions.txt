@@ -1,0 +1,26 @@
+#!/usr/bin/env pinpoint
+[font=Sans 40px] [bg.jpg]
+- 
+clutterscript transitions
+-
+by default pinpoint crossfades backgrounds
+and has flying text.
+- [wth.jpg] [transition=slide-left]
+This slide has
+[transition=slide-left]
+- [transition=slide-in-left]
+[transition=slide-in-left]
+- [transition=slide-up] [wth.jpg]
+[transition=slide-up]
+- [transition=spin]
+[transition=spin-bg]
+- [transition=spin-bg] [wth.jpg]
+[transition=spin]
+- [transition=rolo]
+[transition=rolo]
+- [transition=action]
+[transition=action]
+press return on this slide
+- [transition=text-slide-left]
+[transition=text-slide-left]
+-
