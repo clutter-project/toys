@@ -28,7 +28,7 @@ The current presentation thus far:
   #!/usr/bin/env pinpoint
   [font=Sans 40px]
   [bg.jpg]
--
+- [text-align=center]
 Start by writing down the core concepts of
 what you will be talking about sort them and
 format them as a pinpoint presentation, if

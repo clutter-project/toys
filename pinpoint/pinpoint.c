@@ -57,7 +57,7 @@ typedef struct
 {
   const char *name;
   int value;
-} BackgroundDescription;
+} EnumDescription;
 
 typedef enum
 {
@@ -73,11 +73,26 @@ typedef enum
   PP_BG_ZOOM
 } PPBackgroundScale;
 
-static BackgroundDescription PPBackgroundScale_desc[] =
+static EnumDescription PPBackgroundScale_desc[] =
 {
   { "fit",  PP_BG_FIT },
   { "zoom", PP_BG_ZOOM },
   { NULL,   0}
+};
+
+typedef enum
+{
+  PP_TEXT_LEFT = PANGO_ALIGN_LEFT,
+  PP_TEXT_CENTER = PANGO_ALIGN_CENTER,
+  PP_TEXT_RIGHT = PANGO_ALIGN_RIGHT
+} PPTextAlign;
+
+static EnumDescription PPTextAlign_desc[] =
+{
+  { "left",   PP_TEXT_LEFT },
+  { "center", PP_TEXT_CENTER },
+  { "right",  PP_TEXT_RIGHT },
+  { NULL,     0 }
 };
 
 #define PINPOINT_RENDERER(renderer) ((PinPointRenderer *) renderer)
@@ -107,6 +122,7 @@ struct _PinPointPoint
   const char        *font;
   const char        *stage_color;
   const char        *text_color;
+  PPTextAlign        text_align;
   const char        *shading_color;
   float              shading_opacity;
   const char        *transition;      /* transition template to use, if any */
@@ -117,8 +133,19 @@ struct _PinPointPoint
 
 static PinPointPoint default_point = 
 {
-  NULL, CLUTTER_GRAVITY_CENTER, "NULL", PP_BG_FIT, "Sans 60px", "black",
-  "white", "black", 0.66, NULL,  NULL, NULL,
+  .text = NULL,
+  .position = CLUTTER_GRAVITY_CENTER,
+  .bg = "NULL",
+  .bg_scale = PP_BG_FIT,
+  .font = "Sans 60px",
+  .stage_color = "black",
+  .text_color = "white",
+  .text_align = PP_TEXT_LEFT,
+  .shading_color = "black",
+  .shading_opacity = 0.66,
+  .transition = NULL,
+  .command = NULL,
+  .data = NULL,
 };
 
 static GList *slides      = NULL; /* list of slide texts */
@@ -464,6 +491,7 @@ clutter_renderer_create_text (PinPointRenderer *pp_renderer,
                              "font-name", point->font,
                              "text", point->text,
                              "color", &color,
+                             "line-alignment", point->text_align,
                              NULL);
 
   clutter_container_add_actor (CLUTTER_CONTAINER (renderer->foreground),
@@ -1224,6 +1252,7 @@ _cairo_render_text (CairoRenderer *renderer,
   desc = pango_font_description_from_string (point->font);
   pango_layout_set_font_description (layout, desc);
   pango_layout_set_text (layout, point->text, -1);
+  pango_layout_set_alignment (layout, point->text_align);
 
   pango_layout_get_extents (layout, NULL, &logical_rect);
 
@@ -1379,7 +1408,7 @@ parse_setting (PinPointPoint *point,
 #define enum(r,t,s) \
   do { \
       int _i; \
-      BackgroundDescription *_d = PPBackgroundScale_desc; \
+      EnumDescription *_d = t##_desc; \
       r = _d[0].value; \
       for (_i = 0; _d[_i].name; _i++) \
         if (g_strcmp0 (_d[_i].name, s) == 0) \
@@ -1389,6 +1418,7 @@ parse_setting (PinPointPoint *point,
     IF_PREFIX("stage-color=") point->stage_color = char;
     IF_PREFIX("font=") point->font = char;
     IF_PREFIX("text-color=") point->text_color = char;
+    IF_PREFIX("text-align=") enum(point->text_align, PPTextAlign, char);
     IF_PREFIX("shading-color=") point->shading_color = char;
     IF_PREFIX("shading-opacity=") point->shading_opacity = float;
     IF_PREFIX("command=") point->command = char;
