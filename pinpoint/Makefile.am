@@ -8,7 +8,12 @@ DAX_SOURCES = pp-super-aa.c pp-super-aa.h
 endif
 
 pinpoint_LDADD  = $(DEPS_LIBS)
-pinpoint_SOURCES = pinpoint.c $(DAX_SOURCES)
+pinpoint_SOURCES = \
+  pinpoint.c \
+  pinpoint.h \
+  pinpoint-cairo.c \
+  pinpoint-clutter.c \
+  $(DAX_SOURCES)
 
 EXTRA_DIST=sample.txt wth.jpg bg.jpg pp-super-aa.c pp-super-aa.h
 
