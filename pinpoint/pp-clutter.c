@@ -363,7 +363,6 @@ static void state_completed (ClutterState *state, gpointer user_data)
       clutter_actor_hide (data->json_slide);
       if (data->background2)
         {
-          clutter_actor_reparent (data->background, CLUTTER_RENDERER (data->renderer)->background);
           clutter_actor_reparent (data->text, CLUTTER_RENDERER (data->renderer)->foreground);
 
           g_object_set (data->text,
@@ -379,7 +378,6 @@ static void state_completed (ClutterState *state, gpointer user_data)
 }
 
 static gboolean in_stage_resize = FALSE;
-
 
 static void
 action_slide (ClutterRenderer *renderer)
@@ -424,59 +422,54 @@ show_slide (ClutterRenderer *renderer)
   point = pp_slidep->data;
   data = point->data;
 
-      if (point->stage_color)
-        {
-          ClutterColor color;
+  if (point->stage_color)
+    {
+      ClutterColor color;
 
-          clutter_color_from_string (&color, point->stage_color);
-          clutter_stage_set_color (CLUTTER_STAGE (renderer->stage), &color);
+      clutter_color_from_string (&color, point->stage_color);
+      clutter_stage_set_color (CLUTTER_STAGE (renderer->stage), &color);
+    }
+
+  if (data->background)
+    {
+      float bg_x, bg_y, bg_width, bg_height, bg_scale;
+      if (CLUTTER_IS_RECTANGLE (data->background))
+        {
+          clutter_actor_get_size (renderer->stage, &bg_width, &bg_height);
+          clutter_actor_set_size (data->background, bg_width, bg_height);
+        }
+      else
+        {
+          clutter_actor_get_size (data->background, &bg_width, &bg_height);
         }
 
-      if (data->background)
-        {
-          float bg_x, bg_y, bg_width, bg_height, bg_scale;
-          if (CLUTTER_IS_RECTANGLE (data->background))
-            {
-              clutter_actor_get_size (renderer->stage, &bg_width, &bg_height);
-              clutter_actor_set_size (data->background, bg_width, bg_height);
-            }
-          else
-            {
-              clutter_actor_get_size (data->background, &bg_width, &bg_height);
-            }
+      pp_get_background_position_scale (point,
+                                        clutter_actor_get_width (renderer->stage),
+                                        clutter_actor_get_height (renderer->stage),
+                                        bg_width, bg_height,
+                                        &bg_x, &bg_y, &bg_scale);
 
-          pp_get_background_position_scale (point,
-                                            clutter_actor_get_width (renderer->stage),
-                                            clutter_actor_get_height (renderer->stage),
-                                            bg_width, bg_height,
-                                            &bg_x, &bg_y, &bg_scale);
-
-          clutter_actor_set_scale (data->background, bg_scale, bg_scale);
-          clutter_actor_set_position (data->background, bg_x, bg_y);
-
-          clutter_actor_animate (data->background,
-                                       CLUTTER_LINEAR, 1000,
-                                       "opacity", 0xff,
-                                       NULL);
+      clutter_actor_set_scale (data->background, bg_scale, bg_scale);
+      clutter_actor_set_position (data->background, bg_x, bg_y);
 
 #ifdef USE_CLUTTER_GST
-         if (CLUTTER_GST_IS_VIDEO_TEXTURE (data->background))
-           {
-             clutter_media_set_progress (CLUTTER_MEDIA (data->background), 0.0);
-             clutter_media_set_playing (CLUTTER_MEDIA (data->background), TRUE);
-           }
-         else
+      if (CLUTTER_GST_IS_VIDEO_TEXTURE (data->background))
+        {
+          clutter_media_set_progress (CLUTTER_MEDIA (data->background), 0.0);
+          clutter_media_set_playing (CLUTTER_MEDIA (data->background), TRUE);
+        }
+      else
 #endif
 #ifdef USE_DAX
-        if (DAX_IS_ACTOR (data->background))
-          {
-            dax_actor_set_playing (DAX_ACTOR (data->background), TRUE);
-          }
-        else
-#endif
-          {
-          }
+     if (DAX_IS_ACTOR (data->background))
+       {
+         dax_actor_set_playing (DAX_ACTOR (data->background), TRUE);
        }
+    else
+#endif
+       {
+       }
+    }
 
   if (!point->transition)
     {
@@ -488,7 +481,10 @@ show_slide (ClutterRenderer *renderer)
                              CLUTTER_LINEAR, 500,
                              "opacity", 255,
                              NULL);
-
+      clutter_actor_animate (renderer->background,
+                             CLUTTER_LINEAR, 500,
+                             "opacity", 255,
+                             NULL);
 
       {
        float text_x, text_y, text_width, text_height, text_scale;
@@ -543,6 +539,12 @@ show_slide (ClutterRenderer *renderer)
                 "width", shading_width,
                 "height", shading_height,
                 NULL);
+
+       if (data->background)
+         clutter_actor_animate (data->background,
+                                     CLUTTER_LINEAR, 1000,
+                                     "opacity", 0xff,
+                                     NULL);
       }
     }
   else
@@ -554,6 +556,10 @@ show_slide (ClutterRenderer *renderer)
                              "opacity", 0,
                              NULL);
       clutter_actor_animate (renderer->midground,
+                             CLUTTER_LINEAR, 500,
+                             "opacity", 0,
+                             NULL);
+      clutter_actor_animate (renderer->background,
                              CLUTTER_LINEAR, 500,
                              "opacity", 0,
                              NULL);
@@ -572,7 +578,10 @@ show_slide (ClutterRenderer *renderer)
           g_signal_connect (data->state, "completed", G_CALLBACK (state_completed), point);
           clutter_state_warp_to_state (data->state, "pre");
 
-
+          if (data->background2) /* parmanently steal background */
+            {
+              clutter_actor_reparent (data->background, data->background2);
+            }
         }
           clutter_actor_set_size (data->json_slide, clutter_actor_get_width (renderer->stage),
                                                     clutter_actor_get_height (renderer->stage));
@@ -587,15 +596,11 @@ show_slide (ClutterRenderer *renderer)
           g_warning ("failed to load transition %s %s\n", point->transition, error?error->message:"");
           return;
         }
-      if (data->background2)
-        {
-          clutter_actor_reparent (data->background, data->background2);
-          clutter_actor_set_opacity (data->background, 255);
-        }
       if (data->foreground)
         {
           clutter_actor_reparent (data->text, data->foreground);
         }
+              clutter_actor_set_opacity (data->background, 255);
 
       {
        float text_x, text_y, text_width, text_height, text_scale;
