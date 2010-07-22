@@ -405,7 +405,6 @@ static gchar *pp_lookup_transition (const gchar *transition)
   for (i = 0; dirs[i]; i++)
     {
       gchar *path = g_strdup_printf ("%s%s.json", dirs[i], transition);
-      g_print ("%s\n", path);
       if (g_file_test (path, G_FILE_TEST_EXISTS))
         return path;
       g_free (path);
