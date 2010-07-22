@@ -40,12 +40,6 @@ typedef enum
   PP_TEXT_RIGHT = PANGO_ALIGN_RIGHT
 } PPTextAlign;
 
-typedef struct
-{
-  const char *name;
-  int value;
-} BackgroundDescription;
-
 typedef enum
 {
   PP_BG_NONE,
