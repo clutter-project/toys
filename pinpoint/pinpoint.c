@@ -61,6 +61,7 @@ typedef struct
 
 typedef enum
 {
+  PP_BG_NONE,
   PP_BG_COLOR,
   PP_BG_IMAGE,
   PP_BG_VIDEO,
@@ -104,9 +105,6 @@ struct _PinPointRenderer
   void      (*run)                (PinPointRenderer *renderer);
   void      (*finalize)           (PinPointRenderer *renderer);
   gboolean  (*create_background)  (PinPointRenderer *renderer,
-                                   PinPointPoint    *point,
-                                   PPBackgroundType  type);
-  void      (*create_text)        (PinPointRenderer *renderer,
                                    PinPointPoint    *point);
   void *    (*allocate_data)      (PinPointRenderer *renderer);
   void      (*free_data)          (PinPointRenderer *renderer,
@@ -119,6 +117,7 @@ struct _PinPointPoint
   ClutterGravity     position;
   const gchar       *bg;
   PPBackgroundScale  bg_scale;
+  PPBackgroundType   bg_type;
   const char        *font;
   const char        *stage_color;
   const char        *text_color;
@@ -128,7 +127,7 @@ struct _PinPointPoint
   const char        *transition;      /* transition template to use, if any */
   const char        *command;
 
-  void           *data;               /* the renderer can attach data here */
+  void              *data;            /* the renderer can attach data here */
 };
 
 static PinPointPoint default_point = 
@@ -136,6 +135,7 @@ static PinPointPoint default_point =
   .text = NULL,
   .position = CLUTTER_GRAVITY_CENTER,
   .bg = "NULL",
+  .bg_type = PP_BG_NONE,
   .bg_scale = PP_BG_FIT,
   .font = "Sans 60px",
   .stage_color = "black",
@@ -401,19 +401,17 @@ clutter_renderer_finalize (PinPointRenderer *pp_renderer)
 
 static gboolean
 clutter_renderer_create_background (PinPointRenderer *pp_renderer,
-                                    PinPointPoint    *point,
-                                    PPBackgroundType  type)
+                                    PinPointPoint    *point)
 {
   ClutterRenderer *renderer = CLUTTER_RENDERER (pp_renderer);
   ClutterPointData *data = point->data;
+  ClutterColor color;
   gboolean ret;
 
-  switch (type)
+  switch (point->bg_type)
     {
     case PP_BG_COLOR:
       {
-        ClutterColor color;
-
         ret = clutter_color_from_string (&color, point->bg);
         if (ret)
           data->background = g_object_new (CLUTTER_TYPE_RECTANGLE,
@@ -475,17 +473,6 @@ clutter_renderer_create_background (PinPointRenderer *pp_renderer,
       clutter_actor_set_opacity (data->background, 0);
     }
 
-    return ret;
-}
-
-static void
-clutter_renderer_create_text (PinPointRenderer *pp_renderer,
-                              PinPointPoint    *point)
-{
-  ClutterRenderer *renderer = CLUTTER_RENDERER (pp_renderer);
-  ClutterPointData *data = point->data;
-  ClutterColor color;
-
   clutter_color_from_string (&color, point->text_color);
   data->text = g_object_new (CLUTTER_TYPE_TEXT,
                              "font-name", point->font,
@@ -501,6 +488,8 @@ clutter_renderer_create_text (PinPointRenderer *pp_renderer,
   data->rest_y = renderer->rest_y;
   renderer->rest_y += clutter_actor_get_height (data->text);
   clutter_actor_set_depth (data->text, RESTDEPTH);
+
+  return ret;
 }
 
 static void *
@@ -532,7 +521,6 @@ static ClutterRenderer clutter_renderer =
       .run = clutter_renderer_run,
       .finalize = clutter_renderer_finalize,
       .create_background = clutter_renderer_create_background,
-      .create_text = clutter_renderer_create_text,
       .allocate_data = clutter_renderer_allocate_data,
       .free_data = clutter_renderer_free_data
     }
@@ -1339,8 +1327,7 @@ cairo_renderer_finalize (PinPointRenderer *pp_renderer)
 
 static gboolean
 cairo_renderer_create_background (PinPointRenderer *pp_renderer,
-                                  PinPointPoint    *point,
-                                  PPBackgroundType  type)
+                                  PinPointPoint    *point)
 {
   CairoPointData *data = point->data;
   gboolean ret = TRUE;
@@ -1355,12 +1342,6 @@ cairo_renderer_create_background (PinPointRenderer *pp_renderer,
     }
 
   return ret;
-}
-
-static void
-cairo_renderer_create_text (PinPointRenderer *pp_renderer,
-                            PinPointPoint    *point)
-{
 }
 
 static void *
@@ -1384,7 +1365,6 @@ static ClutterRenderer cairo_renderer =
       .run = cairo_renderer_run,
       .finalize = cairo_renderer_finalize,
       .create_background = cairo_renderer_create_background,
-      .create_text = cairo_renderer_create_text,
       .allocate_data = cairo_renderer_allocate_data,
       .free_data = cairo_renderer_free_data
     }
@@ -1492,6 +1472,13 @@ pin_point_new (PinPointRenderer *renderer)
   return point;
 }
 
+static gboolean
+pp_is_color (const char *string)
+{
+  ClutterColor color;
+  return clutter_color_from_string (&color, string);
+}
+
 static void
 parse_slides (PinPointRenderer *renderer,
               const char       *slide_src)
@@ -1577,24 +1564,13 @@ parse_slides (PinPointRenderer *renderer,
                        || g_str_has_suffix (point->bg, ".MOV")
                        || g_str_has_suffix (point->bg, ".MP4")
                        || g_str_has_suffix (point->bg, ".WMV"))
-                        {
-                          renderer->create_background (renderer, point,
-                                                       PP_BG_VIDEO);
-                        }
+                        point->bg_type = PP_BG_VIDEO;
                       else if (g_str_has_suffix (point->bg, ".svg"))
-                        {
-                          renderer->create_background (renderer, point,
-                                                       PP_BG_SVG);
-                        }
-                      else if (renderer->create_background (renderer, point,
-                                                           PP_BG_COLOR))
-                        {
-                        }
+                        point->bg_type = PP_BG_SVG;
+                      else if (pp_is_color (point->bg))
+                        point->bg_type = PP_BG_COLOR;
                       else
-                        {
-                          renderer->create_background(renderer, point,
-                                                      PP_BG_IMAGE);
-                        }
+                        point->bg_type = PP_BG_IMAGE;
                     }
 
                   {
@@ -1608,8 +1584,9 @@ parse_slides (PinPointRenderer *renderer,
                       slide_str->str[strlen(slide_str->str)-1]='\0';
 
                     point->text = g_intern_string (str);
-                    renderer->create_text (renderer, point);
                   }
+
+                  renderer->create_background (renderer, point);
 
                   g_string_assign (slide_str, "");
                   g_string_assign (setting_str, "");
