@@ -47,7 +47,7 @@ typedef struct _ClutterRenderer
   ClutterActor *foreground;
 
   char *path;               /* path of the file of the GFileMonitor callback */
-  float rest_y;               /* where the text can rest */
+  float rest_y;             /* where the text can rest */
 } ClutterRenderer;
 
 typedef struct
@@ -397,6 +397,22 @@ action_slide (ClutterRenderer *renderer)
     clutter_state_set_state (data->state, "action");
 }
 
+static gchar *pp_lookup_transition (const gchar *transition)
+{
+  gchar *ret = NULL;
+  int i;
+  gchar *dirs[] ={ "", "./transitions/", PKGDATADIR, NULL};
+  for (i = 0; dirs[i]; i++)
+    {
+      gchar *path = g_strdup_printf ("%s%s.json", dirs[i], transition);
+      g_print ("%s\n", path);
+      if (g_file_test (path, G_FILE_TEST_EXISTS))
+        return path;
+      g_free (path);
+    }
+  return NULL;
+}
+
 static void
 show_slide (ClutterRenderer *renderer)
 {
@@ -544,7 +560,7 @@ show_slide (ClutterRenderer *renderer)
                              NULL);
       if (!data->script)
         {
-          gchar *path = g_strdup_printf ("%s.json", point->transition);
+          gchar *path = pp_lookup_transition (point->transition);
           data->script = clutter_script_new ();
           clutter_script_load_from_file (data->script, path, &error);
           g_free (path);
@@ -619,6 +635,8 @@ show_slide (ClutterRenderer *renderer)
              {
                data->shading = clutter_rectangle_new_with_color (&black);
                clutter_container_add_actor (CLUTTER_CONTAINER (data->midground), data->shading);
+               clutter_actor_set_size (data->midground, clutter_actor_get_width (renderer->stage),
+                                                        clutter_actor_get_height (renderer->stage));
              }
            g_object_set (data->shading,
                   "depth", -0.01,

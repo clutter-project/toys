@@ -60,6 +60,7 @@ PKG_CHECK_MODULES([DEPS], [$PINPOINT_DEPS])
 
 AC_OUTPUT([
 	Makefile
+        transitions/Makefile
 ])
 
 echo ""

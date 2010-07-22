@@ -5,13 +5,8 @@
 pinpoint 
 - [wth.jpg] lines starting with - are slide seperators with per-slide properties
 minimalist presentation tool
-
-- You can add '\n' before and after the slides' text to tidy the file a bit
-
-
+-
 Simple text source
-
-
 - [font=monospace 18px] [shading-opacity=1.0]
 The current presentation thus far:
  #!/usr/bin/env pinpoint 
@@ -28,7 +23,11 @@ The current presentation thus far:
   #!/usr/bin/env pinpoint
   [font=Sans 40px]
   [bg.jpg]
+
+
 - [text-align=center]
+
+
 Start by writing down the core concepts of
 what you will be talking about sort them and
 format them as a pinpoint presentation, if
@@ -40,57 +39,82 @@ the presentation if you change it on disk,
 this is useful when tuning things, keep both
 programs open. And remember Less text in a
 slide is almost always better. ;)
-- [wth.jpg]
-Compfight for backgrounds
-- [top-right]
-Place text
--[top-right]
+
+
+- You can add '\n' before and after the slides' text to tidy the file a bit
+
+Lets use some of the more seldomly
+needed pinpoint features:
+
+- [wth.jpg] [text-align=center]
+\- [filename.jpg]
+set a custom background
+
+
+-[top-right] [text-align=center]
+position text
 [top-right]
+
 - [right]
 [right]
+
 - [bottom-right]
 [bottom-right]
+
 - [bottom]
 [bottom]
+
 - [bottom-left]
 [bottom-left]
+
 - [left]
 [left]
+
 - [top-left]
 [top-left]
+
 - [top]
 [top]
-- [center]
-[center] (which is the default)
+
+- [center] [text-align=center]
+[center]
+(which is the default)
+
 - [font=Monospace 100px][white][text-color=black][shading-opacity=0.0][bottom]
 [font=Monospace 100px]
 [white][text-color=black]
 [shading-opacity=0.0][bottom]
--
-Miss bullets?
--
-bullets?
- ❥ no worries; just utf8 it
+
+- [transition=text-slide-left]
+need bullets?
+ ❥ use the power of unicode
 • ✽ ✩ ✔ ❧ ◦
--
-$ pinpoint presentation.txt -o presentation.pdf
+
+- [transition=text-slide-up]
+$ pinpoint presentation.txt -o output.pdf
+Export your presentation to pdf
+
 - [bg-scale=zoom]
 [bg-scale=zoom]
 Fill the slide with your background
--
+
+- [transition=swing]
 Keybindings:
--
+
+- [transition=sheet]
 F11 - toggle fullscreen
--
+
+- [transition=slide-left]
 Escape - quit
--
+
+- [transition=slide-up]
 left - previous slide
--
+
+- [transition=slide-in-left]
 right/space - next slide
-- [wth.jpg]
-todo:
- • Simpler default or selection of? transitions
-   • easiest to just edit the code?
-- [font=Sans 100px]
+
+- [black] [font=Sans 100px] [transition=spin-text]
+
 FIN
-- This final line is needed
+
+- This final hyphen is needed
