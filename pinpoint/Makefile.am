@@ -12,8 +12,8 @@ pinpoint_LDADD  = $(DEPS_LIBS)
 pinpoint_SOURCES = \
   pinpoint.c \
   pinpoint.h \
-  pinpoint-cairo.c \
-  pinpoint-clutter.c \
+  pp-cairo.c \
+  pp-clutter.c \
   $(DAX_SOURCES)
 
 EXTRA_DIST=sample.txt wth.jpg bg.jpg pp-super-aa.c pp-super-aa.h
