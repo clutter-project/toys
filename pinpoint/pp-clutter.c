@@ -336,6 +336,13 @@ static void leave_slide (ClutterRenderer *renderer,
             {
               dax_actor_set_playing (DAX_ACTOR (data->background), FALSE);
             }
+          else if (PP_IS_SUPER_AA (data->background))
+            {
+              ClutterActor *actor;
+
+              actor = mx_offscreen_get_child (MX_OFFSCREEN (data->background));
+              dax_actor_set_playing (DAX_ACTOR (actor), FALSE);
+            }
 #endif
         }
     }
@@ -465,7 +472,14 @@ show_slide (ClutterRenderer *renderer)
        {
          dax_actor_set_playing (DAX_ACTOR (data->background), TRUE);
        }
-    else
+     else if (PP_IS_SUPER_AA (data->background))
+       {
+         ClutterActor *actor;
+
+         actor = mx_offscreen_get_child (MX_OFFSCREEN (data->background));
+         dax_actor_set_playing (DAX_ACTOR (actor), TRUE);
+       }
+     else
 #endif
        {
        }
