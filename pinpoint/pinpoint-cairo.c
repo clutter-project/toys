@@ -45,7 +45,6 @@ typedef struct _CairoRenderer
 
 typedef struct
 {
-  PPBackgroundType bg_type;
 } CairoPointData;
 
 static void
@@ -66,7 +65,7 @@ cairo_renderer_init (PinPointRenderer *pp_renderer,
   CairoRenderer *renderer = CAIRO_RENDERER (pp_renderer);
 
   /* A4, landscape */
-  renderer->surface = cairo_pdf_surface_create (output_filename,
+  renderer->surface = cairo_pdf_surface_create (pp_output_filename,
                                                 A4_LS_WIDTH, A4_LS_HEIGHT);
 
   renderer->ctx = cairo_create (renderer->surface);
@@ -235,8 +234,6 @@ static void
 _cairo_render_background (CairoRenderer *renderer,
                           PinPointPoint *point)
 {
-  CairoPointData *data = point->data;
-
   if (point->stage_color)
     {
       ClutterColor color;
@@ -250,7 +247,7 @@ _cairo_render_background (CairoRenderer *renderer,
       cairo_paint (renderer->ctx);
     }
 
-  switch (data->bg_type)
+  switch (point->bg_type)
     {
     case PP_BG_COLOR:
       {
@@ -278,11 +275,11 @@ _cairo_render_background (CairoRenderer *renderer,
         bg_width = cairo_image_surface_get_width (surface);
         bg_height = cairo_image_surface_get_height (surface);
 
-        get_background_position_scale (point,
-                                       A4_LS_WIDTH, A4_LS_HEIGHT,
-                                       bg_width, bg_height,
-                                       &bg_x, &bg_y,
-                                       &bg_scale);
+        pp_get_background_position_scale (point,
+                                          A4_LS_WIDTH, A4_LS_HEIGHT,
+                                          bg_width, bg_height,
+                                          &bg_x, &bg_y,
+                                          &bg_scale);
 
         cairo_save (renderer->ctx);
         cairo_translate (renderer->ctx, bg_x, bg_y);
@@ -330,26 +327,18 @@ _cairo_render_text (CairoRenderer *renderer,
 
   text_width = (logical_rect.x + logical_rect.width) / 1024;
   text_height = (logical_rect.y + logical_rect.height) / 1024;
-  get_text_position_scale (point,
-                           A4_LS_WIDTH,
-                           A4_LS_HEIGHT,
-                           text_width,
-                           text_height,
-                           &text_x,
-                           &text_y,
-                           &text_scale);
+  pp_get_text_position_scale (point,
+                              A4_LS_WIDTH, A4_LS_HEIGHT,
+                              text_width, text_height,
+                              &text_x, &text_y,
+                              &text_scale);
 
-  get_shading_position_size (A4_LS_HEIGHT,
-                             A4_LS_WIDTH,
-                             text_x,
-                             text_y,
-                             text_width,
-                             text_height,
-                             text_scale,
-                             &shading_x,
-                             &shading_y,
-                             &shading_width,
-                             &shading_height);
+  pp_get_shading_position_size (A4_LS_HEIGHT, A4_LS_WIDTH,
+                                text_x, text_y,
+                                text_width, text_height,
+                                text_scale,
+                                &shading_x, &shading_y,
+                                &shading_width, &shading_height);
 
   clutter_color_from_string (&text_color, point->text_color);
   clutter_color_from_string (&shading_color, point->shading_color);
@@ -382,8 +371,6 @@ static void
 _cairo_render_page (CairoRenderer *renderer,
                     PinPointPoint *point)
 {
-  CairoPointData *data = point->data;
-
   _cairo_render_background (renderer, point);
   _cairo_render_text (renderer, point);
   cairo_show_page (renderer->ctx);
@@ -395,7 +382,7 @@ cairo_renderer_run (PinPointRenderer *pp_renderer)
   CairoRenderer *renderer = CAIRO_RENDERER (pp_renderer);
   GList *cur;
 
-  for (cur = slides; cur; cur = g_list_next (cur))
+  for (cur = pp_slides; cur; cur = g_list_next (cur))
     _cairo_render_page (renderer, cur->data);
 }
 
@@ -413,12 +400,9 @@ static gboolean
 cairo_renderer_make_point (PinPointRenderer *pp_renderer,
                            PinPointPoint    *point)
 {
-  CairoPointData *data = point->data;
   gboolean ret = TRUE;
 
-  data->bg_type = type;
-
-  if (type == PP_BG_COLOR)
+  if (point->bg_type == PP_BG_COLOR)
     {
       ClutterColor color;
 
@@ -431,17 +415,16 @@ cairo_renderer_make_point (PinPointRenderer *pp_renderer,
 static void *
 cairo_renderer_allocate_data (PinPointRenderer *renderer)
 {
-  return g_slice_new0 (CairoPointData);
+  return NULL;
 }
 
 static void
 cairo_renderer_free_data (PinPointRenderer *renderer,
                           void             *datap)
 {
-  CairoPointData *data = datap;
 }
 
-static ClutterRenderer cairo_renderer_vtable =
+static CairoRenderer cairo_renderer_vtable =
 {
   .renderer =
     {

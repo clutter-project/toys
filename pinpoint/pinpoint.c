@@ -34,8 +34,6 @@
 #define RESTX        4600.0
 #define STARTPOS    -3000.0
 
-static char *output_filename;
-
 typedef struct
 {
   const char *name;
@@ -78,7 +76,7 @@ static PinPointPoint default_point = {
 
 static GOptionEntry entries[] =
 {
-    { "output", 'o', 0, G_OPTION_ARG_STRING, &output_filename,
+    { "output", 'o', 0, G_OPTION_ARG_STRING, &pp_output_filename,
       "Output slides to FILE (formats supported: pdf)", "FILE" },
     { NULL }
 };
@@ -131,7 +129,7 @@ main (int    argc,
 #endif
 
   /* select the cairo renderer if we are requested a pdf output */
-  if (output_filename && g_str_has_suffix (output_filename, ".pdf"))
+  if (pp_output_filename && g_str_has_suffix (pp_output_filename, ".pdf"))
     {
 #ifdef HAVE_PDF
       renderer = pp_cairo_renderer ();
@@ -159,6 +157,7 @@ main (int    argc,
 
 /*********************/
 
+char *pp_output_filename;
 GList *pp_slides      = NULL; /* list of slide texts */
 GList *pp_slidep      = NULL; /* current slide */
 
