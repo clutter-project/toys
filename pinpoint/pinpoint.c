@@ -47,7 +47,7 @@
 #define RESTX        4600.0
 #define STARTPOS    -3000.0
 
-typedef struct _PinPointPoint PinPointPoint;
+typedef struct _PinPointPoint    PinPointPoint;
 typedef struct _PinPointRenderer PinPointRenderer;
 
 static ClutterColor black = {0x00,0x00,0x00,0xff};
@@ -92,8 +92,7 @@ struct _PinPointRenderer
                                    PinPointPoint    *point,
                                    PPBackgroundType  type);
   void      (*create_text)        (PinPointRenderer *renderer,
-                                   PinPointPoint    *point,
-                                   const char       *text);
+                                   PinPointPoint    *point);
   void *    (*allocate_data)      (PinPointRenderer *renderer);
   void      (*free_data)          (PinPointRenderer *renderer,
                                    void             *datap);
@@ -454,8 +453,7 @@ clutter_renderer_create_background (PinPointRenderer *pp_renderer,
 
 static void
 clutter_renderer_create_text (PinPointRenderer *pp_renderer,
-                              PinPointPoint    *point,
-                              const char       *text)
+                              PinPointPoint    *point)
 {
   ClutterRenderer *renderer = CLUTTER_RENDERER (pp_renderer);
   ClutterPointData *data = point->data;
@@ -464,7 +462,7 @@ clutter_renderer_create_text (PinPointRenderer *pp_renderer,
   clutter_color_from_string (&color, point->text_color);
   data->text = g_object_new (CLUTTER_TYPE_TEXT,
                              "font-name", point->font,
-                             "text", text,
+                             "text", point->text,
                              "color", &color,
                              NULL);
 
@@ -1330,8 +1328,7 @@ cairo_renderer_create_background (PinPointRenderer *pp_renderer,
 
 static void
 cairo_renderer_create_text (PinPointRenderer *pp_renderer,
-                            PinPointPoint    *point,
-                            const char       *text)
+                            PinPointPoint    *point)
 {
 }
 
@@ -1577,7 +1574,7 @@ parse_slides (PinPointRenderer *renderer,
                       slide_str->str[strlen(slide_str->str)-1]='\0';
 
                     point->text = g_intern_string (str);
-                    renderer->create_text (renderer, point, point->text);
+                    renderer->create_text (renderer, point);
                   }
 
                   g_string_assign (slide_str, "");
