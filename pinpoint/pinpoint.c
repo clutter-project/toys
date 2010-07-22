@@ -521,6 +521,7 @@ key_pressed (ClutterActor    *actor,
       case CLUTTER_Left:
       case CLUTTER_Up:
       case CLUTTER_BackSpace:
+      case CLUTTER_Prior:
         if (slidep && slidep->prev)
           {
             leave_slide (renderer, TRUE);
@@ -530,6 +531,7 @@ key_pressed (ClutterActor    *actor,
         break;
       case CLUTTER_Right:
       case CLUTTER_space:
+      case CLUTTER_Next:
         if (slidep && slidep->next)
           {
             leave_slide (renderer, FALSE);
