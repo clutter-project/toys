@@ -16,8 +16,10 @@ This slide has
 [transition=spin-bg]
 - [transition=spin-bg] [wth.jpg]
 [transition=spin]
-- [transition=rolo]
-[transition=rolo]
+- [transition=swing]
+[transition=swing]
+- [transition=sheet]
+[transition=sheet]
 - [transition=action]
 [transition=action]
 press return on this slide

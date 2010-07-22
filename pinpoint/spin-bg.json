@@ -1,0 +1,61 @@
+[{
+  "type":"ClutterGroup",
+  "id":"actor",
+  "rotation-center-z-gravity":"center",
+  "scale-gravity":"center",
+  "children":[
+     {
+       "id":"background",
+       "type":"ClutterGroup",
+       "rotation-center-z-gravity":"center",
+       "scale-gravity":"center"
+     },
+     {
+       "type":"ClutterGroup",
+       "depth":20.0,
+       "children":[
+     {
+       "id":"midground",
+       "type":"ClutterGroup",
+       "rotation-center-z-gravity":"center",
+       "scale-gravity":"center"
+     }]},
+     {
+       "id":"foreground",
+       "depth":30.0,
+       "type":"ClutterGroup",
+       "rotation-center-z-gravity":"center",
+       "scale-gravity":"center"
+     }
+  ]}
+  ,{
+  "type":"ClutterState",
+  "id":"state",
+  "duration":800,
+  "transitions":[
+      {
+        "source":null,
+        "target":"pre",
+        "keys": [["actor", "rotation-angle-z",  "linear", -360.0],
+                 ["actor", "scale-x", "linear", 0.01],
+                 ["actor", "scale-y", "linear", 0.01],
+                 ["actor", "opacity",  "linear", 0]]
+      },
+      {
+        "source":null,
+        "target":"show",
+        "keys": [["actor", "rotation-angle-z",  "linear", 0.0],
+                 ["actor", "scale-x", "linear", 1.0],
+                 ["actor", "scale-y", "linear", 1.0],
+                 ["actor", "opacity",  "linear", 255]]
+      },
+      {
+        "source":null,
+        "target":"post",
+        "keys": [["actor", "rotation-angle-z",  "linear", 360.0],
+                 ["actor", "scale-x", "linear", 4.0],
+                 ["actor", "scale-y", "linear", 4.0],
+                 ["actor", "opacity",  "linear", 0]]
+      }
+  ]}
+]
