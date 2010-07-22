@@ -1449,6 +1449,7 @@ parse_config (PinPointPoint *point,
 {
   GString *str = g_string_new ("");
   const char *p;
+
   for (p = config; *p; p++)
     {
       if (*p != '[')
@@ -1553,6 +1554,7 @@ parse_slides (PinPointRenderer *renderer,
                    * data (void *) */
                   memcpy (point, &default_point,
                           sizeof (PinPointPoint) - sizeof (void *));
+                  parse_config (point, setting_str->str);
                   gotconfig = TRUE;
                   g_string_assign (slide_str, "");
                   g_string_assign (setting_str, "");
