@@ -1,0 +1,73 @@
+[{
+  "type":"ClutterGroup",
+  "id":"actor",
+  "rotation-center-z-gravity":"center",
+  "scale-gravity":"center",
+  "children":[
+     {
+       "id":"background",
+       "type":"ClutterGroup",
+       "rotation-center-z-gravity":"center",
+       "scale-gravity":"center"
+     },
+     {
+       "type":"ClutterGroup",
+       "depth":20.0,
+       "children":[
+     {
+       "id":"midground",
+       "type":"ClutterGroup",
+       "rotation-center-z-gravity":"center",
+       "scale-gravity":"center"
+     }]},
+     {
+       "id":"foreground",
+       "depth":30.0,
+       "type":"ClutterGroup",
+       "rotation-center-z-gravity":"center",
+       "scale-gravity":"center"
+     }
+  ]}
+  ,{
+  "type":"ClutterState",
+  "id":"state",
+  "duration":800,
+  "transitions":[
+      {
+        "source":null,
+        "target":"pre",
+        "keys": [
+                 ["foreground", "rotation-angle-z",  "linear", -360.0],
+                 ["foreground", "scale-x", "linear", 0.01],
+                 ["foreground", "scale-y", "linear", 0.01],
+                 ["midground", "rotation-angle-z",  "linear", -360.0],
+                 ["midground", "scale-x", "linear", 0.01],
+                 ["midground", "scale-y", "linear", 0.01],
+                 ["actor", "opacity",  "linear", 0]]
+      },
+      {
+        "source":null,
+        "target":"show",
+        "keys": [
+                 ["foreground", "rotation-angle-z",  "linear", 0.0],
+                 ["foreground", "scale-x", "linear", 1.0],
+                 ["foreground", "scale-y", "linear", 1.0],
+                 ["midground", "rotation-angle-z",  "linear", 0.0],
+                 ["midground", "scale-x", "linear", 1.0],
+                 ["midground", "scale-y", "linear", 1.0],
+                 ["actor", "opacity",  "linear", 255]]
+      },
+      {
+        "source":null,
+        "target":"post",
+        "keys": [
+                 ["foreground", "rotation-angle-z",  "linear", 360.0],
+                 ["foreground", "scale-x", "linear", 4.0],
+                 ["foreground", "scale-y", "linear", 4.0],
+                 ["midground", "rotation-angle-z",  "linear", 360.0],
+                 ["midground", "scale-x", "linear", 4.0],
+                 ["midground", "scale-y", "linear", 4.0],
+                 ["actor", "opacity",  "linear", 0]]
+      }
+  ]}
+]

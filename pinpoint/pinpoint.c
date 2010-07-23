@@ -43,7 +43,7 @@ typedef struct
 static EnumDescription PPBackgroundScale_desc[] =
 {
   { "fit",  PP_BG_FIT },
-  { "zoom", PP_BG_ZOOM },
+  { "fill", PP_BG_FILL},
   { NULL,   0}
 };
 
@@ -77,7 +77,7 @@ static PinPointPoint default_point = {
 static GOptionEntry entries[] =
 {
     { "output", 'o', 0, G_OPTION_ARG_STRING, &pp_output_filename,
-      "Output slides to FILE (formats supported: pdf)", "FILE" },
+      "Output presentation to FILE (formats supported: pdf)", "FILE" },
     { NULL }
 };
 
@@ -107,14 +107,14 @@ main (int    argc,
 
   if (!argv[1])
     {
-      g_print ("usage: %s <slides>\n", argv[0]);
-      text = g_strdup ("[red]\n--\nusage: pinpoint <slides.txt>\n--");
+      g_print ("usage: %s <presentation>\n", argv[0]);
+      text = g_strdup ("[red]\n--\nusage: pinpoint <presentation.txt>\n--");
     }
   else
     {
       if (!g_file_get_contents (argv[1], &text, NULL, NULL))
         {
-          g_print ("failed to load slides from %s\n", argv[1]);
+          g_print ("failed to load presentation from %s\n", argv[1]);
           return -1;
         }
     }
@@ -183,7 +183,7 @@ pp_get_background_position_scale (PinPointPoint *point,
                                   float         *bg_y,
                                   float         *bg_scale)
 {
-  if (point->bg_scale == PP_BG_ZOOM)
+  if (point->bg_scale == PP_BG_FILL)
     {
       float w_scale, h_scale;
 
@@ -335,6 +335,8 @@ parse_setting (PinPointPoint *point,
   IF_PREFIX("command=")    point->command = char;
   IF_PREFIX("transition=") point->transition = char;
   IF_PREFIX("bg-scale")    enum(point->bg_scale, PPBackgroundScale, char);
+  IF_EQUAL("fill")         point->bg_scale = PP_BG_FILL;
+  IF_EQUAL("fit")          point->bg_scale = PP_BG_FIT;
   IF_EQUAL("center")       point->position = CLUTTER_GRAVITY_CENTER;
   IF_EQUAL("top")          point->position = CLUTTER_GRAVITY_NORTH;
   IF_EQUAL("bottom")       point->position = CLUTTER_GRAVITY_SOUTH;

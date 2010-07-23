@@ -1,0 +1,58 @@
+[{
+  "type":"ClutterGroup",
+  "id":"actor",
+  "rotation-center-z-gravity":"center",
+  "scale-gravity":"center",
+  "children":[
+     {
+       "id":"background",
+       "type":"ClutterGroup",
+       "rotation-center-z-gravity":"center",
+       "scale-gravity":"center"
+     },
+     {
+       "type":"ClutterGroup",
+       "depth":20.0,
+       "children":[
+     {
+       "id":"midground",
+       "type":"ClutterGroup",
+       "rotation-center-z-gravity":"center",
+       "scale-gravity":"center"
+     }]},
+     {
+       "id":"foreground",
+       "depth":30.0,
+       "type":"ClutterGroup",
+       "rotation-center-z-gravity":"center",
+       "scale-gravity":"center"
+     }
+  ]}
+  ,{
+  "type":"ClutterState",
+  "id":"state",
+  "duration":1000,
+  "transitions":[
+      {
+        "source":null,
+        "target":"post",
+        "keys": [["foreground", "y",  "linear", 1024],
+                 ["midground", "y",  "linear", 1024],
+                 ["background", "opacity", "linear", 0]]
+      },
+      {
+        "source":null,
+        "target":"show",
+        "keys": [["foreground", "y",  "linear", 0],
+                 ["midground", "y",  "linear", 0],
+                 ["background", "opacity", "linear", 255]]
+      },
+      {
+        "source":null,
+        "target":"pre",
+        "keys": [["foreground", "y",  "linear", -1024],
+                 ["midground", "y",  "linear", -1024],
+                 ["background", "opacity", "linear", 0]]
+      }
+  ]}
+]
