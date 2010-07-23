@@ -30,10 +30,6 @@
 
 #include "pinpoint.h"
 
-#define RESTDEPTH   -9000.0
-#define RESTX        4600.0
-#define STARTPOS    -3000.0
-
 typedef struct
 {
   const char *name;

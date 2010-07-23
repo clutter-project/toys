@@ -707,6 +707,7 @@ file_changed (GFileMonitor      *monitor,
   char   *text = NULL;
   if (!g_file_get_contents (renderer->path, &text, NULL, NULL))
     g_error ("failed to load slides from %s\n", renderer->path);
+  renderer->rest_y = STARTPOS;
   pp_parse_slides (PINPOINT_RENDERER (renderer), text);
   g_free (text);
   show_slide(renderer, FALSE);
