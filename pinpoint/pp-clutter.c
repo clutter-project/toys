@@ -40,6 +40,7 @@ static ClutterColor black = {0x00,0x00,0x00,0xff};
 typedef struct _ClutterRenderer
 {
   PinPointRenderer renderer;
+  GHashTable *bg_cache;    /* only load the same backgrounds once */
   ClutterActor *stage;
   ClutterActor *background;
   ClutterActor *midground;
@@ -68,6 +69,7 @@ typedef struct
 
 #define CLUTTER_RENDERER(renderer)  ((ClutterRenderer *) renderer)
 
+
 static void     leave_slide   (ClutterRenderer  *renderer,
                                gboolean          backwards);
 static void     show_slide    (ClutterRenderer  *renderer,
@@ -84,6 +86,14 @@ static void     stage_resized (ClutterActor     *actor,
 static gboolean key_pressed   (ClutterActor     *actor,
                                ClutterEvent     *event,
                                ClutterRenderer  *renderer);
+
+static void
+_destroy_surface (gpointer data)
+{
+  /* not destroying background, since it would be destoryed with
+   * the stage itself.
+   */
+}
 
 
 static void
@@ -129,6 +139,9 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
       g_signal_connect (monitor, "changed", G_CALLBACK (file_changed),
                                             renderer);
     }
+
+  renderer->bg_cache = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                              NULL, _destroy_surface);
 }
 
 static void
@@ -144,7 +157,37 @@ clutter_renderer_finalize (PinPointRenderer *pp_renderer)
   ClutterRenderer *renderer = CLUTTER_RENDERER (pp_renderer);
 
   clutter_actor_destroy (renderer->stage);
+  g_hash_table_unref (renderer->bg_cache);
 }
+
+static ClutterActor *
+_clutter_get_texture (ClutterRenderer *renderer,
+                      const char      *file)
+{
+  ClutterActor *source;
+
+  source = g_hash_table_lookup (renderer->bg_cache, file);
+  if (source)
+    {
+      return clutter_clone_new (source);
+    }
+
+  source = g_object_new (CLUTTER_TYPE_TEXTURE,
+                         "filename", file,
+                         "load-data-async", TRUE,
+                         NULL);
+
+  if (!source)
+    return NULL;
+
+  clutter_container_add_actor (CLUTTER_CONTAINER (renderer->stage), source);
+  clutter_actor_hide (source);
+
+  g_hash_table_insert (renderer->bg_cache, (char *) file, source);
+
+  return clutter_clone_new (source);
+}
+
 
 static gboolean
 clutter_renderer_make_point (PinPointRenderer *pp_renderer,
@@ -169,10 +212,7 @@ clutter_renderer_make_point (PinPointRenderer *pp_renderer,
       }
       break;
     case PP_BG_IMAGE:
-      data->background = g_object_new (CLUTTER_TYPE_TEXTURE,
-                                       "filename", point->bg,
-                                       "load-data-async", TRUE,
-                                       NULL);
+      data->background = _clutter_get_texture (renderer, point->bg);
       ret = TRUE;
       break;
     case PP_BG_VIDEO:
