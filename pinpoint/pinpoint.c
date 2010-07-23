@@ -183,22 +183,17 @@ pp_get_background_position_scale (PinPointPoint *point,
                                   float         *bg_y,
                                   float         *bg_scale)
 {
-  if (point->bg_scale == PP_BG_FILL)
-    {
-      float w_scale, h_scale;
+  float w_scale = stage_width / bg_width;
+  float h_scale = stage_height / bg_height;
 
-      w_scale = stage_width / bg_width;
-      h_scale = stage_height / bg_height;
-      if (w_scale > h_scale)
-        *bg_scale = w_scale;
-      else
-        *bg_scale = h_scale;
-    }
-  else
+  switch (point->bg_scale)
     {
-      *bg_scale =  stage_width / bg_width;
-      if (*bg_scale > 1.0 || stage_height < *bg_scale * bg_height)
-        *bg_scale = stage_height / bg_height;
+    case PP_BG_FILL:
+      *bg_scale = (w_scale > h_scale) ? w_scale : h_scale;
+      break;
+    case PP_BG_FIT:
+      *bg_scale = (w_scale < h_scale) ? w_scale : h_scale;
+      break;
     }
   *bg_x = (stage_width - bg_width * *bg_scale) / 2;
   *bg_y = (stage_height - bg_height * *bg_scale) / 2;
