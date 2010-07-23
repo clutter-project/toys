@@ -413,13 +413,14 @@ pp_parse_slides (PinPointRenderer *renderer,
                  const char       *slide_src)
 {
   const char *p;
-  int      slideno = 0;
-  gboolean startofline = TRUE;
-  gboolean gotconfig = FALSE;
-  GString *slide_str = g_string_new ("");
-  GString *setting_str = g_string_new ("");
+  int         slideno = 0;
+  gboolean    done = FALSE;
+  gboolean    startofline = TRUE;
+  gboolean    gotconfig = FALSE;
+  GString    *slide_str = g_string_new ("");
+  GString    *setting_str = g_string_new ("");
+  GList      *s;
   PinPointPoint *point, *next_point;
-  GList *s;
 
   /* store current slideno */
   if (pp_slidep)
@@ -451,6 +452,7 @@ pp_parse_slides (PinPointRenderer *renderer,
           g_string_append_c (slide_str, *p);
           break;
         case '-': /* slide seperator */
+          close_last_slide:
           if (startofline)
             {
               next_point = pin_point_new (renderer);
@@ -535,6 +537,11 @@ pp_parse_slides (PinPointRenderer *renderer,
           g_string_append_c (slide_str, *p);
           break;
       }
+    }
+  if (!done)
+    {
+      done = TRUE;
+      goto close_last_slide;
     }
 
   g_string_free (slide_str, TRUE);

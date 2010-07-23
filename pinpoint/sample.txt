@@ -117,5 +117,3 @@ right/space - next slide
 - [black] [font=Sans 100px] [transition=spin-text]
 
 FIN
-
-- This final hyphen is needed
