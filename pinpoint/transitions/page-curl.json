@@ -1,0 +1,64 @@
+[
+{
+  "type":"ClutterGroup",
+  "id":"actor",
+  "rotation-center-z-gravity":"center",
+  "scale-gravity":"center",
+  "children":[
+     {
+       "id":"background",
+       "type":"ClutterGroup",
+       "rotation-center-z-gravity":"center",
+       "scale-gravity":"center",
+       "depth":120.0
+     },
+     {
+       "type":"ClutterGroup",
+       "depth":20.0,
+       "children":[
+     {
+       "id":"midground",
+       "type":"ClutterGroup",
+       "rotation-center-z-gravity":"center",
+       "scale-gravity":"center"
+     }]},
+     {
+       "id":"foreground",
+       "depth":30.0,
+       "type":"ClutterGroup",
+       "rotation-center-z-gravity":"center",
+       "scale-gravity":"center"
+     }
+  ],
+  "effects":[
+     {
+       "id":"page-turn",
+       "type":"ClutterPageTurnEffect",
+       "period":0.0,
+       "radius":50.0,
+       "angle":0.0
+     }
+  
+  ]}
+  ,{
+  "type":"ClutterState",
+  "id":"state",
+  "duration":2000,
+  "transitions":[
+      {
+        "source":null,
+        "target":"pre",
+        "keys": [["page-turn", "period",  "linear", 0.0]]
+      },
+      {
+        "source":null,
+        "target":"show",
+        "keys": [["page-turn", "period",  "linear", 0.0]]
+      },
+      {
+        "source":null,
+        "target":"post",
+        "keys": [["page-turn", "period",  "linear", 1.0]]
+      }
+  ]}
+]

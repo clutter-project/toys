@@ -10,7 +10,7 @@ AC_PROG_CC
 PKG_PROG_PKG_CONFIG
 AC_HEADER_STDC
 
-PINPOINT_DEPS="clutter-1.0 gio-2.0 cairo-pdf pangocairo gdk-pixbuf-2.0"
+PINPOINT_DEPS="clutter-1.0 >= 1.3 gio-2.0 cairo-pdf pangocairo gdk-pixbuf-2.0 mx-1.0"
 
 AS_COMPILER_FLAGS([MAINTAINER_CFLAGS], [-Wall])
 

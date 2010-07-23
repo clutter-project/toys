@@ -70,7 +70,8 @@ typedef struct
 
 static void     leave_slide   (ClutterRenderer  *renderer,
                                gboolean          backwards);
-static void     show_slide    (ClutterRenderer  *renderer);
+static void     show_slide    (ClutterRenderer  *renderer,
+                               gboolean          backwards);
 static void     action_slide  (ClutterRenderer  *renderer);
 static void     file_changed  (GFileMonitor     *monitor,
                                GFile            *file,
@@ -133,7 +134,7 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
 static void
 clutter_renderer_run (PinPointRenderer *renderer)
 {
-  show_slide (CLUTTER_RENDERER (renderer));
+  show_slide (CLUTTER_RENDERER (renderer), FALSE);
   clutter_main ();
 }
 
@@ -276,7 +277,7 @@ key_pressed (ClutterActor    *actor,
           {
             leave_slide (renderer, TRUE);
             pp_slidep = pp_slidep->prev;
-            show_slide (renderer);
+            show_slide (renderer, TRUE);
           }
         break;
       case CLUTTER_Right:
@@ -286,7 +287,7 @@ key_pressed (ClutterActor    *actor,
           {
             leave_slide (renderer, FALSE);
             pp_slidep = pp_slidep->next;
-            show_slide (renderer);
+            show_slide (renderer, FALSE);
           }
         break;
       case CLUTTER_Escape:
@@ -418,7 +419,7 @@ static gchar *pp_lookup_transition (const gchar *transition)
 }
 
 static void
-show_slide (ClutterRenderer *renderer)
+show_slide (ClutterRenderer *renderer, gboolean backwards)
 {
   PinPointPoint *point;
   ClutterPointData *data;
@@ -674,7 +675,8 @@ show_slide (ClutterRenderer *renderer)
          }
       }
 
-      clutter_actor_raise_top (data->json_slide);
+      if (!backwards)
+        clutter_actor_raise_top (data->json_slide);
       clutter_actor_show (data->json_slide);
       clutter_state_set_state (data->state, "show");
     }
@@ -692,7 +694,7 @@ stage_resized (ClutterActor    *actor,
                GParamSpec      *pspec,
                ClutterRenderer *renderer)
 {
-  show_slide (renderer); /* redisplay the current slide */
+  show_slide (renderer, FALSE); /* redisplay the current slide */
 }
 
 static void
@@ -707,7 +709,7 @@ file_changed (GFileMonitor      *monitor,
     g_error ("failed to load slides from %s\n", renderer->path);
   pp_parse_slides (PINPOINT_RENDERER (renderer), text);
   g_free (text);
-  show_slide(renderer);
+  show_slide(renderer, FALSE);
 }
 
 static ClutterRenderer clutter_renderer_vtable =

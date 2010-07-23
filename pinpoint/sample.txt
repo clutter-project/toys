@@ -85,7 +85,7 @@ position text
 [white][text-color=black]
 [shading-opacity=0.0][bottom]
 
-- [transition=text-slide-left]
+- [transition=page-curl-both][wth.jpg]
 need bullets?
  ❥ use the power of unicode
 • ✽ ✩ ✔ ❧ ◦
