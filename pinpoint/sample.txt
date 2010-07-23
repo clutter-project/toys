@@ -94,9 +94,10 @@ need bullets?
 $ pinpoint presentation.txt -o output.pdf
 Export your presentation to pdf
 
-- [bg-scale=zoom]
-[bg-scale=zoom]
+- [fill]
+[fill]
 Fill the slide with your background
+(the default is [fit])
 
 - [transition=swing]
 Keybindings:

@@ -334,7 +334,6 @@ parse_setting (PinPointPoint *point,
   IF_PREFIX("shading-opacity=") point->shading_opacity = float;
   IF_PREFIX("command=")    point->command = char;
   IF_PREFIX("transition=") point->transition = char;
-  IF_PREFIX("bg-scale")    enum(point->bg_scale, PPBackgroundScale, char);
   IF_EQUAL("fill")         point->bg_scale = PP_BG_FILL;
   IF_EQUAL("fit")          point->bg_scale = PP_BG_FIT;
   IF_EQUAL("center")       point->position = CLUTTER_GRAVITY_CENTER;
