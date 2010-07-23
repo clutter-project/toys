@@ -99,6 +99,8 @@ main (int    argc,
 
   context = g_option_context_new ("- Presentations made easy");
   g_option_context_add_main_entries (context, entries, NULL);
+  g_option_context_add_group (context, clutter_get_option_group_without_init ());
+  g_option_context_add_group (context, cogl_get_option_group ());
   if (!g_option_context_parse (context, &argc, &argv, &error))
     {
       g_print ("option parsing failed: %s\n", error->message);
