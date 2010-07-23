@@ -324,9 +324,11 @@ _cairo_render_text (CairoRenderer *renderer,
   pango_layout_set_alignment (layout, point->text_align);
 
   pango_layout_get_extents (layout, NULL, &logical_rect);
-
   text_width = (logical_rect.x + logical_rect.width) / 1024;
   text_height = (logical_rect.y + logical_rect.height) / 1024;
+  if (text_width < 1)
+    goto out;
+
   pp_get_text_position_scale (point,
                               A4_LS_WIDTH, A4_LS_HEIGHT,
                               text_width, text_height,
@@ -363,6 +365,7 @@ _cairo_render_text (CairoRenderer *renderer,
   pango_cairo_show_layout (renderer->ctx, layout);
   cairo_restore (renderer->ctx);
 
+out:
   pango_font_description_free (desc);
   g_object_unref (layout);
 }
