@@ -157,6 +157,24 @@ _destroy_surface (gpointer data)
    */
 }
 
+static uint hide_cursor = 0;
+static gboolean hide_cursor_cb (gpointer stage)
+{
+  hide_cursor = 0;
+  clutter_stage_hide_cursor (stage);
+  return FALSE;
+}
+
+static gboolean stage_motion (ClutterActor *actor,
+                              ClutterEvent *event,
+                              gpointer      data)
+{
+  if (hide_cursor)
+    g_source_remove (hide_cursor);
+  clutter_stage_show_cursor (CLUTTER_STAGE (actor));
+  hide_cursor = g_timeout_add (500, hide_cursor_cb, actor);
+}
+
 static void
 clutter_renderer_init (PinPointRenderer   *pp_renderer,
                        char               *pinpoint_file)
@@ -189,6 +207,8 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
                     G_CALLBACK (stage_resized), renderer);
   g_signal_connect (stage, "notify::height",
                     G_CALLBACK (stage_resized), renderer);
+  g_signal_connect (stage, "motion-event",
+                    G_CALLBACK (stage_motion), stage);
 
   clutter_stage_set_user_resizable (CLUTTER_STAGE (stage), TRUE);
 
