@@ -70,10 +70,22 @@ static PinPointPoint default_point = {
   .data = NULL,
 };
 
+char      *pp_output_filename;
+gboolean   pp_fullscreen = FALSE;
+gboolean   pp_maximized = FALSE;
+
 static GOptionEntry entries[] =
 {
+    { "maximized", 'm', 0, G_OPTION_ARG_NONE, &pp_maximized,
+    "Maximize witohout decorations, instead\n"
+"                                         of fullscreening, this is useful\n"
+"                                         to enable windowmanagement when running\n"
+"                                         [command=] spawned apps.", NULL},
+    { "fullscreen", 'f', 0, G_OPTION_ARG_NONE, &pp_fullscreen,
+    "Start in fullscreen mode", NULL},
     { "output", 'o', 0, G_OPTION_ARG_STRING, &pp_output_filename,
-      "Output presentation to FILE (formats supported: pdf)", "FILE" },
+      "Output presentation to FILE\n"
+"                                         (formats supported: pdf)", "FILE" },
     { NULL }
 };
 
@@ -105,8 +117,8 @@ main (int    argc,
 
   if (!argv[1])
     {
-      g_print ("usage: %s <presentation>\n", argv[0]);
-      text = g_strdup ("[red]\n--\nusage: pinpoint <presentation.txt>\n--");
+      g_print ("usage: %s [options] <presentation>\n", argv[0]);
+      text = g_strdup ("[transition=sheet][red]\n--\nusage: pinpoint [options] <presentation.txt>\n");
     }
   else
     {
@@ -155,7 +167,7 @@ main (int    argc,
 
 /*********************/
 
-char *pp_output_filename;
+
 GList *pp_slides      = NULL; /* list of slide texts */
 GList *pp_slidep      = NULL; /* current slide */
 

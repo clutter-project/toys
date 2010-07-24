@@ -89,7 +89,10 @@ struct _PinPointPoint
   void              *data;            /* the renderer can attach data here */
 };
 
-extern char *pp_output_filename;
+extern char      *pp_output_filename;
+extern gboolean   pp_fullscreen;
+extern gboolean   pp_maximized;
+
 extern GList *pp_slides;
 extern GList *pp_slidep;
 

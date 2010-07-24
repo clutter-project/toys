@@ -22,6 +22,7 @@
  */
 
 #include "pinpoint.h"
+#include <clutter/x11/clutter-x11.h>
 #include <gio/gio.h>
 #ifdef USE_CLUTTER_GST
 #include <clutter-gst/clutter-gst.h>
@@ -87,6 +88,67 @@ static gboolean key_pressed   (ClutterActor     *actor,
                                ClutterEvent     *event,
                                ClutterRenderer  *renderer);
 
+
+static void pp_set_fullscreen (ClutterStage  *stage,
+                               gboolean       fullscreen)
+{
+  static gboolean is_fullscreen = FALSE;
+  static gfloat old_width=640, old_height=480;
+
+  struct {
+    unsigned long flags;
+    unsigned long functions;
+    unsigned long decorations;
+    long inputMode;
+    unsigned long status;
+  } MWMHints = { 2, 0, 0, 0, 0};
+
+  Display *xdisplay = clutter_x11_get_default_display ();
+  int      xscreen  = clutter_x11_get_default_screen ();
+  Atom     wm_hints = XInternAtom(xdisplay, "_MOTIF_WM_HINTS", True);
+  Window   xwindow  = clutter_x11_get_stage_window (stage);
+
+  if (!pp_maximized)
+    return clutter_stage_set_fullscreen (stage, fullscreen);
+
+  pp_fullscreen = fullscreen;
+  if (is_fullscreen == fullscreen)
+    return;
+  is_fullscreen = fullscreen;
+
+  if (fullscreen)
+    {
+      int full_width = DisplayWidth (xdisplay, xscreen);
+      int full_height = DisplayHeight (xdisplay, xscreen)+5; /* avoid being detected as fullscreen */
+      clutter_actor_get_size (CLUTTER_ACTOR (stage), &old_width, &old_height);
+
+      if (wm_hints != None)
+        XChangeProperty (xdisplay, xwindow, wm_hints, wm_hints, 32,
+                         PropModeReplace, (guchar*)&MWMHints,
+                         sizeof(MWMHints)/sizeof(long));
+      clutter_actor_set_size (CLUTTER_ACTOR (stage), full_width, full_height);
+      XMoveResizeWindow (xdisplay, xwindow,
+                         0, 0, full_width, full_height);
+    }
+  else
+    {
+      MWMHints.decorations = 7;
+      if (wm_hints != None )
+        XChangeProperty (xdisplay, xwindow, wm_hints, wm_hints, 32,
+                         PropModeReplace, (guchar*)&MWMHints,
+                         sizeof(MWMHints)/sizeof(long));
+      clutter_stage_set_fullscreen (stage, FALSE);
+      clutter_actor_set_size (CLUTTER_ACTOR (stage), old_width, old_height);
+    }
+}
+
+static gboolean pp_get_fullscreen (ClutterStage *stage)
+{
+  if (!pp_maximized)
+    return clutter_stage_get_fullscreen (stage);
+  return pp_fullscreen;
+}
+
 static void
 _destroy_surface (gpointer data)
 {
@@ -94,7 +156,6 @@ _destroy_surface (gpointer data)
    * the stage itself.
    */
 }
-
 
 static void
 clutter_renderer_init (PinPointRenderer   *pp_renderer,
@@ -130,6 +191,9 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
                     G_CALLBACK (stage_resized), renderer);
 
   clutter_stage_set_user_resizable (CLUTTER_STAGE (stage), TRUE);
+
+  if (pp_fullscreen)
+    pp_set_fullscreen (CLUTTER_STAGE (stage), TRUE);
 
   renderer->path = pinpoint_file;
   if (renderer->path)
@@ -301,6 +365,7 @@ clutter_renderer_free_data (PinPointRenderer *renderer,
 }
 
 
+
 static gboolean
 key_pressed (ClutterActor    *actor,
              ClutterEvent    *event,
@@ -334,8 +399,8 @@ key_pressed (ClutterActor    *actor,
         clutter_main_quit ();
         break;
       case CLUTTER_F11:
-        clutter_stage_set_fullscreen (CLUTTER_STAGE (renderer->stage),
-            !clutter_stage_get_fullscreen (CLUTTER_STAGE (renderer->stage)));
+        pp_set_fullscreen (CLUTTER_STAGE (renderer->stage),
+                           !pp_get_fullscreen (CLUTTER_STAGE (renderer->stage)));
       case CLUTTER_Return:
         action_slide (renderer);
         break;
@@ -441,6 +506,12 @@ action_slide (ClutterRenderer *renderer)
 
   if (data->state)
     clutter_state_set_state (data->state, "action");
+
+  if (point->command)
+    {
+      g_print ("running: %s\n", point->command);
+      system (point->command);
+    }
 }
 
 static gchar *pp_lookup_transition (const gchar *transition)
@@ -721,11 +792,6 @@ show_slide (ClutterRenderer *renderer, gboolean backwards)
       clutter_state_set_state (data->state, "show");
     }
 
-  if (point->command)
-    {
-      g_print ("running: %s\n", point->command);
-      system (point->command);
-    }
 }
 
 
