@@ -32,6 +32,10 @@
 #include "pp-super-aa.h"
 #endif
 
+/* #define QUICK_ACCESS_LEFT - uncomment to move speed access from top to left,
+ *                             useful on meego netbook
+ */
+
 #define RESTDEPTH   -9000.0
 #define RESTX        4600.0
 #define STARTPOS    -3000.0
@@ -242,11 +246,30 @@ static gboolean commandline_action_cb (ClutterActor *actor,
 
 static gboolean stage_motion (ClutterActor *actor,
                               ClutterEvent *event,
-                              gpointer      data)
+                              gpointer      renderer)
 {
+  gfloat stage_width, stage_height;
+
   if (hide_cursor)
     g_source_remove (hide_cursor);
   clutter_stage_show_cursor (CLUTTER_STAGE (actor));
+  clutter_actor_get_size (CLUTTER_RENDERER (renderer)->stage, &stage_width, &stage_height);
+#ifdef QUICK_ACCESS_LEFT
+  if (event->motion.x < 8)
+    {
+      float d = event->motion.y / stage_height;
+#else
+  if (event->motion.y < 8)
+    {
+      float d = event->motion.x / stage_width;
+#endif
+      if (pp_slidep)
+        {
+          leave_slide (renderer, FALSE);
+        }
+      pp_slidep = g_list_nth (pp_slides, g_list_length (pp_slides) * d);
+      show_slide (renderer, FALSE);
+    }
   hide_cursor = g_timeout_add (500, hide_cursor_cb, actor);
 }
 
@@ -292,7 +315,7 @@ clutter_renderer_init (PinPointRenderer   *pp_renderer,
   g_signal_connect (stage, "notify::height",
                     G_CALLBACK (stage_resized), renderer);
   g_signal_connect (stage, "motion-event",
-                    G_CALLBACK (stage_motion), stage);
+                    G_CALLBACK (stage_motion), renderer);
   g_signal_connect (renderer->commandline, "activate",
                     G_CALLBACK (commandline_action_cb), renderer);
   g_signal_connect (renderer->commandline, "captured-event",
@@ -974,9 +997,6 @@ show_slide (ClutterRenderer *renderer, gboolean backwards)
 
    update_commandline_shading (renderer);
   }
-
-
-
 }
 
 

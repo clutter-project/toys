@@ -114,7 +114,7 @@ F11 - toggle fullscreen
 - [transition=text-slide-down]
 Escape - quit
 
-- [transition=slide-in-left] [command=killall xeyes ; xeyes]
+- [transition=slide-in-left] [command=killall xeyes ; xeyes] [fill]
 Enter - Run command
 Tab - Edit command
 [command=killall xeyes ; xeyes]
