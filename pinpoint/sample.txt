@@ -1,5 +1,5 @@
 #!/usr/bin/env pinpoint
-[font=Sans 40px]
+[font=Sans 50px]
 [bg.jpg]
 - The bits above are slide defaults
 pinpoint 
@@ -103,16 +103,21 @@ Fill the slide with your background
 Keybindings:
 
 - [transition=sheet]
-F11 - toggle fullscreen
+right/space - next slide
 
 - [transition=slide-left]
-Escape - quit
-
-- [transition=slide-up]
 left - previous slide
 
-- [transition=slide-in-left]
-right/space - next slide
+- [transition=slide-up]
+F11 - toggle fullscreen
+
+- [transition=text-slide-down]
+Escape - quit
+
+- [transition=slide-in-left] [command=killall xeyes ; xeyes]
+Enter - Run command
+Tab - Edit command
+[command=killall xeyes ; xeyes]
 
 - [black] [font=Sans 100px] [transition=spin-text]
 
