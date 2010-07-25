@@ -1,8 +1,8 @@
 #!/usr/bin/env pinpoint
 [font=Sans 50px]
-[bg.jpg]
+[bg.jpg][black]
 - The bits above are slide defaults
-pinpoint 
+pinpoint
 - [wth.jpg] lines starting with - are slide seperators with per-slide properties
 minimalist presentation tool
 -
@@ -85,6 +85,17 @@ position text
 [white][text-color=black]
 [shading-opacity=0.0][bottom]
 
+-
+<s>use</s> <b>pango</b> <i
+><span foreground='#f24'>m<u
+>ar</u>k<sup>up</sup></span></i>
+
+- [no-markup]
+[no-markup]
+<s>use</s> <b>pango</b> <i
+><span foreground='#f24'>m<u
+>ar</u>k<sup>up</sup></span></i>
+
 - [transition=page-curl-both][wth.jpg]
 need bullets?
  ❥ use the power of unicode
@@ -118,6 +129,10 @@ Escape - quit
 Enter - Run command
 Tab - Edit command
 [command=killall xeyes ; xeyes]
+
+Note: run pinpoint with the -m option
+and hidden / auto-hiding panels, to
+permit window management in fullscreen.
 
 - [black] [font=Sans 100px] [transition=spin-text]
 

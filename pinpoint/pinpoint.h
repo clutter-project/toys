@@ -72,18 +72,23 @@ struct _PinPointRenderer
 
 struct _PinPointPoint
 {
+  const char        *stage_color;
+
+  const gchar       *bg;
+  PPBackgroundType   bg_type;
+  PPBackgroundScale  bg_scale;
+
   const char        *text;            /*  the text of the slide */
   ClutterGravity     position;
-  const gchar       *bg;
-  PPBackgroundScale  bg_scale;
-  PPBackgroundType   bg_type;
   const char        *font;
   PPTextAlign        text_align;
-  const char        *stage_color;
   const char        *text_color;
+  gboolean           use_markup;
+
   const char        *shading_color;
   float              shading_opacity;
   const char        *transition;      /* transition template to use, if any */
+
   const char        *command;
 
   void              *data;            /* the renderer can attach data here */

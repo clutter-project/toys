@@ -54,18 +54,23 @@ static EnumDescription PPTextAlign_desc[] =
 #define PINPOINT_RENDERER(renderer) ((PinPointRenderer *) renderer)
 
 static PinPointPoint default_point = {
-  .text = NULL,
-  .position = CLUTTER_GRAVITY_CENTER,
+  .stage_color = "black",
+
   .bg = "NULL",
   .bg_type = PP_BG_NONE,
   .bg_scale = PP_BG_FIT,
+
+  .text = NULL,
+  .position = CLUTTER_GRAVITY_CENTER,
   .font = "Sans 60px",
-  .stage_color = "black",
   .text_color = "white",
   .text_align = PP_TEXT_LEFT,
+  .use_markup = TRUE,
+
   .shading_color = "black",
   .shading_opacity = 0.66,
   .transition = NULL,
+
   .command = NULL,
   .data = NULL,
 };
@@ -313,6 +318,7 @@ parse_setting (PinPointPoint *point,
 /* C Preprocessor macros implemeting a mini language for interpreting
  * pinpoint key=value pairs
  */
+
 #define START_PARSER if (0) {
 #define DEFAULT      } else {
 #define END_PARSER   }
@@ -350,6 +356,8 @@ parse_setting (PinPointPoint *point,
   IF_EQUAL("top-right")    point->position = CLUTTER_GRAVITY_NORTH_EAST;
   IF_EQUAL("bottom-left")  point->position = CLUTTER_GRAVITY_SOUTH_WEST;
   IF_EQUAL("bottom-right") point->position = CLUTTER_GRAVITY_SOUTH_EAST;
+  IF_EQUAL("no-markup")    point->use_markup = FALSE;
+  IF_EQUAL("markup")       point->use_markup = TRUE;
   DEFAULT                  point->bg = g_intern_string (setting);
   END_PARSER
 

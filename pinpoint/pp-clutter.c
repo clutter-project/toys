@@ -456,12 +456,26 @@ clutter_renderer_make_point (PinPointRenderer *pp_renderer,
     }
 
   clutter_color_from_string (&color, point->text_color);
-  data->text = g_object_new (CLUTTER_TYPE_TEXT,
-                             "font-name", point->font,
-                             "text", point->text,
-                             "line-alignment", point->text_align,
-                             "color", &color,
-                             NULL);
+
+  if (point->use_markup)
+    {
+      data->text = g_object_new (CLUTTER_TYPE_TEXT,
+                                 "font-name", point->font,
+                                 "text", point->text,
+                                 "line-alignment", point->text_align,
+                                 "color", &color,
+                                 "use-markup", TRUE,
+                                 NULL);
+    }
+  else
+    {
+      data->text = g_object_new (CLUTTER_TYPE_TEXT,
+                                 "font-name", point->font,
+                                 "text", point->text,
+                                 "line-alignment", point->text_align,
+                                 "color", &color,
+                                 NULL);
+    }
 
   clutter_container_add_actor (CLUTTER_CONTAINER (renderer->foreground),
                                data->text);
@@ -532,6 +546,7 @@ key_pressed (ClutterActor    *actor,
       case CLUTTER_F11:
         pp_set_fullscreen (CLUTTER_STAGE (renderer->stage),
                            !pp_get_fullscreen (CLUTTER_STAGE (renderer->stage)));
+        break;
       case CLUTTER_Return:
         action_slide (renderer);
         break;
