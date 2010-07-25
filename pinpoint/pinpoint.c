@@ -30,6 +30,9 @@
 
 #include "pinpoint.h"
 
+GList *pp_slides      = NULL; /* list of slide texts */
+GList *pp_slidep      = NULL; /* current slide */
+
 typedef struct
 {
   const char *name;
@@ -163,18 +166,16 @@ main (int    argc,
 
   renderer->run (renderer);
   renderer->finalize (renderer);
+  if (renderer->source)
+    g_free (renderer->source);
 
   g_list_free (pp_slides);
 
   return 0;
 }
 
-
 /*********************/
 
-
-GList *pp_slides      = NULL; /* list of slide texts */
-GList *pp_slidep      = NULL; /* current slide */
 
 /*
  * Cross-renderers helpers
@@ -442,10 +443,33 @@ pp_parse_slides (PinPointRenderer *renderer,
   GList      *s;
   PinPointPoint *point, *next_point;
 
-  /* store current slideno */
-  if (pp_slidep)
-  for (;pp_slidep->prev; pp_slidep = pp_slidep->prev)
-    slideno++;
+  if (renderer->source)
+    {
+      gboolean start_of_line = TRUE;
+      int pos;
+      int lineno=0;
+      /* compute slide no that has changed */
+      for (pos = 0, slideno = 0;
+           slide_src[pos] && renderer->source[pos] && slide_src[pos]==renderer->source[pos]
+           ; pos ++)
+        {
+          switch (slide_src[pos])
+            {
+              case '\n':
+                start_of_line = TRUE;
+                lineno++;
+                break;
+              case '-':
+                if (start_of_line)
+                  slideno++;
+              default:
+                start_of_line = FALSE;
+            }
+        }
+      slideno--;
+      g_free (renderer->source);
+    }
+  renderer->source = g_strdup (slide_src);
 
   for (s = pp_slides; s; s = s->next)
     pin_point_free (renderer, s->data);

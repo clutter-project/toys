@@ -12,7 +12,6 @@
      },
      {
        "type":"ClutterGroup",
-       "depth":20.0,
        "children":[
      {
        "id":"midground",
@@ -22,7 +21,6 @@
      }]},
      {
        "id":"foreground",
-       "depth":30.0,
        "type":"ClutterGroup",
        "rotation-center-z-gravity":"center",
        "scale-gravity":"center"

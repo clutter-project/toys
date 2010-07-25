@@ -962,7 +962,8 @@ show_slide (ClutterRenderer *renderer, gboolean backwards)
                   NULL);
          }
        else /* no text, fade out shading */
-         g_object_set (data->shading, "opacity", 0, NULL);
+         if (data->shading)
+           g_object_set (data->shading, "opacity", 0, NULL);
        if (data->foreground)
          {
            clutter_actor_reparent (data->text, data->foreground);
@@ -1023,13 +1024,12 @@ stage_resized (ClutterActor    *actor,
   show_slide (renderer, FALSE); /* redisplay the current slide */
 }
 
-static void
-file_changed (GFileMonitor      *monitor,
-              GFile             *file,
-              GFile             *other_file,
-              GFileMonitorEvent  event_type,
-              ClutterRenderer   *renderer)
+static guint reload_tag = 0;
+
+static gboolean
+reload (gpointer data)
 {
+  ClutterRenderer *renderer = data;
   char   *text = NULL;
   if (!g_file_get_contents (renderer->path, &text, NULL, NULL))
     g_error ("failed to load slides from %s\n", renderer->path);
@@ -1037,6 +1037,20 @@ file_changed (GFileMonitor      *monitor,
   pp_parse_slides (PINPOINT_RENDERER (renderer), text);
   g_free (text);
   show_slide(renderer, FALSE);
+  reload_tag = 0;
+  return FALSE;
+}
+
+static void
+file_changed (GFileMonitor      *monitor,
+              GFile             *file,
+              GFile             *other_file,
+              GFileMonitorEvent  event_type,
+              ClutterRenderer   *renderer)
+{
+  if (reload_tag)
+    g_source_remove (reload_tag);
+  reload_tag = g_timeout_add (200, reload, renderer);
 }
 
 static ClutterRenderer clutter_renderer_vtable =

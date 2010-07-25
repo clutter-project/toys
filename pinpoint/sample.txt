@@ -1,6 +1,6 @@
 #!/usr/bin/env pinpoint
 [font=Sans 50px]
-[bg.jpg][black]
+[bg.jpg]
 - The bits above are slide defaults
 pinpoint
 - [wth.jpg] lines starting with - are slide seperators with per-slide properties

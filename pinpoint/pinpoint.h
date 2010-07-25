@@ -68,6 +68,7 @@ struct _PinPointRenderer
   void *    (*allocate_data) (PinPointRenderer *renderer);
   void      (*free_data)     (PinPointRenderer *renderer,
                               void             *datap);
+  char *      source;
 };
 
 struct _PinPointPoint
