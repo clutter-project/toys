@@ -253,6 +253,11 @@ static gboolean stage_motion (ClutterActor *actor,
   if (hide_cursor)
     g_source_remove (hide_cursor);
   clutter_stage_show_cursor (CLUTTER_STAGE (actor));
+  hide_cursor = g_timeout_add (500, hide_cursor_cb, actor);
+
+  if (!pp_get_fullscreen (CLUTTER_STAGE (actor)))
+    return;
+
   clutter_actor_get_size (CLUTTER_RENDERER (renderer)->stage, &stage_width, &stage_height);
 #ifdef QUICK_ACCESS_LEFT
   if (event->motion.x < 8)
@@ -270,7 +275,6 @@ static gboolean stage_motion (ClutterActor *actor,
       pp_slidep = g_list_nth (pp_slides, g_list_length (pp_slides) * d);
       show_slide (renderer, FALSE);
     }
-  hide_cursor = g_timeout_add (500, hide_cursor_cb, actor);
 }
 
 static void
@@ -506,6 +510,10 @@ clutter_renderer_free_data (PinPointRenderer *renderer,
     clutter_actor_destroy (data->background);
   if (data->text)
     clutter_actor_destroy (data->text);
+  if (data->json_slide)
+    clutter_actor_destroy (data->json_slide);
+  if (data->script)
+    g_object_unref (data->script);
   g_slice_free (ClutterPointData, data);
 }
 
