@@ -119,7 +119,7 @@ main (int    argc,
   if (!argv[1])
     {
       g_print ("usage: %s [options] <presentation>\n", argv[0]);
-      text = g_strdup ("[transition=sheet][red]\n--\nusage: pinpoint [options] <presentation.txt>\n");
+      text = g_strdup ("[no-markup][transition=sheet][red]\n--\nusage: pinpoint [options] <presentation.txt>\n");
     }
   else
     {
@@ -202,6 +202,11 @@ pp_get_background_position_scale (PinPointPoint *point,
       break;
     case PP_BG_FIT:
       *bg_scale = (w_scale < h_scale) ? w_scale : h_scale;
+      break;
+    case PP_BG_UNSCALED:
+      *bg_scale = (w_scale < h_scale) ? w_scale : h_scale;
+      if (*bg_scale > 1.0)
+        *bg_scale = 1.0;
       break;
     }
   *bg_x = (stage_width - bg_width * *bg_scale) / 2;
@@ -318,8 +323,8 @@ parse_setting (PinPointPoint *point,
 #define END_PARSER   }
 #define IF_PREFIX(prefix) } else if (g_str_has_prefix (setting, prefix)) {
 #define IF_EQUAL(string) } else if (g_str_equal (setting, string)) {
-#define char g_intern_string (strrchr (setting, '=') + 1)
-#define float g_ascii_strtod (strrchr (setting, '=') + 1, NULL);
+#define char g_intern_string (strchrnul (setting, '=') + 1)
+#define float g_ascii_strtod (strchrnul (setting, '=') + 1, NULL);
 #define enum(r,t,s) \
   do { \
       int _i; \
@@ -341,6 +346,7 @@ parse_setting (PinPointPoint *point,
   IF_PREFIX("transition=") point->transition = char;
   IF_EQUAL("fill")         point->bg_scale = PP_BG_FILL;
   IF_EQUAL("fit")          point->bg_scale = PP_BG_FIT;
+  IF_EQUAL("unscaled")     point->bg_scale = PP_BG_UNSCALED;
   IF_EQUAL("center")       point->position = CLUTTER_GRAVITY_CENTER;
   IF_EQUAL("top")          point->position = CLUTTER_GRAVITY_NORTH;
   IF_EQUAL("bottom")       point->position = CLUTTER_GRAVITY_SOUTH;

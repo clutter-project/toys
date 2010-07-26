@@ -51,7 +51,8 @@ typedef enum
 
 typedef enum
 {
-  PP_BG_FIT,  /* default value */
+  PP_BG_UNSCALED,
+  PP_BG_FIT,    /* default value */
   PP_BG_FILL
 } PPBackgroundScale;
 
