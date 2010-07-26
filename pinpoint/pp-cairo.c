@@ -320,7 +320,7 @@ _cairo_render_text (CairoRenderer *renderer,
   layout = pango_cairo_create_layout (renderer->ctx);
   desc = pango_font_description_from_string (point->font);
   pango_layout_set_font_description (layout, desc);
-  if (point->markup)
+  if (point->use_markup)
     pango_layout_set_markup (layout, point->text, -1);
   else
     pango_layout_set_text (layout, point->text, -1);
