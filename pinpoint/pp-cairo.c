@@ -50,7 +50,7 @@ typedef struct
 static void
 _destroy_surface (gpointer data)
 {
-  cairo_surface_t *surface;
+  cairo_surface_t *surface = data;
 
   cairo_surface_destroy (surface);
 }
