@@ -30,7 +30,7 @@
 
 #include "pinpoint.h"
 
-GList *pp_slides      = NULL; /* list of slide texts */
+GList *pp_slides      = NULL; /* list of slide text */
 GList *pp_slidep      = NULL; /* current slide */
 
 typedef struct
@@ -78,9 +78,9 @@ gboolean   pp_maximized = FALSE;
 static GOptionEntry entries[] =
 {
     { "maximized", 'm', 0, G_OPTION_ARG_NONE, &pp_maximized,
-    "Maximize witohout decorations, instead\n"
+    "Maximize without window decoration, instead\n"
 "                                         of fullscreening, this is useful\n"
-"                                         to enable windowmanagement when running\n"
+"                                         to enable window management when running\n"
 "                                         [command=] spawned apps.", NULL},
     { "fullscreen", 'f', 0, G_OPTION_ARG_NONE, &pp_fullscreen,
     "Start in fullscreen mode", NULL},
@@ -139,12 +139,12 @@ main (int    argc,
   dax_init (&argc, &argv);
 #endif
 
-  /* select the cairo renderer if we are requested a pdf output */
+  /* select the cairo renderer if we have requested pdf output */
   if (pp_output_filename && g_str_has_suffix (pp_output_filename, ".pdf"))
     {
 #ifdef HAVE_PDF
       renderer = pp_cairo_renderer ();
-      /* makes more sense to default to white for "stage" color in PDFs*/
+      /* makes more sense to default to a white "stage" colour in PDFs*/
       default_point.stage_color = "white";
 #else
       g_warning ("Pinpoint was built without PDF support");
@@ -171,7 +171,7 @@ main (int    argc,
 
 
 /*
- * Cross-renderers helpers
+ * Cross-renderer helpers
  */
 
 void
@@ -545,7 +545,7 @@ pp_parse_slides (PinPointRenderer *renderer,
                     char *str = slide_str->str;
 
                   /* trim newlines from start and end. ' ' can be used in the
-                   * insane case you actually want blank lines before or after
+                   * insane case that you actually want blank lines before or after
                    * the text of a slide */
                     while (*str == '\n') str++;
                     while ( slide_str->str[strlen(slide_str->str)-1]=='\n')
