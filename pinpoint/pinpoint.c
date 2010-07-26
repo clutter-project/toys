@@ -39,13 +39,6 @@ typedef struct
   int value;
 } EnumDescription;
 
-static EnumDescription PPBackgroundScale_desc[] =
-{
-  { "fit",  PP_BG_FIT },
-  { "fill", PP_BG_FILL},
-  { NULL,   0}
-};
-
 static EnumDescription PPTextAlign_desc[] =
 {
   { "left",   PP_TEXT_LEFT },

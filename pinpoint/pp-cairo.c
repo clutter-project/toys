@@ -308,7 +308,6 @@ static void
 _cairo_render_text (CairoRenderer *renderer,
                     PinPointPoint *point)
 {
-  CairoPointData *data = point->data;
   PangoLayout *layout;
   PangoFontDescription *desc;
   PangoRectangle logical_rect = { 0, };

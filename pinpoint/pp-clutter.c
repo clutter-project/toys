@@ -31,6 +31,7 @@
 #include <dax/dax.h>
 #include "pp-super-aa.h"
 #endif
+#include <stdlib.h>
 
 /* #define QUICK_ACCESS_LEFT - uncomment to move speed access from top to left,
  *                             useful on meego netbook
@@ -256,7 +257,7 @@ static gboolean stage_motion (ClutterActor *actor,
   hide_cursor = g_timeout_add (500, hide_cursor_cb, actor);
 
   if (!pp_get_fullscreen (CLUTTER_STAGE (actor)))
-    return;
+    return FALSE;
 
   clutter_actor_get_size (CLUTTER_RENDERER (renderer)->stage, &stage_width, &stage_height);
 #ifdef QUICK_ACCESS_LEFT
@@ -275,6 +276,8 @@ static gboolean stage_motion (ClutterActor *actor,
       pp_slidep = g_list_nth (pp_slides, g_list_length (pp_slides) * d);
       show_slide (renderer, FALSE);
     }
+
+  return FALSE;
 }
 
 static void
@@ -647,8 +650,6 @@ static void state_completed (ClutterState *state, gpointer user_data)
     }
 }
 
-static gboolean in_stage_resize = FALSE;
-
 static void
 action_slide (ClutterRenderer *renderer)
 {
@@ -677,7 +678,6 @@ action_slide (ClutterRenderer *renderer)
 
 static gchar *pp_lookup_transition (const gchar *transition)
 {
-  gchar *ret = NULL;
   int i;
   gchar *dirs[] ={ "", "./transitions/", PKGDATADIR, NULL};
   for (i = 0; dirs[i]; i++)
@@ -694,7 +694,7 @@ static gchar *pp_lookup_transition (const gchar *transition)
 static void update_commandline_shading (ClutterRenderer *renderer)
 {
    ClutterColor color;
-   float text_x, text_y, text_width, text_height, text_scale;
+   float text_x, text_y, text_width, text_height;
    float shading_x, shading_y, shading_width, shading_height;
    const char *command;
    PinPointPoint *point;
@@ -987,8 +987,7 @@ show_slide (ClutterRenderer *renderer, gboolean backwards)
 
   /* render potentially executed commands */
   {
-   float text_x, text_y, text_width, text_height, text_scale;
-   float shading_x, shading_y, shading_width, shading_height;
+   float text_x, text_y, text_width, text_height;
 
    clutter_color_from_string (&color, point->text_color);
    g_object_set (renderer->commandline,
