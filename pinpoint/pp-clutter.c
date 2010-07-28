@@ -532,7 +532,7 @@ key_pressed (ClutterActor    *actor,
     {
       case CLUTTER_Left:
       case CLUTTER_Up:
-              if (pp_slidep && pp_slidep->prev)
+        if (pp_slidep && pp_slidep->prev)
           {
             leave_slide (renderer, TRUE);
             pp_slidep = pp_slidep->prev;
@@ -551,15 +551,8 @@ key_pressed (ClutterActor    *actor,
       case CLUTTER_Right:
       case CLUTTER_space:
       case CLUTTER_Next:
-        if (pp_slidep && pp_slidep->next)
-          {
-            leave_slide (renderer, FALSE);
-            pp_slidep = pp_slidep->next;
-            show_slide (renderer, FALSE);
-          }
-        break;
       case CLUTTER_Down:
-          if (pp_slidep && pp_slidep->next)
+        if (pp_slidep && pp_slidep->next)
           {
             leave_slide (renderer, FALSE);
             pp_slidep = pp_slidep->next;

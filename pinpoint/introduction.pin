@@ -1,0 +1,149 @@
+#!/usr/bin/env pinpoint
+[font=Sans 50px]
+[bg.jpg]
+
+- The bits above this point are defaults for every slide in the presentation
+Welcome to pinpoint
+
+- [bowls.jpg] lines starting with - are slide seperators. This is where you can override the defaults with with per-slide properties
+A tool for making excellent presentations
+
+-
+It has a simple text source
+
+- [font=monospace 18px] [shading-opacity=1.0]
+The current presentation thus far:
+ #!/usr/bin/env pinpoint
+ [font=Droid Sans 50px]
+ [bg.jpg]
+ 
+ - The bits above this point are defaults for every slide in the presentation
+ Welcome to pinpoint
+
+ - [bowls.jpg] lines starting with - are slide seperators..
+ A tool for making excellent presentations
+
+ -
+ 
+ It has a simple text source
+
+ - [font=monospace 18px] [shading-opacity=1.0]
+
+ The current presentation thus far:
+- [text-align=center]
+You start by writing down the core concepts that you will be talking about. Then sort and format
+them as a pinpoint presentation in a text editor of your choice. 
+
+If this was a presentation given as a demonstration of pinpoint you would now be trying to read
+this slide as well as pay attention to what is said. Less than ideal.
+
+Pinpoint reloads the presentation when it changes on disk, very useful when you're tuning things
+so keep both pinpoint and your text editor open. And remember, the less text you have, the happier
+your audience will be ;-)
+
+
+- You can add '\n' before and after the slide text to keep the file tidy and slides seperated
+Let's use some of the more 
+esoteric features of pinpoint
+
+- [bowls.jpg] [text-align=center]
+\- [filename.jpg]
+set a custom background for an individual slide
+
+- [bunny.ogg] [fill]
+You can put <b>anything</b> in the background
+
+- [linus.jpg] [fill] [bottom-left]
+But, slides with cat pictures are best
+
+-[top-right] [text-align=right]
+position text in the
+[top-right]
+
+- [right]
+[right]
+
+- [bottom-right]
+[bottom-right]
+
+- [bottom]
+[bottom]
+
+- [bottom-left]
+[bottom-left]
+
+- [left]
+[left]
+
+- [top-left]
+[top-left]
+
+- [top]
+[top]
+
+- [center] [text-align=center]
+and even in the
+[center]
+(which is the default)
+
+- [font=Monospace 100px][white][text-color=black][shading-opacity=0.0][bottom]
+Make text big!
+[font=Monospace 100px]
+[white][text-color=black]
+[shading-opacity=0.0][bottom]
+
+-
+<s>use</s> <b>pango</b> <i
+><span foreground='#f24'>m<u
+>ar</u>k<sup>up</sup></span></i> for style
+
+- [no-markup]
+[no-markup]
+<s>don't use</s> <b>pango</b> <i
+><span foreground='#f24'>m<u
+>ar</u>k<sup>up</sup></span></i>
+
+- [transition=page-curl-both][bowls.jpg]
+need bullets?
+ ❥ use the power of unicode
+• ✽ ✩ ✔ ☃ ◦
+
+- [transition=text-slide-up]
+$ pinpoint presentation.txt -o output.pdf
+Export to PDF. Handy.
+
+- [fill]
+[fill]
+Fill the slide with your background
+(the default is [fit])
+
+- [transition=swing]
+Keybindings:
+
+- [transition=sheet]
+right, down or space - next slide
+
+- [transition=slide-left]
+left or up - previous slide
+
+- [transition=slide-up]
+F11 - toggle fullscreen
+
+- [transition=text-slide-down]
+Escape - quit pinpoint
+
+- [transition=slide-in-left] [command=killall xeyes ; xeyes] [fill]
+Enter - Run command
+Tab - Edit command
+[command=killall xeyes ; xeyes]
+
+N.B. run pinpoint with the -m option
+and hidden or auto-hiding panels, to
+allow window management in fullscreen.
+
+- [linus.jpg] [fill] [bottom-right]
+That's pretty much everything. 
+Told you it was simple.
+
+- [black] [font=Sans 100px] [transition=spin-text]
+FIN
