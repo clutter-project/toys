@@ -29,6 +29,10 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <pango/pango.h>
 #include <pango/pangocairo.h>
+#ifdef HAVE_RSVG
+#include <librsvg/rsvg.h>
+#include <librsvg/rsvg-cairo.h>
+#endif
 
 #define CAIRO_RENDERER(renderer)  ((CairoRenderer *) renderer)
 
@@ -39,6 +43,10 @@ typedef struct _CairoRenderer
                                    images as we wantt to only include one
                                    instance of the image when using it in
                                    several slides */
+  GHashTable *svgs;             /* keep RsvgHandles around for source
+                                   svg backgrounds as we want to only
+                                   include one instance of the image
+                                   when using it in several slides */
   cairo_surface_t  *surface;
   cairo_t *ctx;
 } CairoRenderer;
@@ -71,6 +79,9 @@ cairo_renderer_init (PinPointRenderer *pp_renderer,
   renderer->ctx = cairo_create (renderer->surface);
   renderer->surfaces = g_hash_table_new_full (g_str_hash, g_str_equal,
                                               NULL, _destroy_surface);
+  renderer->svgs = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                          NULL,
+                                          g_object_unref);
 }
 
 /* This function is adapted from Gtk's gdk_cairo_set_source_pixbuf() you can
@@ -230,6 +241,38 @@ _cairo_get_surface (CairoRenderer *renderer,
   return surface;
 }
 
+#ifdef HAVE_RSVG
+
+static RsvgHandle *
+_cairo_get_svg (CairoRenderer *renderer,
+                const char    *file)
+{
+  RsvgHandle *svg;
+  GError *error = NULL;
+
+  svg = g_hash_table_lookup (renderer->svgs, file);
+  if (svg)
+    return svg;
+
+  svg = rsvg_handle_new_from_file (file, &error);
+
+  if (svg == NULL)
+    {
+      if (error)
+        {
+          g_warning ("could not load file %s: %s", file, error->message);
+          g_clear_error (&error);
+        }
+      return NULL;
+    }
+
+  g_hash_table_insert (renderer->svgs, (char *) file, svg);
+
+  return svg;
+}
+
+#endif /* HAVE_RSVG */
+
 static void
 _cairo_render_background (CairoRenderer *renderer,
                           PinPointPoint *point)
@@ -295,8 +338,30 @@ _cairo_render_background (CairoRenderer *renderer,
 #endif
       break;
     case PP_BG_SVG:
-#ifdef USE_DAX
-      /* TODO */
+#ifdef HAVE_RSVG
+      {
+        RsvgHandle *svg = _cairo_get_svg (renderer, point->bg);
+        RsvgDimensionData dim;
+        float bg_x, bg_y, bg_scale;
+
+        if (svg == NULL)
+          break;
+
+        rsvg_handle_get_dimensions (svg, &dim);
+
+        pp_get_background_position_scale (point,
+                                          A4_LS_WIDTH, A4_LS_HEIGHT,
+                                          dim.width, dim.height,
+                                          &bg_x, &bg_y,
+                                          &bg_scale);
+
+        cairo_save (renderer->ctx);
+        cairo_translate (renderer->ctx, bg_x, bg_y);
+        cairo_scale (renderer->ctx, bg_scale, bg_scale);
+        rsvg_handle_render_cairo (svg, renderer->ctx);
+
+        cairo_restore (renderer->ctx);
+      }
 #endif
       break;
     default:
@@ -398,6 +463,7 @@ cairo_renderer_finalize (PinPointRenderer *pp_renderer)
 
   cairo_surface_destroy (renderer->surface);
   g_hash_table_unref (renderer->surfaces);
+  g_hash_table_unref (renderer->svgs);
   cairo_destroy (renderer->ctx);
 }
 

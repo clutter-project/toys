@@ -35,6 +35,27 @@ AS_IF([test "x$have_pdf" = "xyes"], [
        AC_DEFINE([HAVE_PDF], [1], [Wether pipoint will generate PDFs])])
 AM_CONDITIONAL([HAVE_PDF], [test "x$have_pdf" = "xyes"])
 
+# SVG output support in the PDFs
+AC_ARG_ENABLE([rsvg],
+	      [AS_HELP_STRING([--enable-rsvg=@<:no/auto/yes:>@],
+			      [Use SVGs in PDFs])],,
+			      [enable_rsvg=auto])
+AC_MSG_CHECKING([for the stuff needed to put SVGs in PDFs])
+AS_CASE([$enable_rsvg],
+	[no], [have_rsvg="no (disabled)"],
+	[yes], [PKG_CHECK_EXISTS([librsvg-2.0],
+                                 have_rsvg="yes",
+                                 AC_MSG_ERROR([Oh no!]))],
+	[auto], [PKG_CHECK_EXISTS([librsvg-2.0],
+				  have_rsvg="yes",
+				  have_rsvg="no")],
+	AC_MSG_ERROR([invalid argumented passed to --enable-rsvg]))
+AC_MSG_RESULT([$have_rsvg])
+AS_IF([test "x$have_rsvg" = "xyes"], [
+       PINPOINT_DEPS="$PINPOINT_DEPS librsvg-2.0"
+       AC_DEFINE([HAVE_RSVG], [1], [Wether pipoint will generate RSVGs])])
+AM_CONDITIONAL([HAVE_RSVG], [test "x$have_rsvg" = "xyes"])
+
 # SVG support with Dax
 AC_ARG_ENABLE([dax],
 	      [AS_HELP_STRING([--enabled-dax=@<:no/auto/yes:>@],
@@ -73,8 +94,9 @@ echo "       cflags: ${MAINTAINER_CFLAGS}"
 
 echo ""
 echo " • Slides' background"
-echo "       Images: yes (built-in)"
-echo "       SVG   : ${use_dax}"
+echo "       Images:      yes (built-in)"
+echo "       SVG:         ${use_dax}"
+echo "       SVG in PDF:  ${have_rsvg}"
 
 echo ""
 echo " • Renderers"
