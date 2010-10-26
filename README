@@ -7,6 +7,7 @@ circles       - A small spinning circles demo (using the cogl path API)
 courasel      - A carousel-style menu demo
 foofone       - A mock-up mobile phone interface
 gps-globe     - The start of an app to draw a globe with your GPS pos
+object-store  - A ClutterModel subclass that proxies GObjects
 opt           - A slide-show application
 odo           - A mesh deformation demo set
 pinpoint      - A minimalistic presentation tool
