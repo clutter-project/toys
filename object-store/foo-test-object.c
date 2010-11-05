@@ -27,11 +27,13 @@ G_DEFINE_TYPE (FooTestObject, foo_test_object, G_TYPE_OBJECT)
 enum
 {
   PROP_0,
+  PROP_NUMBER,
   PROP_TEXT
 };
 
 typedef struct
 {
+  int   number;
   char *text;
 } FooTestObjectPrivate;
 
@@ -43,6 +45,11 @@ _get_property (GObject    *object,
 {
   switch (property_id)
   {
+  case PROP_NUMBER:
+    g_value_set_int (value,
+                     foo_test_object_get_number (
+                        FOO_TEST_OBJECT (object)));
+    break;
   case PROP_TEXT:
     g_value_set_string (value,
                         foo_test_object_get_text (
@@ -61,6 +68,10 @@ _set_property (GObject      *object,
 {
   switch (property_id)
   {
+  case PROP_NUMBER:
+    foo_test_object_set_number (FOO_TEST_OBJECT (object),
+                                g_value_get_int (value));
+    break;
   case PROP_TEXT:
     foo_test_object_set_text (FOO_TEST_OBJECT (object),
                               g_value_get_string (value));
@@ -88,6 +99,12 @@ foo_test_object_class_init (FooTestObjectClass *klass)
   object_class->finalize = _finalize;
 
   g_object_class_install_property (object_class,
+                                   PROP_NUMBER,
+                                   g_param_spec_int ("number", "", "",
+                                                     G_MININT32, G_MAXINT32, 0,
+                                                     G_PARAM_READWRITE));
+
+  g_object_class_install_property (object_class,
                                    PROP_TEXT,
                                    g_param_spec_string ("text", "", "",
                                                         NULL,
@@ -103,6 +120,32 @@ FooTestObject *
 foo_test_object_new (void)
 {
   return g_object_new (FOO_TYPE_TEST_OBJECT, NULL);
+}
+
+int
+foo_test_object_get_number (FooTestObject *self)
+{
+  FooTestObjectPrivate *priv = GET_PRIVATE (self);
+
+  g_return_val_if_fail (FOO_IS_TEST_OBJECT (self), 0);
+
+  return priv->number;
+}
+
+void
+foo_test_object_set_number (FooTestObject *self,
+                            int            number)
+{
+  FooTestObjectPrivate *priv = GET_PRIVATE (self);
+
+  g_return_if_fail (FOO_IS_TEST_OBJECT (self));
+
+  if (number != priv->number)
+  {
+    priv->number = number;
+
+    g_object_notify (G_OBJECT (self), "number");
+  }
 }
 
 char const *

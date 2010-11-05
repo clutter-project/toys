@@ -57,6 +57,13 @@ foo_test_object_get_type (void);
 FooTestObject *
 foo_test_object_new (void);
 
+int
+foo_test_object_get_number (FooTestObject *self);
+
+void
+foo_test_object_set_number (FooTestObject *self,
+                            int            number);
+
 char const *
 foo_test_object_get_text (FooTestObject *self);
 
