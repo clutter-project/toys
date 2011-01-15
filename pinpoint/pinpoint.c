@@ -27,6 +27,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #include "pinpoint.h"
 
@@ -524,27 +525,31 @@ pp_parse_slides (PinPointRenderer *renderer,
                 {
                   if (point->bg && point->bg[0])
                     {
-                      if (g_str_has_suffix (point->bg, ".avi")
-                       || g_str_has_suffix (point->bg, ".ogg")
-                       || g_str_has_suffix (point->bg, ".ogv")
-                       || g_str_has_suffix (point->bg, ".mpg")
-                       || g_str_has_suffix (point->bg, ".mov")
-                       || g_str_has_suffix (point->bg, ".mp4")
-                       || g_str_has_suffix (point->bg, ".wmv")
-                       || g_str_has_suffix (point->bg, ".AVI")
-                       || g_str_has_suffix (point->bg, ".OGG")
-                       || g_str_has_suffix (point->bg, ".OGV")
-                       || g_str_has_suffix (point->bg, ".MPG")
-                       || g_str_has_suffix (point->bg, ".MOV")
-                       || g_str_has_suffix (point->bg, ".MP4")
-                       || g_str_has_suffix (point->bg, ".WMV"))
+                      gchar *filename = g_strdup (point->bg);
+                      int i = 0;
+
+                      while (filename[i])
+                        {
+                          filename[i] = tolower(filename[i]);
+                          i++;
+                        }
+                      if (g_str_has_suffix (filename, ".avi")
+                       || g_str_has_suffix (filename, ".ogg")
+                       || g_str_has_suffix (filename, ".ogv")
+                       || g_str_has_suffix (filename, ".mpg")
+                       || g_str_has_suffix (filename, ".mpeg")
+                       || g_str_has_suffix (filename, ".mov")
+                       || g_str_has_suffix (filename, ".mp4")
+                       || g_str_has_suffix (filename, ".wmv")
+                       || g_str_has_suffix (filename, ".webm"))
                         point->bg_type = PP_BG_VIDEO;
-                      else if (g_str_has_suffix (point->bg, ".svg"))
+                      else if (g_str_has_suffix (filename, ".svg"))
                         point->bg_type = PP_BG_SVG;
                       else if (pp_is_color (point->bg))
                         point->bg_type = PP_BG_COLOR;
                       else
                         point->bg_type = PP_BG_IMAGE;
+                      g_free (filename);
                     }
 
                   {
