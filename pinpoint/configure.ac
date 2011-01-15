@@ -32,7 +32,7 @@ AS_CASE([$enable_pdf],
 AC_MSG_RESULT([$have_pdf])
 AS_IF([test "x$have_pdf" = "xyes"], [
        PINPOINT_DEPS="$PINPOINT_DEPS cairo-pdf >= 1.9.12 pangocairo gdk-pixbuf-2.0"
-       AC_DEFINE([HAVE_PDF], [1], [Wether pipoint will generate PDFs])])
+       AC_DEFINE([HAVE_PDF], [1], [Whether pinpoint will generate PDFs])])
 AM_CONDITIONAL([HAVE_PDF], [test "x$have_pdf" = "xyes"])
 
 # ClutterGst support
@@ -74,7 +74,7 @@ AS_CASE([$enable_rsvg],
 AC_MSG_RESULT([$have_rsvg])
 AS_IF([test "x$have_rsvg" = "xyes"], [
        PINPOINT_DEPS="$PINPOINT_DEPS librsvg-2.0"
-       AC_DEFINE([HAVE_RSVG], [1], [Wether pipoint will generate RSVGs])])
+       AC_DEFINE([HAVE_RSVG], [1], [Whether pinpoint will generate RSVGs])])
 AM_CONDITIONAL([HAVE_RSVG], [test "x$have_rsvg" = "xyes"])
 
 # SVG support with Dax
@@ -95,7 +95,7 @@ AS_CASE([$enable_dax],
 AC_MSG_RESULT([$use_dax])
 AS_IF([test "x$use_dax" = "xyes"], [
        PINPOINT_DEPS="$PINPOINT_DEPS dax-0.2 mx-1.0"
-       AC_DEFINE([USE_DAX], [1], [Wether pipoint will use Dax])])
+       AC_DEFINE([USE_DAX], [1], [Whether pinpoint will use Dax])])
 AM_CONDITIONAL([USE_DAX], [test "x$use_dax" = "xyes"])
 
 PKG_CHECK_MODULES([DEPS], [$PINPOINT_DEPS])
