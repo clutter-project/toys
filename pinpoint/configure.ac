@@ -35,6 +35,27 @@ AS_IF([test "x$have_pdf" = "xyes"], [
        AC_DEFINE([HAVE_PDF], [1], [Wether pipoint will generate PDFs])])
 AM_CONDITIONAL([HAVE_PDF], [test "x$have_pdf" = "xyes"])
 
+# ClutterGst support
+AC_ARG_ENABLE([cluttergst],
+	      [AS_HELP_STRING([--enable-cluttergst=@<:no/auto/yes:>@],
+			      [Show media files using ClutterGst])],,
+			      [enable_cluttergst=auto])
+AC_MSG_CHECKING([for the stuff needed to show media files])
+AS_CASE([$enable_cluttergst],
+	[no], [have_cluttergst="no (disabled)"],
+	[yes], [PKG_CHECK_EXISTS([clutter-gst-1.0 >= 1.3],
+                                 have_cluttergst="yes",
+                                 AC_MSG_ERROR([Oh no!]))],
+	[auto], [PKG_CHECK_EXISTS([clutter-gst-1.0 >= 1.3],
+				  have_cluttergst="yes",
+				  have_cluttergst="no")],
+	AC_MSG_ERROR([invalid argumented passed to --enable-cluttergst]))
+AC_MSG_RESULT([$have_cluttergst])
+AS_IF([test "x$have_cluttergst" = "xyes"], [
+       PINPOINT_DEPS="$PINPOINT_DEPS clutter-gst-1.0 >= 1.3"
+       AC_DEFINE([USE_CLUTTER_GST], [1], [Whether pinpoint will display media files using ClutterGst])])
+AM_CONDITIONAL([USE_CLUTTER_GST], [test "x$have_cluttergst" = "xyes"])
+
 # SVG output support in the PDFs
 AC_ARG_ENABLE([rsvg],
 	      [AS_HELP_STRING([--enable-rsvg=@<:no/auto/yes:>@],
@@ -97,6 +118,7 @@ echo " • Slides' background"
 echo "       Images:      yes (built-in)"
 echo "       SVG:         ${use_dax}"
 echo "       SVG in PDF:  ${have_rsvg}"
+echo "       ClutterGst:  ${have_cluttergst}"
 
 echo ""
 echo " • Renderers"
