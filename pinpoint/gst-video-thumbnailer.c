@@ -17,6 +17,7 @@
  */
 
 #include <config.h>
+#ifdef USE_CLUTTER_GST
 
 #include <string.h>
 #include <stdlib.h>
@@ -316,3 +317,5 @@ is_interesting (GdkPixbuf *pixbuf)
     /* Image is boring if there is only 1 bin with > 1% of pixels */
     return count > 1;
 }
+
+#endif
