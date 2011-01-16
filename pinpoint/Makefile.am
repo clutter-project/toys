@@ -14,6 +14,7 @@ pinpoint_SOURCES = \
   pinpoint.h \
   pp-cairo.c \
   pp-clutter.c \
+  gst-video-thumbnailer.c \
   $(DAX_SOURCES)
 
 EXTRA_DIST=sample.txt wth.jpg bg.jpg pp-super-aa.c pp-super-aa.h

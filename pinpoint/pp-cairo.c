@@ -34,6 +34,8 @@
 #include <librsvg/rsvg-cairo.h>
 #endif
 
+#include "gst-video-thumbnailer.h"
+
 #define CAIRO_RENDERER(renderer)  ((CairoRenderer *) renderer)
 
 typedef struct _CairoRenderer
@@ -333,10 +335,38 @@ _cairo_render_background (CairoRenderer *renderer,
       }
       break;
     case PP_BG_VIDEO:
+      {
 #ifdef USE_CLUTTER_GST
-      /* TODO */
+        GdkPixbuf *pixbuf;
+        cairo_surface_t *surface;
+        float bg_x, bg_y, bg_width, bg_height, bg_scale;
+        GCancellable* cancellable = g_cancellable_new ();
+
+        pixbuf = gst_video_thumbnailer_get_shot (point->bg, cancellable);
+        if (pixbuf == NULL)
+          break;
+
+        surface = _cairo_new_surface_from_pixbuf (pixbuf);
+        g_hash_table_insert (renderer->surfaces, (char *) point->bg, surface);
+
+        bg_width = cairo_image_surface_get_width (surface);
+        bg_height = cairo_image_surface_get_height (surface);
+
+        pp_get_background_position_scale (point,
+                                          A4_LS_WIDTH, A4_LS_HEIGHT,
+                                          bg_width, bg_height,
+                                          &bg_x, &bg_y,
+                                          &bg_scale);
+
+        cairo_save (renderer->ctx);
+        cairo_translate (renderer->ctx, bg_x, bg_y);
+        cairo_scale (renderer->ctx, bg_scale, bg_scale);
+        cairo_set_source_surface (renderer->ctx, surface, 0., 0.);
+        cairo_paint (renderer->ctx);
+        cairo_restore (renderer->ctx);
 #endif
-      break;
+        break;
+      }
     case PP_BG_SVG:
 #ifdef HAVE_RSVG
       {
