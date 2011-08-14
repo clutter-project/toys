@@ -4,6 +4,7 @@ libraries. The following is a summary of each;
 
 arc-clock     - A small clock demo (using the cogl path API)
 circles       - A small spinning circles demo (using the cogl path API)
+nyancat       - A small nyancat made of clutter
 courasel      - A carousel-style menu demo
 foofone       - A mock-up mobile phone interface
 gps-globe     - The start of an app to draw a globe with your GPS pos
@@ -14,7 +15,7 @@ pinpoint      - A minimalistic presentation tool
 pong          - An unfinished pong game
 ripples       - A small 'ripples' effect demo (using the cogl vector-drawing
                 API)
-script-viewer - A ClutterScript viewer 
+script-viewer - A ClutterScript viewer
 
 Bitrotted toys that do not work with Clutter 1.x API yet have been placed in the attic/
 
