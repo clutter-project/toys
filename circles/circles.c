@@ -1,4 +1,4 @@
-
+#define CLUTTER_DISABLE_DEPRECATION_WARNINGS
 #include <clutter/clutter.h>
 #include <math.h>
 
@@ -10,7 +10,7 @@
 #define SCREEN_H 480
 
 #ifndef CLUTTER_ANGLE_FROM_RAD
-#define CLUTTER_ANGLE_FROM_RAD(x) ((x) * 180.0 / M_PI)
+#define CLUTTER_ANGLE_FROM_RAD(x) ((x) * 180.0 / G_PI)
 #endif
 
 static void
@@ -19,14 +19,14 @@ circle_paint_cb (ClutterActor *actor)
   const CoglColor fill_color = { 0xff, 0xff, 0xff, 0x80 };
   gint i;
   gdouble angle;
-  guint radius = clutter_actor_get_width (actor)/2;
+  guint radius = clutter_actor_get_width (actor) / 2;
 
   cogl_set_source_color (&fill_color);
 
   angle = *((gdouble *)g_object_get_data (G_OBJECT (actor), "angle"));
-  for (i = 0; i < CIRCLE_S; i++, angle += (2.0*M_PI)/(gdouble)CIRCLE_S)
+  for (i = 0; i < CIRCLE_S; i++, angle += (2.0 * G_PI) / (gdouble) CIRCLE_S)
     {
-      gdouble angle2 = angle + ((2.0*M_PI)/(gdouble)CIRCLE_S)/2.0;
+      gdouble angle2 = angle + ((2.0 * G_PI) / (gdouble)CIRCLE_S) / 2.0;
       cogl_path_move_to (((radius - CIRCLE_W) * cos (angle)) + radius,
                          ((radius - CIRCLE_W) * sin (angle)) + radius);
       cogl_path_arc (radius, radius, radius, radius,
@@ -50,13 +50,16 @@ main (int argc, char **argv)
   ClutterTimeline *timeline;
   ClutterActor *stage;
   gint i;
-  
-  clutter_init (&argc, &argv);
-  
-  stage = clutter_stage_get_default ();
-  clutter_actor_set_size (stage, SCREEN_W, SCREEN_H);
+
+  if (clutter_init (&argc, &argv) != CLUTTER_INIT_SUCCESS)
+    return 1;
+
+  stage = clutter_stage_new ();
+  clutter_stage_set_title (CLUTTER_STAGE (stage), "Circles");
   clutter_stage_set_color (CLUTTER_STAGE (stage), &bg_color);
-  
+  clutter_actor_set_size (stage, SCREEN_W, SCREEN_H);
+  g_signal_connect (stage, "destroy", G_CALLBACK (clutter_main_quit), NULL);
+
   timeline = clutter_timeline_new (5000);
   clutter_timeline_set_loop (timeline, TRUE);
 
@@ -70,10 +73,11 @@ main (int argc, char **argv)
       
       actor = clutter_rectangle_new_with_color (&transp);
       
-      size = (i+1) * (CIRCLE_W + CIRCLE_G) * 2;
+      size = (i + 1) * (CIRCLE_W + CIRCLE_G) * 2;
       clutter_actor_set_size (actor, size, size);
-      clutter_actor_set_position (actor, SCREEN_W - size/2,
-                                  SCREEN_H - size/2);
+      clutter_actor_set_position (actor,
+                                  SCREEN_W - size / 2.0,
+                                  SCREEN_H - size / 2.0);
       
       clutter_container_add_actor (CLUTTER_CONTAINER (stage), actor);
       
@@ -89,7 +93,9 @@ main (int argc, char **argv)
                                                         : CLUTTER_ROTATE_CCW,
                                                 0.0, 0.0);
       clutter_behaviour_rotate_set_center (CLUTTER_BEHAVIOUR_ROTATE (behaviour),
-                                           size/2, size/2, 0);
+                                           size / 2,
+                                           size / 2,
+                                           0);
       clutter_behaviour_apply (behaviour, actor);
     }
   
@@ -101,4 +107,3 @@ main (int argc, char **argv)
   
   return 0;
 }
-
