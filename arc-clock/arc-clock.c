@@ -138,11 +138,12 @@ main (int argc, char *argv[])
   clutter_x11_set_use_argb_visual (TRUE);
 
   GError *error = NULL;
-  clutter_init_with_args (&argc, &argv,
-                          "Arc Clock",
-                          entries,
-                          NULL,
-                          &error);
+  if(clutter_init_with_args (&argc, &argv,
+                             "Arc Clock",
+                             entries,
+                             NULL,
+                             &error) != CLUTTER_INIT_SUCCESS)
+    g_error("%s", error->message);
 
   ClutterActor *stage = clutter_stage_new ();
   clutter_stage_set_title (CLUTTER_STAGE (stage), "Arc Clock");
