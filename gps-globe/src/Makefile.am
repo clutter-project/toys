@@ -22,6 +22,7 @@ gps_globe_SOURCES = \
 	echo ";" >> $@
 
 gps_globe_LDADD = \
+	-lm \
 	@CLUTTER_LIBS@
 
 ENUMFILES = gpsg-enum-types.c gpsg-enum-types.h
