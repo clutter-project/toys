@@ -96,7 +96,7 @@
             "alpha" : { "timeline" : "animation", "mode" : "linear" }
           }
         ]
-      },
+      }
     ]
   }
 ]
