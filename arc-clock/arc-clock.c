@@ -165,7 +165,7 @@ main (int argc, char *argv[])
       clutter_actor_add_constraint (hands[i], clutter_align_constraint_new (stage, CLUTTER_ALIGN_Y_AXIS, 0.5));
       g_signal_connect (hands[i], "paint", G_CALLBACK (hand_paint), NULL);
       g_object_set_data (G_OBJECT (hands[i]), "hand-id", GUINT_TO_POINTER (i));
-      clutter_container_add_actor (CLUTTER_CONTAINER (stage), hands[i]);
+      clutter_actor_add_child(stage, hands[i]);
     }
 
   if (hide_seconds)
