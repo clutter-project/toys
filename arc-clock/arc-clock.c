@@ -25,6 +25,7 @@ enum
 static double slices[N_HANDS] = { 0.0, };
 
 static ClutterActor *hands[N_HANDS] = { NULL, };
+static ClutterColor  hands_color[N_HANDS];
 
 static const char *colors[N_HANDS] = {
   "#4e9a06",
@@ -51,15 +52,12 @@ hand_paint (ClutterActor *hand)
 
   float radius = clutter_actor_get_width (hand) / 2.0 + 0.5;
 
-  ClutterColor hand_color;
-  clutter_rectangle_get_color (CLUTTER_RECTANGLE (hand), &hand_color);
-
   CoglColor fill_color;
   cogl_color_init_from_4ub (&fill_color,
-                            hand_color.red,
-                            hand_color.green,
-                            hand_color.blue,
-                            hand_color.alpha);
+                            hands_color[hand_id].red,
+                            hands_color[hand_id].green,
+                            hands_color[hand_id].blue,
+                            hands_color[hand_id].alpha);
 
   cogl_set_source_color (&fill_color);
 
@@ -157,10 +155,8 @@ main (int argc, char *argv[])
 
   for (int i = SECONDS; i < N_HANDS; i++)
     {
-      ClutterColor color;
-
-      clutter_color_from_string (&color, colors[i]);
-      hands[i] = clutter_rectangle_new_with_color (&color);
+      clutter_color_from_string (&hands_color[i], colors[i]);
+      hands[i] = clutter_actor_new ();
       clutter_actor_set_size (hands[i], (HAND_WIDTH * 3.0) * i, (HAND_WIDTH * 3.0) * i);
       clutter_actor_add_constraint (hands[i], clutter_align_constraint_new (stage, CLUTTER_ALIGN_X_AXIS, 0.5));
       clutter_actor_add_constraint (hands[i], clutter_align_constraint_new (stage, CLUTTER_ALIGN_Y_AXIS, 0.5));
