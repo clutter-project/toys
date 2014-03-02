@@ -1,6 +1,3 @@
-# there are inconsistencies in the naming of the nicks of the
-# properties: 
-
 [
   {
     "id" : "animation",
@@ -13,7 +10,7 @@
     "id" : "root",
     "type" : "ClutterGroup",
     "x": 0,
-    "y": 0
+    "y": 0,
     "children" : [
       {
         "type": "ClutterLabel",
@@ -30,7 +27,7 @@
               "y-scale-start"   : 1.0,
               "y-scale-end"     : 0.5,
               "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
-            },
+            }
           ]
       },
 
@@ -48,7 +45,7 @@
               "angle-start"   : 0.0,
               "angle-end"     : 359.0,
               "alpha"         : {"timeline"  : "animation", "function"  : "sine"}
-            },
+            }
           ]
       },
       {

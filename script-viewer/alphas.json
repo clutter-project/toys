@@ -179,8 +179,7 @@
               "alpha" : {"timeline"  : "animation", "function"  : "smoothstep-dec"}
             }
           ]
-      },
-
+      }
     ]
   }
 ]
