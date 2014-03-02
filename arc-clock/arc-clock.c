@@ -136,11 +136,11 @@ main (int argc, char *argv[])
   clutter_x11_set_use_argb_visual (TRUE);
 
   GError *error = NULL;
-  if(clutter_init_with_args (&argc, &argv,
-                             "Arc Clock",
-                             entries,
-                             NULL,
-                             &error) != CLUTTER_INIT_SUCCESS)
+  if (clutter_init_with_args (&argc, &argv,
+                              "Arc Clock",
+                              entries,
+                              NULL,
+                              &error) != CLUTTER_INIT_SUCCESS)
     g_error("%s", error->message);
 
   ClutterActor *stage = clutter_stage_new ();
@@ -162,7 +162,7 @@ main (int argc, char *argv[])
       clutter_actor_add_constraint (hands[i], clutter_align_constraint_new (stage, CLUTTER_ALIGN_Y_AXIS, 0.5));
       g_signal_connect (hands[i], "paint", G_CALLBACK (hand_paint), NULL);
       g_object_set_data (G_OBJECT (hands[i]), "hand-id", GUINT_TO_POINTER (i));
-      clutter_actor_add_child(stage, hands[i]);
+      clutter_actor_add_child (stage, hands[i]);
     }
 
   if (hide_seconds)
